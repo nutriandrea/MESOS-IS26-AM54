@@ -2,8 +2,8 @@
 ----------------------------------------------------------------------------
 Professore: Alessandro Margara
 ----------------------------------------------------------------------------
-Studenti:   Andrea Carbone
-            Andrea Cacioppo
-            Gabriele Buca
+Studenti:   Andrea Carbone;
+            Andrea Cacioppo;
+            Gabriele Buca;
             Francesco Botton
 ----------------------------------------------------------------------------

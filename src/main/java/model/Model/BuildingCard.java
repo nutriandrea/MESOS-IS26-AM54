@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 
 
-public class BuildingCard extends Card {
+public class BuildingCard extends Card implements IPurchasable {
 
     /**
      * Default constructor
@@ -53,6 +53,22 @@ public class BuildingCard extends Card {
     public int getFinalAura() {
         // TODO implement here
         return 0;
+    }
+
+    @Override
+    public boolean canBePurchased(Player player) {
+        return (player.getFoodTokens()-player.getMyBuildingDiscount()>=this.cost);
+    }
+
+    @Override
+    public void buy(Player player) {
+        int foodAmount = this.cost-player.getMyBuildingDiscount();
+        if (foodAmount>=0) {player.modifyFood(-foodAmount);}
+
+        this.addOwner(player);
+        player.modifyMyTribe(this);
+
+        //sarà poi la board a toglierselo, non la carta stessa
     }
 
 }

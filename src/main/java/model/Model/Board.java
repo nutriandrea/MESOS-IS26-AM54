@@ -3,9 +3,7 @@ package model.Model;
 import java.io.*;
 import java.util.*;
 
-/**
- * 
- */
+
 public class Board {
 
     /**
@@ -14,24 +12,16 @@ public class Board {
     public Board() {
     }
 
-    /**
-     * 
-     */
+    
     private List<Card> upperRow;
 
-    /**
-     * 
-     */
+    
     private List<Card> lowerRow;
 
-    /**
-     * 
-     */
+    
     private List<OfferingTile> offeringTrack;
 
-    /**
-     * 
-     */
+    
     private List<TurnOrderSlot> turnOrderTile;
 
 
@@ -46,9 +36,7 @@ public class Board {
         // TODO implement here
     }
 
-    /**
-     * @return
-     */
+    
     public void moveUpperToLower() {
         // TODO implement here
     }
@@ -65,23 +53,17 @@ public class Board {
         // Inizializza le liste (verranno popolate da Game)
     }
 
-    /**
-     * @return
-     */
+    
     public void moveBuildings() {
         // TODO implement here
     }
 
-    /**
-     * @return
-     */
+    
     public void removeCard() {
         // TODO implement here
     }
 
-    /**
-     * @return
-     */
+    
     public List<Card> getRow() {
         // TODO implement here
         return null;

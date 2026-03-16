@@ -1,8 +1,6 @@
 package model.Model;
 
-/**
- * 
- */
+
 public class OfferingTile {
 
     /**
@@ -11,35 +9,23 @@ public class OfferingTile {
     public OfferingTile() {
     }
 
-    /**
-     * 
-     */
+    
     private char id;
 
-    /**
-     * 
-     */
+    
     private int cardsFromUpper;
 
-    /**
-     * 
-     */
+    
     private int cardsFromLower;
 
-    /**
-     * 
-     */
+    
     private int foodBonus;
 
-    /**
-     * 
-     */
+    
     private Player occupiedBy;
 
 
-    /**
-     * @return
-     */
+    
     public boolean isAvailable() {
         return occupiedBy != null;
     }
@@ -52,9 +38,7 @@ public class OfferingTile {
         this.occupiedBy = p;
     }
 
-    /**
-     * @return
-     */
+    
     public int[] getCards() {
 
         int[] x = new int[0];

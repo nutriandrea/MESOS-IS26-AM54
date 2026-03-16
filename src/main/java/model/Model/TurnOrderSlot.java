@@ -35,23 +35,21 @@ public class TurnOrderSlot {
      * @return
      */
     public void occupy(Player p) {
-        // TODO implement here
+        this.occupiedBy = p;
     }
 
     /**
      * @return
      */
     public boolean isAvailable() {
-        // TODO implement here
-        return false;
+        return this.occupiedBy != null;
     }
 
     /**
      * @return
      */
     public int getPosition() {
-        // TODO implement here
-        return 0;
+        return this.position;
     }
 
 }

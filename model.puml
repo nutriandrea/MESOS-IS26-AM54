@@ -2,261 +2,260 @@
 !theme plain
 
 package "model.Model" <<Rectangle>> {
-  class Game {
-    - board: Board
-    - deckTribu: Deck<TribeCard>
-    - deckBuildings: Deck<BuildingCard>
-    - players: List<Player>
-    - chosenPlayerNumber: int
-    - currentEra: int
-    - roundCount: int
-    - status: GameStatus
-    - currentPlayer: Player
-    + getPlayerNumber(): int
-    + getCurrentPlayer(): Player
-    + setupGame(): void
-    + placeTotemOrder(p: Player, selectedSlot: TurnOrderSlot): void
-    + startRound(): void
-    + pickingPhase(): void
-    + resolveEvents(): void
-    + nextTurn(): void
-    + handleEraTransition(): void
-    + calculateFinalScore(): void
-    + endGame(): void
-  }
 
-  class Board {
-    - upperRow: List<TribeCard>
-    - lowerRow: List<TribeCard>
-    - upperRowBuildings: List<BuildingCard>
-    - lowerRowBuildings: List<BuildingCard>
-    - offeringTrack: List<OfferingTile>
-    - turnOrderTile: List<TurnOrderSlot>
-    + refillUpperRow(numPlayers: int): void
-    + moveUpperToLower(): void
-    + generateBoard(numPlayers: int): void
-    + moveBuildings(): void
-    + removeCard(): void
-    + getRow(): List<Card>
-  }
-
-  class Player {
-    - nickname: String
-    - totemColor: TotemColors
-    - foodTokens: int
-    - auraPoints: int
-    - magicPoints: int
-    - extraPick: boolean
-    - myTribe: ArrayList<CharacterCard>
-    - myBuildings: ArrayList<BuildingCard>
-    - myBuildingDiscount: int
-    - myFoodDiscount: int
-    + getFood(): int
-    + getAuraPoints(): int
-    + getNickname(): String
-    + getTotemColors(): TotemColors
-    + getFoodTokens(): int
-    + getMagicPoints(): int
-    + getExtraPick(): boolean
-    + getMyTribe(): ArrayList<CharacterCard>
-    + getBuildings(): ArrayList<BuildingCard>
-    + getMyBuildingDiscount(): int
-    + getMyFoodDiscount(): int
-    + modifyFood(amount: int): void
-    + modifyAuraPoints(amount: int): void
-    + modifyMagicPoints(amount: int): void
-    + modifyMyTribe(c: Card): void
-    + modifyMyBuildingDiscount(amount: int): void
-    + modifyMyFoodDiscount(amount: int): void
-  }
-
-  class Deck<T extends Card> {
-    - cards: Stack<T>
-    + drawCard(): T
-    + isEmpty(): boolean
-  }
-
-  class Card {
-    - era: int
-    - owner: Player
-    + getEra(): int
-    + getOwner(): Player
-    + addOwner(p: Player): void
-  }
-
-  class TribeCard {
-  }
-
-  class BuildingCard {
-    - name: String
-    - cost: int
-    - finalAura: int
-    - phase: Phases
-    - effects: List<IEffect>
-    - eventType: JobType
-    + BuildingCard(name: String, cost: int, finalAura: int, phase: Phases, effects: List<IEffect>)
-    + getFinalAura(): int
-  }
-
-  class CharacterCard {
-    - level: int
-    - type: JobType
-    - aura: int
-    - effect: IEffect
-    + CharacterCard(level: int, type: JobType, effects: List<IEffect>)
-  }
-
-  class EventCard {
-    - finalEvent: boolean
-    + isFinalEvent(): boolean
-    + resolveEvent(g: Game): void
-  }
-
-  class HuntEvent {
-    + resolveEvent(g: Game): void
-  }
-
-  class ShamanEvent {
-    + resolveEvent(g: Game): void
-  }
-
-  class PaintingEvent {
-    + resolveEvent(g: Game): void
-  }
-
-  class SustenanceEvent {
-    + resolveEvent(g: Game): void
-  }
-
-  class OfferingTile {
-    - id: char
-    - cardsFromUpper: int
-    - cardsFromLower: int
-    - foodBonus: int
-    - occupiedBy: Player
-    + isAvailable(): boolean
-    + occupy(p: Player): void
-    + getCards(): List<Card>
-  }
-
-  class TurnOrderSlot {
-    - position: int
-    - bonusFood: int
-    - occupiedBy: Player
-    + occupy(p: Player): void
-    + isAvailable(): boolean
-    + getPosition(): int
-  }
-
-  class DeckFactory {
-    - effectRegistry: Map<String, IEffect>
-    + createBuildingDeck(filePath: String): Stack<BuildingCard>
-    + createTribeDeck(filePath: String): Stack<TribeCard>
-  }
-
-  interface IEffect {
-    + apply(p: Player, g: Game): void
-  }
-
-  interface IPurchasable {
-    + getBaseCost(): int
-  }
-
-  interface IDrawable {
-    + reveal(): void
-  }
-
-  enum TotemColors {
-    RED
-    YELLOW
-    BLACK
-    WHITE
-    BLUE
-  }
-
-  enum GameStatus {
-    LOGIN
-    START
-    INGAME
-    PAUSE
-    ENDGAME
-  }
-
-  enum JobType {
-    HUNTER
-    SHAMAN
-    CONSTRUCTOR
-    FARMER
-    INVENTOR
-    ARTIST
-  }
-
-  enum Phases {
-    STARTTURN
-    POSTPICK
-    POSTACTIONS
-    EVENT
-    ENDGAME
-  }
+class Game {
+  - board: Board
+  - deckTribu: Deck<TribeCard>
+  - deckBuildings: Deck<BuildingCard>
+  - players: List<Player>
+  - chosenPlayerNumber: int
+  - currentEra: int
+  - roundCount: int
+  - status: GameStatus
+  - currentPlayer: Player
+  + getPlayerNumber(): int
+  + getCurrentPlayer(): Player
+  + setupGame(): void
+  + placeTotemOrder(p: Player, selectedSlot: TurnOrderSlot): void
+  + startRound(): void
+  + pickingPhase(): void
+  + resolveEvents(): void
+  + nextTurn(): void
+  + handleEraTransition(): void
+  + calculateFinalScore(): void
+  + endGame(): void
 }
 
-'Game' *-- 'Board' : 1
-'Game' *-- 'Deck<TribeCard>' : 1
-'Game' *-- 'Deck<BuildingCard>' : 1
-'Game' *-- 'List<Player>' : 1..*
-'Game' *-- 'GameStatus' : 1
+class Board {
+  - upperRow: List<TribeCard>
+  - lowerRow: List<TribeCard>
+  - upperRowBuildings: List<BuildingCard>
+  - lowerRowBuildings: List<BuildingCard>
+  - offeringTrack: List<OfferingTile>
+  - turnOrderTile: List<TurnOrderSlot>
+  + refillUpperRow(numPlayers: int): void
+  + moveUpperToLower(): void
+  + generateBoard(numPlayers: int): void
+  + moveBuildings(): void
+  + removeCard(): void
+  + getRow(): List<Card>
+}
 
-'Board' *-- 'List<TribeCard>' : 1..*
-'Board' *-- 'List<BuildingCard>' : 1..*
-'Board' *-- 'List<OfferingTile>' : 1..*
-'Board' *-- 'List<TurnOrderSlot>' : 1..*
+class Player {
+  - nickname: String
+  - totemColor: TotemColors
+  - food: int
+  - prestige: int
+  - extraPick: boolean
+  - myTribe: ArrayList<CharacterCard>
+  - myBuildings: ArrayList<BuildingCard>
+  - myBuildingDiscount: int
+  - myFoodDiscount: int
+  + getFood(): int
+  + getAuraPoints(): int
+  + getNickname(): String
+  + getTotemColors(): TotemColors
+  + getFoodTokens(): int
+  + getMagicPoints(): int
+  + getExtraPick(): boolean
+  + getMyTribe(): ArrayList<CharacterCard>
+  + getBuildings(): ArrayList<BuildingCard>
+  + getMyBuildingDiscount(): int
+  + getMyFoodDiscount(): int
+  + modifyFood(amount: int): void
+  + modifyAuraPoints(amount: int): void
+  + modifyMagicPoints(amount: int): void
+  + modifyMyTribe(c: Card): void
+  + modifyMyBuildingDiscount(amount: int): void
+  + modifyMyFoodDiscount(amount: int): void
+  + setNickname(nickname: String): void
+  + setTotemColor(color: TotemColors): void
+  + setExtraPick(extraPick: boolean): void
+}
 
-'Player' *-- 'TotemColors' : 1
-'Player' *-- 'List<CharacterCard>' : 0..*
-'Player' *-- 'List<BuildingCard>' : 0..*
+class Deck<T extends Card> {
+  - cards: Stack<T>
+  + drawCard(): T
+  + isEmpty(): boolean
+}
 
-'Deck' <|-- 'Deck<TribeCard>'
-'Deck' <|-- 'Deck<BuildingCard>'
+class Card {
+  - era: int
+  - owner: Player
+  + getEra(): int
+  + getOwner(): Player
+  + addOwner(p: Player): void
+}
 
-'Card' <|-- 'TribeCard'
-'Card' <|-- 'BuildingCard'
+class TribeCard
+class BuildingCard {
+  - name: String
+  - cost: int
+  - finalAura: int
+  - phase: Phases
+  - effects: List<IEffect>
+  - eventType: JobType
+  + BuildingCard(name: String, cost: int, finalAura: int, phase: Phases, effects: List<IEffect>)
+  + getFinalAura(): int
+}
 
-'TribeCard' <|-- 'CharacterCard'
-'TribeCard' <|-- 'EventCard'
+class CharacterCard {
+  - level: int
+  - type: JobType
+  - aura: int
+  - effect: IEffect
+  + CharacterCard(level: int, type: JobType, effects: List<IEffect>)
+}
 
-'EventCard' <|-- 'HuntEvent'
-'EventCard' <|-- 'ShamanEvent'
-'EventCard' <|-- 'PaintingEvent'
-'EventCard' <|-- 'SustenanceEvent'
+class EventCard {
+  - finalEvent: boolean
+  + isFinalEvent(): boolean
+  + resolveEvent(g: Game): void
+}
 
-'BuildingCard' ..|> 'IPurchasable'
-'Card' ..|> 'IDrawable'
+class HuntEvent
+class ShamanEvent
+class PaintingEvent
+class SustenanceEvent
 
-'CharacterCard' *-- 'IEffect' : 1
-'BuildingCard' *-- 'List<IEffect>' : 1..*
+class OfferingTile {
+  - id: char
+  - cardsFromUpper: int
+  - cardsFromLower: int
+  - foodBonus: int
+  - occupiedBy: Player
+  + isAvailable(): boolean
+  + occupy(p: Player): void
+  + getCards(): List<Card>
+}
 
-'DeckFactory' ..> 'BuildingCard'
-'DeckFactory' ..> 'TribeCard'
-'DeckFactory' *-- 'Map<String, IEffect>' : 1
+class TurnOrderSlot {
+  - position: int
+  - bonusFood: int
+  - occupiedBy: Player
+  + occupy(p: Player): void
+  + isAvailable(): boolean
+  + getPosition(): int
+}
 
-'Game' ..> 'Player' : manages
-'Player' ..> 'Card' : owns
-'Board' ..> 'Card' : displays
+class DeckFactory {
+  - effectRegistry: Map<String, IEffect>
+  + createBuildingDeck(filePath: String): Stack<BuildingCard>
+  + createTribeDeck(filePath: String): Stack<TribeCard>
+}
+
+interface IEffect {
+  + apply(p: Player, g: Game): void
+}
+
+interface IPurchasable {
+  + getBaseCost(): int
+}
+
+interface IDrawable {
+  + reveal(): void
+}
+
+enum TotemColors {
+  RED
+  YELLOW
+  BLACK
+  WHITE
+  BLUE
+}
+
+enum GameStatus {
+  LOGIN
+  START
+  INGAME
+  PAUSE
+  ENDGAME
+}
+
+enum JobType {
+  HUNTER
+  SHAMAN
+  CONSTRUCTOR
+  FARMER
+  INVENTOR
+  ARTIST
+}
+
+enum Phases {
+  STARTTURN
+  POSTPICK
+  POSTACTIONS
+  EVENT
+  ENDGAME
+}
+
+}
+
+Game *-- Board
+Game *-- Deck
+Game *-- Deck
+Game *-- "1..*" Player
+Game *-- GameStatus
+
+Board *-- "1..*" TribeCard
+Board *-- "1..*" BuildingCard
+Board *-- "1..*" OfferingTile
+Board *-- "1..*" TurnOrderSlot
+
+Player *-- TotemColors
+Player *-- "0..*" CharacterCard
+Player *-- "0..*" BuildingCard
+
+Card <|-- TribeCard
+Card <|-- BuildingCard
+
+TribeCard <|-- CharacterCard
+TribeCard <|-- EventCard
+
+EventCard <|-- HuntEvent
+EventCard <|-- ShamanEvent
+EventCard <|-- PaintingEvent
+EventCard <|-- SustenanceEvent
+
+BuildingCard ..|> IPurchasable
+Card ..|> IDrawable
+
+CharacterCard *-- IEffect
+BuildingCard *-- "1..*" IEffect
+BuildingCard *-- Phases
+BuildingCard *-- JobType
+CharacterCard *-- JobType
+
+
+DeckFactory ..> BuildingCard
+DeckFactory ..> TribeCard
+DeckFactory *-- IEffect
+
+Game ..> Player : manages
+Game --> TurnOrderSlot : uses
+Player ..> Card : owns
+Board ..> Card : displays
+OfferingTile --> Player : occupiedBy
+TurnOrderSlot --> Player : occupiedBy
+Card --> Player : owner
+Game --> Player : currentPlayer
+CharacterCard --> IEffect : effect
+EventCard ..> Game : resolveEvent
 
 note right of Game
-  **Flusso di gioco:**
-  1. Setup iniziale
-  2. Turno per giocatore
-  3. Fase di picking
-  4. Risoluzione eventi
-  5. Calcolo punteggio
+Flusso di gioco:
+1. Setup iniziale
+2. Turno per giocatore
+3. Fase di picking
+4. Risoluzione eventi
+5. Calcolo punteggio
 end note
 
 note bottom of DeckFactory
-  **Responsabilità:**
-  - Carica carte da file
-  - Crea mazzi specifici
-  - Gestisce registry effetti
+Responsabilità:
+- Carica carte da file
+- Crea mazzi specifici
+- Gestisce registry effetti
 end note
 
 @enduml

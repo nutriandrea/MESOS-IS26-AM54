@@ -9,7 +9,7 @@ import java.util.*;
 public class Board {
 
     /**
-     * Default constructor
+     * TEST GIT constructor
      */
     public Board() {
     }

@@ -9,13 +9,10 @@ public class PaintingEvent extends EventCard {
     /**
      * Default constructor
      */
-    public PaintingEvent() {
+    public PaintingEvent(int era) {
+        super(era);
     }
 
-    /**
-     * @param Game g 
-     * @return
-     */
     public void resolveEvent(Game g) {
         // TODO implement here
     }

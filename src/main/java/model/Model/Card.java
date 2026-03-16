@@ -29,23 +29,21 @@ public class Card {
      * @return
      */
     public int getEra() {
-        // TODO implement here
-        return 0;
+        return era;
     }
 
     /**
      * @return
      */
     public Player getOwner() {
-        // TODO implement here
-        return null;
+        return owner;
     }
 
     /**
      * @return
      */
     public void addOwner(Player p) {
-        // TODO implement here
+        this.owner = p;
     }
 
 }

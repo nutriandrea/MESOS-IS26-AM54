@@ -85,10 +85,7 @@ public class Game {
      * @return
      */
     public void setupGame() {
-        board.generateBoard(chosenPlayerNumber);
-
-
-
+        // TODO implement here
     }
 
     /**

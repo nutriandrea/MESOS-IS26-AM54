@@ -1,8 +1,5 @@
 package model.Model;
 
-import java.io.*;
-import java.util.*;
-
 /**
  * 
  */
@@ -44,8 +41,7 @@ public class OfferingTile {
      * @return
      */
     public boolean isAvailable() {
-        // TODO implement here
-        return false;
+        return occupiedBy != null;
     }
 
     /**
@@ -53,15 +49,19 @@ public class OfferingTile {
      * @return
      */
     public void occupy(Player p) {
-        // TODO implement here
+        this.occupiedBy = p;
     }
 
     /**
      * @return
      */
-    public List<Card> getCards() {
-        // TODO implement here
-        return null;
+    public int[] getCards() {
+
+        int[] x = new int[0];
+        x[0]=this.cardsFromLower;
+        x[1]=this.cardsFromUpper;
+        return x;
+
     }
 
 }

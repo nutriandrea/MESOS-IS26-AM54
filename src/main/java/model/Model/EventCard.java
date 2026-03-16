@@ -17,23 +17,22 @@ public class EventCard extends TribeCard {
     /**
      * 
      */
-    private bool finalEvent;
+    private boolean finalEvent;
 
     /**
      * @return
      */
-    public bool isFinalEvent() {
+    public boolean isFinalEvent() {
         // TODO implement here
-        return null;
+        return false;
     }
 
     /**
      * @param Game g 
      * @return
      */
-    public void resolveEvent(void Game g) {
+    public void resolveEvent(Game g) {
         // TODO implement here
-        return null;
     }
 
 }

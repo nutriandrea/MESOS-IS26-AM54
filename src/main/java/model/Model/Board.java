@@ -52,9 +52,8 @@ public class Board {
      * @param int numPlayers 
      * @return
      */
-    public void refillUpperRow(void int numPlayers) {
+    public void refillUpperRow(int numPlayers) {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -62,16 +61,14 @@ public class Board {
      */
     public void moveUpperToLower() {
         // TODO implement here
-        return null;
     }
 
     /**
      * @param int numPlayers 
      * @return
      */
-    public void generateBoard(void int numPlayers) {
+    public void generateBoard(int numPlayers) {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -79,7 +76,6 @@ public class Board {
      */
     public void moveBuildings() {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -87,7 +83,6 @@ public class Board {
      */
     public void removeCard() {
         // TODO implement here
-        return null;
     }
 
     /**

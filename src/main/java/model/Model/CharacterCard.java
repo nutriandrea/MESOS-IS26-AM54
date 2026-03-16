@@ -45,9 +45,10 @@ public class CharacterCard extends TribeCard {
      * @param effects 
      * @return
      */
-    public void characterCard(int level, JobType type, List<IEffect> effects) {
-        // TODO implement here
-        return null;
+    public CharacterCard(int level, JobType type, List<IEffect> effects) {
+        this.level = level;
+        this.type = type;
+        // this.effects = effects; // if effects field is List<IEffect>
     }
 
 }

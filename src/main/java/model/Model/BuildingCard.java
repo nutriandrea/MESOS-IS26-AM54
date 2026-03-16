@@ -37,7 +37,7 @@ public class BuildingCard extends Card {
     /**
      * 
      */
-    private IEffects effect;
+    private List<IEffect> effects;
 
     /**
      * 
@@ -55,9 +55,12 @@ public class BuildingCard extends Card {
      * @param effects 
      * @return
      */
-    public void buildingCard(String name, int cost, int finalAura, Phases phase, List<IEffect> effects) {
-        // TODO implement here
-        return null;
+    public BuildingCard(String name, int cost, int finalAura, Phases phase, List<IEffect> effects) {
+        this.name = name;
+        this.cost = cost;
+        this.finalAura = finalAura;
+        this.phase = phase;
+        this.effects = effects;
     }
 
     /**

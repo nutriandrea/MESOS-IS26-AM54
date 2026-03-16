@@ -43,24 +43,23 @@ public class OfferingTile {
     /**
      * @return
      */
-    public bool isAvailable() {
+    public boolean isAvailable() {
         // TODO implement here
-        return null;
+        return false;
     }
 
     /**
      * @param Player p 
      * @return
      */
-    public void occupy(void Player p) {
+    public void occupy(Player p) {
         // TODO implement here
-        return null;
     }
 
     /**
      * @return
      */
-    public Array<int>[] getCards() {
+    public List<Card> getCards() {
         // TODO implement here
         return null;
     }

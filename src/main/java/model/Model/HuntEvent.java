@@ -18,9 +18,8 @@ public class HuntEvent extends EventCard {
      * @param Game g 
      * @return
      */
-    public void resolveEvent(void Game g) {
+    public void resolveEvent(Game g) {
         // TODO implement here
-        return null;
     }
 
 }

@@ -6,7 +6,7 @@ import java.util.*;
 /**
  * 
  */
-private class Game {
+public class Game {
 
     /**
      * Default constructor
@@ -86,7 +86,6 @@ private class Game {
      */
     public void setupGame() {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -94,9 +93,8 @@ private class Game {
      * @param TurnOrderSlot selectedSlot 
      * @return
      */
-    public void placeTotemOrder(void Player p, void TurnOrderSlot selectedSlot) {
+    public void placeTotemOrder(Player p, TurnOrderSlot selectedSlot) {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -104,7 +102,6 @@ private class Game {
      */
     public void startRound() {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -112,7 +109,6 @@ private class Game {
      */
     public void pickingPhase() {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -120,7 +116,6 @@ private class Game {
      */
     public void resolveEvents() {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -128,7 +123,6 @@ private class Game {
      */
     public void nextTurn() {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -136,7 +130,6 @@ private class Game {
      */
     public void handleEraTransition() {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -144,7 +137,6 @@ private class Game {
      */
     public void calculateFinalScore() {
         // TODO implement here
-        return null;
     }
 
     /**
@@ -152,7 +144,6 @@ private class Game {
      */
     public void endGame() {
         // TODO implement here
-        return null;
     }
 
 }

@@ -42,7 +42,7 @@ public class Player {
     /**
      * 
      */
-    private bool extraPick;
+    private boolean extraPick;
 
     /**
      * 
@@ -118,9 +118,9 @@ public class Player {
     /**
      * @return
      */
-    public bool getExtraPick() {
+    public boolean getExtraPick() {
         // TODO implement here
-        return null;
+        return false;
     }
 
     /**
@@ -159,54 +159,48 @@ public class Player {
      * @param int amout 
      * @return
      */
-    public void modifyFood(void int amout) {
+    public void modifyFood(int amount) {
         // TODO implement here
-        return null;
     }
 
     /**
      * @param int amount 
      * @return
      */
-    public void modifyAuraPoints(void int amount) {
+    public void modifyAuraPoints(int amount) {
         // TODO implement here
-        return null;
     }
 
     /**
      * @param int amount 
      * @return
      */
-    public void modifyMagicPoints(void int amount) {
+    public void modifyMagicPoints(int amount) {
         // TODO implement here
-        return null;
     }
 
     /**
      * @param Card c 
      * @return
      */
-    public void modifyMyTribe(void Card c) {
+    public void modifyMyTribe(Card c) {
         // TODO implement here
-        return null;
     }
 
     /**
      * @param int amount 
      * @return
      */
-    public void modifyMyBuildingDiscount(void int amount) {
+    public void modifyMyBuildingDiscount(int amount) {
         // TODO implement here
-        return null;
     }
 
     /**
      * @param int amount 
      * @return
      */
-    public void modifyMyFoodDiscount(void int amount) {
+    public void modifyMyFoodDiscount(int amount) {
         // TODO implement here
-        return null;
     }
 
 }

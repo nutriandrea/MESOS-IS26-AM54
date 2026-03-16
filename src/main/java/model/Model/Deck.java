@@ -6,7 +6,7 @@ import java.util.*;
 /**
  * 
  */
-public class Deck {
+public class Deck<T extends Card> {
 
     /**
      * Default constructor
@@ -17,14 +17,14 @@ public class Deck {
     /**
      * 
      */
-    private Stack<Card> cards;
+    private Stack<T> cards;
 
 
 
     /**
      * @return
      */
-    public Card carbi drawCard() {
+    public T drawCard() {
         // TODO implement here
         return null;
     }
@@ -32,9 +32,9 @@ public class Deck {
     /**
      * @return
      */
-    public bool isEmpty() {
+    public boolean isEmpty() {
         // TODO implement here
-        return null;
+        return false;
     }
 
 }

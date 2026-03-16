@@ -44,9 +44,8 @@ public class Card {
     /**
      * @return
      */
-    public void addOwner() {
+    public void addOwner(Player p) {
         // TODO implement here
-        return null;
     }
 
 }

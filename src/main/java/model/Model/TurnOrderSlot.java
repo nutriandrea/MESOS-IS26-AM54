@@ -34,17 +34,16 @@ public class TurnOrderSlot {
      * @param Player p 
      * @return
      */
-    public void occupy(void Player p) {
+    public void occupy(Player p) {
         // TODO implement here
-        return null;
     }
 
     /**
      * @return
      */
-    public bool isAvailable() {
+    public boolean isAvailable() {
         // TODO implement here
-        return null;
+        return false;
     }
 
     /**

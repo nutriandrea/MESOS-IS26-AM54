@@ -3,9 +3,7 @@ package model.Model;
 import java.io.*;
 import java.util.*;
 
-/**
- * 
- */
+
 public class TurnOrderSlot {
 
     /**
@@ -14,19 +12,13 @@ public class TurnOrderSlot {
     public TurnOrderSlot() {
     }
 
-    /**
-     * 
-     */
+    
     private int position;
 
-    /**
-     * 
-     */
+    
     private int bonusFood;
 
-    /**
-     * 
-     */
+    
     private Player occupiedBy;
 
 
@@ -38,16 +30,12 @@ public class TurnOrderSlot {
         this.occupiedBy = p;
     }
 
-    /**
-     * @return
-     */
+    
     public boolean isAvailable() {
         return this.occupiedBy != null;
     }
 
-    /**
-     * @return
-     */
+    
     public int getPosition() {
         return this.position;
     }

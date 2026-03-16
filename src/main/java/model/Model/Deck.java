@@ -3,9 +3,7 @@ package model.Model;
 import java.io.*;
 import java.util.*;
 
-/**
- * 
- */
+
 public class Deck<T extends Card> {
 
     /**
@@ -14,24 +12,18 @@ public class Deck<T extends Card> {
     public Deck() {
     }
 
-    /**
-     * 
-     */
+    
     private Stack<T> cards;
 
 
 
-    /**
-     * @return
-     */
+    
     public T drawCard() {
         // TODO implement here
         return null;
     }
 
-    /**
-     * @return
-     */
+    
     public boolean isEmpty() {
         // TODO implement here
         return false;

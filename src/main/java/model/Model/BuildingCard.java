@@ -3,9 +3,7 @@ package model.Model;
 import java.io.*;
 import java.util.*;
 
-/**
- * 
- */
+
 public class BuildingCard extends Card {
 
     /**
@@ -14,34 +12,22 @@ public class BuildingCard extends Card {
     public BuildingCard() {
     }
 
-    /**
-     * 
-     */
+    
     private String name;
 
-    /**
-     * 
-     */
+    
     private int cost;
 
-    /**
-     * 
-     */
+    
     private int finalAura;
 
-    /**
-     * 
-     */
+    
     private Phases phase;
 
-    /**
-     * 
-     */
+    
     private List<IEffect> effects;
 
-    /**
-     * 
-     */
+    
     private JobType eventType;
 
 
@@ -63,9 +49,7 @@ public class BuildingCard extends Card {
         this.effects = effects;
     }
 
-    /**
-     * @return
-     */
+    
     public int getFinalAura() {
         // TODO implement here
         return 0;

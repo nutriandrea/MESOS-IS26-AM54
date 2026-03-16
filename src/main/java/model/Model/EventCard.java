@@ -3,9 +3,7 @@ package model.Model;
 import java.io.*;
 import java.util.*;
 
-/**
- * 
- */
+
 public class EventCard extends TribeCard {
 
     /**
@@ -14,14 +12,10 @@ public class EventCard extends TribeCard {
     public EventCard() {
     }
 
-    /**
-     * 
-     */
+    
     private boolean finalEvent;
 
-    /**
-     * @return
-     */
+    
     public boolean isFinalEvent() {
         // TODO implement here
         return false;

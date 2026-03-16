@@ -3,9 +3,7 @@ package model.Model;
 import java.io.*;
 import java.util.*;
 
-/**
- * 
- */
+
 public class DeckFactory {
 
     /**
@@ -14,9 +12,7 @@ public class DeckFactory {
     public DeckFactory() {
     }
 
-    /**
-     * 
-     */
+    
     private Map<String, IEffect> effectRegistry;
 
     /**

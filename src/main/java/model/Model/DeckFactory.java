@@ -23,18 +23,20 @@ public class DeckFactory {
      * @param filePath 
      * @return
      */
-    public Stack<BuildingCard> createBuildingDeck(String filePath) {
-        // TODO implement here
-        return null;
+    public Deck<BuildingCard> createBuildingDeck(String filePath) {
+        // TODO: Caricare carte da file e creare Deck<BuildingCard>
+        // Per ora, ritorna un Deck vuoto
+        return new Deck<>();
     }
 
     /**
      * @param filePath 
      * @return
      */
-    public Stack<TribeCard> createTribeDeck(String filePath) {
-        // TODO implement here
-        return null;
+    public Deck<TribeCard> createTribeDeck(String charactersFilePath, String eventsFilePath) {
+        // TODO: Caricare carte da file e creare Deck<TribeCard>
+        // Per ora, ritorna un Deck vuoto
+        return new Deck<>();
     }
 
 }

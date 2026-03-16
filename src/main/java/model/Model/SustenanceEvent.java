@@ -8,18 +8,17 @@ import java.util.*;
  */
 public class SustenanceEvent extends EventCard {
 
+    private boolean finalEvent;
     /**
-     * Default constructor
      */
-    public SustenanceEvent() {
+    public SustenanceEvent(int era, boolean finalEvent) {
+        super(era);
+        this.finalEvent = finalEvent;
     }
 
     /**
-     * @param Game g 
-     * @return
      */
     public void resolveEvent(Game g) {
         // TODO implement here
     }
-
 }

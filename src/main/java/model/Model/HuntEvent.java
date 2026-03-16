@@ -9,15 +9,12 @@ import java.util.*;
 public class HuntEvent extends EventCard {
 
     /**
-     * Default constructor
+     * Constructor
      */
-    public HuntEvent() {
+    public HuntEvent(int era) {
+        super(era);
     }
 
-    /**
-     * @param Game g 
-     * @return
-     */
     public void resolveEvent(Game g) {
         // TODO implement here
     }

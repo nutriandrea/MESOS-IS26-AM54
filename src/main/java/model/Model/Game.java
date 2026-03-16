@@ -23,12 +23,12 @@ public class Game {
     /**
      * 
      */
-    private Deck<TribeCard> deckTribu;
+    private Stack<TribeCard> deckTribu;
 
     /**
      * 
      */
-    private Deck<BuildingCard> deckBuildings;
+    private Stack<BuildingCard> deckBuildings;
 
     /**
      * 

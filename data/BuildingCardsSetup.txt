@@ -1,1 +1,1 @@
-buildingType (JobType enum), cost(int), finalAura(int), Phase(Phases enum), NomeLambda (String)
+buildingType (JobType enum), cost(int), finalAura(int), Phase(Phases enum), NomeLambda (String), era(int)

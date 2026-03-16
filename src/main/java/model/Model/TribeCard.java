@@ -9,9 +9,10 @@ import java.util.*;
 public abstract class TribeCard extends Card {
 
     /**
-     * Default constructor
+     * Constructor
      */
-    public TribeCard() {
+    public TribeCard(int era) {
+        super(era);
     }
 
 }

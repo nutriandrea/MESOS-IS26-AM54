@@ -11,17 +11,12 @@ public class Card {
     /**
      * Default constructor
      */
-    public Card() {
+    public Card(int era) {
+        this.era = era;
     }
 
-    /**
-     * 
-     */
     private int era;
 
-    /**
-     * 
-     */
     private Player owner;
 
 

@@ -3,9 +3,7 @@ package model.Model;
 import java.io.*;
 import java.util.*;
 
-/**
- * 
- */
+
 public class Player {
 
     /**
@@ -18,127 +16,87 @@ public class Player {
         this.myBuildings = new ArrayList<>();
     }
 
-    /**
-     * 
-     */
+    
     private String nickname;
 
-    /**
-     * 
-     */
+    
     private TotemColors totemColor;
 
-    /**
-     * 
-     */
+    
     private int food;
 
-    /**
-     * 
-     */
+    
     private int prestige;
 
-    /**
-     * 
-     */
+    
     private boolean extraPick;
 
-    /**
-     * 
-     */
+    
     private ArrayList<CharacterCard> myTribe;
 
-    /**
-     * 
-     */
+    
     private ArrayList<BuildingCard> myBuildings;
 
-    /**
-     * 
-     */
+    
     private int myBuildingDiscount;
 
-    /**
-     * 
-     */
+    
     private int myFoodDiscount;
 
 
 
 
-    /**
-     * @return
-     */
+    
     public int getFood() {
         return food;
     }
 
-    /**
-     * @return
-     */
+    
     public int getAuraPoints() {
         return prestige;
     }
 
-    /**
-     * @return
-     */
+    
     public String getNickname() {
         return nickname;
     }
 
-    /**
-     * @return
-     */
+    
     public TotemColors getTotemColors() {
         return totemColor;
     }
 
-    /**
-     * @return
-     */
+    
     public int getFoodTokens() {
         return food;
     }
 
-    /**
-     * @return
-     */
+    
     public int getMagicPoints() {
         return prestige;
     }
 
-    /**
-     * @return
-     */
+    
     public boolean getExtraPick() {
         return extraPick;
     }
 
-    /**
-     * @return
-     */
+    
     public ArrayList<CharacterCard> getMyTribe() {
         return myTribe;
     }
 
-    /**
-     * @return
-     */
+    
     public ArrayList<BuildingCard> getBuildings() {
         return myBuildings;
     }
 
-    /**
-     * @return
-     */
+    
     public int getMyBuildingDiscount() {
         return myBuildingDiscount;
     }
 
-    /**
-     * @return
-     */
+    
     public int getMyFoodDiscount() {
         return myFoodDiscount;
     }

@@ -3,9 +3,7 @@ package model.Model;
 import java.io.*;
 import java.util.*;
 
-/**
- * 
- */
+
 public class CharacterCard extends TribeCard {
 
     /**
@@ -14,24 +12,16 @@ public class CharacterCard extends TribeCard {
     public CharacterCard() {
     }
 
-    /**
-     * 
-     */
+    
     private int level;
 
-    /**
-     * 
-     */
+    
     private JobType type;
 
-    /**
-     * 
-     */
+    
     private int aura;
 
-    /**
-     * 
-     */
+    
     private IEffect effect;
 
 

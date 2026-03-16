@@ -6,7 +6,8 @@ import java.util.*;
 
 public interface IPurchasable {
 
-    
-    public int getBaseCost();
+    public boolean canBePurchased(Player player);
+
+    public void buy(Player p);
 
 }

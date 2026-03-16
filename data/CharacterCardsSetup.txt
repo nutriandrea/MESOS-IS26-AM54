@@ -1,0 +1,1 @@
+level (int), characterType (JobType enum), aura (int), Phase del Caracter (Phases enum), NomeLambda (String), era(int)

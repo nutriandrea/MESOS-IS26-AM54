@@ -12,6 +12,10 @@ public class Player {
      * Default constructor
      */
     public Player() {
+        this.food = 0;
+        this.prestige = 0;
+        this.myTribe = new ArrayList<>();
+        this.myBuildings = new ArrayList<>();
     }
 
     /**
@@ -27,17 +31,12 @@ public class Player {
     /**
      * 
      */
-    private int foodTokens;
+    private int food;
 
     /**
      * 
      */
-    private int auraPoints;
-
-    /**
-     * 
-     */
-    private int magicPoints;
+    private int prestige;
 
     /**
      * 
@@ -71,88 +70,77 @@ public class Player {
      * @return
      */
     public int getFood() {
-        // TODO implement here
-        return 0;
+        return food;
     }
 
     /**
      * @return
      */
     public int getAuraPoints() {
-        // TODO implement here
-        return 0;
+        return prestige;
     }
 
     /**
      * @return
      */
     public String getNickname() {
-        // TODO implement here
-        return "";
+        return nickname;
     }
 
     /**
      * @return
      */
     public TotemColors getTotemColors() {
-        // TODO implement here
-        return null;
+        return totemColor;
     }
 
     /**
      * @return
      */
     public int getFoodTokens() {
-        // TODO implement here
-        return 0;
+        return food;
     }
 
     /**
      * @return
      */
     public int getMagicPoints() {
-        // TODO implement here
-        return 0;
+        return prestige;
     }
 
     /**
      * @return
      */
     public boolean getExtraPick() {
-        // TODO implement here
-        return false;
+        return extraPick;
     }
 
     /**
      * @return
      */
     public ArrayList<CharacterCard> getMyTribe() {
-        // TODO implement here
-        return null;
+        return myTribe;
     }
 
     /**
      * @return
      */
     public ArrayList<BuildingCard> getBuildings() {
-        // TODO implement here
-        return null;
+        return myBuildings;
     }
 
     /**
      * @return
      */
     public int getMyBuildingDiscount() {
-        // TODO implement here
-        return 0;
+        return myBuildingDiscount;
     }
 
     /**
      * @return
      */
     public int getMyFoodDiscount() {
-        // TODO implement here
-        return 0;
+        return myFoodDiscount;
     }
 
     /**
@@ -160,7 +148,11 @@ public class Player {
      * @return
      */
     public void modifyFood(int amount) {
-        // TODO implement here
+        if (amount > 0) {
+            this.food += amount;
+        } else {
+            this.food = Math.max(0, this.food - (-amount));
+        }
     }
 
     /**
@@ -168,7 +160,7 @@ public class Player {
      * @return
      */
     public void modifyAuraPoints(int amount) {
-        // TODO implement here
+        this.prestige += amount;
     }
 
     /**
@@ -176,7 +168,7 @@ public class Player {
      * @return
      */
     public void modifyMagicPoints(int amount) {
-        // TODO implement here
+        this.prestige += amount;
     }
 
     /**
@@ -184,7 +176,9 @@ public class Player {
      * @return
      */
     public void modifyMyTribe(Card c) {
-        // TODO implement here
+        if (c instanceof CharacterCard) {
+            myTribe.add((CharacterCard) c);
+        }
     }
 
     /**
@@ -192,7 +186,7 @@ public class Player {
      * @return
      */
     public void modifyMyBuildingDiscount(int amount) {
-        // TODO implement here
+        this.myBuildingDiscount += amount;
     }
 
     /**
@@ -200,7 +194,19 @@ public class Player {
      * @return
      */
     public void modifyMyFoodDiscount(int amount) {
-        // TODO implement here
+        this.myFoodDiscount += amount;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void setTotemColor(TotemColors color) {
+        this.totemColor = color;
+    }
+
+    public void setExtraPick(boolean extraPick) {
+        this.extraPick = extraPick;
     }
 
 }

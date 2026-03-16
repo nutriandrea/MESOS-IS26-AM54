@@ -17,10 +17,10 @@ public class Game {
     private Board board;
 
 
-    private Deck<TribeCard> deckTribu;
+    private Stack<TribeCard> deckTribu;
 
     
-    private Deck<BuildingCard> deckBuildings;
+    private Stack<BuildingCard> deckBuildings;
 
     
     private List<Player> players;
@@ -104,11 +104,6 @@ public class Game {
     }
 
 
-    /**
-     * @param Player p 
-     * @param TurnOrderSlot selectedSlot 
-     * @return
-     */
     public void placeTotemOrder(Player p, TurnOrderSlot selectedSlot) {
         // Delega a Board per piazzare il Totem
         // board.placeTotem(p, selectedSlot);

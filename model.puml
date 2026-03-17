@@ -1,7 +1,19 @@
 @startuml
 !theme plain
 
-package "model.Model" <<Rectangle>> {
+package "controller" <<Rectangle>> {
+}
+
+package "server" <<Rectangle>> {
+}
+
+package "network" <<Rectangle>> {
+}
+
+package "client" <<Rectangle>> {
+}
+
+package "model" <<Rectangle>> {
 
 class Game {
   - board: Board

@@ -1,0 +1,14 @@
+[
+  { "finalEvent": false, "etichettaSottoclasse": "Artist_Event", "era": 1 },
+  { "finalEvent": false, "etichettaSottoclasse": "Shaman_Event", "era": 1 },
+  { "finalEvent": false, "etichettaSottoclasse": "Hunter_Event", "era": 1 },
+  { "finalEvent": false, "etichettaSottoclasse": "Sustenance_Event", "era": 1 },
+  { "finalEvent": false, "etichettaSottoclasse": "Artist_Event", "era": 2 },
+  { "finalEvent": false, "etichettaSottoclasse": "Hunter_Event", "era": 2 },
+  { "finalEvent": false, "etichettaSottoclasse": "Sustenance_Event", "era": 2 },
+  { "finalEvent": false, "etichettaSottoclasse": "Shaman_Event", "era": 2 },
+  { "finalEvent": false, "etichettaSottoclasse": "Artist_Event", "era": 3 },
+  { "finalEvent": false, "etichettaSottoclasse": "Hunter_Event", "era": 3 },
+  { "finalEvent": true, "etichettaSottoclasse": "Sustenance_Event", "era": 3 },
+  { "finalEvent": true, "etichettaSottoclasse": "Shaman_Event", "era": 3 }
+]

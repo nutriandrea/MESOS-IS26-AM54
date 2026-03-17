@@ -10,7 +10,7 @@ public class Game {
      * Default constructor
      */
     public Game() {
-        this.deckFactory = new DeckFactory();
+        
     }
 
 
@@ -37,8 +37,7 @@ public class Game {
     
     private Player currentPlayer;
 
-   
-    private DeckFactory deckFactory;
+
 
     // I campi offeringTiles, turnOrderSlots, upperRow, lowerRow sono gestiti da Board
 
@@ -47,6 +46,10 @@ public class Game {
     public int getPlayerNumber() {
         // TODO implement here
         return 0;
+    }
+
+    public Board getBoard(){
+        return this.board;
     }
 
     
@@ -71,13 +74,14 @@ public class Game {
         this.board.generateBoard(playerCount);
         
         // 3. Preparazione mazzo Tribù (delega a DeckFactory)
-        this.deckTribu = deckFactory.createTribeDeck(
+        this.deckTribu = DeckFactory.createTribeDeck(
             "data/CharacterCardsSetup.txt", 
-            "data/EventCardsSetup.txt"
+            "data/EventCardsSetup.txt", 
+            players.size()
         );
 
         // 6. Preparazione mazzi Edificio (delega a DeckFactory)
-        this.deckBuildings = deckFactory.createBuildingDeck("data/BuildingCardsSetup.txt");
+        this.deckBuildings = DeckFactory.createBuildingDeck("data/BuildingCardsSetup.txt", players.size());
         distributeInitialFood();
     }
     /**

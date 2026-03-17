@@ -5,14 +5,55 @@ import java.util.*;
 
 public class DeckFactory {
 
-    private static final Map<String, IEffect> effectRegistry = new HashMap<>();
+    private static final Map<String, IEffect> buildingsEffectRegistry = new HashMap<>();
+    private static final Map<String, IEffect> charactersEffectRegistry = new HashMap<>();
 
     // Inizializzazione del registro degli effetti tramite Lambda [cite: 146, 149]
     static {
-        effectRegistry.put("DAI_1_CIBO", (p, g) -> p.modifyFood(1));
-        effectRegistry.put("GENERA_MAGIA", (p, g) -> p.modifyAuraPoints(1));
-        effectRegistry.put("AURA_PUNTI", (p, g) -> p.modifyAuraPoints(5));
-        // Aggiungi qui gli altri nomi lambda usati nei file .txt
+        // Buildings
+
+        //era1
+        //WORK IN PROGRESS
+        buildingsEffectRegistry.put("DOUBLE_INVENTOR", (p, g, c) ->() );
+        buildingsEffectRegistry.put("SIX_OF_TYPE", (p, g, c) -> ());
+
+        buildingsEffectRegistry.put("TURN_FOOD", (p, g, c) -> g.getBoard().getTurnOrderTile().stream()
+                .filter(t -> t.getOccupiedBy() != null && t.getOccupiedBy().equals(p))
+                .forEach(t -> p.modifyFood(1)));
+
+        buildingsEffectRegistry.put("DISCOUNT_FOOD_FARMER", (p, g, c) -> p.setEventCostFood(p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.FARMER).count() * -1) );
+        buildingsEffectRegistry.put("DISCOUNT_FOOD_ARTIST", (p, g, c) -> p.setEventCostFood(p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count() * -1) );
+        buildingsEffectRegistry.put("NO_LOSS", (p,g,c) -> p.setEventCostAura(-p.getEventCost()) );
+        //era2
+        buildingsEffectRegistry.put("PLUS_HUNTING", (p,g,c) ->  {p.setEventCostFood(p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count() * 1);
+                                                              p.setEventCostAura(p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count() * 1);});
+        buildingsEffectRegistry.put("PLUS_FOOD_ARTIST", (p, g, c) -> p.setEventCostFood(p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count() * 1) );
+        buildingsEffectRegistry.put("DISCOUNT_FOOD_INVENTOR", (p, g, c) -> p.setEventCostFood(p.getMyTribe().stream()
+                                                                            .filter(c -> c.getJobType() == JobType.INVENTOR).count() * -1) );
+        buildingsEffectRegistry.put("DOUBLE_AURA_SHAMAN", (p, g, c) -> p.setEventCostAura(p.getEventCostAura() * 2) );
+        //double constructor aggiunge solo uno per construttori perche di base aggiunge uno il end_game di game, quello aggiuntivo lo fa qua il building
+        buildingsEffectRegistry.put("DOUBLE_CONSTRUCTOR_AURA", (p, g, c) -> p.getMyTribe().stream()
+                                                                                .filter(c -> c.getJobType() == JobType.CONSTRUCTOR).forEach(c -> p.modifyAuraPoints(c.getAura()) ));
+        buildingsEffectRegistry.put("THREE_MAGIC", (p, g, c) -> p.modifyMagicPoints(3) );
+        
+        buildingsEffectRegistry.put("SIX_DIFFERENT_AURA", (p, g, c) -> p.modifyAuraPoints(6 * (int) Arrays.stream(JobType.values())
+                                                                        .mapToLong(job -> p.getMyTribe().stream().filter(c -> c.getJobType() == job).count())
+                                                                        .min().orElse(0)));
+        buildingsEffectRegistry.put("AURA_SHAMAN", (p, g, c) -> p.modifyAuraPoints(4*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.SHAMAN).count())) );
+        buildingsEffectRegistry.put("AURA_HUNTER", (p, g, c) -> p.modifyAuraPoints(3*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.HUNTER).count())) );
+        buildingsEffectRegistry.put("AURA_BUILDER", (p, g, c) -> p.modifyAuraPoints(4*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.BUILDER).count())) );
+        buildingsEffectRegistry.put("AURA_ARTIST", (p, g, c) -> p.modifyAuraPoints(4*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.ARTIST).count())) );
+        buildingsEffectRegistry.put("AURA_FARMER", (p, g, c) -> p.modifyAuraPoints(4*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.FARMER).count())) );
+        buildingsEffectRegistry.put("AURA_INVENTOR", (p, g, c) -> p.modifyAuraPoints(2*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.INVENTOR).count())) );
+        buildingsEffectRegistry.put("25_AURA", (p, g, c) -> p.modifyAuraPoints(25) );
+        buildingsEffectRegistry.put("EXTRA_PICK", (p, g, c) -> p.setExtraPick(true) );
+        
+        // Characters
+
+        charactersEffectRegistry.put("HUNTER", (p, g, c) -> p.modifyFood(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.HUNTER).count()+1));
+        charactersEffectRegistry.put("BUILDER", (p, g, c) -> p.modifyMyBuildingDiscount(c.getLevel()));
+        charactersEffectRegistry.put("SHAMAN", (p, g, c) -> p.modifyMagicPoints(c.getLevel()));
+        charactersEffectRegistry.put("FARMER", (p, g, c) -> p.modifyMyFoodDiscount(c.getLevel()));
     }
 
     /**
@@ -46,8 +87,8 @@ public class DeckFactory {
                 int finalAura = Integer.parseInt(d[2]);
                 Phases phase = Phases.valueOf(d[3].toUpperCase());
                 List<IEffect> effects = new ArrayList<>();
-                if (effectRegistry.containsKey(d[4])) {
-                    effects.add(effectRegistry.get(d[4]));
+                if (buildingsEffectRegistry.containsKey(d[4])) {
+                    effects.add(buildingsEffectRegistry.get(d[4]));
                 }
                 int era = Integer.parseInt(d[5]);
                 BuildingCard card = new BuildingCard(type, cost, finalAura, phase, effects, era);
@@ -114,8 +155,8 @@ public class DeckFactory {
                     int aura = Integer.parseInt(d[2]);
                     Phases phase = Phases.valueOf(d[3].toUpperCase());
                     List<IEffect> effects = new ArrayList<>();
-                    if (effectRegistry.containsKey(d[4])) {
-                        effects.add(effectRegistry.get(d[4]));
+                    if (charactersEffectRegistry.containsKey(d[4])) {
+                        effects.add(charactersEffectRegistry.get(d[4]));
                     }
                     int era = Integer.parseInt(d[5]);
 

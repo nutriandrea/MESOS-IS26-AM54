@@ -14,6 +14,6 @@ public interface IEffect {
      * @param g 
      * @return
      */
-    public void apply(Player p, Game g);
+    public void apply(Player p, Game g, Card sourceCard);
 
 }

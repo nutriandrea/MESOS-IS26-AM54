@@ -11,7 +11,8 @@ public class Player {
      */
     public Player() {
         this.food = 0;
-        this.prestige = 0;
+        this.aura = 0;
+        this.magicPoints = 0;
         this.myTribe = new ArrayList<>();
         this.myBuildings = new ArrayList<>();
     }
@@ -26,7 +27,9 @@ public class Player {
     private int food;
 
     
-    private int prestige;
+    private int aura;
+
+    private int magicPoints;
 
     
     private boolean extraPick;
@@ -44,8 +47,23 @@ public class Player {
     private int myFoodDiscount;
 
 
+    private int eventCostFood;
+
+    private int eventCostAura;
 
 
+    public int getEventCostFood() {
+        return eventCostFood;
+    }
+    public int getEventCostAura() {
+        return eventCostAura;
+    }
+    public void setEventCostFood(int eventCost) {
+        this.eventCostFood += eventCost;
+    }
+    public void setEventCostAura(int eventCost) {
+        this.eventCostAura += eventCost;
+    }
     
     public int getFood() {
         return food;
@@ -53,7 +71,7 @@ public class Player {
 
     
     public int getAuraPoints() {
-        return prestige;
+        return aura;
     }
 
     
@@ -73,7 +91,7 @@ public class Player {
 
     
     public int getMagicPoints() {
-        return prestige;
+        return magicPoints;
     }
 
     
@@ -105,6 +123,8 @@ public class Player {
      * @param int amout 
      * @return
      */
+
+    //fare attenzione a quando vai sotto di cibo che devi pagare in aura
     public void modifyFood(int amount) {
         if (amount > 0) {
             this.food += amount;
@@ -118,7 +138,7 @@ public class Player {
      * @return
      */
     public void modifyAuraPoints(int amount) {
-        this.prestige += amount;
+        this.aura += amount;
     }
 
     /**
@@ -126,7 +146,7 @@ public class Player {
      * @return
      */
     public void modifyMagicPoints(int amount) {
-        this.prestige += amount;
+        this.magicPoints += amount;
     }
 
     /**

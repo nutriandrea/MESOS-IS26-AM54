@@ -4,7 +4,7 @@ package model.Model;
 public enum JobType {
     HUNTER,
     SHAMAN,
-    CONSTRUCTOR,
+    BUILDER,
     FARMER,
     INVENTOR,
     ARTIST

@@ -193,7 +193,6 @@ public void populateUpperRowBuildings() {
     public void takeCards() {
        /*TODO*/
         }
-    }
 
 public void resolveEvents() {
     /**
@@ -202,9 +201,10 @@ public void resolveEvents() {
     }
 
 public List<OfferingTile> getOfferingTrack() { return offeringTrack; }
-public List<TurnOrderSlot> getTurnOrderTile() { return turnOrderTile; }
+public List<TurnOrderSlot> getTurnOrderTile() { return turnOrderTile;}
 public List<Card> getUpperRow() { return upperRow; }
 public List<Card> getLowerRow() { return lowerRow; }
 public List<BuildingCard> getBuildingCardsUpperRow() { return buildingCardsUpperRow; }
 public List<BuildingCard> getBuildingCardsLowerRow() { return buildingCardsLowerRow; }
+
 }

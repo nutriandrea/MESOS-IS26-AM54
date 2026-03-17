@@ -12,33 +12,15 @@ public class Game {
     public Game() {
         currentInstance = this;
     }
-
-    private static Game currentInstance;
-
+    private Game currentInstance;
     private Board board;
-
-
     private Deck<TribeCard> deckTribu;
-
-    
     private Deck<BuildingCard> deckBuildings;
-
-    
     private List<Player> players;
-
-    
     private int currentEra;
-
-    
     private int roundCount;
-
-    
     private GameStatus status;
-
-    
     private Player currentPlayer;
-
-
 
     // I campi offeringTiles, turnOrderSlots, upperRow, lowerRow sono gestiti da Board
 
@@ -53,7 +35,6 @@ public class Game {
         return this.board;
     }
 
-    
     public Player getCurrentPlayer() {
         // TODO implement here
         return null;
@@ -67,22 +48,19 @@ public class Game {
         this.currentEra = 1;
         this.roundCount = 0;
         this.status = GameStatus.START;
-        
+
         int playerCount = players.size();
-        
         // Inizializza board (delega a Board)
         this.board = new Board();
-        this.board.generateBoard(playerCount);
+        this.board.generateBoard(this);
         
-        // 3. Preparazione mazzo Tribù (delega a DeckFactory)
         this.deckTribu = DeckFactory.createTribeDeck(
-            "data/CharacterCardsSetup.txt", 
-            "data/EventCardsSetup.txt", 
+            "data/CharacterCardsSetup.json",
+            "data/EventCardsSetup.json",
             players.size()
         );
 
-        // 6. Preparazione mazzi Edificio (delega a DeckFactory)
-        this.deckBuildings = DeckFactory.createBuildingDeck("data/BuildingCardsSetup.txt", players.size());
+        this.deckBuildings = DeckFactory.createBuildingDeck("data/BuildingCardsSetup.json", players.size());
         distributeInitialFood();
     }
     /**
@@ -162,28 +140,28 @@ public class Game {
     }
 
     // Metodi statici per accesso da Board
-    public static int getPlayersNumber() {
+    public  int getPlayersNumber() {
         if (currentInstance != null && currentInstance.players != null) {
             return currentInstance.players.size();
         }
         return 0;
     }
     
-    public static int getCurrentEra() {
+    public  int getCurrentEra() {
         if (currentInstance != null) {
             return currentInstance.currentEra;
         }
         return 1;
     }
     
-    public static Deck<TribeCard> getTribeDeck() {
+    public  Deck<TribeCard> getTribeDeck() {
         if (currentInstance != null) {
             return currentInstance.deckTribu;
         }
         return null;
     }
     
-    public static Deck<BuildingCard> getBuildingDeck() {
+    public  Deck<BuildingCard> getBuildingDeck() {
         if (currentInstance != null) {
             return currentInstance.deckBuildings;
         }

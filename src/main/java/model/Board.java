@@ -21,38 +21,30 @@ public class Board {
         this.turnOrderTile = new ArrayList<>();
     }
 
-    /**
-     * Genera la board iniziale comunicando con la classe Game
-     */
-    public void generateBoard() {
-        // Prendo le informazioni direttamente dal Game manager
-        int numPlayers = Game.getPlayersNumber();
-
-        initializeOfferingTiles(numPlayers);
+    public void generateBoard(Game game) {
+        int numPlayers = game.getPlayersNumber();
+        initializeOfferingTiles(game);
         initializeTurnOrderSlots(numPlayers);
 
-        populateUpperRow();
-        populateLowerRow();
-        populateUpperRowBuildings();
+        populateUpperRow(game);
+        populateLowerRow(game);
+        populateUpperRowBuildings(game);
     }
 
-    /**
-     * Inizializza le 7 tessere Offerta (A-G)
-     */
-    private void initializeOfferingTiles(int numPlayers) {
+    private void initializeOfferingTiles(Game game) {
         offeringTrack.clear();
-
+        int numPlayers = game.getPlayersNumber();
         // Controllo di sicurezza
         if (numPlayers < 2 || numPlayers > 5) return;
 
         // Definiamo esattamente quali tessere (A, B, C...) servono per ogni numero di giocatori
         char[][] requiredTiles = {
-                {},                                  // 0
-                {},                                  // 1
-                {'B', 'C', 'E', 'F'},           // 2 giocatori
-                {'B', 'C', 'D', 'E', 'F'},      // 3 giocatori
-                {'B', 'C', 'D', 'E', 'F', 'G'},      // 4 giocatori
-                {'A', 'B', 'C', 'D', 'E', 'F', 'G'}  // 5 giocatori
+                {},                                 // 0
+                {},                                 // 1
+                {'B', 'C', 'E', 'F'},               // 2 giocatori
+                {'B', 'C', 'D', 'E', 'F'},          // 3 giocatori
+                {'B', 'C', 'D', 'E', 'F', 'G'},     // 4 giocatori
+                {'A', 'B', 'C', 'D', 'E', 'F', 'G'} // 5 giocatori
         };
 
         // Scorriamo SOLO le lettere necessarie per questa partita
@@ -73,12 +65,12 @@ public class Board {
         }
     }
 
-    public void populateUpperRow() {
-        int numPlayers = Game.getPlayersNumber();
+    public void populateUpperRow(Game game) {
+        int numPlayers = game.getPlayersNumber();
         int count = numPlayers + 4;
 
         upperRow.clear();
-        Deck<TribeCard> tribeDeck = Game.getTribeDeck();
+        Deck<TribeCard> tribeDeck = game.getTribeDeck();
 
         for (int i = 0; i < count; i++) {
             Card card = tribeDeck.drawCard(); // Chiamata alla classe Deck
@@ -88,12 +80,12 @@ public class Board {
         }
     }
 
-    public void populateLowerRow() {
-        int numPlayers = Game.getPlayersNumber();
+    public void populateLowerRow(Game game) {
+        int numPlayers = game.getPlayersNumber();
         int count = numPlayers + 1;
 
         lowerRow.clear();
-        Deck<TribeCard> tribeDeck = Game.getTribeDeck();
+        Deck<TribeCard> tribeDeck = game.getTribeDeck();
 
         for (int i = 0; i < count; i++) {
             Card card = tribeDeck.drawCard();
@@ -103,9 +95,9 @@ public class Board {
         }
     }
 
-public void populateUpperRowBuildings() {
-        int numPlayers = Game.getPlayersNumber();
-        int currentEra = Game.getCurrentEra();
+public void populateUpperRowBuildings(Game game) {
+        int numPlayers = game.getPlayersNumber();
+        int currentEra = game.getCurrentEra();
 
         // Controllo di sicurezza sul numero di giocatori per evitare ArrayIndexOutOfBoundsException
         if (numPlayers < 2 || numPlayers > 5) return;
@@ -127,7 +119,7 @@ public void populateUpperRowBuildings() {
         if (cardsToDraw <= 0) return;
 
         buildingCardsUpperRow.clear();
-        Deck<BuildingCard> buildingDeck = Game.getBuildingDeck();
+        Deck<BuildingCard> buildingDeck = game.getBuildingDeck();
 
         for (int i = 0; i < cardsToDraw; i++) {
             BuildingCard card = buildingDeck.drawCard();
@@ -147,11 +139,11 @@ public void populateUpperRowBuildings() {
         buildingCardsUpperRow.clear();
     }
 
-    public void refillUpperRow() {
-        int numPlayers = Game.getPlayersNumber();
+    public void refillUpperRow(Game game) {
+        int numPlayers = game.getPlayersNumber();
         int cardsToAdd = (numPlayers + 4) - upperRow.size();
 
-        Deck<TribeCard> tribeDeck = Game.getTribeDeck();
+        Deck<TribeCard> tribeDeck = game.getTribeDeck();
         for (int i = 0; i < cardsToAdd; i++) {
             Card card = tribeDeck.drawCard();
             if (card != null) {

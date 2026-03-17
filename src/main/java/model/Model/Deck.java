@@ -10,6 +10,14 @@ public class Deck<T extends Card> {
      * Default constructor
      */
     public Deck() {
+        this.cards = new Stack<>();
+    }
+    
+    /**
+     * Constructor with existing stack
+     */
+    public Deck(Stack<T> stack) {
+        this.cards = stack;
     }
 
     
@@ -19,14 +27,15 @@ public class Deck<T extends Card> {
 
     
     public T drawCard() {
-        // TODO implement here
-        return null;
+        if (cards.isEmpty()) {
+            return null;
+        }
+        return cards.pop();
     }
 
     
     public boolean isEmpty() {
-        // TODO implement here
-        return false;
+        return cards.isEmpty();
     }
 
 }

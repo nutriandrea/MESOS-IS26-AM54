@@ -10,17 +10,18 @@ public class Game {
      * Default constructor
      */
     public Game() {
-        
+        currentInstance = this;
     }
 
+    private static Game currentInstance;
 
     private Board board;
 
 
-    private Stack<TribeCard> deckTribu;
+    private Deck<TribeCard> deckTribu;
 
     
-    private Stack<BuildingCard> deckBuildings;
+    private Deck<BuildingCard> deckBuildings;
 
     
     private List<Player> players;
@@ -124,9 +125,8 @@ public class Game {
     }
 
     
-    public void resolveEvents() {
-        // Delega a Board per risolvere gli eventi
-        board.resolveEvents();
+    public void resolveEvent(EventCard event) {
+        // TODO implement here
     }
 
     /**
@@ -159,6 +159,35 @@ public class Game {
     
     public void endGame() {
         // TODO implement here
+    }
+
+    // Metodi statici per accesso da Board
+    public static int getPlayersNumber() {
+        if (currentInstance != null && currentInstance.players != null) {
+            return currentInstance.players.size();
+        }
+        return 0;
+    }
+    
+    public static int getCurrentEra() {
+        if (currentInstance != null) {
+            return currentInstance.currentEra;
+        }
+        return 1;
+    }
+    
+    public static Deck<TribeCard> getTribeDeck() {
+        if (currentInstance != null) {
+            return currentInstance.deckTribu;
+        }
+        return null;
+    }
+    
+    public static Deck<BuildingCard> getBuildingDeck() {
+        if (currentInstance != null) {
+            return currentInstance.deckBuildings;
+        }
+        return null;
     }
 
 }

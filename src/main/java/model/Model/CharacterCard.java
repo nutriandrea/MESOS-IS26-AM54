@@ -18,6 +18,17 @@ public class CharacterCard extends TribeCard {
 
     private List<IEffect> effects;
 
+    public int getAura() {
+        return aura;
+    }
+
+    public JobType getJobType() {
+        return type;
+    }
+
+    public int getLevel() {
+        return level;
+    }   
 
     /**
      *
@@ -29,6 +40,6 @@ public class CharacterCard extends TribeCard {
         this.aura = aura;
         this.phase = phase;
         this.effects = effects;
-    }
+    }    }
 
 }

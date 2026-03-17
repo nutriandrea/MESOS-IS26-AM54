@@ -16,9 +16,22 @@ public class DeckFactory {
     }
 
     /**
-     * Crea il mazzo edifici leggendo dal file specifico.
+     * Crea il mazzo edifici leggendo dal file specifico e filtrando per numero di giocatori.
+     * @param filePath il percorso del file
+     * @param numPlayers il numero di giocatori nella partita
      */
-    public static Stack<BuildingCard> createBuildingDeck(String filePath) {
+    public static Stack<BuildingCard> createBuildingDeck(String filePath, int numPlayers) {
+
+        // Tabella dei conteggi [giocatori][era-1]
+        int[][] eraCounts = {
+                {0, 0, 0},              // indice 0 non usato
+                {0, 0, 0},              // indice 1 non usato
+                {1, 2, 3},              // 2 giocatori → Era I, II, III
+                {2, 2, 4},              // 3 giocatori
+                {2, 3, 4},              // 4 giocatori
+                {2, 3, 5}               // 5 giocatori
+        };
+
         // Liste separate per ogni era
         List<BuildingCard> e1 = new ArrayList<>();
         List<BuildingCard> e2 = new ArrayList<>();
@@ -28,7 +41,6 @@ public class DeckFactory {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] d = line.split(",");
-                // Formato Txt: buildingType(JobType), cost(int), finalAura(int), Phase(Phases), NomeLambda(String)
                 JobType type = JobType.valueOf(d[0].toUpperCase());
                 int cost = Integer.parseInt(d[1]);
                 int finalAura = Integer.parseInt(d[2]);
@@ -40,23 +52,37 @@ public class DeckFactory {
                 int era = Integer.parseInt(d[5]);
                 BuildingCard card = new BuildingCard(type, cost, finalAura, phase, effects, era);
 
-                // Smistamento per Era
+                // Smistamento per Era (qui carichiamo TUTTE le carte del file)
                 if (era == 1) e1.add(card);
                 else if (era == 2) e2.add(card);
                 else if (era == 3) e3.add(card);
             }
         } catch (IOException e) { e.printStackTrace(); }
 
-        // Mischiamo ogni era individualmente
+        // Mischiamo tutte le carte di ogni era
         Collections.shuffle(e1);
         Collections.shuffle(e2);
         Collections.shuffle(e3);
 
         Stack<BuildingCard> finalStack = new Stack<>();
-        // Push in ordine inverso per avere Era 1 in cima
-        for (BuildingCard c : e3) finalStack.push(c);
-        for (BuildingCard c : e2) finalStack.push(c);
-        for (BuildingCard c : e1) finalStack.push(c);
+
+        // Push in ordine inverso (Era 3, poi 2, poi 1) limitato dal numero di giocatori
+        // Usiamo Math.min per evitare errori se nel file ci sono meno carte del previsto
+
+        int countE3 = eraCounts[numPlayers][2];
+        for (int i = 0; i < Math.min(countE3, e3.size()); i++) {
+            finalStack.push(e3.get(i));
+        }
+
+        int countE2 = eraCounts[numPlayers][1];
+        for (int i = 0; i < Math.min(countE2, e2.size()); i++) {
+            finalStack.push(e2.get(i));
+        }
+
+        int countE1 = eraCounts[numPlayers][0];
+        for (int i = 0; i < Math.min(countE1, e1.size()); i++) {
+            finalStack.push(e1.get(i));
+        }
 
         return finalStack;
     }
@@ -65,32 +91,39 @@ public class DeckFactory {
      * Crea il mazzo Tribù unendo Personaggi ed Eventi.
      * Gestisce la logica dei Final Event in fondo al mazzo.
      */
-    public static Stack<TribeCard> createTribeDeck(String charPath, String eventPath) {
+    public static Stack<TribeCard> createTribeDeck(String charPath, String eventPath, int numPlayers) {
+
         List<TribeCard> finalEvents = new ArrayList<>();
         List<TribeCard> era1 = new ArrayList<>();
         List<TribeCard> era2 = new ArrayList<>();
         List<TribeCard> era3 = new ArrayList<>();
 
-        // 1. Caricamento Personaggi (Hanno IEffects)
+        // 1. Caricamento Personaggi (Filtrati con logica 2+, 3+, 4+, 5)
         try (BufferedReader br = new BufferedReader(new FileReader(charPath))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] d = line.split(",");
-                // Formato Txt: level(int), characterType(JobType), aura(int), Phase(Phases), NomeLambda(String)
-                int level = Integer.parseInt(d[0]);
-                JobType type = JobType.valueOf(d[1].toUpperCase());
-                int aura = Integer.parseInt(d[2]);
-                Phases phase = Phases.valueOf(d[3].toUpperCase());
-                List<IEffect> effects = new ArrayList<>();
-                if (effectRegistry.containsKey(d[4])) {
-                    effects.add(effectRegistry.get(d[4]));
-                }
-                int era = Integer.parseInt(d[5]);
 
-                CharacterCard card = new CharacterCard(level, type, aura, phase, effects, era);
-                if (era == 1) era1.add(card);
-                else if (era == 2) era2.add(card);
-                else era3.add(card);
+                // Leggiamo il requisito minimo di giocatori (assumiamo sia il 7° parametro, indice 6)
+                int minPlayers = Integer.parseInt(d[6]);
+
+                // Aggiungiamo la carta SOLO se abbiamo abbastanza giocatori
+                if (numPlayers >= minPlayers) {
+                    int level = Integer.parseInt(d[0]);
+                    JobType type = JobType.valueOf(d[1].toUpperCase());
+                    int aura = Integer.parseInt(d[2]);
+                    Phases phase = Phases.valueOf(d[3].toUpperCase());
+                    List<IEffect> effects = new ArrayList<>();
+                    if (effectRegistry.containsKey(d[4])) {
+                        effects.add(effectRegistry.get(d[4]));
+                    }
+                    int era = Integer.parseInt(d[5]);
+
+                    CharacterCard card = new CharacterCard(level, type, aura, phase, effects, era);
+                    if (era == 1) era1.add(card);
+                    else if (era == 2) era2.add(card);
+                    else era3.add(card);
+                }
             }
         } catch (IOException e) { e.printStackTrace(); }
 
@@ -124,7 +157,6 @@ public class DeckFactory {
         } catch (IOException e) { e.printStackTrace(); }
 
         // Mischiamo tutto per blocchi
-        Collections.shuffle(finalEvents);
         Collections.shuffle(era1);
         Collections.shuffle(era2);
         Collections.shuffle(era3);

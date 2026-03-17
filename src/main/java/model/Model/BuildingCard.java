@@ -28,6 +28,14 @@ public class BuildingCard extends Card implements IPurchasable {
         this.effects = effects;
     }
 
+    public void resolveEffects(Player p, Game g) {
+        // Scorri tutti gli effetti assegnati a questo edificio
+        for (IEffect effect : this.effects) {
+            // Applica l'effetto. Passi 'null' al posto di CharacterCard perché questo è un Edificio!
+            effect.apply(p, g, null);
+        }
+    }
+
     public int getFinalAura() {
         // TODO implement here
         return 0;

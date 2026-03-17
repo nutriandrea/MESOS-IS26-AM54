@@ -40,6 +40,15 @@ public class CharacterCard extends TribeCard {
         this.aura = aura;
         this.phase = phase;
         this.effects = effects;
-    }    }
+    }
+
+    public void resolveEffects(Player p, Game g) {
+        // Scorri tutti gli effetti assegnati a questo personaggio
+        for (IEffect effect : this.effects) {
+            // Applica l'effetto. Passi 'this' perché la lambda potrebbe aver bisogno di leggere il livello o il tipo di QUESTA carta
+            effect.apply(p, g, this);
+        }
+    }
 
 }
+

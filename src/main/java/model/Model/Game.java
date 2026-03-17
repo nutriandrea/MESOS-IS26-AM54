@@ -48,6 +48,10 @@ public class Game {
         return 0;
     }
 
+    public Board getBoard(){
+        return this.board;
+    }
+
     
     public Player getCurrentPlayer() {
         // TODO implement here

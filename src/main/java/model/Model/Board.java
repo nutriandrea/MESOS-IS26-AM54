@@ -29,6 +29,9 @@ public class Board {
     private List<TurnOrderSlot> turnOrderTile;
 
 
+    public List<TurnOrderSlot> getTurnOrderTile() {
+        return turnOrderTile;
+    }
 
     /**
      * @param int numPlayers 

@@ -25,6 +25,9 @@ public class OfferingTile {
     private Player occupiedBy;
 
 
+    public Player getOccupiedBy() {
+        return occupiedBy;
+    }
     
     public boolean isAvailable() {
         return occupiedBy != null;

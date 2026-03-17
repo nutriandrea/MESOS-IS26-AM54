@@ -5,14 +5,25 @@ import java.util.*;
 
 public class DeckFactory {
 
-    private static final Map<String, IEffect> effectRegistry = new HashMap<>();
+    private static final Map<String, IEffect> buildingsEffectRegistry = new HashMap<>();
+    private static final Map<String, IEffect> charactersEffectRegistry = new HashMap<>();
 
     // Inizializzazione del registro degli effetti tramite Lambda [cite: 146, 149]
     static {
-        effectRegistry.put("DAI_1_CIBO", (p, g) -> p.modifyFood(1));
-        effectRegistry.put("GENERA_MAGIA", (p, g) -> p.modifyAuraPoints(1));
-        effectRegistry.put("AURA_PUNTI", (p, g) -> p.modifyAuraPoints(5));
-        // Aggiungi qui gli altri nomi lambda usati nei file .txt
+        // Buildings
+
+        //WORK IN PROGRESS
+        buildingsEffectRegistry.put("DOUBLE_INVENTOR", (p, g) -> );
+        buildingsEffectRegistry.put("SIX_OF_TYPE", (p, g) -> );
+
+        buildingsEffectRegistry.put("TURN_FOOD", (p, g) -> g.getBoard().getTurnOrderTile().stream()
+                .filter(t -> t.getOccupiedBy() != null && t.getOccupiedBy().equals(p))
+                .forEach(t -> p.modifyFood(1)));
+        buildingsEffectRegistry.put("DISCOUNT_FOOD_FARMER", (p, g) -> );
+
+        // Characters
+
+        charactersEffectRegistry.put("AURA_PUNTI", (p, g) -> p.modifyAuraPoints(5));
     }
 
     /**
@@ -46,8 +57,8 @@ public class DeckFactory {
                 int finalAura = Integer.parseInt(d[2]);
                 Phases phase = Phases.valueOf(d[3].toUpperCase());
                 List<IEffect> effects = new ArrayList<>();
-                if (effectRegistry.containsKey(d[4])) {
-                    effects.add(effectRegistry.get(d[4]));
+                if (buildingsEffectRegistry.containsKey(d[4])) {
+                    effects.add(buildingsEffectRegistry.get(d[4]));
                 }
                 int era = Integer.parseInt(d[5]);
                 BuildingCard card = new BuildingCard(type, cost, finalAura, phase, effects, era);
@@ -114,8 +125,8 @@ public class DeckFactory {
                     int aura = Integer.parseInt(d[2]);
                     Phases phase = Phases.valueOf(d[3].toUpperCase());
                     List<IEffect> effects = new ArrayList<>();
-                    if (effectRegistry.containsKey(d[4])) {
-                        effects.add(effectRegistry.get(d[4]));
+                    if (charactersEffectRegistry.containsKey(d[4])) {
+                        effects.add(charactersEffectRegistry.get(d[4]));
                     }
                     int era = Integer.parseInt(d[5]);
 

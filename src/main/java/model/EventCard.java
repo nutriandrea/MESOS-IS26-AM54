@@ -1,4 +1,4 @@
-package model.Model;
+package model;
 
 public abstract class EventCard extends TribeCard { // Deve essere abstract per le sottoclassi [cite: 116]
 

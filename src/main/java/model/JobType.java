@@ -1,4 +1,4 @@
-package model.Model;
+package model;
 
 
 public enum JobType {

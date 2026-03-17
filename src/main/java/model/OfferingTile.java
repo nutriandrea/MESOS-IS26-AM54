@@ -1,4 +1,4 @@
-package model.Model;
+package model;
 
 import java.io.*;
 

@@ -61,7 +61,7 @@ public class DeckFactory {
      * @param filePath il percorso del file
      * @param numPlayers il numero di giocatori nella partita
      */
-    public static Stack<BuildingCard> createBuildingDeck(String filePath, int numPlayers) {
+    public static Deck<BuildingCard> createBuildingDeck(String filePath, int numPlayers) {
 
         // Tabella dei conteggi [giocatori][era-1]
         int[][] eraCounts = {
@@ -105,34 +105,36 @@ public class DeckFactory {
         Collections.shuffle(e2);
         Collections.shuffle(e3);
 
-        Stack<BuildingCard> finalStack = new Stack<>();
+        Stack<BuildingCard> finalDeck = new Stack<>();
 
         // Push in ordine inverso (Era 3, poi 2, poi 1) limitato dal numero di giocatori
         // Usiamo Math.min per evitare errori se nel file ci sono meno carte del previsto
 
         int countE3 = eraCounts[numPlayers][2];
         for (int i = 0; i < Math.min(countE3, e3.size()); i++) {
-            finalStack.push(e3.get(i));
+            finalDeck.push(e3.get(i));
         }
 
         int countE2 = eraCounts[numPlayers][1];
         for (int i = 0; i < Math.min(countE2, e2.size()); i++) {
-            finalStack.push(e2.get(i));
+            finalDeck.push(e2.get(i));
         }
 
         int countE1 = eraCounts[numPlayers][0];
         for (int i = 0; i < Math.min(countE1, e1.size()); i++) {
-            finalStack.push(e1.get(i));
+            finalDeck.push(e1.get(i));
         }
 
-        return finalStack;
+        Deck<BuildingCard> deck = new Deck<>(finalDeck);
+
+        return deck;
     }
 
     /**
      * Crea il mazzo Tribù unendo Personaggi ed Eventi.
      * Gestisce la logica dei Final Event in fondo al mazzo.
      */
-    public static Stack<TribeCard> createTribeDeck(String charPath, String eventPath, int numPlayers) {
+    public static Deck<TribeCard> createTribeDeck(String charPath, String eventPath, int numPlayers) {
 
         List<TribeCard> finalEvents = new ArrayList<>();
         List<TribeCard> era1 = new ArrayList<>();
@@ -202,18 +204,20 @@ public class DeckFactory {
         Collections.shuffle(era2);
         Collections.shuffle(era3);
 
-        Stack<TribeCard> finalStack = new Stack<>();
+        Stack<TribeCard> finalDeck = new Stack<>();
 
         // ORDINE DI PUSH (Bottom to Top):
         // 1. Final Events (Abs bottom)
-        for (TribeCard c : finalEvents) finalStack.push(c);
+        for (TribeCard c : finalEvents) finalDeck.push(c);
         // 2. Era 3
-        for (TribeCard c : era3) finalStack.push(c);
+        for (TribeCard c : era3) finalDeck.push(c);
         // 3. Era 2
-        for (TribeCard c : era2) finalStack.push(c);
+        for (TribeCard c : era2) finalDeck.push(c);
         // 4. Era 1 (Top)
-        for (TribeCard c : era1) finalStack.push(c);
+        for (TribeCard c : era1) finalDeck.push(c);
 
-        return finalStack;
+        Deck<TribeCard> deck = new Deck<>(finalDeck);
+
+        return deck;
     }
 }

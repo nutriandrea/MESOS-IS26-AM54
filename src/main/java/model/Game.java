@@ -111,12 +111,7 @@ public class Game {
      * Prende carte da una fila e le aggiunge alla tribù del giocatore
      */
     public void takeCards(Player player, int count, String row) {
-        // Delega a Board per prendere le carte
-        List<Card> cards = board.takeCards(player, count, row);
-        // Aggiungi le carte alla tribù del giocatore
-        for (Card card : cards) {
-            player.modifyMyTribe(card);
-        }
+        // TODO
     }
 
     

@@ -95,8 +95,8 @@ public class DeckFactory {
                 Phases phase = Phases.valueOf(dto.phase);
 
                 List<IEffect> effects = new ArrayList<>();
-                if (buildingsEffectRegistry.containsKey(dto.effectKey)) {
-                    effects.add(buildingsEffectRegistry.get(dto.effectKey));
+                if (buildingsEffectRegistry.containsKey(dto.nomeLambda)) {
+                    effects.add(buildingsEffectRegistry.get(dto.nomeLambda));
                 }
 
                 BuildingCard card = new BuildingCard(type, dto.cost, dto.finalAura, phase, effects, dto.era);
@@ -160,12 +160,12 @@ public class DeckFactory {
                 // Filtro sui giocatori
                 if (numPlayers >= dto.minPlayers) {
 
-                    JobType type = JobType.valueOf(dto.jobType);
+                    JobType type = JobType.valueOf(dto.characterType);
                     Phases phase = Phases.valueOf(dto.phase);
 
                     List<IEffect> effects = new ArrayList<>();
-                    if (charactersEffectRegistry.containsKey(dto.effectKey)) {
-                        effects.add(charactersEffectRegistry.get(dto.effectKey));
+                    if (charactersEffectRegistry.containsKey(dto.nomeLambda)) {
+                        effects.add(charactersEffectRegistry.get(dto.nomeLambda));
                     }
 
                     CharacterCard card = new CharacterCard(dto.level, type, dto.aura, phase, effects, dto.era);
@@ -185,19 +185,19 @@ public class DeckFactory {
 
             for (EventDTO dto : eventiLetti) {
 
-                String label = dto.label.toUpperCase();
+                String label = dto.etichettaSottoclasse;
 
                 // Creazione tramite il tuo costrutto switch!
                 EventCard event = switch (label) {
                     case "HUNT" -> new HuntEvent(dto.era);
                     case "PAINTING" -> new PaintingEvent(dto.era);
-                    case "SHAMAN" -> new ShamanEvent(dto.era, dto.isFinal);
-                    case "SUSTENANCE" -> new SustenanceEvent(dto.era, dto.isFinal);
+                    case "SHAMAN" -> new ShamanEvent(dto.era, dto.FinalEvent);
+                    case "SUSTENANCE" -> new SustenanceEvent(dto.era, dto.FinalEvent);
                     default -> null;
                 };
 
                 if (event != null) {
-                    if (dto.isFinal) {
+                    if (dto.FinalEvent) {
                         finalEvents.add(event);
                     } else {
                         if (dto.era == 1) era1.add(event);

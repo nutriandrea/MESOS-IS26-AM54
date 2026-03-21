@@ -5,6 +5,6 @@ public class BuildingDTO {
     public int cost;
     public int finalAura;
     public String phase;
-    public String effectKey;
+    public String nomeLambda;
     public int era;
 }

@@ -1,7 +1,7 @@
 package model;
 
 public class EventDTO {
-    public boolean isFinal;
-    public String label;
+    public boolean FinalEvent;
+    public String etichettaSottoclasse;
     public int era;
 }

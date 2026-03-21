@@ -1,6 +1,10 @@
 package model;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.io.*;
+import java.lang.reflect.Type;
 import java.util.*;
 
 public class DeckFactory {
@@ -78,27 +82,30 @@ public class DeckFactory {
         List<BuildingCard> e2 = new ArrayList<>();
         List<BuildingCard> e3 = new ArrayList<>();
 
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] d = line.split(",");
-                JobType type = JobType.valueOf(d[0].toUpperCase());
-                int cost = Integer.parseInt(d[1]);
-                int finalAura = Integer.parseInt(d[2]);
-                Phases phase = Phases.valueOf(d[3].toUpperCase());
-                List<IEffect> effects = new ArrayList<>();
-                if (buildingsEffectRegistry.containsKey(d[4])) {
-                    effects.add(buildingsEffectRegistry.get(d[4]));
-                }
-                int era = Integer.parseInt(d[5]);
-                BuildingCard card = new BuildingCard(type, cost, finalAura, phase, effects, era);
+        Gson gson = new Gson();
 
+        try (Reader reader = new FileReader(filePath)) {
+
+            Type listType = new TypeToken<List<BuildingDTO>>() {
+            }.getType();
+            List<BuildingDTO> carteLette = gson.fromJson(reader, listType);
+
+            for (BuildingDTO dto : carteLette) {
+                JobType type = JobType.valueOf(dto.jobType);
+                Phases phase = Phases.valueOf(dto.phase);
+
+                List<IEffect> effects = new ArrayList<>();
+                if (buildingsEffectRegistry.containsKey(dto.effectKey)) {
+                    effects.add(buildingsEffectRegistry.get(dto.effectKey));
+                }
+
+                BuildingCard card = new BuildingCard(type, dto.cost, dto.finalAura, phase, effects, dto.era);
                 // Smistamento per Era (qui carichiamo TUTTE le carte del file)
-                if (era == 1) e1.add(card);
-                else if (era == 2) e2.add(card);
-                else if (era == 3) e3.add(card);
+                if (dto.era == 1) e1.add(card);
+                else if (dto.era == 2) e2.add(card);
+                else if (dto.era == 3) e3.add(card);
             }
-        } catch (IOException e) { e.printStackTrace(); }
+        }catch (Exception e) { e.printStackTrace(); }
 
         // Mischiamo tutte le carte di ogni era
         Collections.shuffle(e1);
@@ -141,63 +148,65 @@ public class DeckFactory {
         List<TribeCard> era2 = new ArrayList<>();
         List<TribeCard> era3 = new ArrayList<>();
 
+        Gson gson = new Gson();
+
         // 1. Caricamento Personaggi (Filtrati con logica 2+, 3+, 4+, 5)
-        try (BufferedReader br = new BufferedReader(new FileReader(charPath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] d = line.split(",");
+        try (Reader reader = new FileReader(charPath)) {
 
-                // Leggiamo il requisito minimo di giocatori (assumiamo sia il 7° parametro, indice 6)
-                int minPlayers = Integer.parseInt(d[6]);
+            Type charListType = new TypeToken<List<CharacterDTO>>(){}.getType();
+            List<CharacterDTO> charLetti = gson.fromJson(reader, charListType);
 
-                // Aggiungiamo la carta SOLO se abbiamo abbastanza giocatori
-                if (numPlayers >= minPlayers) {
-                    int level = Integer.parseInt(d[0]);
-                    JobType type = JobType.valueOf(d[1].toUpperCase());
-                    int aura = Integer.parseInt(d[2]);
-                    Phases phase = Phases.valueOf(d[3].toUpperCase());
+            for (CharacterDTO dto : charLetti) {
+                // Filtro sui giocatori
+                if (numPlayers >= dto.minPlayers) {
+
+                    JobType type = JobType.valueOf(dto.jobType);
+                    Phases phase = Phases.valueOf(dto.phase);
+
                     List<IEffect> effects = new ArrayList<>();
-                    if (charactersEffectRegistry.containsKey(d[4])) {
-                        effects.add(charactersEffectRegistry.get(d[4]));
+                    if (charactersEffectRegistry.containsKey(dto.effectKey)) {
+                        effects.add(charactersEffectRegistry.get(dto.effectKey));
                     }
-                    int era = Integer.parseInt(d[5]);
 
-                    CharacterCard card = new CharacterCard(level, type, aura, phase, effects, era);
-                    if (era == 1) era1.add(card);
-                    else if (era == 2) era2.add(card);
+                    CharacterCard card = new CharacterCard(dto.level, type, dto.aura, phase, effects, dto.era);
+
+                    if (dto.era == 1) era1.add(card);
+                    else if (dto.era == 2) era2.add(card);
                     else era3.add(card);
                 }
             }
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (Exception e) { e.printStackTrace(); }
 
         // 2. Caricamento Eventi (NON hanno IEffects, usano resolveEvent)
-        try (BufferedReader br = new BufferedReader(new FileReader(eventPath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] d = line.split(",");
-                // Formato Txt: finalEvent(bool), etichettaSottoclasse(String)
-                boolean isFinal = Boolean.parseBoolean(d[0]);
-                String label = d[1].toUpperCase();
-                int era = Integer.parseInt(d[2]);
+        try (Reader reader = new FileReader(eventPath)) {
 
+            Type eventListType = new TypeToken<List<EventDTO>>(){}.getType();
+            List<EventDTO> eventiLetti = gson.fromJson(reader, eventListType);
+
+            for (EventDTO dto : eventiLetti) {
+
+                String label = dto.label.toUpperCase();
+
+                // Creazione tramite il tuo costrutto switch!
                 EventCard event = switch (label) {
-                    case "HUNT" -> new HuntEvent(era);
-                    case "PAINTING" -> new PaintingEvent(era);
-                    case "SHAMAN" -> new ShamanEvent(era, isFinal);
-                    case "SUSTENANCE" -> new SustenanceEvent(era, isFinal);
+                    case "HUNT" -> new HuntEvent(dto.era);
+                    case "PAINTING" -> new PaintingEvent(dto.era);
+                    case "SHAMAN" -> new ShamanEvent(dto.era, dto.isFinal);
+                    case "SUSTENANCE" -> new SustenanceEvent(dto.era, dto.isFinal);
                     default -> null;
                 };
 
                 if (event != null) {
-                    if (isFinal) finalEvents.add(event);
-                    else {
-                        if (era == 1) era1.add(event);
-                        else if (era == 2) era2.add(event);
+                    if (dto.isFinal) {
+                        finalEvents.add(event);
+                    } else {
+                        if (dto.era == 1) era1.add(event);
+                        else if (dto.era == 2) era2.add(event);
                         else era3.add(event);
                     }
                 }
             }
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (Exception e) { e.printStackTrace(); }
 
         // Mischiamo tutto per blocchi
         Collections.shuffle(era1);

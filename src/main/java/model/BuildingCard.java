@@ -14,12 +14,11 @@ public class BuildingCard extends Card implements IPurchasable {
 
     private Phases phase;
 
-    private List<IEffect> effects;
+    private List<IEffect<BuildingCard>> effects;
 
     private JobType buildingType;
 
-
-    public BuildingCard(JobType type, int cost, int finalAura, Phases phase, List<IEffect> effects, int era) {
+    public BuildingCard(JobType type, int cost, int finalAura, Phases phase, List<IEffect<BuildingCard>> effects, int era) {
         super(era);
         this.buildingType = type;
         this.cost = cost;

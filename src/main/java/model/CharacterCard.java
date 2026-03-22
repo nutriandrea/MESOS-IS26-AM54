@@ -16,7 +16,7 @@ public class CharacterCard extends TribeCard {
 
     private Phases phase;
 
-    private List<IEffect> effects;
+    private List<IEffect<CharacterCard>> effects;
 
     public int getAura() {
         return aura;
@@ -33,7 +33,7 @@ public class CharacterCard extends TribeCard {
     /**
      *
      */
-    public CharacterCard(int level, JobType type, int aura, Phases phase, List<IEffect> effects, int era) {
+    public CharacterCard(int level, JobType type, int aura, Phases phase, List<IEffect<CharacterCard>>effects, int era) {
         super(era);
         this.level = level;
         this.type = type;

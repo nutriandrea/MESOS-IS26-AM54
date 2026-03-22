@@ -1,21 +1,93 @@
 package model;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+
 import java.io.*;
 import java.util.*;
 
 public class DeckFactory {
 
-    private static final Map<String, IEffect> buildingsEffectRegistry = new HashMap<>();
-    private static final Map<String, IEffect> charactersEffectRegistry = new HashMap<>();
+    private static final Map<String, IEffect<BuildingCard>> buildingsEffectRegistry = new HashMap<>();
+    private static final Map<String, IEffect<CharacterCard>> charactersEffectRegistry = new HashMap<>();
 
-    // Inizializzazione del registro degli effetti tramite Lambda [cite: 146, 149]
+    // Inizializzazione del registro degli effetti tramite Lambda
     static {
         // Buildings
 
         //era1
         //WORK IN PROGRESS
-        buildingsEffectRegistry.put("DOUBLE_INVENTOR", (p, g, cc) ->() );
-        buildingsEffectRegistry.put("SIX_OF_TYPE", (p, g, cc) -> ());
+        buildingsEffectRegistry.put("DOUBLE_INVENTOR", (p, g, edificio) -> {
+            // 1. Prendi la lista delle carte del giocatore
+            List<CharacterCard> tribe = p.getMyTribe();
+            if (tribe.isEmpty()) return;
+
+            // 2. Prendi l'ultima carta appena pescata (che ha innescato la fase POSTPICK)
+            CharacterCard ultimaCarta = tribe.get(tribe.size() - 1);
+
+            // 3. È un inventore?
+            if (ultimaCarta.getJobType() == JobType.INVENTOR) {
+
+                int iconaInvenzione = ultimaCarta.getLevel();
+
+                // 4. Contiamo TUTTI gli inventori con QUESTA specifica icona nella tribù
+                long conteggioTotale = tribe.stream()
+                        .filter(c -> c.getJobType() == JobType.INVENTOR)
+                        .filter(c -> c.getLevel() == iconaInvenzione)
+                        .count();
+
+                // 5. Se il totale attuale è pari, significa che QUESTA carta ha appena chiuso una coppia!
+                if (conteggioTotale > 0 && conteggioTotale % 2 == 0) {
+
+                    p.modifyFood(3); // Assegna il cibo (modifica la quantità se serve)
+                }
+            }
+        });
+
+        buildingsEffectRegistry.put("SIX_OF_TYPE", (p, g, edificio) -> {
+            List<CharacterCard> tribe = p.getMyTribe();
+            if (tribe.isEmpty()) return;
+
+            // 1. Prendi la carta che ha appena innescato l'effetto
+            CharacterCard ultimaCarta = tribe.get(tribe.size() - 1);
+            JobType lavoroAppenaPescato = ultimaCarta.getJobType();
+
+            // Se per qualche motivo è NULL, usciamo
+            if (lavoroAppenaPescato == null) return;
+
+            // 2. Quanti personaggi di QUESTO specifico lavoro abbiamo in totale ora? (Es. 2)
+            long conteggioQuestoLavoro = tribe.stream()
+                    .filter(c -> c.getJobType() == lavoroAppenaPescato)
+                    .count();
+
+            // 3. Elenco dei 6 lavori che compongono un set completo
+            JobType[] tuttiILavori = {
+                    JobType.HUNTER, JobType.BUILDER, JobType.SHAMAN,
+                    JobType.FARMER, JobType.ARTIST, JobType.INVENTOR
+            };
+
+            boolean setCompletato = true;
+
+            // 4. Verifichiamo se TUTTI i lavori hanno raggiunto almeno la quota di quello appena pescato
+            for (JobType job : tuttiILavori) {
+                long conteggio = tribe.stream()
+                        .filter(c -> c.getJobType() == job)
+                        .count();
+
+                // Se troviamo anche solo un lavoro che sta "indietro", il set non è chiuso
+                if (conteggio < conteggioQuestoLavoro) {
+                    setCompletato = false;
+                    break; // Inutile continuare a controllare gli altri
+                }
+            }
+
+            // 5. Se nessuno era rimasto indietro, abbiamo appena chiuso il set!
+            if (setCompletato) {
+                p.modifyFood(1); // Sostituisci con il bonus esatto previsto dalla carta
+                System.out.println("Set di 6 personaggi diversi completato! Cibo assegnato.");
+            }
+        });
 
         buildingsEffectRegistry.put("TURN_FOOD", (p, g, cc) -> g.getBoard().getTurnOrderTile().stream()
                 .filter(t -> t.getOccupiedBy() != null && t.getOccupiedBy().equals(p))
@@ -26,19 +98,19 @@ public class DeckFactory {
         buildingsEffectRegistry.put("NO_LOSS", (p,g,cc) -> p.setEventCostAura(- p.getEventCostAura()) );
         //era2
         buildingsEffectRegistry.put("PLUS_HUNTING", (p,g,cc) ->  {p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count()));
-                                                              p.setEventCostAura((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count()));});
+            p.setEventCostAura((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count()));});
         buildingsEffectRegistry.put("PLUS_FOOD_ARTIST", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count())) );
         buildingsEffectRegistry.put("DISCOUNT_FOOD_INVENTOR", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream()
-                                                                                    .filter(c -> c.getJobType() == JobType.INVENTOR).count() * -1)) );
+                .filter(c -> c.getJobType() == JobType.INVENTOR).count() * -1)) );
         buildingsEffectRegistry.put("DOUBLE_AURA_SHAMAN", (p, g, cc) -> p.setEventCostAura(p.getEventCostAura() * 2) );
-        //double constructor aggiunge solo uno per construttori perche di base aggiunge uno il end_game di game, quello aggiuntivo lo fa qua il building
+
         buildingsEffectRegistry.put("DOUBLE_CONSTRUCTOR_AURA", (p, g, cc) -> p.getMyTribe().stream()
-                                                                                .filter(c -> c.getJobType() == JobType.BUILDER).forEach(c -> p.modifyAuraPoints(c.getAura()) ));
+                .filter(c -> c.getJobType() == JobType.BUILDER).forEach(c -> p.modifyAuraPoints(c.getAura()) ));
         buildingsEffectRegistry.put("THREE_MAGIC", (p, g, cc) -> p.modifyMagicPoints(3) );
-        
+
         buildingsEffectRegistry.put("SIX_DIFFERENT_AURA", (p, g, cc) -> p.modifyAuraPoints(6 * (int) Arrays.stream(JobType.values())
-                                                                        .mapToLong(job -> p.getMyTribe().stream().filter(c -> c.getJobType() == job).count())
-                                                                        .min().orElse(0)));
+                .mapToLong(job -> p.getMyTribe().stream().filter(c -> c.getJobType() == job).count())
+                .min().orElse(0)));
         buildingsEffectRegistry.put("AURA_SHAMAN", (p, g, cc) -> p.modifyAuraPoints((int) (4*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.SHAMAN).count()))) );
         buildingsEffectRegistry.put("AURA_HUNTER", (p, g, cc) -> p.modifyAuraPoints((int) (3*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.HUNTER).count()))) );
         buildingsEffectRegistry.put("AURA_BUILDER", (p, g, cc) -> p.modifyAuraPoints((int) (4*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.BUILDER).count()))) );
@@ -47,9 +119,8 @@ public class DeckFactory {
         buildingsEffectRegistry.put("AURA_INVENTOR", (p, g, cc) -> p.modifyAuraPoints((int) (2*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.INVENTOR).count()))) );
         buildingsEffectRegistry.put("25_AURA", (p, g, cc) -> p.modifyAuraPoints(25) );
         buildingsEffectRegistry.put("EXTRA_PICK", (p, g, cc) -> p.setExtraPick(true) );
-        
-        // Characters
 
+        // Characters
         charactersEffectRegistry.put("HUNTER", (p, g, cc) -> p.modifyFood((int) (p.getMyTribe().stream().filter(c->c.getJobType()==JobType.HUNTER).count()+1)));
         charactersEffectRegistry.put("BUILDER", (p, g, cc) -> p.modifyMyBuildingDiscount(cc.getLevel()));
         charactersEffectRegistry.put("SHAMAN", (p, g, cc) -> p.modifyMagicPoints(cc.getLevel()));
@@ -78,27 +149,30 @@ public class DeckFactory {
         List<BuildingCard> e2 = new ArrayList<>();
         List<BuildingCard> e3 = new ArrayList<>();
 
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] d = line.split(",");
-                JobType type = JobType.valueOf(d[0].toUpperCase());
-                int cost = Integer.parseInt(d[1]);
-                int finalAura = Integer.parseInt(d[2]);
-                Phases phase = Phases.valueOf(d[3].toUpperCase());
-                List<IEffect> effects = new ArrayList<>();
-                if (buildingsEffectRegistry.containsKey(d[4])) {
-                    effects.add(buildingsEffectRegistry.get(d[4]));
-                }
-                int era = Integer.parseInt(d[5]);
-                BuildingCard card = new BuildingCard(type, cost, finalAura, phase, effects, era);
+        Gson gson = new Gson();
 
+        try (Reader reader = new FileReader(filePath)) {
+
+            Type listType = new TypeToken<List<BuildingDTO>>() {
+            }.getType();
+            List<BuildingDTO> carteLette = gson.fromJson(reader, listType);
+
+            for (BuildingDTO dto : carteLette) {
+                JobType type = JobType.valueOf(dto.jobType);
+                Phases phase = Phases.valueOf(dto.phase);
+
+                List<IEffect> effects = new ArrayList<>();
+                if (buildingsEffectRegistry.containsKey(dto.nomeLambda)) {
+                    effects.add(buildingsEffectRegistry.get(dto.nomeLambda));
+                }
+
+                BuildingCard card = new BuildingCard(type, dto.cost, dto.finalAura, phase, effects, dto.era);
                 // Smistamento per Era (qui carichiamo TUTTE le carte del file)
-                if (era == 1) e1.add(card);
-                else if (era == 2) e2.add(card);
-                else if (era == 3) e3.add(card);
+                if (dto.era == 1) e1.add(card);
+                else if (dto.era == 2) e2.add(card);
+                else if (dto.era == 3) e3.add(card);
             }
-        } catch (IOException e) { e.printStackTrace(); }
+        }catch (Exception e) { e.printStackTrace(); }
 
         // Mischiamo tutte le carte di ogni era
         Collections.shuffle(e1);
@@ -130,6 +204,7 @@ public class DeckFactory {
         return deck;
     }
 
+
     /**
      * Crea il mazzo Tribù unendo Personaggi ed Eventi.
      * Gestisce la logica dei Final Event in fondo al mazzo.
@@ -141,63 +216,65 @@ public class DeckFactory {
         List<TribeCard> era2 = new ArrayList<>();
         List<TribeCard> era3 = new ArrayList<>();
 
+        Gson gson = new Gson();
+
         // 1. Caricamento Personaggi (Filtrati con logica 2+, 3+, 4+, 5)
-        try (BufferedReader br = new BufferedReader(new FileReader(charPath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] d = line.split(",");
+        try (Reader reader = new FileReader(charPath)) {
 
-                // Leggiamo il requisito minimo di giocatori (assumiamo sia il 7° parametro, indice 6)
-                int minPlayers = Integer.parseInt(d[6]);
+            Type charListType = new TypeToken<List<CharacterDTO>>(){}.getType();
+            List<CharacterDTO> charLetti = gson.fromJson(reader, charListType);
 
-                // Aggiungiamo la carta SOLO se abbiamo abbastanza giocatori
-                if (numPlayers >= minPlayers) {
-                    int level = Integer.parseInt(d[0]);
-                    JobType type = JobType.valueOf(d[1].toUpperCase());
-                    int aura = Integer.parseInt(d[2]);
-                    Phases phase = Phases.valueOf(d[3].toUpperCase());
+            for (CharacterDTO dto : charLetti) {
+                // Filtro sui giocatori
+                if (numPlayers >= dto.minPlayers) {
+
+                    JobType type = JobType.valueOf(dto.characterType);
+                    Phases phase = Phases.valueOf(dto.phase);
+
                     List<IEffect> effects = new ArrayList<>();
-                    if (charactersEffectRegistry.containsKey(d[4])) {
-                        effects.add(charactersEffectRegistry.get(d[4]));
+                    if (charactersEffectRegistry.containsKey(dto.nomeLambda)) {
+                        effects.add(charactersEffectRegistry.get(dto.nomeLambda));
                     }
-                    int era = Integer.parseInt(d[5]);
 
-                    CharacterCard card = new CharacterCard(level, type, aura, phase, effects, era);
-                    if (era == 1) era1.add(card);
-                    else if (era == 2) era2.add(card);
+                    CharacterCard card = new CharacterCard(dto.level, type, dto.aura, phase, effects, dto.era);
+
+                    if (dto.era == 1) era1.add(card);
+                    else if (dto.era == 2) era2.add(card);
                     else era3.add(card);
                 }
             }
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (Exception e) { e.printStackTrace(); }
 
         // 2. Caricamento Eventi (NON hanno IEffects, usano resolveEvent)
-        try (BufferedReader br = new BufferedReader(new FileReader(eventPath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] d = line.split(",");
-                // Formato Txt: finalEvent(bool), etichettaSottoclasse(String)
-                boolean isFinal = Boolean.parseBoolean(d[0]);
-                String label = d[1].toUpperCase();
-                int era = Integer.parseInt(d[2]);
+        try (Reader reader = new FileReader(eventPath)) {
 
+            Type eventListType = new TypeToken<List<EventDTO>>(){}.getType();
+            List<EventDTO> eventiLetti = gson.fromJson(reader, eventListType);
+
+            for (EventDTO dto : eventiLetti) {
+
+                String label = dto.etichettaSottoclasse;
+
+                // Creazione tramite il tuo costrutto switch!
                 EventCard event = switch (label) {
-                    case "HUNT" -> new HuntEvent(era);
-                    case "PAINTING" -> new PaintingEvent(era);
-                    case "SHAMAN" -> new ShamanEvent(era, isFinal);
-                    case "SUSTENANCE" -> new SustenanceEvent(era, isFinal);
+                    case "HUNT" -> new HuntEvent(dto.era);
+                    case "PAINTING" -> new PaintingEvent(dto.era);
+                    case "SHAMAN" -> new ShamanEvent(dto.era, dto.FinalEvent);
+                    case "SUSTENANCE" -> new SustenanceEvent(dto.era, dto.FinalEvent);
                     default -> null;
                 };
 
                 if (event != null) {
-                    if (isFinal) finalEvents.add(event);
-                    else {
-                        if (era == 1) era1.add(event);
-                        else if (era == 2) era2.add(event);
+                    if (dto.FinalEvent) {
+                        finalEvents.add(event);
+                    } else {
+                        if (dto.era == 1) era1.add(event);
+                        else if (dto.era == 2) era2.add(event);
                         else era3.add(event);
                     }
                 }
             }
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (Exception e) { e.printStackTrace(); }
 
         // Mischiamo tutto per blocchi
         Collections.shuffle(era1);

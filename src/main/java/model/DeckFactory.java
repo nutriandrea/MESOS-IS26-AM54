@@ -3,9 +3,9 @@ package model;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-
 import java.io.*;
 import java.util.*;
+
 
 public class DeckFactory {
 
@@ -133,8 +133,14 @@ public class DeckFactory {
         // HUNTER: baseFood + aura per hunter * era
         eventEffectRegistry.put("HUNTER", (p, g, ec) ->
                 g.getPlayers().forEach(pl -> {
-                    pl.modifyFood(ec.baseFood);
-                    pl.modifyAuraPoints((int) pl.getMyTribe().stream().count() * ec.auraPerCharacter);
+                    long cacciatori = pl.getMyTribe().stream()
+                            .filter(c -> c.getJobType() == JobType.HUNTER).count();
+
+                    // Usa ec.baseFood moltiplicato per i cacciatori (così il JSON comanda tutto!)
+                    pl.modifyFood((int) cacciatori * ec.getBaseFood());
+
+                    // I Punti Prestigio (Aura)
+                    pl.modifyAuraPoints((int) cacciatori * ec.getAuraPerCharacter());
                 })
         );
 
@@ -143,7 +149,7 @@ public class DeckFactory {
                 g.getPlayers().forEach(pl -> {
                     pl.getMyTribe().forEach(c -> {
                         if (pl.getFood() > 0) pl.modifyFood(-1);
-                        else pl.modifyAuraPoints(-ec.auraPerCharacter);
+                        else pl.modifyAuraPoints(-ec.getAuraPerCharacter());
                     });
                 })
         );
@@ -153,7 +159,9 @@ public class DeckFactory {
                 g.getPlayers().forEach(pl -> {
                     long painters = pl.getMyTribe().stream()
                             .filter(c -> c.getJobType() == JobType.ARTIST).count();
-                    pl.modifyAuraPoints(painters <= ec.threshold ? -ec.penalty : (int) painters * ec.bonusMultiplier);
+                    pl.modifyAuraPoints(painters <= ec.getThreshold()
+                            ? -ec.getPenalty()
+                            : (int) painters * ec.getBonusMultiplier());
                 })
         );
 
@@ -162,8 +170,8 @@ public class DeckFactory {
             int max = g.getPlayers().stream().mapToInt(Player::getAuraPoints).max().orElse(0);
             int min = g.getPlayers().stream().mapToInt(Player::getAuraPoints).min().orElse(0);
             g.getPlayers().forEach(pl -> {
-                if (pl.getAuraPoints() == max) pl.modifyAuraPoints(ec.bonus);
-                if (pl.getAuraPoints() == min) pl.modifyAuraPoints(-ec.malus);
+                if (pl.getAuraPoints() == max) pl.modifyAuraPoints(ec.getBonus());
+                if (pl.getAuraPoints() == min) pl.modifyAuraPoints(-ec.getMalus());
             });
         });
 }
@@ -290,27 +298,31 @@ public class DeckFactory {
                 e.printStackTrace();
             }
 
-            // 2. Caricamento Eventi (NON hanno IEffects, usano resolveEvent)
+            // 2. Caricamento Eventi
             try (Reader reader = new FileReader(eventPath)) {
 
-                Type eventListType = new TypeToken<List<EventDTO>>() {
-                }.getType();
+                Type eventListType = new TypeToken<List<EventDTO>>() {}.getType();
                 List<EventDTO> eventiLetti = gson.fromJson(reader, eventListType);
 
                 for (EventDTO dto : eventiLetti) {
-                    IEffect<EventCard> eff = eventEffectRegistry.get(dto.etichettaSottoclasse);
-                    if (eff == null) continue;
 
-                    EventCard event = new EventCard(dto.era, dto.finalEvent);
-                    event.baseFood = dto.baseFood;
-                    event.auraPerCharacter = dto.auraPerCharacter;
-                    event.threshold = dto.threshold;
-                    event.bonusMultiplier = dto.bonusMultiplier;
-                    event.penalty = dto.penalty;
-                    event.bonus = dto.bonus;
-                    event.malus = dto.malus;
+                    List<IEffect<EventCard>> effects = new ArrayList<>();
+                    if (eventEffectRegistry.containsKey(dto.etichettaSottoclasse)) {
+                        effects.add(eventEffectRegistry.get(dto.etichettaSottoclasse));
+                    }
 
-                    event.setEffect(g -> eff.apply(null, g, event));
+                    EventCard event = new EventCard(
+                            dto.era,
+                            dto.finalEvent,
+                            effects,
+                            dto.baseFood,
+                            dto.auraPerCharacter,
+                            dto.threshold,
+                            dto.bonusMultiplier,
+                            dto.penalty,
+                            dto.bonus,
+                            dto.malus
+                    );
 
                     if (dto.finalEvent) {
                         finalEvents.add(event);
@@ -346,4 +358,3 @@ public class DeckFactory {
             return deck;
         }
     }
-}

@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 
 
-public abstract class TribeCard extends Card {
+public abstract class TribeCard extends Card implements IDrawable{
 
     /**
      * Constructor

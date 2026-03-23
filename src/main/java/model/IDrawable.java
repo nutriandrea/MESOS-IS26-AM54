@@ -7,6 +7,6 @@ import java.util.*;
 public interface IDrawable {
 
     
-    public void reveal();
+    public void reveal(Board board, String row);
 
 }

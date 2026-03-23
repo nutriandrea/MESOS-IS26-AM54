@@ -8,16 +8,21 @@ import java.util.*;
 
 public class Board {
 
-    private List<Card> upperRow;
-    private List<Card> lowerRow;
+    private List<CharacterCard> characterUpperRow;
+    private List<CharacterCard> characterLowerRow;
+    private List<EventCard> eventUpperRow;
+    private List<EventCard> eventLowerRow;
     private List<BuildingCard> buildingCardsUpperRow;
     private List<BuildingCard> buildingCardsLowerRow;
+
     private List<OfferingTile> offeringTrack;
     private List<TurnOrderSlot> turnOrderTile;
 
     public Board() {
-        this.upperRow = new ArrayList<>();
-        this.lowerRow = new ArrayList<>();
+        this.characterUpperRow = new ArrayList<>();
+        this.characterLowerRow = new ArrayList<>();
+        this.eventUpperRow = new ArrayList<>();
+        this.eventLowerRow = new ArrayList<>();
         this.buildingCardsUpperRow = new ArrayList<>();
         this.buildingCardsLowerRow = new ArrayList<>();
         this.offeringTrack = new ArrayList<>();
@@ -91,37 +96,67 @@ public class Board {
         }
     }
 
+    // La Board offre degli "sportelli" specifici, senza fare domande
+    public void addCharacterCard(CharacterCard card, String row) {
+        if (row.equalsIgnoreCase("upper")) {
+            characterUpperRow.add(card);
+        } else {
+            characterLowerRow.add(card);
+        }
+    }
+
+    public void addEventCard(EventCard card, String row) {
+            eventUpperRow.add(card);
+    }
+
+
+    public void populateLowerRow(Game game) {
+        int numPlayers = game.getPlayersNumber();
+        int requiredCharacters = numPlayers + 1;
+
+        characterLowerRow.clear();
+        Deck<TribeCard> tribeDeck = game.getTribeDeck();
+
+        // Continua a pescare finché la fila in basso non ha il numero giusto di Personaggi
+        while (characterLowerRow.size() < requiredCharacters) {
+
+            TribeCard card = tribeDeck.drawCard();
+
+            // Sicurezza: se il mazzo finisce, blocchiamo il ciclo per evitare loop infiniti
+            if (card == null) {
+                System.out.println("Attenzione: il mazzo delle Tribù è esaurito!");
+                break;
+            }
+
+            // Diciamo alla carta: "Rivelati e vai nella fila in basso!"
+            // - Se è un Personaggio, andrà in characterLowerRow.
+            // - Se è un Evento, lo sportello della Board lo devierà in eventUpperRow!
+            card.reveal(this, "lower");
+        }
+    }
+
     public void populateUpperRow(Game game) {
         int numPlayers = game.getPlayersNumber();
         int count = numPlayers + 4;
 
-        upperRow.clear();
+        characterUpperRow.clear();
+        eventUpperRow.clear();
+
         Deck<TribeCard> tribeDeck = game.getTribeDeck();
 
         for (int i = 0; i < count; i++) {
-            Card card = tribeDeck.drawCard(); // Chiamata alla classe Deck
+            TribeCard card = tribeDeck.drawCard();
+
             if (card != null) {
-                upperRow.add(card);
+                // MAGIA! Nessun instanceof.
+                // Se è un Personaggio andrà da solo in characterUpperRow.
+                // Se è un Evento andrà da solo in eventUpperRow.
+                card.reveal(this, "upper");
             }
         }
     }
 
-    public void populateLowerRow(Game game) {
-        int numPlayers = game.getPlayersNumber();
-        int count = numPlayers + 1;
-
-        lowerRow.clear();
-        Deck<TribeCard> tribeDeck = game.getTribeDeck();
-
-        for (int i = 0; i < count; i++) {
-            Card card = tribeDeck.drawCard();
-            if (card != null) {
-                lowerRow.add(card);
-            }
-        }
-    }
-
-public void populateUpperRowBuildings(Game game) {
+    public void populateUpperRowBuildings(Game game) {
         int numPlayers = game.getPlayersNumber();
         int currentEra = game.getCurrentEra();
 
@@ -156,8 +191,13 @@ public void populateUpperRowBuildings(Game game) {
     }
 
     public void moveUpperToLower() {
-        lowerRow.addAll(upperRow);
-        upperRow.clear();
+        // 1. Facciamo scivolare giù tutti i Personaggi rimasti
+        characterLowerRow.addAll(characterUpperRow);
+        characterUpperRow.clear();
+
+        // 2. Facciamo scivolare giù tutti gli Eventi rimasti
+        eventLowerRow.addAll(eventUpperRow);
+        eventUpperRow.clear();
     }
 
     public void moveBuildings() {
@@ -167,14 +207,26 @@ public void populateUpperRowBuildings(Game game) {
 
     public void refillUpperRow(Game game) {
         int numPlayers = game.getPlayersNumber();
-        int cardsToAdd = (numPlayers + 4) - upperRow.size();
+        int targetSize = numPlayers + 4;
 
         Deck<TribeCard> tribeDeck = game.getTribeDeck();
-        for (int i = 0; i < cardsToAdd; i++) {
-            Card card = tribeDeck.drawCard();
-            if (card != null) {
-                upperRow.add(card);
+
+        // Il ciclo controlla la somma di Personaggi ed Eventi presenti nella riga in alto.
+        // Finché non arriviamo a "numPlayers + 4", continuiamo a pescare.
+        while ((characterUpperRow.size() + eventUpperRow.size()) < targetSize) {
+
+            TribeCard card = tribeDeck.drawCard();
+
+            // Sicurezza: se il mazzo è finito, ci fermiamo!
+            if (card == null) {
+                System.out.println("Attenzione: il mazzo delle Tribù è esaurito!");
+                break;
             }
+
+            // MAGIA: La carta si rivela e, grazie agli "sportelli" che abbiamo
+            // creato prima nella Board, andrà in automatico in characterUpperRow
+            // oppure in eventUpperRow. In entrambi i casi, la somma totale salirà di 1!
+            card.reveal(this, "upper");
         }
     }
 
@@ -191,11 +243,21 @@ public void populateUpperRowBuildings(Game game) {
      * Ottiene la fila specificata
      */
     public List<Card> getRow(String row) {
+        // Creiamo una nuova lista vuota che conterrà le carte unite
+        List<Card> combinedRow = new ArrayList<>();
+
         if (row.equalsIgnoreCase("upper")) {
-            return new ArrayList<>(upperRow);
-        } else {
-            return new ArrayList<>(lowerRow);
+            // Uniamo i Personaggi e gli Eventi della riga in alto
+            combinedRow.addAll(characterUpperRow);
+            combinedRow.addAll(eventUpperRow);
+        } else if (row.equalsIgnoreCase("lower")) {
+            // Uniamo i Personaggi e gli Eventi della riga in basso
+            combinedRow.addAll(characterLowerRow);
+            combinedRow.addAll(eventLowerRow);
         }
+
+        // Restituiamo la lista fusa!
+        return combinedRow;
     }
 
     /**
@@ -220,8 +282,6 @@ public void resolveEvents() {
 
 public List<OfferingTile> getOfferingTrack() { return offeringTrack; }
 public List<TurnOrderSlot> getTurnOrderTile() { return turnOrderTile;}
-public List<Card> getUpperRow() { return upperRow; }
-public List<Card> getLowerRow() { return lowerRow; }
 public List<BuildingCard> getBuildingCardsUpperRow() { return buildingCardsUpperRow; }
 public List<BuildingCard> getBuildingCardsLowerRow() { return buildingCardsLowerRow; }
 

@@ -6,7 +6,7 @@ import java.util.*;
 /**
  * 
  */
-public class CharacterCard extends TribeCard {
+public class CharacterCard extends TribeCard implements IDrawable {
 
     private int level;
     private JobType type;
@@ -41,5 +41,10 @@ public class CharacterCard extends TribeCard {
         }
     }
 
+    @Override
+    public void reveal(Board board, String row) {
+        // La carta dice: "Ehi Board, sono un Personaggio, mettimi nella fila dei Personaggi!"
+        board.addCharacterCard(this, row);
+    }
 }
 

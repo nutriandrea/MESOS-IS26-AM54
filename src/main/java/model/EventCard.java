@@ -58,6 +58,12 @@ public class EventCard extends TribeCard {
         }
     }
 
+    @Override
+    public void reveal(Board board, String row) {
+        // La carta dice: "Ehi Board, sono un Evento, mettimi nella fila degli Eventi!"
+        board.addEventCard(this, row);
+    }
+
     public boolean isFinalEvent() {
         return finalEvent;
     }

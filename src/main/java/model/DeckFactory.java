@@ -209,7 +209,7 @@ public class DeckFactory {
                     JobType type = JobType.valueOf(dto.jobType);
                     Phases phase = Phases.valueOf(dto.phase);
 
-                    List<IEffect> effects = new ArrayList<>();
+                    List<IEffect<BuildingCard>> effects = new ArrayList<>();
                     if (buildingsEffectRegistry.containsKey(dto.nomeLambda)) {
                         effects.add(buildingsEffectRegistry.get(dto.nomeLambda));
                     }
@@ -282,9 +282,9 @@ public class DeckFactory {
                         JobType type = JobType.valueOf(dto.characterType);
                         Phases phase = Phases.valueOf(dto.phase);
 
-                        List<IEffect> effects = new ArrayList<>();
-                        if (charactersEffectRegistry.containsKey(dto.nomeLambda)) {
-                            effects.add(charactersEffectRegistry.get(dto.nomeLambda));
+                        List<IEffect<CharacterCard>> effects = new ArrayList<>();
+                        if (charactersEffectRegistry.containsKey(dto.characterType)) {
+                            effects.add(charactersEffectRegistry.get(dto.characterType));
                         }
 
                         CharacterCard card = new CharacterCard(dto.level, type, dto.aura, phase, effects, dto.era);

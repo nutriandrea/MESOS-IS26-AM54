@@ -1,0 +1,44 @@
+[
+  {
+    "id": "A",
+    "cardsFromUpper": 0,
+    "cardsFromLower": 0,
+    "foodBonus": 3
+  },
+  {
+    "id": "B",
+    "cardsFromUpper": 0,
+    "cardsFromLower": 1,
+    "foodBonus": 0
+  },
+  {
+    "id": "C",
+    "cardsFromUpper": 1,
+    "cardsFromLower": 0,
+    "foodBonus": 0
+  },
+  {
+    "id": "D",
+    "cardsFromUpper": 0,
+    "cardsFromLower": 2,
+    "foodBonus": 0
+  },
+  {
+    "id": "E",
+    "cardsFromUpper": 1,
+    "cardsFromLower": 1,
+    "foodBonus": 0
+  },
+  {
+    "id": "F",
+    "cardsFromUpper": 2,
+    "cardsFromLower": 0,
+    "foodBonus": 0
+  },
+  {
+    "id": "G",
+    "cardsFromUpper": 2,
+    "cardsFromLower": 1,
+    "foodBonus": 0
+  }
+]

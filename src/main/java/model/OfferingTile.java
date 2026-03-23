@@ -10,43 +10,21 @@ public class OfferingTile {
     private int foodBonus;
     private Player occupiedBy;
 
-    /**
-     * Costruttore di default
-     */
-    public OfferingTile() {
+    public OfferingTile(char id, int cardsFromUpper, int cardsFromLower, int foodBonus) {
+        this.id = id;
+        this.cardsFromUpper = cardsFromUpper;
+        this.cardsFromLower = cardsFromLower;
+        this.foodBonus = foodBonus;
+        this.occupiedBy = null; // default (non inzializzo occupato)
     }
 
-    /**
-     * Costruttore che legge gli attributi dal file in base all'ID
-     * * @param id L'identificativo della tessera (es. 'A', 'B', 'C')
-     */
-    public OfferingTile(char id) {
-        this.id = id;
 
-        // Sostituisci con il percorso corretto del tuo file
-        String filePath = "offering_tiles.txt";
+    public char getId() {
+        return id;
+    }
 
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                // Ignoriamo righe vuote o commenti
-                if (line.trim().isEmpty() || line.startsWith("#")) continue;
-
-                String[] data = line.split(",");
-
-                // Controlliamo se la riga inizia con l'ID che stiamo cercando
-                if (data.length >= 4 && data[0].trim().charAt(0) == id) {
-                    this.cardsFromUpper = Integer.parseInt(data[1].trim());
-                    this.cardsFromLower = Integer.parseInt(data[2].trim());
-                    this.foodBonus = Integer.parseInt(data[3].trim());
-                    break; // Trovata la tessera, fermiamo la lettura
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Errore di lettura del file per la tessera " + id + ": " + e.getMessage());
-        } catch (NumberFormatException e) {
-            System.err.println("Errore nel formato dei numeri nel file per la tessera " + id);
-        }
+    public int getFoodBonus() {
+        return foodBonus;
     }
 
     public Player getOccupiedBy() {
@@ -59,6 +37,11 @@ public class OfferingTile {
 
     public void occupy(Player p) {
         this.occupiedBy = p;
+    }
+
+    //sembra essere bad practice usare il occupy ma con null come riferimento
+    public void freeSlot() {
+        this.occupiedBy = null;
     }
 
     /**
@@ -74,11 +57,4 @@ public class OfferingTile {
         return x;
     }
 
-    public char getId() {
-        return id;
-    }
-
-    public int getFoodBonus() {
-        return foodBonus;
-    }
 }

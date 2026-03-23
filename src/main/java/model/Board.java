@@ -1,6 +1,10 @@
 package model;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.io.*;
+import java.lang.reflect.Type;
 import java.util.*;
 
 public class Board {
@@ -47,11 +51,44 @@ public class Board {
                 {'A', 'B', 'C', 'D', 'E', 'F', 'G'} // 5 giocatori
         };
 
-        // Scorriamo SOLO le lettere necessarie per questa partita
-        for (char tileId : requiredTiles[numPlayers]) {
-            // Creiamo la tessera passandole la lettera come ID.
-            offeringTrack.add(new OfferingTile(tileId));
+        List<Character> neededTiles = new ArrayList<>();
+        for (char c : requiredTiles[numPlayers]) {
+            neededTiles.add(c);
         }
+
+        Gson gson = new Gson();
+        String filePath = "data/OfferingTilesSetup.json";
+        try (Reader reader = new FileReader(filePath)) {
+
+            // non ho usato un DTO quindi senza List<DTO>, dico a Gson: "Dammi una Lista di Mappe Generiche"
+            Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
+            List<Map<String, Object>> tessereLette = gson.fromJson(reader, listType);
+
+            // scorro ogni Mappa (che rappresenta una singola tessera JSON)
+            for (Map<String, Object> mappa : tessereLette) {
+
+                // Estraggo la lettera dalla mappa
+                char idLetto = ((String) mappa.get("id")).charAt(0);
+
+                if (neededTiles.contains(idLetto)) {
+
+                    // N.B. Gson legge TUTTI i numeri come Double (es. 2.0), bisogna prima fare il cast a Double, e poi chiamare .intValue()
+                    int upper = ((Double) mappa.get("cardsFromUpper")).intValue();
+                    int lower = ((Double) mappa.get("cardsFromLower")).intValue();
+                    int food  = ((Double) mappa.get("foodBonus")).intValue();
+
+                    OfferingTile tile = new OfferingTile(idLetto, upper, lower, food);
+                    offeringTrack.add(tile);
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+
+        //nel caso venisse messo in ordine sbagliato, li ordina
+        offeringTrack.sort(Comparator.comparing(OfferingTile::getId));
+
     }
 
     private void initializeTurnOrderSlots(int numPlayers) {

@@ -11,6 +11,7 @@ public class DeckFactory {
 
     private static final Map<String, IEffect<BuildingCard>> buildingsEffectRegistry = new HashMap<>();
     private static final Map<String, IEffect<CharacterCard>> charactersEffectRegistry = new HashMap<>();
+    private static final Map<String, IEffect<EventCard>> eventEffectRegistry = new HashMap<>();
 
     // Inizializzazione del registro degli effetti tramite Lambda
     static {
@@ -93,179 +94,225 @@ public class DeckFactory {
                 .filter(t -> t.getOccupiedBy() != null && t.getOccupiedBy().equals(p))
                 .forEach(t -> p.modifyFood(1)));
 
-        buildingsEffectRegistry.put("DISCOUNT_FOOD_FARMER", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.FARMER).count() * -1)) );
-        buildingsEffectRegistry.put("DISCOUNT_FOOD_ARTIST", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count() * -1)) );
-        buildingsEffectRegistry.put("NO_LOSS", (p,g,cc) -> p.setEventCostAura(- p.getEventCostAura()) );
+        buildingsEffectRegistry.put("DISCOUNT_FOOD_FARMER", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.FARMER).count() * -1)));
+        buildingsEffectRegistry.put("DISCOUNT_FOOD_ARTIST", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count() * -1)));
+        buildingsEffectRegistry.put("NO_LOSS", (p, g, cc) -> p.setEventCostAura(-p.getEventCostAura()));
         //era2
-        buildingsEffectRegistry.put("PLUS_HUNTING", (p,g,cc) ->  {p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count()));
-            p.setEventCostAura((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count()));});
-        buildingsEffectRegistry.put("PLUS_FOOD_ARTIST", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count())) );
+        buildingsEffectRegistry.put("PLUS_HUNTING", (p, g, cc) -> {
+            p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count()));
+            p.setEventCostAura((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count()));
+        });
+        buildingsEffectRegistry.put("PLUS_FOOD_ARTIST", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count())));
         buildingsEffectRegistry.put("DISCOUNT_FOOD_INVENTOR", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream()
-                .filter(c -> c.getJobType() == JobType.INVENTOR).count() * -1)) );
-        buildingsEffectRegistry.put("DOUBLE_AURA_SHAMAN", (p, g, cc) -> p.setEventCostAura(p.getEventCostAura() * 2) );
+                .filter(c -> c.getJobType() == JobType.INVENTOR).count() * -1)));
+        buildingsEffectRegistry.put("DOUBLE_AURA_SHAMAN", (p, g, cc) -> p.setEventCostAura(p.getEventCostAura() * 2));
 
         buildingsEffectRegistry.put("DOUBLE_CONSTRUCTOR_AURA", (p, g, cc) -> p.getMyTribe().stream()
-                .filter(c -> c.getJobType() == JobType.BUILDER).forEach(c -> p.modifyAuraPoints(c.getAura()) ));
-        buildingsEffectRegistry.put("THREE_MAGIC", (p, g, cc) -> p.modifyMagicPoints(3) );
+                .filter(c -> c.getJobType() == JobType.BUILDER).forEach(c -> p.modifyAuraPoints(c.getAura())));
+        buildingsEffectRegistry.put("THREE_MAGIC", (p, g, cc) -> p.modifyMagicPoints(3));
 
         buildingsEffectRegistry.put("SIX_DIFFERENT_AURA", (p, g, cc) -> p.modifyAuraPoints(6 * (int) Arrays.stream(JobType.values())
                 .mapToLong(job -> p.getMyTribe().stream().filter(c -> c.getJobType() == job).count())
                 .min().orElse(0)));
-        buildingsEffectRegistry.put("AURA_SHAMAN", (p, g, cc) -> p.modifyAuraPoints((int) (4*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.SHAMAN).count()))) );
-        buildingsEffectRegistry.put("AURA_HUNTER", (p, g, cc) -> p.modifyAuraPoints((int) (3*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.HUNTER).count()))) );
-        buildingsEffectRegistry.put("AURA_BUILDER", (p, g, cc) -> p.modifyAuraPoints((int) (4*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.BUILDER).count()))) );
-        buildingsEffectRegistry.put("AURA_ARTIST", (p, g, cc) -> p.modifyAuraPoints((int) (4*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.ARTIST).count()))) );
-        buildingsEffectRegistry.put("AURA_FARMER", (p, g, cc) -> p.modifyAuraPoints((int) (4*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.FARMER).count()))) );
-        buildingsEffectRegistry.put("AURA_INVENTOR", (p, g, cc) -> p.modifyAuraPoints((int) (2*(p.getMyTribe().stream().filter(c->c.getJobType()==JobType.INVENTOR).count()))) );
-        buildingsEffectRegistry.put("25_AURA", (p, g, cc) -> p.modifyAuraPoints(25) );
-        buildingsEffectRegistry.put("EXTRA_PICK", (p, g, cc) -> p.setExtraPick(true) );
+        buildingsEffectRegistry.put("AURA_SHAMAN", (p, g, cc) -> p.modifyAuraPoints((int) (4 * (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.SHAMAN).count()))));
+        buildingsEffectRegistry.put("AURA_HUNTER", (p, g, cc) -> p.modifyAuraPoints((int) (3 * (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count()))));
+        buildingsEffectRegistry.put("AURA_BUILDER", (p, g, cc) -> p.modifyAuraPoints((int) (4 * (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.BUILDER).count()))));
+        buildingsEffectRegistry.put("AURA_ARTIST", (p, g, cc) -> p.modifyAuraPoints((int) (4 * (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count()))));
+        buildingsEffectRegistry.put("AURA_FARMER", (p, g, cc) -> p.modifyAuraPoints((int) (4 * (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.FARMER).count()))));
+        buildingsEffectRegistry.put("AURA_INVENTOR", (p, g, cc) -> p.modifyAuraPoints((int) (2 * (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.INVENTOR).count()))));
+        buildingsEffectRegistry.put("25_AURA", (p, g, cc) -> p.modifyAuraPoints(25));
+        buildingsEffectRegistry.put("EXTRA_PICK", (p, g, cc) -> p.setExtraPick(true));
 
         // Characters
-        charactersEffectRegistry.put("HUNTER", (p, g, cc) -> p.modifyFood((int) (p.getMyTribe().stream().filter(c->c.getJobType()==JobType.HUNTER).count()+1)));
+        charactersEffectRegistry.put("HUNTER", (p, g, cc) -> p.modifyFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count() + 1)));
         charactersEffectRegistry.put("BUILDER", (p, g, cc) -> p.modifyMyBuildingDiscount(cc.getLevel()));
         charactersEffectRegistry.put("SHAMAN", (p, g, cc) -> p.modifyMagicPoints(cc.getLevel()));
         charactersEffectRegistry.put("FARMER", (p, g, cc) -> p.modifyMyFoodDiscount(cc.getLevel()));
-    }
 
-    /**
-     * Crea il mazzo edifici leggendo dal file specifico e filtrando per numero di giocatori.
-     * @param filePath il percorso del file
-     * @param numPlayers il numero di giocatori nella partita
-     */
-    public static Deck<BuildingCard> createBuildingDeck(String filePath, int numPlayers) {
+        // Event
+        // HUNTER: baseFood + aura per hunter * era
+        eventEffectRegistry.put("HUNTER", (p, g, ec) ->
+                g.getPlayers().forEach(pl -> {
+                    pl.modifyFood(ec.baseFood);
+                    pl.modifyAuraPoints((int) pl.getMyTribe().stream().count() * ec.auraPerCharacter);
+                })
+        );
 
-        // Tabella dei conteggi [giocatori][era-1]
-        int[][] eraCounts = {
-                {0, 0, 0},              // indice 0 non usato
-                {0, 0, 0},              // indice 1 non usato
-                {1, 2, 3},              // 2 giocatori → Era I, II, III
-                {2, 2, 4},              // 3 giocatori
-                {2, 3, 4},              // 4 giocatori
-                {2, 3, 5}               // 5 giocatori
-        };
+        // FARMER: ogni character costa 1 food, se non c'è food paga in aura
+        eventEffectRegistry.put("FARMER", (p, g, ec) ->
+                g.getPlayers().forEach(pl -> {
+                    pl.getMyTribe().forEach(c -> {
+                        if (pl.getFood() > 0) pl.modifyFood(-1);
+                        else pl.modifyAuraPoints(-ec.auraPerCharacter);
+                    });
+                })
+        );
 
-        // Liste separate per ogni era
-        List<BuildingCard> e1 = new ArrayList<>();
-        List<BuildingCard> e2 = new ArrayList<>();
-        List<BuildingCard> e3 = new ArrayList<>();
+        // ARTIST: penalità o bonus in aura secondo il numero di painter
+        eventEffectRegistry.put("ARTIST", (p, g, ec) ->
+                g.getPlayers().forEach(pl -> {
+                    long painters = pl.getMyTribe().stream()
+                            .filter(c -> c.getJobType() == JobType.ARTIST).count();
+                    pl.modifyAuraPoints(painters <= ec.threshold ? -ec.penalty : (int) painters * ec.bonusMultiplier);
+                })
+        );
 
-        Gson gson = new Gson();
+        // SHAMAN: bonus/malus in aura per player con più o meno aura
+        eventEffectRegistry.put("SHAMAN", (p, g, ec) -> {
+            int max = g.getPlayers().stream().mapToInt(Player::getAuraPoints).max().orElse(0);
+            int min = g.getPlayers().stream().mapToInt(Player::getAuraPoints).min().orElse(0);
+            g.getPlayers().forEach(pl -> {
+                if (pl.getAuraPoints() == max) pl.modifyAuraPoints(ec.bonus);
+                if (pl.getAuraPoints() == min) pl.modifyAuraPoints(-ec.malus);
+            });
+        });
+}
+        /**
+         * Crea il mazzo edifici leggendo dal file specifico e filtrando per numero di giocatori.
+         * @param filePath il percorso del file
+         * @param numPlayers il numero di giocatori nella partita
+         */
+        public static Deck<BuildingCard> createBuildingDeck (String filePath,int numPlayers){
 
-        try (Reader reader = new FileReader(filePath)) {
+            // Tabella dei conteggi [giocatori][era-1]
+            int[][] eraCounts = {
+                    {0, 0, 0},              // indice 0 non usato
+                    {0, 0, 0},              // indice 1 non usato
+                    {1, 2, 3},              // 2 giocatori → Era I, II, III
+                    {2, 2, 4},              // 3 giocatori
+                    {2, 3, 4},              // 4 giocatori
+                    {2, 3, 5}               // 5 giocatori
+            };
 
-            Type listType = new TypeToken<List<BuildingDTO>>() {
-            }.getType();
-            List<BuildingDTO> carteLette = gson.fromJson(reader, listType);
+            // Liste separate per ogni era
+            List<BuildingCard> e1 = new ArrayList<>();
+            List<BuildingCard> e2 = new ArrayList<>();
+            List<BuildingCard> e3 = new ArrayList<>();
 
-            for (BuildingDTO dto : carteLette) {
-                JobType type = JobType.valueOf(dto.jobType);
-                Phases phase = Phases.valueOf(dto.phase);
+            Gson gson = new Gson();
 
-                List<IEffect> effects = new ArrayList<>();
-                if (buildingsEffectRegistry.containsKey(dto.nomeLambda)) {
-                    effects.add(buildingsEffectRegistry.get(dto.nomeLambda));
-                }
+            try (Reader reader = new FileReader(filePath)) {
 
-                BuildingCard card = new BuildingCard(type, dto.cost, dto.finalAura, phase, effects, dto.era);
-                // Smistamento per Era (qui carichiamo TUTTE le carte del file)
-                if (dto.era == 1) e1.add(card);
-                else if (dto.era == 2) e2.add(card);
-                else if (dto.era == 3) e3.add(card);
-            }
-        }catch (Exception e) { e.printStackTrace(); }
+                Type listType = new TypeToken<List<BuildingDTO>>() {
+                }.getType();
+                List<BuildingDTO> carteLette = gson.fromJson(reader, listType);
 
-        // Mischiamo tutte le carte di ogni era
-        Collections.shuffle(e1);
-        Collections.shuffle(e2);
-        Collections.shuffle(e3);
-
-        Stack<BuildingCard> finalDeck = new Stack<>();
-
-        // Push in ordine inverso (Era 3, poi 2, poi 1) limitato dal numero di giocatori
-        // Usiamo Math.min per evitare errori se nel file ci sono meno carte del previsto
-
-        int countE3 = eraCounts[numPlayers][2];
-        for (int i = 0; i < Math.min(countE3, e3.size()); i++) {
-            finalDeck.push(e3.get(i));
-        }
-
-        int countE2 = eraCounts[numPlayers][1];
-        for (int i = 0; i < Math.min(countE2, e2.size()); i++) {
-            finalDeck.push(e2.get(i));
-        }
-
-        int countE1 = eraCounts[numPlayers][0];
-        for (int i = 0; i < Math.min(countE1, e1.size()); i++) {
-            finalDeck.push(e1.get(i));
-        }
-
-        Deck<BuildingCard> deck = new Deck<>(finalDeck);
-
-        return deck;
-    }
-
-
-    /**
-     * Crea il mazzo Tribù unendo Personaggi ed Eventi.
-     * Gestisce la logica dei Final Event in fondo al mazzo.
-     */
-    public static Deck<TribeCard> createTribeDeck(String charPath, String eventPath, int numPlayers) {
-
-        List<TribeCard> finalEvents = new ArrayList<>();
-        List<TribeCard> era1 = new ArrayList<>();
-        List<TribeCard> era2 = new ArrayList<>();
-        List<TribeCard> era3 = new ArrayList<>();
-
-        Gson gson = new Gson();
-
-        // 1. Caricamento Personaggi (Filtrati con logica 2+, 3+, 4+, 5)
-        try (Reader reader = new FileReader(charPath)) {
-
-            Type charListType = new TypeToken<List<CharacterDTO>>(){}.getType();
-            List<CharacterDTO> charLetti = gson.fromJson(reader, charListType);
-
-            for (CharacterDTO dto : charLetti) {
-                // Filtro sui giocatori
-                if (numPlayers >= dto.minPlayers) {
-
-                    JobType type = JobType.valueOf(dto.characterType);
+                for (BuildingDTO dto : carteLette) {
+                    JobType type = JobType.valueOf(dto.jobType);
                     Phases phase = Phases.valueOf(dto.phase);
 
                     List<IEffect> effects = new ArrayList<>();
-                    if (charactersEffectRegistry.containsKey(dto.nomeLambda)) {
-                        effects.add(charactersEffectRegistry.get(dto.nomeLambda));
+                    if (buildingsEffectRegistry.containsKey(dto.nomeLambda)) {
+                        effects.add(buildingsEffectRegistry.get(dto.nomeLambda));
                     }
 
-                    CharacterCard card = new CharacterCard(dto.level, type, dto.aura, phase, effects, dto.era);
-
-                    if (dto.era == 1) era1.add(card);
-                    else if (dto.era == 2) era2.add(card);
-                    else era3.add(card);
+                    BuildingCard card = new BuildingCard(type, dto.cost, dto.finalAura, phase, effects, dto.era);
+                    // Smistamento per Era (qui carichiamo TUTTE le carte del file)
+                    if (dto.era == 1) e1.add(card);
+                    else if (dto.era == 2) e2.add(card);
+                    else if (dto.era == 3) e3.add(card);
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) { e.printStackTrace(); }
 
-        // 2. Caricamento Eventi (NON hanno IEffects, usano resolveEvent)
-        try (Reader reader = new FileReader(eventPath)) {
+            // Mischiamo tutte le carte di ogni era
+            Collections.shuffle(e1);
+            Collections.shuffle(e2);
+            Collections.shuffle(e3);
 
-            Type eventListType = new TypeToken<List<EventDTO>>(){}.getType();
-            List<EventDTO> eventiLetti = gson.fromJson(reader, eventListType);
+            Stack<BuildingCard> finalDeck = new Stack<>();
 
-            for (EventDTO dto : eventiLetti) {
+            // Push in ordine inverso (Era 3, poi 2, poi 1) limitato dal numero di giocatori
+            // Usiamo Math.min per evitare errori se nel file ci sono meno carte del previsto
 
-                String label = dto.etichettaSottoclasse;
+            int countE3 = eraCounts[numPlayers][2];
+            for (int i = 0; i < Math.min(countE3, e3.size()); i++) {
+                finalDeck.push(e3.get(i));
+            }
 
-                // Creazione tramite il tuo costrutto switch!
-                EventCard event = switch (label) {
-                    case "HUNT" -> new HuntEvent(dto.era);
-                    case "PAINTING" -> new PaintingEvent(dto.era);
-                    case "SHAMAN" -> new ShamanEvent(dto.era, dto.FinalEvent);
-                    case "SUSTENANCE" -> new SustenanceEvent(dto.era, dto.FinalEvent);
-                    default -> null;
-                };
+            int countE2 = eraCounts[numPlayers][1];
+            for (int i = 0; i < Math.min(countE2, e2.size()); i++) {
+                finalDeck.push(e2.get(i));
+            }
 
-                if (event != null) {
-                    if (dto.FinalEvent) {
+            int countE1 = eraCounts[numPlayers][0];
+            for (int i = 0; i < Math.min(countE1, e1.size()); i++) {
+                finalDeck.push(e1.get(i));
+            }
+
+            Deck<BuildingCard> deck = new Deck<>(finalDeck);
+
+            return deck;
+        }
+
+
+        /**
+         * Crea il mazzo Tribù unendo Personaggi ed Eventi.
+         * Gestisce la logica dei Final Event in fondo al mazzo.
+         */
+        public static Deck<TribeCard> createTribeDeck (String charPath, String eventPath,int numPlayers){
+
+            List<TribeCard> finalEvents = new ArrayList<>();
+            List<TribeCard> era1 = new ArrayList<>();
+            List<TribeCard> era2 = new ArrayList<>();
+            List<TribeCard> era3 = new ArrayList<>();
+
+            Gson gson = new Gson();
+
+            // 1. Caricamento Personaggi (Filtrati con logica 2+, 3+, 4+, 5)
+            try (Reader reader = new FileReader(charPath)) {
+
+                Type charListType = new TypeToken<List<CharacterDTO>>() {
+                }.getType();
+                List<CharacterDTO> charLetti = gson.fromJson(reader, charListType);
+
+                for (CharacterDTO dto : charLetti) {
+                    // Filtro sui giocatori
+                    if (numPlayers >= dto.minPlayers) {
+
+                        JobType type = JobType.valueOf(dto.characterType);
+                        Phases phase = Phases.valueOf(dto.phase);
+
+                        List<IEffect> effects = new ArrayList<>();
+                        if (charactersEffectRegistry.containsKey(dto.nomeLambda)) {
+                            effects.add(charactersEffectRegistry.get(dto.nomeLambda));
+                        }
+
+                        CharacterCard card = new CharacterCard(dto.level, type, dto.aura, phase, effects, dto.era);
+
+                        if (dto.era == 1) era1.add(card);
+                        else if (dto.era == 2) era2.add(card);
+                        else era3.add(card);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // 2. Caricamento Eventi (NON hanno IEffects, usano resolveEvent)
+            try (Reader reader = new FileReader(eventPath)) {
+
+                Type eventListType = new TypeToken<List<EventDTO>>() {
+                }.getType();
+                List<EventDTO> eventiLetti = gson.fromJson(reader, eventListType);
+
+                for (EventDTO dto : eventiLetti) {
+                    IEffect<EventCard> eff = eventEffectRegistry.get(dto.etichettaSottoclasse);
+                    if (eff == null) continue;
+
+                    EventCard event = new EventCard(dto.era, dto.finalEvent);
+                    event.baseFood = dto.baseFood;
+                    event.auraPerCharacter = dto.auraPerCharacter;
+                    event.threshold = dto.threshold;
+                    event.bonusMultiplier = dto.bonusMultiplier;
+                    event.penalty = dto.penalty;
+                    event.bonus = dto.bonus;
+                    event.malus = dto.malus;
+
+                    event.setEffect(g -> eff.apply(null, g, event));
+
+                    if (dto.finalEvent) {
                         finalEvents.add(event);
                     } else {
                         if (dto.era == 1) era1.add(event);
@@ -273,28 +320,30 @@ public class DeckFactory {
                         else era3.add(event);
                     }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) { e.printStackTrace(); }
 
-        // Mischiamo tutto per blocchi
-        Collections.shuffle(era1);
-        Collections.shuffle(era2);
-        Collections.shuffle(era3);
+            // Mischiamo tutto per blocchi
+            Collections.shuffle(era1);
+            Collections.shuffle(era2);
+            Collections.shuffle(era3);
 
-        Stack<TribeCard> finalDeck = new Stack<>();
+            Stack<TribeCard> finalDeck = new Stack<>();
 
-        // ORDINE DI PUSH (Bottom to Top):
-        // 1. Final Events (Abs bottom)
-        for (TribeCard c : finalEvents) finalDeck.push(c);
-        // 2. Era 3
-        for (TribeCard c : era3) finalDeck.push(c);
-        // 3. Era 2
-        for (TribeCard c : era2) finalDeck.push(c);
-        // 4. Era 1 (Top)
-        for (TribeCard c : era1) finalDeck.push(c);
+            // ORDINE DI PUSH (Bottom to Top):
+            // 1. Final Events (Abs bottom)
+            for (TribeCard c : finalEvents) finalDeck.push(c);
+            // 2. Era 3
+            for (TribeCard c : era3) finalDeck.push(c);
+            // 3. Era 2
+            for (TribeCard c : era2) finalDeck.push(c);
+            // 4. Era 1 (Top)
+            for (TribeCard c : era1) finalDeck.push(c);
 
-        Deck<TribeCard> deck = new Deck<>(finalDeck);
+            Deck<TribeCard> deck = new Deck<>(finalDeck);
 
-        return deck;
+            return deck;
+        }
     }
 }

@@ -1,14 +1,86 @@
 [
-  { "finalEvent": false, "etichettaSottoclasse": "PAINTING", "era": 1 },
-  { "finalEvent": false, "etichettaSottoclasse": "SHAMAN", "era": 1 },
-  { "finalEvent": false, "etichettaSottoclasse": "HUNT", "era": 1 },
-  { "finalEvent": false, "etichettaSottoclasse": "SUSTENANCE", "era": 1 },
-  { "finalEvent": false, "etichettaSottoclasse": "PAINTING", "era": 2 },
-  { "finalEvent": false, "etichettaSottoclasse": "HUNT", "era": 2 },
-  { "finalEvent": false, "etichettaSottoclasse": "SUSTENANCE", "era": 2 },
-  { "finalEvent": false, "etichettaSottoclasse": "SHAMAN", "era": 2 },
-  { "finalEvent": false, "etichettaSottoclasse": "PAINTING", "era": 3 },
-  { "finalEvent": false, "etichettaSottoclasse": "HUNT", "era": 3 },
-  { "finalEvent": true, "etichettaSottoclasse": "SUSTENANCE", "era": 3 },
-  { "finalEvent": true, "etichettaSottoclasse": "SHAMAN", "era": 3 }
+  {
+    "finalEvent": false,
+    "etichettaSottoclasse": "HUNTER",
+    "era": 1,
+    "baseFood": 1,
+    "auraPerCharacter": 1
+  },
+  {
+    "finalEvent": false,
+    "etichettaSottoclasse": "HUNTER",
+    "era": 2,
+    "baseFood": 1,
+    "auraPerCharacter": 2
+  },
+  {
+    "finalEvent": false,
+    "etichettaSottoclasse": "HUNTER",
+    "era": 3,
+    "baseFood": 1,
+    "auraPerCharacter": 3
+  },
+  {
+    "finalEvent": false,
+    "etichettaSottoclasse": "FARMER",
+    "era": 1,
+    "auraPerCharacter": 1
+  },
+  {
+    "finalEvent": false,
+    "etichettaSottoclasse": "FARMER",
+    "era": 2,
+    "auraPerCharacter": 2
+  },
+  {
+    "finalEvent": true,
+    "etichettaSottoclasse": "FARMER",
+    "era": 3,
+    "auraPerCharacter": 3
+  },
+  {
+    "finalEvent": false,
+    "etichettaSottoclasse": "ARTIST",
+    "era": 1,
+    "threshold": 0,
+    "bonusMultiplier": 1,
+    "penalty": 2
+  },
+  {
+    "finalEvent": false,
+    "etichettaSottoclasse": "ARTIST",
+    "era": 2,
+    "threshold": 2,
+    "bonusMultiplier": 2,
+    "penalty": 2
+  },
+  {
+    "finalEvent": false,
+    "etichettaSottoclasse": "ARTIST",
+    "era": 3,
+    "threshold": 3,
+    "bonusMultiplier": 3,
+    "penalty": 2
+  },
+  {
+    "finalEvent": false,
+    "etichettaSottoclasse": "SHAMAN",
+    "era": 1,
+    "bonus": 5,
+    "malus": 3
+  },
+  {
+    "finalEvent": false,
+    "etichettaSottoclasse": "SHAMAN",
+    "era": 2,
+    "bonus": 10,
+    "malus": 5
+  },
+  {
+    "finalEvent": true,
+    "etichettaSottoclasse": "SHAMAN",
+    "era": 3,
+    "bonus": 15,
+    "malus": 7
+  }
 ]

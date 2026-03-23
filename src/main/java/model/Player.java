@@ -119,10 +119,7 @@ public class Player {
         return myFoodDiscount;
     }
 
-    /**
-     * @param int amout 
-     * @return
-     */
+
 
     //fare attenzione a quando vai sotto di cibo che devi pagare in aura
     public void modifyFood(int amount) {
@@ -133,44 +130,29 @@ public class Player {
         }
     }
 
-    /**
-     * @param int amount 
-     * @return
-     */
+
     public void modifyAuraPoints(int amount) {
         this.aura += amount;
     }
 
-    /**
-     * @param int amount 
-     * @return
-     */
+
     public void modifyMagicPoints(int amount) {
         this.magicPoints += amount;
     }
 
-    /**
-     * @param Card c 
-     * @return
-     */
+
     public void modifyMyTribe(Card c) {
         if (c instanceof CharacterCard) {
             myTribe.add((CharacterCard) c);
         }
     }
 
-    /**
-     * @param int amount 
-     * @return
-     */
+
     public void modifyMyBuildingDiscount(int amount) {
         this.myBuildingDiscount += amount;
     }
 
-    /**
-     * @param int amount 
-     * @return
-     */
+
     public void modifyMyFoodDiscount(int amount) {
         this.myFoodDiscount += amount;
     }
@@ -185,6 +167,11 @@ public class Player {
 
     public void setExtraPick(boolean extraPick) {
         this.extraPick = extraPick;
+    }
+
+    public void resetEventAttributes(){
+        this.eventCostAura=0;
+        this.eventCostFood=0;
     }
 
 }

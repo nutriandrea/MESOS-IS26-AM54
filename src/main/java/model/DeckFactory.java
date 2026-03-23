@@ -96,7 +96,7 @@ public class DeckFactory {
 
         buildingsEffectRegistry.put("DISCOUNT_FOOD_FARMER", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.FARMER).count() * -1)));
         buildingsEffectRegistry.put("DISCOUNT_FOOD_ARTIST", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count() * -1)));
-        buildingsEffectRegistry.put("NO_LOSS", (p, g, cc) -> p.setEventCostAura(-p.getEventCostAura()));
+        buildingsEffectRegistry.put("NO_LOSS", (p, g, cc) -> {});
         //era2
         buildingsEffectRegistry.put("PLUS_HUNTING", (p, g, cc) -> {
             p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.HUNTER).count()));
@@ -105,7 +105,7 @@ public class DeckFactory {
         buildingsEffectRegistry.put("PLUS_FOOD_ARTIST", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count())));
         buildingsEffectRegistry.put("DISCOUNT_FOOD_INVENTOR", (p, g, cc) -> p.setEventCostFood((int) (p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.INVENTOR).count() * -1)));
-        buildingsEffectRegistry.put("DOUBLE_AURA_SHAMAN", (p, g, cc) -> p.setEventCostAura(p.getEventCostAura() * 2));
+        buildingsEffectRegistry.put("DOUBLE_AURA_SHAMAN", (p, g, cc) -> {});
 
         buildingsEffectRegistry.put("DOUBLE_CONSTRUCTOR_AURA", (p, g, cc) -> p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.BUILDER).forEach(c -> p.modifyAuraPoints(c.getAura())));
@@ -136,21 +136,43 @@ public class DeckFactory {
                     long cacciatori = pl.getMyTribe().stream()
                             .filter(c -> c.getJobType() == JobType.HUNTER).count();
 
+                    //prendo gli attributi dati dai building per i plus degli eventi
+                    int buildingFood = pl.getEventCostFood();
+                    int buildingAura = pl.getEventCostAura();
+
                     // Usa ec.baseFood moltiplicato per i cacciatori (così il JSON comanda tutto!)
-                    pl.modifyFood((int) cacciatori * ec.getBaseFood());
+                    pl.modifyFood((int) cacciatori * ec.getBaseFood() + buildingFood);
 
                     // I Punti Prestigio (Aura)
-                    pl.modifyAuraPoints((int) cacciatori * ec.getAuraPerCharacter());
+                    pl.modifyAuraPoints((int) cacciatori * ec.getAuraPerCharacter() + buildingAura);
+
+                    //resetto gli attributi, per il prossimo evento
+                    pl.resetEventAttributes();
                 })
         );
 
         // FARMER: ogni character costa 1 food, se non c'è food paga in aura
         eventEffectRegistry.put("FARMER", (p, g, ec) ->
                 g.getPlayers().forEach(pl -> {
-                    pl.getMyTribe().forEach(c -> {
-                        if (pl.getFood() > 0) pl.modifyFood(-1);
-                        else pl.modifyAuraPoints(-ec.getAuraPerCharacter());
-                    });
+                    //vedo quanto cibo ha in totale
+                    int playerMaxFood = pl.getFood();
+                    //conto quant'è lo sconto dei building (n.b. sconto sarà negativo)
+                    int sconto = pl.getEventCostFood();
+
+                    //conto quanto ne deve pagare
+                    int costo = pl.getMyTribe().size() + sconto;
+
+                    if(costo>0){
+                        if(costo>playerMaxFood){
+                            pl.modifyFood(-playerMaxFood);
+                            pl.modifyAuraPoints((playerMaxFood-costo)*ec.getAuraPerCharacter());
+                        }
+                        else{
+                            pl.modifyFood(-costo);
+                        }
+                    }
+                    pl.resetEventAttributes();
+
                 })
         );
 
@@ -162,6 +184,12 @@ public class DeckFactory {
                     pl.modifyAuraPoints(painters <= ec.getThreshold()
                             ? -ec.getPenalty()
                             : (int) painters * ec.getBonusMultiplier());
+
+                    //controllo se c'è il building che da anche cibo durante questo evento:
+                    int extraFood = pl.getEventCostFood();
+                    if(extraFood>0) pl.modifyFood(extraFood);
+
+                    pl.resetEventAttributes();
                 })
         );
 
@@ -169,9 +197,27 @@ public class DeckFactory {
         eventEffectRegistry.put("SHAMAN", (p, g, ec) -> {
             int max = g.getPlayers().stream().mapToInt(Player::getAuraPoints).max().orElse(0);
             int min = g.getPlayers().stream().mapToInt(Player::getAuraPoints).min().orElse(0);
+
+            // dato che non salvo il nome della lambda, prendo dal registro i riferimenti originali degli effetti
+            IEffect<BuildingCard> noLossEffect = buildingsEffectRegistry.get("NO_LOSS");
+            IEffect<BuildingCard> doubleAuraEffect = buildingsEffectRegistry.get("DOUBLE_AURA_SHAMAN");
+
             g.getPlayers().forEach(pl -> {
-                if (pl.getAuraPoints() == max) pl.modifyAuraPoints(ec.getBonus());
-                if (pl.getAuraPoints() == min) pl.modifyAuraPoints(-ec.getMalus());
+
+                boolean isZero = pl.getBuildings().stream()
+                        .anyMatch(b -> b.getEffects().contains(noLossEffect));
+                boolean isDouble = pl.getBuildings().stream()
+                        .anyMatch(b -> b.getEffects().contains(doubleAuraEffect));
+
+                if (pl.getAuraPoints() == max) {
+                    if (isDouble)
+                        pl.modifyAuraPoints(2 * ec.getBonus());
+                    else pl.modifyAuraPoints(ec.getBonus());
+                }
+                if (pl.getAuraPoints() == min) {
+                    if (!isZero) pl.modifyAuraPoints(-ec.getMalus());
+                }
+                pl.resetEventAttributes();
             });
         });
 }

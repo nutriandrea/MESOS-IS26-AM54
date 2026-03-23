@@ -39,6 +39,9 @@ public class BuildingCard extends Card implements IPurchasable {
         // TODO implement here
         return 0;
     }
+    public List<IEffect<BuildingCard>> getEffects(){
+        return this.effects;
+    }
 
     @Override
     public boolean canBePurchased(Player player) {

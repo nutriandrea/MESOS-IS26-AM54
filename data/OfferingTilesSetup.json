@@ -1,44 +1,52 @@
-[
-  {
-    "id": "A",
-    "cardsFromUpper": 0,
-    "cardsFromLower": 0,
-    "foodBonus": 3
+{
+  "requiredTiles": {
+    "2": ["B", "C", "E", "F"],
+    "3": ["B", "C", "D", "E", "F"],
+    "4": ["B", "C", "D", "E", "F", "G"],
+    "5": ["A", "B", "C", "D", "E", "F", "G"]
   },
-  {
-    "id": "B",
-    "cardsFromUpper": 0,
-    "cardsFromLower": 1,
-    "foodBonus": 0
-  },
-  {
-    "id": "C",
-    "cardsFromUpper": 1,
-    "cardsFromLower": 0,
-    "foodBonus": 0
-  },
-  {
-    "id": "D",
-    "cardsFromUpper": 0,
-    "cardsFromLower": 2,
-    "foodBonus": 0
-  },
-  {
-    "id": "E",
-    "cardsFromUpper": 1,
-    "cardsFromLower": 1,
-    "foodBonus": 0
-  },
-  {
-    "id": "F",
-    "cardsFromUpper": 2,
-    "cardsFromLower": 0,
-    "foodBonus": 0
-  },
-  {
-    "id": "G",
-    "cardsFromUpper": 2,
-    "cardsFromLower": 1,
-    "foodBonus": 0
-  }
-]
+  "tiles": [
+    {
+      "id": "A",
+      "cardsFromUpper": 0,
+      "cardsFromLower": 0,
+      "foodBonus": 3
+    },
+    {
+      "id": "B",
+      "cardsFromUpper": 0,
+      "cardsFromLower": 1,
+      "foodBonus": 0
+    },
+    {
+      "id": "C",
+      "cardsFromUpper": 1,
+      "cardsFromLower": 0,
+      "foodBonus": 0
+    },
+    {
+      "id": "D",
+      "cardsFromUpper": 0,
+      "cardsFromLower": 2,
+      "foodBonus": 0
+    },
+    {
+      "id": "E",
+      "cardsFromUpper": 1,
+      "cardsFromLower": 1,
+      "foodBonus": 0
+    },
+    {
+      "id": "F",
+      "cardsFromUpper": 2,
+      "cardsFromLower": 0,
+      "foodBonus": 0
+    },
+    {
+      "id": "G",
+      "cardsFromUpper": 2,
+      "cardsFromLower": 1,
+      "foodBonus": 0
+    }
+  ]
+}

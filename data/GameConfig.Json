@@ -1,0 +1,16 @@
+{
+  "initialResources": {
+    "food": 0,
+    "aura": 0,
+    "magic": 0
+  },
+  "startingCards": {
+    "tribeCards": 0,
+    "buildingCards": 0
+  },
+  "maxResources": {
+    "food": 999,
+    "aura": 999,
+    "magic": 999
+  }
+}

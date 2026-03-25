@@ -1,5 +1,6 @@
 package model;
 
+import model.states.SetUpGameState;
 import java.io.*;
 import java.util.*;
 
@@ -10,6 +11,7 @@ public class Game implements IGame{
     public Game() {
         this.observers = new ArrayList<>();
         this.players = new ArrayList<>();
+        this.currentState = new SetUpGameState();
     }
 
     private Game currentInstance;
@@ -19,7 +21,8 @@ public class Game implements IGame{
     private List<Player> players;
     private int currentEra;
     private int roundCount;
-    private GameStatus status;
+    private GameState currentState;
+    private Phases turnPhase;
     private Player currentPlayer;
     // LA LISTA DEGLI ISCRITTI (Fondamentale per il pattern)
     private List<IGameObserver> observers;
@@ -30,36 +33,31 @@ public class Game implements IGame{
 
     @Override
     public void joinGame(String nickname) throws Exception {
-        // TODO
-
+        currentState.joinGame(this, nickname);
         notifyObservers();
     }
 
     @Override
     public void chooseTotemColor(String nickname, String color) throws Exception {
-        // TODO
-
+        currentState.chooseTotemColor(this, nickname, color);
         notifyObservers();
     }
 
     @Override
     public void placeTotem(String nickname, int offerPosition) throws Exception {
-        // TODO
-
+        currentState.placeTotem(this, nickname, offerPosition);
         notifyObservers();
     }
 
     @Override
     public void pickCharacter(String nickname, int cardIndex) throws Exception {
-        // TODO
-
+        currentState.pickCharacter(this, nickname, cardIndex);
         notifyObservers();
     }
 
     @Override
     public void buyBuilding(String nickname, int cardIndex) throws Exception {
-        // TODO
-
+        currentState.buyBuilding(this, nickname, cardIndex);
         notifyObservers();
     }
 
@@ -101,7 +99,6 @@ public class Game implements IGame{
     public void setupGame() {
         this.currentEra = 1;
         this.roundCount = 0;
-        this.status = GameStatus.START;
 
         int playerCount = players.size();
         // Inizializza board (delega a Board)
@@ -214,6 +211,14 @@ public class Game implements IGame{
 
     public List<Player> getPlayers() {
         return players;
+    }
+
+    public void setState(GameState state) {
+        this.currentState = state;
+    }
+
+    public GameState getState() {
+        return currentState;
     }
 
 }

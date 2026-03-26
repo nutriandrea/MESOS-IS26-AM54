@@ -7,6 +7,22 @@ import java.util.*;
 
 public class Game implements IGame{
 
+
+    //ATTRIBUTI:
+
+    private Board board;
+    private Deck<TribeCard> deckTribu;
+    private Deck<BuildingCard> deckBuildings;
+    private List<Player> players;
+
+    private int currentEra;
+    private int roundCount;
+    private Player currentPlayer;
+
+    private GameState currentState;
+
+    private List<IGameObserver> observers;
+
     // I campi offeringTiles, turnOrderSlots, upperRow, lowerRow sono gestiti da Board
     public Game() {
         this.observers = new ArrayList<>();
@@ -15,17 +31,6 @@ public class Game implements IGame{
     }
 
     private Game currentInstance;
-    private Board board;
-    private Deck<TribeCard> deckTribu;
-    private Deck<BuildingCard> deckBuildings;
-    private List<Player> players;
-    private int currentEra;
-    private int roundCount;
-    private GameState currentState;
-    private Phases turnPhase;
-    private Player currentPlayer;
-    // LA LISTA DEGLI ISCRITTI (Fondamentale per il pattern)
-    private List<IGameObserver> observers;
 
     // ==========================================
     // METODI DELL'INTERFACCIA IGAME
@@ -77,21 +82,6 @@ public class Game implements IGame{
         }
     }
 
-    
-    public int getPlayerNumber() {
-        // TODO implement here
-        return 0;
-    }
-
-    public Board getBoard(){
-        return this.board;
-    }
-
-    public Player getCurrentPlayer() {
-        // TODO implement here
-        return null;
-    }
-
     /**
      * Preparazione completa del gioco MESOS
      * Il numero di giocatori viene determinato dalla lista players
@@ -138,87 +128,63 @@ public class Game implements IGame{
         }
     }
 
-    public void placeTotemOrder(Player p, TurnOrderSlot selectedSlot) {
-        // Delega a Board per piazzare il Totem
-        // board.placeTotem(p, selectedSlot);
-    }
-    
-    public void startRound() {
-        // TODO implement here
+    public void setState(GameState newState) {
+        this.currentState = newState;
+        notifyObservers(); // Aggiorniamo la grafica al cambio di fase
     }
 
-    
-    public void pickingPhase() {
-        // TODO implement here
+    public void nextPlayer() {
+        if (players.isEmpty()) return;
+
+        // Trova a che punto della lista è il giocatore attuale
+        int currentIndex = players.indexOf(currentPlayer);
+
+        // Calcola il prossimo indice (il % players.size() fa ricominciare il giro da 0 se siamo all'ultimo)
+        int nextIndex = (currentIndex + 1) % players.size();
+
+        // Aggiorna il giocatore corrente
+        this.currentPlayer = players.get(nextIndex);
+
+        System.out.println("Turno passato a: " + currentPlayer.getNickname());
+
+        // Avvisa la grafica che è cambiato il player corrente!
+        notifyObservers();
     }
 
-    public void resolveEvent(EventCard event) {
-        // TODO implement here
-    }
+    // ==========================================
+    // GETTERS & SETTERS ESSENZIALI
+    // ==========================================
 
-    public void takeCards(Player player, int count, String row) {
+    public List<Player> getPlayers() { return players; }
+    public int getPlayersNumber() { return players.size(); }
+
+    public Board getBoard() { return this.board; }
+    public Deck<TribeCard> getTribeDeck() { return deckTribu; }
+    public Deck<BuildingCard> getBuildingDeck() { return deckBuildings; }
+
+    public int getCurrentEra() { return currentEra; }
+    public int getRoundCount() { return roundCount; }
+
+    public Player getCurrentPlayer() { return currentPlayer; }
+    public void setCurrentPlayer(Player player) { this.currentPlayer = player; }
+
+    /*public void takeCards(Player player, int count, String row) {
         // TODO
-    }
+    }*/
 
     
-    public void nextTurn() {
+    /*public void nextTurn() {
         // TODO implement here
-    }
+    }*/
 
     
-    public void handleEraTransition() {
+   /* public void handleEraTransition() {
         // TODO implement here
-    }
+    }*/
 
     
-    public void calculateFinalScore() {
+   /* public void endGame() {
         // TODO implement here
-    }
-
-    
-    public void endGame() {
-        // TODO implement here
-    }
-
-    // Metodi statici per accesso da Board
-    public  int getPlayersNumber() {
-        if (currentInstance != null && currentInstance.players != null) {
-            return currentInstance.players.size();
-        }
-        return 0;
-    }
-    
-    public  int getCurrentEra() {
-        if (currentInstance != null) {
-            return currentInstance.currentEra;
-        }
-        return 1;
-    }
-    
-    public  Deck<TribeCard> getTribeDeck() {
-        if (currentInstance != null) {
-            return currentInstance.deckTribu;
-        }
-        return null;
-    }
-    
-    public  Deck<BuildingCard> getBuildingDeck() {
-        if (currentInstance != null) {
-            return currentInstance.deckBuildings;
-        }
-        return null;
-    }
-
-    public List<Player> getPlayers() {
-        return players;
-    }
-
-    public void setState(GameState state) {
-        this.currentState = state;
-    }
-
-    public GameState getState() {
-        return currentState;
-    }
+    }*/
 
 }

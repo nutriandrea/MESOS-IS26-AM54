@@ -51,6 +51,10 @@ public class Player {
 
     private int eventCostAura;
 
+    private boolean hasPlacedTotem = false;
+
+    public boolean hasPlacedTotem() { return hasPlacedTotem; }
+    public void setHasPlacedTotem(boolean value) { this.hasPlacedTotem = value; }
 
     public int getEventCostFood() {
         return eventCostFood;

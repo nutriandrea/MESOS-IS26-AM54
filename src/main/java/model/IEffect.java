@@ -24,4 +24,8 @@ public interface IEffect<T extends Card> {
     default boolean shouldResolveLast() {
         return false;
     }
+
+    default boolean isEndgameEffect() {
+        return false;
+    }
 }

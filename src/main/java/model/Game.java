@@ -242,6 +242,83 @@ public class Game implements IGame{
         }
     }
 
+    public void applyEndGameBuildingEffects() {
+        for (Player p : players) {
+            for (BuildingCard b : p.getBuildings()) {
+                for (IEffect<BuildingCard> effect : b.getEffects()) {
+                    if (effect.isEndgameEffect()) {
+                        effect.apply(p, this, b);
+                    }
+                }
+            }
+        }
+    }
+
+    public int calculatePlayerScore(Player p) {
+        int score = 0;
+
+        score += p.getAuraPoints();
+
+        long inventors = p.getMyTribe().stream()
+                .filter(c -> c.getJobType() == JobType.INVENTOR).count();
+        long uniqueInventions = p.getMyTribe().stream()
+                .filter(c -> c.getJobType() == JobType.INVENTOR)
+                .mapToInt(c -> c.getLevel())
+                .distinct().count();
+        score += (int) (inventors * uniqueInventions);
+
+        long artists = p.getMyTribe().stream()
+                .filter(c -> c.getJobType() == JobType.ARTIST).count();
+        score += (int) (artists / 2) * 10;
+
+        score += p.getBuildings().stream()
+                .mapToInt(BuildingCard::getFinalAura).sum();
+
+        return score;
+    }
+
+    public List<Player> determineWinners() {
+        applyEndGameBuildingEffects();
+
+        List<Player> winners = new ArrayList<>();
+        int maxScore = 0;
+
+        for (Player p : players) {
+            int score = calculatePlayerScore(p);
+            if (score > maxScore) {
+                maxScore = score;
+                winners.clear();
+                winners.add(p);
+            } else if (score == maxScore) {
+                winners.add(p);
+            }
+        }
+
+        if (winners.size() > 1) {
+            int maxFood = 0;
+            for (Player p : winners) {
+                maxFood = Math.max(maxFood, p.getFood());
+            }
+            final int finalMaxFood = maxFood;
+            winners = winners.stream()
+                    .filter(p -> p.getFood() == finalMaxFood)
+                    .toList();
+        }
+
+        return winners;
+    }
+
+    public void notifyEndGame(List<Player> winners) {
+        System.out.println("=== FINE PARTITA ===");
+        if (winners.size() == 1) {
+            System.out.println("Vincitore: " + winners.get(0).getNickname());
+        } else {
+            System.out.println("Vittoria condivisa tra: " + 
+                winners.stream().map(Player::getNickname).reduce((a, b) -> a + ", " + b).orElse(""));
+        }
+        notifyObservers();
+    }
+
     /*public void takeCards(Player player, int count, String row) {
         // TODO
     }*/

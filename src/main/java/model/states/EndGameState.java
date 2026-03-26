@@ -1,7 +1,7 @@
 package model.states;
 
-import model.Game;
-import model.GameState;
+import model.*;
+import java.util.List;
 
 /**
  * Stato di fine partita: calcola i punteggi finali e decreta il vincitore.
@@ -11,11 +11,13 @@ public class EndGameState extends GameState {
 
     @Override
     public void resolvePhase(Game game) throws Exception {
-        // TODO: calcola punteggi finali
-        // TODO: risolvi effetti ENDGAME dei building
-        // TODO: bonus Inventor PP, Artist PP
-        // TODO: trasforma risorse avanzate in punti
-        // TODO: decreta vincitore
-        // TODO: notifica Observer per schermata vittoria
+        // 1. Risolvi TUTTI gli eventi visibili (upper + lower), Farmer per ultimo
+        game.getBoard().resolveAllVisibleEvents(game);
+
+        // 2. Calcola punteggi e determina vincitore
+        List<Player> winners = game.determineWinners();
+
+        // 3. Notifica observers per schermata vittoria
+        game.notifyEndGame(winners);
     }
 }

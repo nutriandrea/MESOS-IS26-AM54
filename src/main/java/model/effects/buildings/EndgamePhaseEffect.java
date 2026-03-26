@@ -26,6 +26,11 @@ public class EndgamePhaseEffect implements IEffect<BuildingCard> {
     }
 
     @Override
+    public boolean isEndgameEffect() {
+        return true;
+    }
+
+    @Override
     public void apply(Player p, Game g, BuildingCard card) {
         switch (effectName) {
             case "AURA_PER_JOB" -> {

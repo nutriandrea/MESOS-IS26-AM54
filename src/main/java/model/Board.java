@@ -172,7 +172,6 @@ public class Board {
             TribeCard card = tribeDeck.drawCard();
 
             if (card != null) {
-                // MAGIA! Nessun instanceof.
                 // Se è un Personaggio andrà da solo in characterUpperRow.
                 // Se è un Evento andrà da solo in eventUpperRow.
                 card.reveal(this, "upper");
@@ -353,6 +352,22 @@ public void resolveAllEventsInOrder(Game game) {
         eventLowerRow.get(0).resolveEvent(game);
         eventLowerRow.remove(0);
     }
+}
+
+// Risolvi TUTTI gli eventi visibili (upper + lower), Farmer per ultimo
+public void resolveAllVisibleEvents(Game game) {
+    List<EventCard> allEvents = new ArrayList<>();
+    allEvents.addAll(eventUpperRow);
+    allEvents.addAll(eventLowerRow);
+    eventUpperRow.clear();
+    eventLowerRow.clear();
+
+    allEvents.sort((a, b) -> {
+        if (a.shouldResolveLast() == b.shouldResolveLast()) return 0;
+        return a.shouldResolveLast() ? 1 : -1;
+    });
+
+    allEvents.forEach(e -> e.resolveEvent(game));
 }
 
 // PULISCE E BASTA (solo caratteri, eventi gia' rimossi)

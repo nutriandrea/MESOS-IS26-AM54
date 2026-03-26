@@ -2,7 +2,6 @@ package model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.io.*;
 import java.util.*;
 
@@ -32,7 +31,7 @@ public class Board {
     public void generateBoard(Game game) {
         int numPlayers = game.getPlayersNumber();
         initializeOfferingTiles(game);
-        initializeTurnOrderSlots(numPlayers);
+        initializeTurnOrderTile(numPlayers);
 
         populateUpperRow(game);
         populateLowerRow(game);
@@ -42,57 +41,86 @@ public class Board {
     private void initializeOfferingTiles(Game game) {
         offeringTrack.clear();
         int numPlayers = game.getPlayersNumber();
+
         // Controllo di sicurezza
         if (numPlayers < 2 || numPlayers > 5) return;
 
-        // Definiamo esattamente quali tessere (A, B, C...) servono per ogni numero di giocatori
-        char[][] requiredTiles = {
-                {},                                 // 0
-                {},                                 // 1
-                {'B', 'C', 'E', 'F'},               // 2 giocatori
-                {'B', 'C', 'D', 'E', 'F'},          // 3 giocatori
-                {'B', 'C', 'D', 'E', 'F', 'G'},     // 4 giocatori
-                {'A', 'B', 'C', 'D', 'E', 'F', 'G'} // 5 giocatori
-        };
-
         List<Character> neededTiles = new ArrayList<>();
-        for (char c : requiredTiles[numPlayers]) {
-            neededTiles.add(c);
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+
+            // 1. Leggiamo tutto il file UNA SOLA VOLTA nell'albero principale
+            JsonNode rootNode = mapper.readTree(new File("data/OfferingTilesSetup.json"));
+
+            // 2. Peschiamo l'array delle lettere necessarie ("A", "B", "C"...)
+            String playerKey = String.valueOf(numPlayers);
+            JsonNode arrayTessere = rootNode.get("requiredTiles").get(playerKey);
+
+            if (arrayTessere != null && arrayTessere.isArray()) {
+                for (JsonNode nodoLettera : arrayTessere) {
+                    neededTiles.add(nodoLettera.asText().charAt(0));
+                }
+            }
+
+            // 3. Ora peschiamo l'array con le STATISTICHE delle tessere!
+            JsonNode arrayTiles = rootNode.get("tiles"); //
+
+            if (arrayTiles != null && arrayTiles.isArray()) {
+                // Cicliamo SOLO dentro le tessere
+                for (JsonNode node : arrayTiles) {
+                    char idLetto = node.get("id").asText().charAt(0);
+
+                    // Se la tessera corrente ci serve per questa partita, la costruiamo
+                    if (neededTiles.contains(idLetto)) {
+                        int upper = node.get("cardsFromUpper").asInt();
+                        int lower = node.get("cardsFromLower").asInt();
+                        int food  = node.get("foodBonus").asInt();
+
+                        OfferingTile tile = new OfferingTile(idLetto, upper, lower, food);
+                        offeringTrack.add(tile);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Errore lettura JSON Offering Tiles: " + e.getMessage());
+            e.printStackTrace(); // Ti aiuta a capire subito la riga esatta se qualcosa esplode
         }
 
-        ObjectMapper mapper = new ObjectMapper();
+        // 4. Ordine alfabetico finale per sicurezza
+        offeringTrack.sort(Comparator.comparing(OfferingTile::getId));
+    }
+
+    public void initializeTurnOrderTile(int numPlayers) {
+        // Svuota la lista se c'era già qualcosa
+        this.turnOrderTile.clear();
+
+        // Controllo di sicurezza
+        if (numPlayers < 2 || numPlayers > 5) return;
+
         try {
-            JsonNode root = mapper.readTree(new File("data/OfferingTilesSetup.json"));
+            ObjectMapper mapper = new ObjectMapper();
 
-            for (JsonNode node : root) {
-                char idLetto = node.get("id").asText().charAt(0);
+            // 1. Legge il file UNA SOLA VOLTA
+            JsonNode rootNode = mapper.readTree(new File("data/TurnOrderConfig.json"));
+            JsonNode bonusArray = rootNode.get("bonusFood").get(String.valueOf(numPlayers));
 
-                if (neededTiles.contains(idLetto)) {
-                    int upper = node.get("cardsFromUpper").asInt();
-                    int lower = node.get("cardsFromLower").asInt();
-                    int food  = node.get("foodBonus").asInt();
+            // 2. Se l'array esiste, crea gli slot
+            if (bonusArray != null && bonusArray.isArray()) {
 
-                    OfferingTile tile = new OfferingTile(idLetto, upper, lower, food);
-                    offeringTrack.add(tile);
+                // Se sono 4 giocatori, il ciclo gira 4 volte
+                for (int i = 0; i < bonusArray.size(); i++) {
+                    int position = i + 1; // La posizione "umana" parte da 1
+                    int bonus = bonusArray.get(i).asInt(); // Il cibo da dare (-1, 0, 1, 2...)
+
+                    // 3. Fabbrica lo slot passandogli i dati già pronti
+                    TurnOrderSlot slot = new TurnOrderSlot(position, bonus);
+                    this.turnOrderTile.add(slot);
                 }
             }
         } catch (Exception e) {
-            System.err.println(e.getMessage());
-        }
-
-        //nel caso venisse messo in ordine sbagliato, li ordina
-        offeringTrack.sort(Comparator.comparing(OfferingTile::getId));
-
-    }
-
-    private void initializeTurnOrderSlots(int numPlayers) {
-        turnOrderTile.clear();
-        if (numPlayers < 2 || numPlayers > 5) return;
-
-        for (int i = 1; i <= numPlayers; i++) {
-            TurnOrderSlot slot = new TurnOrderSlot();
-            slot.createTurnOrderSlot(i, numPlayers);
-            turnOrderTile.add(slot);
+            System.err.println("Errore lettura JSON TurnOrderConfig: " + e.getMessage());
         }
     }
 

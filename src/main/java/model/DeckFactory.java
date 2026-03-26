@@ -18,14 +18,28 @@ public class DeckFactory {
      */
     public static Deck<BuildingCard> createBuildingDeck(String filePath, int numPlayers) {
 
-        int[][] eraCounts = {
-                {0, 0, 0},
-                {0, 0, 0},
-                {1, 2, 3},
-                {2, 2, 4},
-                {2, 3, 4},
-                {2, 3, 5}
-        };
+        // Controllo di sicurezza
+        if (numPlayers < 2 || numPlayers > 5) {
+            System.err.println("Numero di giocatori non valido per creare il mazzo!");
+            return new Deck<>(new Stack<>());
+        }
+
+        int countE1 = 0, countE2 = 0, countE3 = 0;
+
+        // 1. Leggiamo il setup delle quantità da EraCounts.json
+        try {
+            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json")); // Assicurati del percorso!
+            JsonNode buildingCounts = countsRoot.get("buildingCounts").get(String.valueOf(numPlayers));
+
+            if (buildingCounts != null && buildingCounts.isArray()) {
+                // L'array nel JSON è [era1, era2, era3]
+                countE1 = buildingCounts.get(0).asInt();
+                countE2 = buildingCounts.get(1).asInt();
+                countE3 = buildingCounts.get(2).asInt();
+            }
+        } catch (Exception e) {
+            System.err.println("Errore lettura EraCounts.json: " + e.getMessage());
+        }
 
         List<BuildingCard> e1 = new ArrayList<>();
         List<BuildingCard> e2 = new ArrayList<>();
@@ -55,6 +69,7 @@ public class DeckFactory {
                 else if (era == 3) e3.add(card);
             }
         } catch (Exception e) {
+            System.err.println("Errore lettura file carte: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -64,15 +79,15 @@ public class DeckFactory {
 
         Stack<BuildingCard> finalDeck = new Stack<>();
 
-        int countE3 = eraCounts[numPlayers][2];
+        // Inseriamo PRIMA l'Era 3 (così va in fondo al mazzo)
         for (int i = 0; i < Math.min(countE3, e3.size()); i++) {
             finalDeck.push(e3.get(i));
         }
-        int countE2 = eraCounts[numPlayers][1];
+        // Poi l'Era 2
         for (int i = 0; i < Math.min(countE2, e2.size()); i++) {
             finalDeck.push(e2.get(i));
         }
-        int countE1 = eraCounts[numPlayers][0];
+        // Infine l'Era 1 (così rimane in CIMA allo Stack e viene pescata per prima)
         for (int i = 0; i < Math.min(countE1, e1.size()); i++) {
             finalDeck.push(e1.get(i));
         }
@@ -81,19 +96,45 @@ public class DeckFactory {
     }
 
     /**
-     * Crea il mazzo Tribu unendo Personaggi ed Eventi.
+     * Crea il mazzo Tribu unendo Personaggi (quantità da JSON) e TUTTI gli Eventi.
      */
     public static Deck<TribeCard> createTribeDeck(String charPath, String eventPath, int numPlayers) {
 
-        List<TribeCard> finalEvents = new ArrayList<>();
-        List<TribeCard> era1 = new ArrayList<>();
-        List<TribeCard> era2 = new ArrayList<>();
-        List<TribeCard> era3 = new ArrayList<>();
+        // Controllo di sicurezza
+        if (numPlayers < 2 || numPlayers > 5) {
+            System.err.println("Numero di giocatori non valido!");
+            return new Deck<>(new Stack<>());
+        }
 
-        // 1. Caricamento Personaggi
+        int countE1 = 0, countE2 = 0, countE3 = 0;
+
+        // 0. Leggiamo il numero di personaggi da pescare per Era
+        try {
+            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
+            JsonNode charCounts = countsRoot.get("characterCounts").get(String.valueOf(numPlayers));
+
+            if (charCounts != null) {
+                countE1 = charCounts.get("era1").asInt();
+                countE2 = charCounts.get("era2").asInt();
+                countE3 = charCounts.get("era3").asInt();
+            }
+        } catch (Exception e) {
+            System.err.println("Errore lettura EraCounts: " + e.getMessage());
+        }
+
+        // Liste separate per Personaggi ed Eventi
+        List<TribeCard> charE1 = new ArrayList<>();
+        List<TribeCard> charE2 = new ArrayList<>();
+        List<TribeCard> charE3 = new ArrayList<>();
+
+        List<TribeCard> eventE1 = new ArrayList<>();
+        List<TribeCard> eventE2 = new ArrayList<>();
+        List<TribeCard> eventE3 = new ArrayList<>();
+        List<TribeCard> finalEvents = new ArrayList<>();
+
+        // 1. Caricamento Personaggi (Li mettiamo nelle liste charE)
         try {
             JsonNode root = mapper.readTree(new File(charPath));
-
             for (JsonNode node : root) {
                 int minPlayers = node.get("minPlayers").asInt();
                 if (numPlayers >= minPlayers) {
@@ -108,19 +149,18 @@ public class DeckFactory {
                     effects.add(new CharacterEffect(characterType));
 
                     CharacterCard card = new CharacterCard(level, type, aura, phase, effects, era);
-                    if (era == 1) era1.add(card);
-                    else if (era == 2) era2.add(card);
-                    else era3.add(card);
+                    if (era == 1) charE1.add(card);
+                    else if (era == 2) charE2.add(card);
+                    else charE3.add(card);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // 2. Caricamento Eventi
+        // 2. Caricamento Eventi (Li mettiamo nelle liste eventE)
         try {
             JsonNode root = mapper.readTree(new File(eventPath));
-
             for (JsonNode node : root) {
                 String etichetta = node.get("etichettaSottoclasse").asText();
                 int era = node.get("era").asInt();
@@ -145,19 +185,36 @@ public class DeckFactory {
                 if (finalEvent) {
                     finalEvents.add(event);
                 } else {
-                    if (era == 1) era1.add(event);
-                    else if (era == 2) era2.add(event);
-                    else era3.add(event);
+                    if (era == 1) eventE1.add(event);
+                    else if (era == 2) eventE2.add(event);
+                    else eventE3.add(event);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        // 3. Mescoliamo SOLO i personaggi e li "tagliamo" in base al numero del JSON
+        Collections.shuffle(charE1);
+        Collections.shuffle(charE2);
+        Collections.shuffle(charE3);
+
+        List<TribeCard> era1 = new ArrayList<>(charE1.subList(0, Math.min(countE1, charE1.size())));
+        List<TribeCard> era2 = new ArrayList<>(charE2.subList(0, Math.min(countE2, charE2.size())));
+        List<TribeCard> era3 = new ArrayList<>(charE3.subList(0, Math.min(countE3, charE3.size())));
+
+        // 4. Uniamo TUTTI gli Eventi ai personaggi appena selezionati
+        era1.addAll(eventE1);
+        era2.addAll(eventE2);
+        era3.addAll(eventE3);
+
+        // 5. Mischiamo il mazzetto completo per ogni Era (così non sai mai quando esce l'evento)
         Collections.shuffle(era1);
         Collections.shuffle(era2);
         Collections.shuffle(era3);
+        Collections.shuffle(finalEvents); // Consigliato mischiare anche quelli finali
 
+        // 6. Impiliamo tutto nello Stack finale (LIFO)
         Stack<TribeCard> finalDeck = new Stack<>();
         for (TribeCard c : finalEvents) finalDeck.push(c);
         for (TribeCard c : era3) finalDeck.push(c);

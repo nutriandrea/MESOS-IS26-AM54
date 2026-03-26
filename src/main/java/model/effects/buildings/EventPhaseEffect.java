@@ -31,6 +31,16 @@ public class EventPhaseEffect implements IEffect<BuildingCard> {
     }
 
     @Override
+    public boolean isNoLossEffect() {
+        return "NO_LOSS".equals(effectName);
+    }
+
+    @Override
+    public boolean isDoubleAuraShamanEffect() {
+        return "DOUBLE_AURA_SHAMAN".equals(effectName);
+    }
+
+    @Override
     public void apply(Player p, Game g, BuildingCard card) {
         switch (effectName) {
             case "EVENT_FOOD_DISCOUNT" -> {

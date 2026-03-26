@@ -68,4 +68,13 @@ public class EventCard extends TribeCard {
         return finalEvent;
     }
 
+    public boolean isFarmerEvent() {
+        return effects.stream().anyMatch(IEffect::isFarmerEffect);
+    }
+
+    // True if any effect in this card should resolve last
+    public boolean shouldResolveLast() {
+        return effects.stream().anyMatch(IEffect::shouldResolveLast);
+    }
+
 }

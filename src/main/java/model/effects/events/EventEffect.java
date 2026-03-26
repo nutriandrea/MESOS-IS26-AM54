@@ -1,7 +1,6 @@
 package model.effects.events;
 
 import model.*;
-import model.effects.buildings.EventPhaseEffect;
 
 /**
  * Gestisce tutti gli effetti degli eventi.
@@ -13,6 +12,21 @@ public class EventEffect implements IEffect<EventCard> {
 
     public EventEffect(String effectName) {
         this.effectName = effectName;
+    }
+
+    public String getEffectName() {
+        return effectName;
+    }
+
+    @Override
+    public boolean isFarmerEffect() {
+        return "FARMER".equals(effectName);
+    }
+
+    // Farmer events are resolved last
+    @Override
+    public boolean shouldResolveLast() {
+        return "FARMER".equals(effectName);
     }
 
     @Override
@@ -78,12 +92,10 @@ public class EventEffect implements IEffect<EventCard> {
         g.getPlayers().forEach(pl -> {
             boolean isZero = pl.getBuildings().stream()
                     .flatMap(b -> b.getEffects().stream())
-                    .filter(e -> e instanceof EventPhaseEffect)
-                    .anyMatch(e -> ((EventPhaseEffect) e).getEffectName().equals("NO_LOSS"));
+                    .anyMatch(IEffect::isNoLossEffect);
             boolean isDouble = pl.getBuildings().stream()
                     .flatMap(b -> b.getEffects().stream())
-                    .filter(e -> e instanceof EventPhaseEffect)
-                    .anyMatch(e -> ((EventPhaseEffect) e).getEffectName().equals("DOUBLE_AURA_SHAMAN"));
+                    .anyMatch(IEffect::isDoubleAuraShamanEffect);
 
             if (pl.getAuraPoints() == max) {
                 if (isDouble)

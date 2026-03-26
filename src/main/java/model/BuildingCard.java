@@ -66,9 +66,7 @@ public class BuildingCard extends Card implements IPurchasable {
         if (foodAmount>=0) {player.modifyFood(-foodAmount);}
 
         this.addOwner(player);
-        player.modifyMyTribe(this);
-
-        //sarà poi la board a toglierselo, non la carta stessa
+        player.getBuildings().add(this);
     }
 
     @Override

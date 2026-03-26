@@ -229,6 +229,7 @@ public class Board {
     }
 
     public void moveBuildings() {
+        buildingCardsLowerRow.clear();
         buildingCardsLowerRow.addAll(buildingCardsUpperRow);
         buildingCardsUpperRow.clear();
     }
@@ -331,11 +332,27 @@ public class Board {
             : buildingCardsLowerRow.size();
     }
 
-public void resolveEvents() {
-    /**
-     * TODO
-     */
+public List<EventCard> getEventLowerRow() {
+    return eventLowerRow;
+}
+
+// Ordina eventi: non-Farmer prima, Farmer dopo. Poi risolve e rimuove.
+public void resolveAllEventsInOrder(Game game) {
+    eventLowerRow.sort((a, b) -> {
+        if (a.shouldResolveLast() == b.shouldResolveLast()) return 0;
+        return a.shouldResolveLast() ? 1 : -1;
+    });
+    while (!eventLowerRow.isEmpty()) {
+        eventLowerRow.get(0).resolveEvent(game);
+        eventLowerRow.remove(0);
     }
+}
+
+// PULISCE E BASTA (solo caratteri, eventi gia' rimossi)
+public void clearLowerRow() {
+    characterLowerRow.clear();
+}
+
 
 public List<OfferingTile> getOfferingTrack() { return offeringTrack; }
 public List<TurnOrderSlot> getTurnOrderTile() { return turnOrderTile;}

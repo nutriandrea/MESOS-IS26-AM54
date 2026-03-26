@@ -174,6 +174,14 @@ public class Game implements IGame{
     public Player getCurrentPlayer() { return currentPlayer; }
     public void setCurrentPlayer(Player player) { this.currentPlayer = player; }
 
+    public Player getPlayerByNickname(String nickname) {
+        for (Player p : players) {
+            if (p.getNickname().equalsIgnoreCase(nickname)) {
+                return p;
+            }
+        }
+        return null;
+    }
 
     public Player getCurrentPicker() {
         List<OfferingTile> tiles = board.getOfferingTrack();
@@ -214,17 +222,31 @@ public class Game implements IGame{
         return true;
     }
 
+
+    public boolean isTribeDeckEmpty() {
+        return deckTribu.isEmpty();
+    }
+
+    // True se la prossima carta del deck e' di un'era successiva
+    public boolean isEraTransition() {
+        TribeCard nextCard = deckTribu.peek();
+        if (nextCard == null) return false;
+        return nextCard.getEra() > currentEra;
+    }
+
+    public void advanceRound() {
+        roundCount++;
+        if (isEraTransition()) {
+            currentEra++;
+        }
+    }
+
     /*public void takeCards(Player player, int count, String row) {
         // TODO
     }*/
 
     
     /*public void nextTurn() {
-        // TODO implement here
-    }*/
-
-    
-   /* public void handleEraTransition() {
         // TODO implement here
     }*/
 

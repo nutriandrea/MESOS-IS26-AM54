@@ -79,6 +79,7 @@ public class PickingState extends GameState {
         }
 
         game.assignPickerToTurnOrder(player);
+        player.getCurrentTile().freeSlot();
         System.out.println(player.getNickname() + " si e' posizionato nel turno order");
 
         if (game.isPickingComplete()) {

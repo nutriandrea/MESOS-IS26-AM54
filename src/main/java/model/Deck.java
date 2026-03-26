@@ -38,4 +38,10 @@ public class Deck<T extends Card> {
         return cards.isEmpty();
     }
 
+    // Guarda la prossima carta senza rimuoverla
+    public T peek() {
+        if (cards.isEmpty()) return null;
+        return cards.peek();
+    }
+
 }

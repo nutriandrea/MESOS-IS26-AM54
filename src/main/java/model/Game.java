@@ -184,15 +184,6 @@ public class Game implements IGame{
     public Player getCurrentPlayer() { return currentPlayer; }
     public void setCurrentPlayer(Player player) { this.currentPlayer = player; }
 
-    public Player getPlayerByNickname(String nickname) {
-        for (Player p : players) {
-            if (p.getNickname().equalsIgnoreCase(nickname)) {
-                return p;
-            }
-        }
-        return null;
-    }
-
     public Player getCurrentPicker() {
         List<OfferingTile> tiles = board.getOfferingTrack();
         

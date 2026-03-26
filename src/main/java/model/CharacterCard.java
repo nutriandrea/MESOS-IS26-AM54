@@ -22,6 +22,14 @@ public class CharacterCard extends TribeCard implements IDrawable {
     }
     public int getLevel() {
         return level;
+    }
+
+    public int getCost() {
+        return 0;
+    }
+
+    public String getName() {
+        return type != null ? type.name() : "Unknown";
     }   
 
     public CharacterCard(int level, JobType type, int aura, Phases phase, List<IEffect<CharacterCard>>effects, int era) {
@@ -45,6 +53,12 @@ public class CharacterCard extends TribeCard implements IDrawable {
     public void reveal(Board board, String row) {
         // La carta dice: "Ehi Board, sono un Personaggio, mettimi nella fila dei Personaggi!"
         board.addCharacterCard(this, row);
+    }
+
+    @Override
+    public void pick(Player player, Game game) throws Exception {
+        player.modifyMyTribe(this);
+        System.out.println(player.getNickname() + " ha pescato il personaggio: " + getName());
     }
 }
 

@@ -2,7 +2,10 @@ package model.states;
 
 import model.Game;
 import model.GameState;
+import model.OfferingTile;
 import model.Player;
+import model.TurnOrderSlot;
+import java.util.Comparator;
 
 /**
  * Stato di inizio turno: i giocatori piazzano il totem sulle offering tiles.
@@ -29,6 +32,10 @@ public class StartTurnState extends GameState {
         // Ad esempio: game.getBoard().addTotemToPosition(player.getTotemColors(), offerPosition);
         System.out.println(nickname + " ha piazzato il totem sulla posizione " + offerPosition);
 
+        // Imposta la offering tile corrente del giocatore
+        OfferingTile tile = game.getBoard().getOfferingTrack().get(offerPosition);
+        player.setCurrentTile(tile);
+
         // Segniamo che il giocatore ha fatto la sua mossa (aggiungi un booleano in Player se non ce l'hai)
         player.setHasPlacedTotem(true);
 
@@ -45,10 +52,19 @@ public class StartTurnState extends GameState {
         if (tuttiHannoPiazzato) {
             System.out.println("Tutti i totem sono stati piazzati! Transizione a PickingState...");
 
-            // Prima di passare allo stato successivo, resettiamo le variabili dei giocatori
-            for (Player p : game.getPlayers()) {
-                p.setHasPlacedTotem(false);
+            // Reset turn order slots
+            for (TurnOrderSlot slot : game.getBoard().getTurnOrderTile()) {
+                slot.freeSlot();
             }
+
+            // Ordina i giocatori per ID della offering tile (A, B, C...)
+            game.getPlayers().sort(Comparator.comparing(p -> {
+                OfferingTile playerTile = p.getCurrentTile();
+                return playerTile != null ? playerTile.getId() : 'Z';
+            }));
+
+            // Imposta il primo giocatore (quello sulla tile A)
+            game.setCurrentPlayer(game.getPlayers().get(0));
 
             // Passiamo la palla alla fase degli acquisti!
             game.setState(new PickingState());

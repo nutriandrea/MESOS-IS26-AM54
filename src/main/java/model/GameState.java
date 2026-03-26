@@ -31,6 +31,10 @@ public abstract class GameState {
         throw new IllegalStateException("Non puoi comprare un edificio in questa fase");
     }
 
+    public void pickCard(Game game, String nickname, String row, int cardIndex) throws Exception {
+        throw new IllegalStateException("Non puoi pescare carte in questa fase");
+    }
+
     public void endTurn(Game game, String nickname) throws Exception {
         throw new IllegalStateException("Non puoi terminare il turno in questa fase");
     }

@@ -43,6 +43,18 @@ public class BuildingCard extends Card implements IPurchasable {
         return this.effects;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public int getCost() {
+        return cost;
+    }
+
+    public JobType getBuildingType() {
+        return buildingType;
+    }
+
     @Override
     public boolean canBePurchased(Player player) {
         return (player.getFoodTokens()-player.getMyBuildingDiscount()>=this.cost);
@@ -57,6 +69,21 @@ public class BuildingCard extends Card implements IPurchasable {
         player.modifyMyTribe(this);
 
         //sarà poi la board a toglierselo, non la carta stessa
+    }
+
+    @Override
+    public void pick(Player player, Game game) throws Exception {
+        int finalCost = this.cost - player.getMyBuildingDiscount();
+        finalCost = Math.max(0, finalCost);
+
+        if (player.getFood() < finalCost) {
+            throw new Exception("Cibo insufficiente per comprare l'edificio! Hai " + player.getFood() + ", servono " + finalCost);
+        }
+
+        player.modifyFood(-finalCost);
+        this.addOwner(player);
+        player.getBuildings().add(this);
+        System.out.println(player.getNickname() + " ha comprato l'edificio: " + getName() + " per " + finalCost + " cibo");
     }
 
 }

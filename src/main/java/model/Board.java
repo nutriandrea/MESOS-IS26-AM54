@@ -295,12 +295,41 @@ public class Board {
             tile.occupy(player);
         }
 
-    /**
-     * Prende carte da una fila
-     */
-    public void takeCards() {
-       /*TODO*/
+    public CharacterCard takeCharacterCard(String row, int index) {
+        List<CharacterCard> targetRow = row.equalsIgnoreCase("upper") 
+            ? characterUpperRow 
+            : characterLowerRow;
+        
+        if (index < 0 || index >= targetRow.size()) {
+            return null;
         }
+        
+        return targetRow.remove(index);
+    }
+
+    public BuildingCard takeBuildingCard(String row, int index) {
+        List<BuildingCard> targetRow = row.equalsIgnoreCase("upper") 
+            ? buildingCardsUpperRow 
+            : buildingCardsLowerRow;
+        
+        if (index < 0 || index >= targetRow.size()) {
+            return null;
+        }
+        
+        return targetRow.remove(index);
+    }
+
+    public int getCharacterRowSize(String row) {
+        return row.equalsIgnoreCase("upper") 
+            ? characterUpperRow.size() 
+            : characterLowerRow.size();
+    }
+
+    public int getBuildingRowSize(String row) {
+        return row.equalsIgnoreCase("upper") 
+            ? buildingCardsUpperRow.size() 
+            : buildingCardsLowerRow.size();
+    }
 
 public void resolveEvents() {
     /**

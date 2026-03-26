@@ -54,15 +54,21 @@ public class Game implements IGame{
         notifyObservers();
     }
 
-    @Override
-    public void pickCharacter(String nickname, int cardIndex) throws Exception {
-        currentState.pickCharacter(this, nickname, cardIndex);
-        notifyObservers();
-    }
+    // @Override
+    // public void pickCharacter(String nickname, int cardIndex) throws Exception {
+    //     currentState.pickCharacter(this, nickname, cardIndex);
+    //     notifyObservers();
+    // }
+
+    // @Override
+    // public void buyBuilding(String nickname, int cardIndex) throws Exception {
+    //     currentState.buyBuilding(this, nickname, cardIndex);
+    //     notifyObservers();
+    // }
 
     @Override
-    public void buyBuilding(String nickname, int cardIndex) throws Exception {
-        currentState.buyBuilding(this, nickname, cardIndex);
+    public void pickCard(String nickname, String row, int cardIndex) throws Exception {
+        currentState.pickCard(this, nickname, row, cardIndex);
         notifyObservers();
     }
 
@@ -167,6 +173,46 @@ public class Game implements IGame{
 
     public Player getCurrentPlayer() { return currentPlayer; }
     public void setCurrentPlayer(Player player) { this.currentPlayer = player; }
+
+
+    public Player getCurrentPicker() {
+        List<OfferingTile> tiles = board.getOfferingTrack();
+        
+        for (OfferingTile tile : tiles) {
+            Player occupant = tile.getOccupiedBy();
+            if (occupant != null && !isInTurnOrder(occupant)) {
+                return occupant;
+            }
+        }
+        return null;
+    }
+
+    private boolean isInTurnOrder(Player p) {
+        for (TurnOrderSlot slot : board.getTurnOrderTile()) {
+            if (p.equals(slot.getOccupiedBy())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void assignPickerToTurnOrder(Player p) {
+        for (TurnOrderSlot slot : board.getTurnOrderTile()) {
+            if (slot.getOccupiedBy() == null) {
+                slot.occupy(p);
+                return;
+            }
+        }
+    }
+
+    public boolean isPickingComplete() {
+        for (TurnOrderSlot slot : board.getTurnOrderTile()) {
+            if (slot.getOccupiedBy() == null) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     /*public void takeCards(Player player, int count, String row) {
         // TODO

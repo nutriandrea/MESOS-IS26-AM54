@@ -41,4 +41,8 @@ public class Card {
         this.owner = p;
     }
 
+    public void pick(Player player, Game game) throws Exception {
+        throw new UnsupportedOperationException("Cannot pick this card type");
+    }
+
 }

@@ -35,4 +35,8 @@ public class TurnOrderSlot {
     public Player getOccupiedBy() {
         return this.occupiedBy;
     }
+
+    public void freeSlot() {
+        this.occupiedBy = null;
+    }
 }

@@ -52,6 +52,8 @@ public class Player {
     private int eventCostAura;
 
     private boolean hasPlacedTotem = false;
+    
+    private OfferingTile currentTile;
 
     public boolean hasPlacedTotem() { return hasPlacedTotem; }
     public void setHasPlacedTotem(boolean value) { this.hasPlacedTotem = value; }
@@ -145,10 +147,8 @@ public class Player {
     }
 
 
-    public void modifyMyTribe(Card c) {
-        if (c instanceof CharacterCard) {
-            myTribe.add((CharacterCard) c);
-        }
+    public void modifyMyTribe(CharacterCard c) {
+        myTribe.add(c);
     }
 
 
@@ -176,6 +176,14 @@ public class Player {
     public void resetEventAttributes(){
         this.eventCostAura=0;
         this.eventCostFood=0;
+    }
+
+    public OfferingTile getCurrentTile() {
+        return currentTile;
+    }
+
+    public void setCurrentTile(OfferingTile tile) {
+        this.currentTile = tile;
     }
 
 }

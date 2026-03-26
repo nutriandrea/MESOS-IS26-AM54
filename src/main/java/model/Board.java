@@ -33,8 +33,8 @@ public class Board {
         initializeOfferingTiles(game);
         initializeTurnOrderTile(numPlayers);
 
-        populateUpperRow(game);
         populateLowerRow(game);
+        populateUpperRow(game);
         populateUpperRowBuildings(game);
     }
 
@@ -142,7 +142,6 @@ public class Board {
         int numPlayers = game.getPlayersNumber();
         int requiredCharacters = numPlayers + 1;
 
-        characterLowerRow.clear();
         Deck<TribeCard> tribeDeck = game.getTribeDeck();
 
         // Continua a pescare finché la fila in basso non ha il numero giusto di Personaggi
@@ -167,12 +166,9 @@ public class Board {
         int numPlayers = game.getPlayersNumber();
         int count = numPlayers + 4;
 
-        characterUpperRow.clear();
-        eventUpperRow.clear();
-
         Deck<TribeCard> tribeDeck = game.getTribeDeck();
 
-        for (int i = 0; i < count; i++) {
+        while (characterUpperRow.size() + eventUpperRow.size() < count) {
             TribeCard card = tribeDeck.drawCard();
 
             if (card != null) {
@@ -189,7 +185,7 @@ public class Board {
         int currentEra = game.getCurrentEra();
 
         // Controllo di sicurezza sul numero di giocatori per evitare ArrayIndexOutOfBoundsException
-        if (numPlayers < 2 || numPlayers > 5) return;
+        if (numPlayers < 2 || numPlayers > 5) return; //deve lanciare eccezione
 
         // Tabella dei conteggi [giocatori][era-1]
         int[][] eraCounts = {
@@ -202,12 +198,11 @@ public class Board {
         };
 
         // Assicuriamoci che l'era sia valida (es. da 1 a 3)
-        if (currentEra < 1 || currentEra > 3) return;
+        if (currentEra < 1 || currentEra > 3) return; //eccezione
 
         int cardsToDraw = eraCounts[numPlayers][currentEra - 1];
-        if (cardsToDraw <= 0) return;
+        if (cardsToDraw <= 0) return; //eccezione
 
-        buildingCardsUpperRow.clear();
         Deck<BuildingCard> buildingDeck = game.getBuildingDeck();
 
         for (int i = 0; i < cardsToDraw; i++) {
@@ -215,6 +210,18 @@ public class Board {
             if (card != null) {
                 buildingCardsUpperRow.add(card);
             }
+        }
+    }
+
+
+    public void setupInitialTurnOrder(List<Player> randomPlayers) {
+        for (int i = 0; i < randomPlayers.size(); i++) {
+            Player p = randomPlayers.get(i);
+            TurnOrderSlot slot = this.turnOrderTile.get(i);
+
+            // 1. Piazza il giocatore nello slot (usa il metodo che hai in TurnOrderSlot)
+            slot.occupy(p);
+
         }
     }
 
@@ -291,9 +298,9 @@ public class Board {
     /**
      * Piazza un Totem su una tessera Offerta
      */
-    public void placeTotem(Player player, OfferingTile tile) {
+    public void addTotemToPosition(Player player, OfferingTile tile) {
             tile.occupy(player);
-        }
+    }
 
     public CharacterCard takeCharacterCard(String row, int index) {
         List<CharacterCard> targetRow = row.equalsIgnoreCase("upper") 

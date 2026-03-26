@@ -79,15 +79,6 @@ public class Game implements IGame{
         }
     }
 
-
-    // METODO DELLA FUNCT INT IGAMEOBSERVER
-    // Lo chiami internamente OGNI VOLTA che il gioco cambia stato.
-    private void notifyObservers() {
-        for (IGameObserver obs : observers) {
-            obs.onGameUpdated(this); // Passa se stesso (il Game) all'Observer
-        }
-    }
-
     /**
      * Preparazione completa del gioco MESOS
      * Il numero di giocatori viene determinato dalla lista players
@@ -96,18 +87,22 @@ public class Game implements IGame{
         this.currentEra = 1;
         this.roundCount = 0;
 
-        int playerCount = players.size();
-        // Inizializza board (delega a Board)
+        this.deckTribu = DeckFactory.createTribeDeck(
+                "data/CharacterCardsSetup.json",
+                "data/EventCardsSetup.json",
+                players.size()
+        );
+        this.deckBuildings = DeckFactory.createBuildingDeck("data/BuildingCardsSetup.json", players.size());
+
         this.board = new Board();
         this.board.generateBoard(this);
-        
-        this.deckTribu = DeckFactory.createTribeDeck(
-            "data/CharacterCardsSetup.json",
-            "data/EventCardsSetup.json",
-            players.size()
-        );
 
-        this.deckBuildings = DeckFactory.createBuildingDeck("data/BuildingCardsSetup.json", players.size());
+        List<Player> tempPlayers = new ArrayList<>(this.players);
+        Collections.shuffle(tempPlayers);
+
+        // 4. Passiamo la lista mescolata alla Board
+        this.board.setupInitialTurnOrder(tempPlayers);
+
         distributeInitialFood();
     }
 
@@ -155,6 +150,21 @@ public class Game implements IGame{
 
         // Avvisa la grafica che è cambiato il player corrente!
         notifyObservers();
+    }
+
+    public Player getPlayerByNickname(String nickname) throws Exception {
+        return this.players.stream()
+                .filter(p -> p.getNickname().equalsIgnoreCase(nickname))
+                .findFirst()
+                .orElseThrow(() -> new Exception("Errore: Giocatore '" + nickname + "' non trovato."));
+    }
+
+    // METODO DELLA FUNCT INT IGAMEOBSERVER
+    // Lo chiami internamente OGNI VOLTA che il gioco cambia stato.
+    private void notifyObservers() {
+        for (IGameObserver obs : observers) {
+            obs.onGameUpdated(this); // Passa se stesso (il Game) all'Observer
+        }
     }
 
     // ==========================================

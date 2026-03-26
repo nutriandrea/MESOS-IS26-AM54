@@ -2,10 +2,7 @@ package model.states;
 
 import model.Game;
 import model.GameState;
-import model.OfferingTile;
 import model.Player;
-import model.TurnOrderSlot;
-import java.util.Comparator;
 
 /**
  * Stato di inizio turno: i giocatori piazzano il totem sulle offering tiles.
@@ -15,36 +12,53 @@ public class StartTurnState extends GameState {
     @Override
     public void placeTotem(Game game, String nickname, int offerPosition) throws Exception {
         // 1. Troviamo il giocatore
-        Player player = game.getPlayers().stream()
-                .filter(p -> p.getNickname().equalsIgnoreCase(nickname))
-                .findFirst()
-                .orElseThrow(() -> new Exception("Errore: Giocatore '" + nickname + "' non trovato."));
+        Player player = game.getPlayerByNickname(nickname);
 
         // 2. Controllo del turno (opzionale ma consigliato se il piazzamento è a turni)
         // Se nel tuo gioco i totem si piazzano uno alla volta seguendo un ordine:
+
+        var casellaDiPartenza = game.getBoard().getTurnOrderTile().stream()
+                .filter(tile -> tile.getOccupiedBy() != null && tile.getOccupiedBy().getNickname().equalsIgnoreCase(nickname))
+                .findFirst()
+                .orElseThrow(() -> new Exception("Errore: Nessun totem trovato sulla pista dei turni per " + nickname));
 
         if (!game.getCurrentPlayer().equals(player)) {
             throw new Exception("Non è il tuo turno per piazzare il totem!");
         }
 
+
+        if (game.getRoundCount() > 0) { // (Ricordati del > 1 se nel Round 1 l'hai già dato al setup!)
+
+            int ciboBonus = game.getBoard().getTurnOrderTile().stream()
+                    // AGGIUNTO IL CONTROLLO != null PRIMA DEL NICKNAME!
+                    .filter(tile -> tile.getOccupiedBy() != null && tile.getOccupiedBy().getNickname().equalsIgnoreCase(nickname))
+                    .findFirst()
+                    .orElseThrow(() -> new Exception("Errore: Nessun totem trovato sulla pista per " + nickname))
+                    .getBonusFood();
+
+            player.modifyFood(ciboBonus);
+            System.out.println(nickname + " ottiene " + ciboBonus + " cibo bonus dalla pista.");
+        }
+
+
+
         // 3. Esecuzione fisica del piazzamento (delega alla Board)
         // Immagino tu abbia un metodo nella Board o nel Game per registrare dove va il totem.
         // Ad esempio: game.getBoard().addTotemToPosition(player.getTotemColors(), offerPosition);
+        game.getBoard().addTotemToPosition(player, game.getBoard().getOfferingTrack().get(offerPosition));
+
         System.out.println(nickname + " ha piazzato il totem sulla posizione " + offerPosition);
 
-        // Imposta la offering tile corrente del giocatore
-        OfferingTile tile = game.getBoard().getOfferingTrack().get(offerPosition);
-        player.setCurrentTile(tile);
-
+        casellaDiPartenza.occupy(null);
         // Segniamo che il giocatore ha fatto la sua mossa (aggiungi un booleano in Player se non ce l'hai)
         player.setHasPlacedTotem(true);
+
 
         // 4. Controllo di fine fase: Tutti hanno piazzato il totem?
         boolean tuttiHannoPiazzato = true;
         for (Player p : game.getPlayers()) {
             if (!p.hasPlacedTotem()) {
                 tuttiHannoPiazzato = false;
-                break;
             }
         }
 
@@ -52,19 +66,10 @@ public class StartTurnState extends GameState {
         if (tuttiHannoPiazzato) {
             System.out.println("Tutti i totem sono stati piazzati! Transizione a PickingState...");
 
-            // Reset turn order slots
-            for (TurnOrderSlot slot : game.getBoard().getTurnOrderTile()) {
-                slot.freeSlot();
+            // Prima di passare allo stato successivo, resettiamo le variabili dei giocatori
+            for (Player p : game.getPlayers()) {
+                p.setHasPlacedTotem(false);
             }
-
-            // Ordina i giocatori per ID della offering tile (A, B, C...)
-            game.getPlayers().sort(Comparator.comparing(p -> {
-                OfferingTile playerTile = p.getCurrentTile();
-                return playerTile != null ? playerTile.getId() : 'Z';
-            }));
-
-            // Imposta il primo giocatore (quello sulla tile A)
-            game.setCurrentPlayer(game.getPlayers().get(0));
 
             // Passiamo la palla alla fase degli acquisti!
             game.setState(new PickingState());

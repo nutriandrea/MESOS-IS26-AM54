@@ -34,11 +34,7 @@ public class SetUpGameState extends GameState {
     @Override
     public void chooseTotemColor(Game game, String nickname, String color) throws Exception {
         // 1. Cerchiamo il giocatore nella lista
-        Player player = game.getPlayers().stream()
-                .filter(p -> p.getNickname().equalsIgnoreCase(nickname))
-                .findFirst()
-                .orElseThrow(() -> new Exception("Errore: Giocatore '" + nickname + "' non trovato nella lobby."));
-
+        Player p = game.getPlayerByNickname(nickname);
         // 2. Convertiamo la stringa in Enum
         TotemColors chosenColor;
         try {
@@ -48,14 +44,14 @@ public class SetUpGameState extends GameState {
         }
 
         // 3. Controlliamo che il colore non sia già stato preso
-        for (Player p : game.getPlayers()) {
-            if (p.getTotemColors() == chosenColor) {
+        for (Player pl : game.getPlayers()) {
+            if (pl.getTotemColors() == chosenColor) {
                 throw new Exception("Errore: Il colore " + color + " è già stato scelto da un altro giocatore!");
             }
         }
 
         // 4. Assegniamo il colore
-        player.setTotemColor(chosenColor);
+        p.setTotemColor(chosenColor);
         System.out.println(nickname + " ha scelto il totem " + chosenColor.name());
     }
 

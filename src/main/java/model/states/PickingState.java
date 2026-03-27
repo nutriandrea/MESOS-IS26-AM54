@@ -80,12 +80,15 @@ public class PickingState extends GameState {
             throw new Exception("Non è il tuo turno!");
         }
 
-        // Il giocatore ha finito le sue azioni e sposta il Totem sul Turn Order Track
-        game.assignPickerToTurnOrder(player);
+        // Assegna al primo slot libero e ottieni il bonus cibo
+        TurnOrderSlot slot = game.assignPickerToTurnOrder(player);
+        if (slot != null && slot.getBonusFood() > 0) {
+            player.modifyFood(slot.getBonusFood());
+        }
+        
         player.getCurrentTile().freeSlot();
         System.out.println(player.getNickname() + " si è posizionato nell'ordine di turno.");
 
-        // Controlliamo se tutti hanno finito la fase di Picking
         if (game.isPickingComplete()) {
             System.out.println("Tutti i giocatori hanno finito di pescare! Transizione a EventState...");
             game.setState(new EventState());

@@ -131,7 +131,11 @@ public class Game implements IGame{
 
     public void setState(GameState newState) {
         this.currentState = newState;
-        notifyStateChanged(newState); // Aggiornato!
+        notifyStateChanged(newState);
+    }
+
+    public GameState getCurrentState() {
+        return currentState;
     }
 
     public void nextPlayer() {
@@ -243,13 +247,14 @@ public class Game implements IGame{
         return false;
     }
 
-    public void assignPickerToTurnOrder(Player p) {
+    public TurnOrderSlot assignPickerToTurnOrder(Player p) {
         for (TurnOrderSlot slot : board.getTurnOrderTile()) {
             if (slot.getOccupiedBy() == null) {
                 slot.occupy(p);
-                return;
+                return slot;
             }
         }
+        return null;
     }
 
     public boolean isPickingComplete() {
@@ -276,6 +281,9 @@ public class Game implements IGame{
     public void advanceRound() {
         roundCount++;
         if (isEraTransition()) {
+            if (currentEra == 2) {
+                board.getBuildingCardsLowerRow().clear();
+            }
             currentEra++;
         }
     }
@@ -308,6 +316,10 @@ public class Game implements IGame{
         long artists = p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.ARTIST).count();
         score += (int) (artists / 2) * 10;
+
+        long builders = p.getMyTribe().stream()
+                .filter(c -> c.getJobType() == JobType.BUILDER).count();
+        score += (int) builders;
 
         score += p.getBuildings().stream()
                 .mapToInt(BuildingCard::getFinalAura).sum();

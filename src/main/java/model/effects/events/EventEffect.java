@@ -44,10 +44,9 @@ public class EventEffect implements IEffect<EventCard> {
             long cacciatori = pl.getMyTribe().stream()
                     .filter(c -> c.getJobType() == JobType.HUNTER).count();
 
-            int buildingFood = pl.getEventCostFood();
             int buildingAura = pl.getEventCostAura();
 
-            pl.modifyFood((int) cacciatori * ec.getBaseFood() + buildingFood);
+            pl.modifyFood((int) cacciatori * ec.getBaseFood());
             pl.modifyAuraPoints((int) cacciatori * ec.getAuraPerCharacter() + buildingAura);
             pl.resetEventAttributes();
         });
@@ -79,8 +78,6 @@ public class EventEffect implements IEffect<EventCard> {
                     ? -ec.getPenalty()
                     : (int) painters * ec.getBonusMultiplier());
 
-            int extraFood = pl.getEventCostFood();
-            if (extraFood > 0) pl.modifyFood(extraFood);
             pl.resetEventAttributes();
         });
     }

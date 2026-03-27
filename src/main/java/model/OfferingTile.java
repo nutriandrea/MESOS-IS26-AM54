@@ -69,4 +69,12 @@ public class OfferingTile {
         return remainingUpperPicks > 0 || remainingLowerPicks > 0;
     }
 
+    public int getRemainingUpperPicks() {
+        return remainingUpperPicks;
+    }
+
+    public int getRemainingLowerPicks() {
+        return remainingLowerPicks;
+    }
+
 }

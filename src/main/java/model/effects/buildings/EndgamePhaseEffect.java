@@ -30,6 +30,10 @@ public class EndgamePhaseEffect implements IEffect<BuildingCard> {
         return true;
     }
 
+    public String getEffectName() {
+        return effectName;
+    }
+
     @Override
     public void apply(Player p, Game g, BuildingCard card) {
         switch (effectName) {

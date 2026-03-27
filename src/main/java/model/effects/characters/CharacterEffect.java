@@ -19,7 +19,7 @@ public class CharacterEffect implements IEffect<CharacterCard> {
         switch (effectName) {
             case "HUNTER" -> p.modifyFood((int) (p.getMyTribe().stream()
                     .filter(c -> c.getJobType() == JobType.HUNTER).count() + 1));
-            case "BUILDER" -> p.modifyMyBuildingDiscount(card.getLevel());
+            case "CONSTRUCTOR" -> p.modifyMyBuildingDiscount(card.getLevel());
             case "SHAMAN" -> p.modifyMagicPoints(card.getLevel());
             case "FARMER" -> p.modifyMyFoodDiscount(card.getLevel());
         }

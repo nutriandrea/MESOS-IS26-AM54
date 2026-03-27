@@ -44,12 +44,12 @@ public class EndgamePhaseEffect implements IEffect<BuildingCard> {
             }
             case "DOUBLE_CONSTRUCTOR_AURA" -> {
                 p.getMyTribe().stream()
-                        .filter(c -> c.getJobType() == JobType.BUILDER)
+                        .filter(c -> c.getJobType() == JobType.CONSTRUCTOR)
                         .forEach(c -> p.modifyAuraPoints(c.getAura()));
             }
             case "SIX_DIFFERENT_AURA" -> {
                 JobType[] allJobs = {
-                        JobType.HUNTER, JobType.BUILDER, JobType.SHAMAN,
+                        JobType.HUNTER, JobType.CONSTRUCTOR, JobType.SHAMAN,
                         JobType.FARMER, JobType.ARTIST, JobType.INVENTOR
                 };
                 long minCount = Arrays.stream(allJobs)

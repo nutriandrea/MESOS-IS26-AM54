@@ -25,7 +25,7 @@
   { "JobType": "NULL", "cost": 7, "finalAura": 4, "phase": "ENDGAME", "nomeLambda": "AURA_PER_JOB", "era": 3,
     "effectParams": { "jobType": "SHAMAN", "multiplier": 4 } },
   { "JobType": "NULL", "cost": 6, "finalAura": 3, "phase": "ENDGAME", "nomeLambda": "AURA_PER_JOB", "era": 3,
-    "effectParams": { "jobType": "BUILDER", "multiplier": 4 } },
+    "effectParams": { "jobType": "CONSTRUCTOR", "multiplier": 4 } },
   { "JobType": "NULL", "cost": 7, "finalAura": 4, "phase": "ENDGAME", "nomeLambda": "AURA_PER_JOB", "era": 3,
     "effectParams": { "jobType": "ARTIST", "multiplier": 4 } },
   { "JobType": "NULL", "cost": 6, "finalAura": 6, "phase": "ENDGAME", "nomeLambda": "AURA_PER_JOB", "era": 3,

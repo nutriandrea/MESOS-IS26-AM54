@@ -4,7 +4,7 @@ package model;
 public enum Phases {
     STARTTURN,
     POSTPICK,
-    POSTACTIONS,
+    POSTACTION,
     EVENT,
     ENDGAME
 }

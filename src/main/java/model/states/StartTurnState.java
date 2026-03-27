@@ -32,15 +32,15 @@ public class StartTurnState extends GameState {
 
         if (game.getRoundCount() > 0) { // (Ricordati del > 1 se nel Round 1 l'hai già dato al setup!)
 
-            int ciboBonus = game.getBoard().getTurnOrderTile().stream()
+            int cifrabboonus = game.getBoard().getTurnOrderTile().stream()
                     // AGGIUNTO IL CONTROLLO != null PRIMA DEL NICKNAME!
                     .filter(tile -> tile.getOccupiedBy() != null && tile.getOccupiedBy().getNickname().equalsIgnoreCase(nickname))
                     .findFirst()
                     .orElseThrow(() -> new Exception("Errore: Nessun totem trovato sulla pista per " + nickname))
                     .getBonusFood();
 
-            player.modifyFood(ciboBonus);
-            System.out.println(nickname + " ottiene " + ciboBonus + " cibo bonus dalla pista.");
+            player.modifyFood(cifrabboonus);
+            System.out.println(nickname + " ottiene " + cifrabboonus + " cibo bonus dalla pista.");
         }
 
 

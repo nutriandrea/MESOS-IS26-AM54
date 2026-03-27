@@ -31,7 +31,7 @@ public class PostpickPhaseEffect implements IEffect<BuildingCard> {
                         .filter(c -> c.getJobType() == lavoroAppenaPescato).count();
 
                 JobType[] tuttiILavori = {
-                        JobType.HUNTER, JobType.BUILDER, JobType.SHAMAN,
+                        JobType.HUNTER, JobType.CONSTRUCTOR, JobType.SHAMAN,
                         JobType.FARMER, JobType.ARTIST, JobType.INVENTOR
                 };
 

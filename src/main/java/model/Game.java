@@ -317,9 +317,9 @@ public class Game implements IGame{
                 .filter(c -> c.getJobType() == JobType.ARTIST).count();
         score += (int) (artists / 2) * 10;
 
-        long builders = p.getMyTribe().stream()
-                .filter(c -> c.getJobType() == JobType.BUILDER).count();
-        score += (int) builders;
+        long CONSTRUCTORs = p.getMyTribe().stream()
+                .filter(c -> c.getJobType() == JobType.CONSTRUCTOR).count();
+        score += (int) CONSTRUCTORs;
 
         score += p.getBuildings().stream()
                 .mapToInt(BuildingCard::getFinalAura).sum();

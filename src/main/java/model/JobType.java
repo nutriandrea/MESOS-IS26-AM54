@@ -4,8 +4,9 @@ package model;
 public enum JobType {
     HUNTER,
     SHAMAN,
-    BUILDER,
+    CONSTRUCTOR,
     FARMER,
     INVENTOR,
-    ARTIST
+    ARTIST,
+    NULL
 }

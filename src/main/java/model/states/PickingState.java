@@ -24,25 +24,26 @@ public class PickingState extends GameState {
             throw new Exception("Non hai una offering tile assegnata!");
         }
 
-        int[] picksAvailable = tile.getCards();
-        int remainingPicks = row.equalsIgnoreCase("upper") 
-            ? picksAvailable[1] 
-            : picksAvailable[0];
-
-        if (remainingPicks <= 0) {
-            throw new Exception("Non hai più pick disponibili per la fila " + row);
-        }
-
-        int currentPicks = row.equalsIgnoreCase("upper") 
-            ? picksAvailable[1] 
-            : picksAvailable[0];
+        // ==========================================
+        // NUOVA LOGICA DI PESCATA
+        // Usiamo i metodi della tessera per scalare fisicamente le pescate disponibili
+        // ==========================================
         if (row.equalsIgnoreCase("upper")) {
-            picksAvailable[1] = currentPicks - 1;
+            if (!tile.useUpperPick()) {
+                throw new Exception("Non hai più pick disponibili per la fila upper");
+            }
+        } else if (row.equalsIgnoreCase("lower")) {
+            if (!tile.useLowerPick()) {
+                throw new Exception("Non hai più pick disponibili per la fila lower");
+            }
         } else {
-            picksAvailable[0] = currentPicks - 1;
+            throw new Exception("Errore: Fila non valida. Usa 'upper' o 'lower'.");
         }
+        // ==========================================
 
-        Card card;
+        Card card = null;
+
+        // Calcolo dell'indice per estrarre la carta giusta (Personaggio o Edificio)
         if (row.equalsIgnoreCase("upper")) {
             if (cardIndex < game.getBoard().getCharacterRowSize("upper")) {
                 card = game.getBoard().takeCharacterCard(row, cardIndex);
@@ -50,7 +51,7 @@ public class PickingState extends GameState {
                 int buildingIndex = cardIndex - game.getBoard().getCharacterRowSize("upper");
                 card = game.getBoard().takeBuildingCard(row, buildingIndex);
             }
-        } else {
+        } else if (row.equalsIgnoreCase("lower")) {
             if (cardIndex < game.getBoard().getCharacterRowSize("lower")) {
                 card = game.getBoard().takeCharacterCard(row, cardIndex);
             } else {
@@ -60,9 +61,10 @@ public class PickingState extends GameState {
         }
 
         if (card == null) {
-            throw new Exception("Carta non trovata o non disponibile.");
+            throw new Exception("Carta non trovata o non disponibile a quell'indice.");
         }
 
+        // Eseguiamo la logica specifica della carta (aggiunge al player, scala il cibo per gli edifici, ecc.)
         card.pick(player, game);
     }
 
@@ -78,14 +80,15 @@ public class PickingState extends GameState {
             throw new Exception("Non è il tuo turno!");
         }
 
+        // Il giocatore ha finito le sue azioni e sposta il Totem sul Turn Order Track
         game.assignPickerToTurnOrder(player);
         player.getCurrentTile().freeSlot();
-        System.out.println(player.getNickname() + " si e' posizionato nel turno order");
+        System.out.println(player.getNickname() + " si è posizionato nell'ordine di turno.");
 
+        // Controlliamo se tutti hanno finito la fase di Picking
         if (game.isPickingComplete()) {
             System.out.println("Tutti i giocatori hanno finito di pescare! Transizione a EventState...");
             game.setState(new EventState());
-        } else {
         }
     }
 }

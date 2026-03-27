@@ -39,19 +39,19 @@ public class Game implements IGame{
     @Override
     public void joinGame(String nickname) throws Exception {
         currentState.joinGame(this, nickname);
-        notifyObservers();
+        notifyPlayerJoined(getPlayerByNickname(nickname));
     }
 
     @Override
     public void chooseTotemColor(String nickname, String color) throws Exception {
         currentState.chooseTotemColor(this, nickname, color);
-        notifyObservers();
+        notifyTotemColorChosen(getPlayerByNickname(nickname), TotemColors.valueOf(color.toUpperCase()));
     }
 
     @Override
     public void placeTotem(String nickname, int offerPosition) throws Exception {
         currentState.placeTotem(this, nickname, offerPosition);
-        notifyObservers();
+        notifyTotemPlaced(getPlayerByNickname(nickname), offerPosition);
     }
 
     // @Override
@@ -69,7 +69,7 @@ public class Game implements IGame{
     @Override
     public void pickCard(String nickname, String row, int cardIndex) throws Exception {
         currentState.pickCard(this, nickname, row, cardIndex);
-        notifyObservers();
+        notifyCardPicked(getPlayerByNickname(nickname), row, cardIndex);
     }
 
     @Override
@@ -131,26 +131,48 @@ public class Game implements IGame{
 
     public void setState(GameState newState) {
         this.currentState = newState;
-        notifyObservers(); // Aggiorniamo la grafica al cambio di fase
+        notifyStateChanged(newState); // Aggiornato!
     }
 
     public void nextPlayer() {
-        if (players.isEmpty()) return;
+        List<TurnOrderSlot> turnTrack = board.getTurnOrderTile();
 
-        // Trova a che punto della lista è il giocatore attuale
-        int currentIndex = players.indexOf(currentPlayer);
+        // 1. Troviamo in quale slot si trova il giocatore corrente
+        int currentIndex = 0;
+        boolean foundCurrent = false;
 
-        // Calcola il prossimo indice (il % players.size() fa ricominciare il giro da 0 se siamo all'ultimo)
-        int nextIndex = (currentIndex + 1) % players.size();
+        while (currentIndex < turnTrack.size() && !foundCurrent) {
+            if (currentPlayer.equals(turnTrack.get(currentIndex).getOccupiedBy())) {
+                foundCurrent = true; // Trovato! Al prossimo giro il while si ferma da solo.
+            } else {
+                currentIndex++; // Andiamo avanti a cercare
+            }
+        }
 
-        // Aggiorna il giocatore corrente
-        this.currentPlayer = players.get(nextIndex);
+        // 2. Passiamo al prossimo slot occupato
+        boolean nextFound = false;
+        int offset = 1;
 
-        System.out.println("Turno passato a: " + currentPlayer.getNickname());
+        while (offset <= turnTrack.size() && !nextFound) {
+            int nextIndex = (currentIndex + offset) % turnTrack.size();
+            Player nextP = turnTrack.get(nextIndex).getOccupiedBy();
 
-        // Avvisa la grafica che è cambiato il player corrente!
-        notifyObservers();
+            // Se in questo slot c'è seduto qualcuno, e NON ha ancora piazzato il totem
+            if (nextP != null && !nextP.hasPlacedTotem()) {
+                this.currentPlayer = nextP; // Aggiorniamo il giocatore corrente
+                nextFound = true; // Condizione soddisfatta, il while si ferma!
+            } else {
+                offset++; // Altrimenti controlliamo il posto successivo
+            }
+        }
+        // Se abbiamo effettivamente trovato e cambiato il giocatore, avvisiamo la grafica
+        if (nextFound) {
+            System.out.println("Turno passato a: " + currentPlayer.getNickname());
+            notifyTurnChanged(currentPlayer); // Aggiornato!
+        }
     }
+
+
 
     public Player getPlayerByNickname(String nickname) throws Exception {
         return this.players.stream()
@@ -159,12 +181,28 @@ public class Game implements IGame{
                 .orElseThrow(() -> new Exception("Errore: Giocatore '" + nickname + "' non trovato."));
     }
 
-    // METODO DELLA FUNCT INT IGAMEOBSERVER
-    // Lo chiami internamente OGNI VOLTA che il gioco cambia stato.
-    private void notifyObservers() {
-        for (IGameObserver obs : observers) {
-            obs.onGameUpdated(this); // Passa se stesso (il Game) all'Observer
-        }
+    private void notifyPlayerJoined(Player player) {
+        for (IGameObserver obs : observers) obs.onPlayerJoined(this, player);
+    }
+
+    private void notifyTotemColorChosen(Player player, TotemColors color) {
+        for (IGameObserver obs : observers) obs.onTotemColorChosen(this, player, color);
+    }
+
+    private void notifyTotemPlaced(Player player, int offerPosition) {
+        for (IGameObserver obs : observers) obs.onTotemPlaced(this, player, offerPosition);
+    }
+
+    private void notifyCardPicked(Player player, String row, int cardIndex) {
+        for (IGameObserver obs : observers) obs.onCardPicked(this, player, row, cardIndex);
+    }
+
+    private void notifyTurnChanged(Player player) {
+        for (IGameObserver obs : observers) obs.onTurnChanged(this, player);
+    }
+
+    private void notifyStateChanged(GameState newState) {
+        for (IGameObserver obs : observers) obs.onStateChanged(this, newState);
     }
 
     // ==========================================
@@ -228,7 +266,7 @@ public class Game implements IGame{
         return deckTribu.isEmpty();
     }
 
-    // True se la prossima carta del deck e' di un'era successiva
+    // True se la prossima carta del deck è di un'era successiva
     public boolean isEraTransition() {
         TribeCard nextCard = deckTribu.peek();
         if (nextCard == null) return false;
@@ -316,21 +354,8 @@ public class Game implements IGame{
             System.out.println("Vittoria condivisa tra: " + 
                 winners.stream().map(Player::getNickname).reduce((a, b) -> a + ", " + b).orElse(""));
         }
-        notifyObservers();
+        for (IGameObserver obs : observers) {
+            obs.onEndGame(this, winners);
+        }
     }
-
-    /*public void takeCards(Player player, int count, String row) {
-        // TODO
-    }*/
-
-    
-    /*public void nextTurn() {
-        // TODO implement here
-    }*/
-
-    
-   /* public void endGame() {
-        // TODO implement here
-    }*/
-
 }

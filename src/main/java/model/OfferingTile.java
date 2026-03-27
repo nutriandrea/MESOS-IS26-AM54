@@ -10,6 +10,9 @@ public class OfferingTile {
     private int foodBonus;
     private Player occupiedBy;
 
+    private int remainingUpperPicks;
+    private int remainingLowerPicks;
+
     public OfferingTile(char id, int cardsFromUpper, int cardsFromLower, int foodBonus) {
         this.id = id;
         this.cardsFromUpper = cardsFromUpper;
@@ -37,6 +40,8 @@ public class OfferingTile {
 
     public void occupy(Player p) {
         this.occupiedBy = p;
+        this.remainingUpperPicks = this.cardsFromUpper;
+        this.remainingLowerPicks = this.cardsFromLower;
     }
 
     //sembra essere bad practice usare il occupy ma con null come riferimento
@@ -44,17 +49,24 @@ public class OfferingTile {
         this.occupiedBy = null;
     }
 
-    /**
-     * Restituisce le carte che il giocatore può prendere.
-     * Indice 0: carte dalla fila inferiore
-     * Indice 1: carte dalla fila superiore
-     */
-    public int[] getCards() {
-        // CORRETTO: l'array deve avere dimensione 2 per contenere due elementi
-        int[] x = new int[2];
-        x[0] = this.cardsFromLower;
-        x[1] = this.cardsFromUpper;
-        return x;
+    public boolean useUpperPick() {
+        if (remainingUpperPicks > 0) {
+            remainingUpperPicks--;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean useLowerPick() {
+        if (remainingLowerPicks > 0) {
+            remainingLowerPicks--;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean hasPicksLeft() {
+        return remainingUpperPicks > 0 || remainingLowerPicks > 0;
     }
 
 }

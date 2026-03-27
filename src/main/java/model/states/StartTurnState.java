@@ -2,7 +2,10 @@ package model.states;
 
 import model.Game;
 import model.GameState;
+import model.OfferingTile;
 import model.Player;
+
+import java.util.List;
 
 /**
  * Stato di inizio turno: i giocatori piazzano il totem sulle offering tiles.
@@ -43,8 +46,8 @@ public class StartTurnState extends GameState {
 
 
         // 3. Esecuzione fisica del piazzamento (delega alla Board)
-        // Immagino tu abbia un metodo nella Board o nel Game per registrare dove va il totem.
-        // Ad esempio: game.getBoard().addTotemToPosition(player.getTotemColors(), offerPosition);
+        OfferingTile tileScelta = game.getBoard().getOfferingTrack().get(offerPosition);
+
         game.getBoard().addTotemToPosition(player, game.getBoard().getOfferingTrack().get(offerPosition));
 
         System.out.println(nickname + " ha piazzato il totem sulla posizione " + offerPosition);
@@ -53,13 +56,19 @@ public class StartTurnState extends GameState {
         // Segniamo che il giocatore ha fatto la sua mossa (aggiungi un booleano in Player se non ce l'hai)
         player.setHasPlacedTotem(true);
 
+        player.setCurrentTile(tileScelta);
 
         // 4. Controllo di fine fase: Tutti hanno piazzato il totem?
         boolean tuttiHannoPiazzato = true;
-        for (Player p : game.getPlayers()) {
-            if (!p.hasPlacedTotem()) {
-                tuttiHannoPiazzato = false;
+
+        int index = 0;
+        List<Player> listaGiocatori = game.getPlayers();
+
+        while (index < listaGiocatori.size() && tuttiHannoPiazzato) {
+            if (!listaGiocatori.get(index).hasPlacedTotem()) {
+                tuttiHannoPiazzato = false; // Se ne troviamo uno che non ha finito, il while si ferma
             }
+            index++;
         }
 
         // 5. TRANSIZIONE DI STATO O CAMBIO TURNO

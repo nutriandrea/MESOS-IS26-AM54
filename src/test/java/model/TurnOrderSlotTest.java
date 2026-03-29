@@ -24,6 +24,8 @@ class TurnOrderSlotTest {
         slot = new TurnOrderSlot(1, 2);
     }
 
+    // ==================== Basic Tests ====================
+
     @Test
     void testTurnOrderSlot_GetPosition() {
         assertEquals(1, slot.getPosition());
@@ -38,6 +40,8 @@ class TurnOrderSlotTest {
     void testTurnOrderSlot_GetOccupiedBy_InitiallyNull() {
         assertNull(slot.getOccupiedBy());
     }
+
+    // ==================== Occupy Tests ====================
 
     @Test
     void testTurnOrderSlot_Occupy() {
@@ -73,10 +77,11 @@ class TurnOrderSlotTest {
 
     @Test
     void testTurnOrderSlot_FreeSlot_WhenAlreadyEmpty() {
-        // Should not throw
         assertDoesNotThrow(() -> slot.freeSlot());
         assertNull(slot.getOccupiedBy());
     }
+
+    // ==================== Edge Cases ====================
 
     @Test
     void testTurnOrderSlot_NegativeBonus() {
@@ -88,5 +93,31 @@ class TurnOrderSlotTest {
     void testTurnOrderSlot_ZeroBonus() {
         TurnOrderSlot zeroSlot = new TurnOrderSlot(3, 0);
         assertEquals(0, zeroSlot.getBonusFood());
+    }
+
+    @Test
+    void testTurnOrderSlot_PositiveBonus() {
+        TurnOrderSlot positiveSlot = new TurnOrderSlot(4, 5);
+        assertEquals(5, positiveSlot.getBonusFood());
+    }
+
+    @Test
+    void testTurnOrderSlot_AllPositions() {
+        for (int i = 0; i < 10; i++) {
+            TurnOrderSlot testSlot = new TurnOrderSlot(i, i);
+            assertEquals(i, testSlot.getPosition());
+            assertEquals(i, testSlot.getBonusFood());
+        }
+    }
+
+    @Test
+    void testTurnOrderSlot_IsAvailable_WhenEmpty() {
+        assertTrue(slot.getOccupiedBy() == null);
+    }
+
+    @Test
+    void testTurnOrderSlot_IsNotAvailable_WhenOccupied() {
+        slot.occupy(player);
+        assertFalse(slot.getOccupiedBy() == null);
     }
 }

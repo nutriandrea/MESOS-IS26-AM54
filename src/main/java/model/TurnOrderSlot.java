@@ -20,10 +20,6 @@ public class TurnOrderSlot {
         this.occupiedBy = p;
     }
 
-    public boolean isAvailable() {
-        return this.occupiedBy == null;
-    }
-
     public int getPosition() {
         return this.position;
     }

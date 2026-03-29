@@ -101,11 +101,6 @@ public class Player {
     }
 
     
-    public boolean getExtraPick() {
-        return extraPick;
-    }
-
-    
     public ArrayList<CharacterCard> getMyTribe() {
         return myTribe;
     }
@@ -127,7 +122,6 @@ public class Player {
 
 
 
-    //fare attenzione a quando vai sotto di cibo che devi pagare in aura
     public void modifyFood(int amount) {
         if (amount > 0) {
             this.food += amount;

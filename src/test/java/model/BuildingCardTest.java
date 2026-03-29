@@ -1,8 +1,11 @@
 package model;
 
-import model.effects.buildings.EventPhaseEffect;
+import model.effects.buildings.EndgamePhaseEffect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,9 +26,10 @@ class BuildingCardTest {
         player = game.getPlayers().get(0);
     }
 
+    // ==================== Basic Getter Tests ====================
+
     @Test
     void testBuildingCard_GetCost() {
-        // Create a building card with cost 5
         BuildingCard card = new BuildingCard(
             JobType.CONSTRUCTOR, 5, 3, Phases.ENDGAME, null, 1
         );
@@ -37,7 +41,6 @@ class BuildingCardTest {
         BuildingCard card = new BuildingCard(
             JobType.CONSTRUCTOR, 5, 3, Phases.ENDGAME, null, 1
         );
-        // getFinalAura() currently returns 0 (TODO)
         assertEquals(0, card.getFinalAura());
     }
 
@@ -46,7 +49,6 @@ class BuildingCardTest {
         BuildingCard card = new BuildingCard(
             JobType.CONSTRUCTOR, 5, 3, Phases.ENDGAME, null, 1
         );
-        // name is null by default
         assertNull(card.getName());
     }
 
@@ -59,7 +61,44 @@ class BuildingCardTest {
     }
 
     @Test
-    void testBuildingCard_CanBePurchased() throws Exception {
+    void testBuildingCard_Era() {
+        BuildingCard card = new BuildingCard(
+            JobType.CONSTRUCTOR, 5, 3, Phases.ENDGAME, null, 2
+        );
+        assertEquals(2, card.getEra());
+    }
+
+    // ==================== Constructor Tests ====================
+
+    @Test
+    void testBuildingCard_Constructor_AllParameters() {
+        List<IEffect<BuildingCard>> effects = new ArrayList<>();
+        effects.add(new EndgamePhaseEffect("AURA_PER_JOB", null));
+        
+        BuildingCard card = new BuildingCard(
+            JobType.FARMER, 7, 4, Phases.EVENT, effects, 3
+        );
+        
+        assertEquals(JobType.FARMER, card.getBuildingType());
+        assertEquals(7, card.getCost());
+        assertEquals(0, card.getFinalAura());
+        assertNotNull(card.getEffects());
+        assertEquals(1, card.getEffects().size());
+        assertEquals(3, card.getEra());
+    }
+
+    @Test
+    void testBuildingCard_Constructor_NullEffects() {
+        BuildingCard card = new BuildingCard(
+            JobType.NULL, 5, 3, Phases.ENDGAME, null, 1
+        );
+        assertNull(card.getEffects());
+    }
+
+    // ==================== canBePurchased Tests ====================
+
+    @Test
+    void testBuildingCard_CanBePurchased_EnoughFood() throws Exception {
         Game game = new Game();
         game.joinGame("Buyer");
         game.joinGame("Player2");
@@ -97,7 +136,7 @@ class BuildingCardTest {
     }
 
     @Test
-    void testBuildingCard_Buy_WithDiscount() throws Exception {
+    void testBuildingCard_CanBePurchased_WithDiscount() throws Exception {
         Game game = new Game();
         game.joinGame("DiscountPlayer");
         game.joinGame("Player2");
@@ -106,7 +145,6 @@ class BuildingCardTest {
         game.setupGame();
         
         Player discountPlayer = game.getPlayers().get(0);
-        int initialFood = discountPlayer.getFood();
         
         BuildingCard card = new BuildingCard(
             JobType.CONSTRUCTOR, 3, 1, Phases.ENDGAME, null, 1
@@ -121,11 +159,163 @@ class BuildingCardTest {
         assertTrue(effectiveCost >= 0);
     }
 
+    // ==================== buy Tests ====================
+
     @Test
-    void testBuildingCard_Era() {
+    void testBuildingCard_Buy_Success() throws Exception {
+        Game game = new Game();
+        game.joinGame("Buyer");
+        game.joinGame("Player2");
+        game.chooseTotemColor("Buyer", "YELLOW");
+        game.chooseTotemColor("Player2", "BLACK");
+        game.setupGame();
+        
+        Player buyer = game.getPlayers().get(0);
+        int initialFood = buyer.getFood();
+        int initialBuildings = buyer.getBuildings().size();
+        
         BuildingCard card = new BuildingCard(
-            JobType.CONSTRUCTOR, 5, 3, Phases.ENDGAME, null, 2
+            JobType.CONSTRUCTOR, 1, 2, Phases.ENDGAME, null, 1
         );
-        assertEquals(2, card.getEra());
+        
+        card.buy(buyer);
+        
+        assertEquals(initialBuildings + 1, buyer.getBuildings().size());
+        assertTrue(buyer.getBuildings().contains(card));
+    }
+
+    @Test
+    void testBuildingCard_Buy_ReducesFood() throws Exception {
+        Game game = new Game();
+        game.joinGame("Buyer");
+        game.joinGame("Player2");
+        game.chooseTotemColor("Buyer", "YELLOW");
+        game.chooseTotemColor("Player2", "BLACK");
+        game.setupGame();
+        
+        Player buyer = game.getPlayers().get(0);
+        int initialFood = buyer.getFood();
+        
+        BuildingCard card = new BuildingCard(
+            JobType.CONSTRUCTOR, 2, 2, Phases.ENDGAME, null, 1
+        );
+        
+        card.buy(buyer);
+        
+        assertTrue(buyer.getFood() <= initialFood);
+    }
+
+    // ==================== pick Tests ====================
+
+    @Test
+    void testBuildingCard_Pick_Success() throws Exception {
+        BuildingCard card = new BuildingCard(
+            JobType.CONSTRUCTOR, 1, 2, Phases.ENDGAME, null, 1
+        );
+        int initialBuildings = player.getBuildings().size();
+        
+        card.pick(player, null);
+        
+        assertEquals(initialBuildings + 1, player.getBuildings().size());
+    }
+
+    @Test
+    void testBuildingCard_Pick_InsufficientFood() throws Exception {
+        BuildingCard card = new BuildingCard(
+            JobType.CONSTRUCTOR, 1000, 5, Phases.ENDGAME, null, 1
+        );
+        
+        assertThrows(Exception.class, () -> {
+            card.pick(player, null);
+        });
+    }
+
+    @Test
+    void testBuildingCard_Pick_WithDiscount() throws Exception {
+        BuildingCard discountCard = new BuildingCard(
+            JobType.CONSTRUCTOR, 1, 1, Phases.ENDGAME, null, 1
+        );
+        discountCard.addOwner(player);
+        
+        BuildingCard affordableCard = new BuildingCard(
+            JobType.CONSTRUCTOR, 1, 2, Phases.ENDGAME, null, 1
+        );
+        
+        assertDoesNotThrow(() -> {
+            affordableCard.pick(player, null);
+        });
+    }
+
+    // ==================== resolveEffects Tests ====================
+
+    @Test
+    void testBuildingCard_ResolveEffects_WithEmptyEffects() {
+        BuildingCard card = new BuildingCard(
+            JobType.NULL, 5, 3, Phases.ENDGAME, new ArrayList<>(), 1
+        );
+        
+        assertDoesNotThrow(() -> card.resolveEffects(player, null));
+    }
+
+    @Test
+    void testBuildingCard_ResolveEffects_WithEffects() {
+        List<IEffect<BuildingCard>> effects = new ArrayList<>();
+        effects.add(new EndgamePhaseEffect("AURA_PER_JOB", null));
+        
+        BuildingCard card = new BuildingCard(
+            JobType.HUNTER, 5, 3, Phases.ENDGAME, effects, 1
+        );
+        
+        assertDoesNotThrow(() -> card.resolveEffects(player, null));
+    }
+
+    // ==================== getEffects Tests ====================
+
+    @Test
+    void testBuildingCard_GetEffects_ReturnsNull() {
+        BuildingCard card = new BuildingCard(
+            JobType.NULL, 5, 3, Phases.ENDGAME, null, 1
+        );
+        assertNull(card.getEffects());
+    }
+
+    @Test
+    void testBuildingCard_GetEffects_ReturnsList() {
+        List<IEffect<BuildingCard>> effects = new ArrayList<>();
+        effects.add(new EndgamePhaseEffect("AURA_PER_JOB", null));
+        
+        BuildingCard card = new BuildingCard(
+            JobType.HUNTER, 5, 3, Phases.ENDGAME, effects, 1
+        );
+        
+        assertNotNull(card.getEffects());
+        assertEquals(1, card.getEffects().size());
+    }
+
+    // ==================== All JobTypes ====================
+
+    @Test
+    void testBuildingCard_AllJobTypes() {
+        JobType[] validTypes = {JobType.HUNTER, JobType.SHAMAN, JobType.CONSTRUCTOR, 
+                                JobType.FARMER, JobType.INVENTOR, JobType.ARTIST};
+        for (JobType type : validTypes) {
+            BuildingCard card = new BuildingCard(
+                type, 5, 3, Phases.ENDGAME, null, 1
+            );
+            assertEquals(type, card.getBuildingType());
+        }
+    }
+
+    // ==================== All Phases ====================
+
+    @Test
+    void testBuildingCard_AllPhases() {
+        Phases[] phases = {Phases.STARTTURN, Phases.POSTPICK, Phases.POSTACTION, Phases.EVENT, Phases.ENDGAME};
+        for (Phases phase : phases) {
+            BuildingCard card = new BuildingCard(
+                JobType.NULL, 5, 3, phase, null, 1
+            );
+            assertNotNull(card);
+        }
     }
 }

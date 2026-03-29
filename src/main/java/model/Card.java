@@ -8,9 +8,7 @@ import java.util.*;
  */
 public class Card {
 
-    /**
-     * Default constructor
-     */
+
     public Card(int era) {
         this.era = era;
     }
@@ -19,24 +17,11 @@ public class Card {
 
     private Player owner;
 
-
-    /**
-     * @return
-     */
     public int getEra() {
         return era;
     }
 
-    /**
-     * @return
-     */
-    public Player getOwner() {
-        return owner;
-    }
 
-    /**
-     * @return
-     */
     public void addOwner(Player p) {
         this.owner = p;
     }

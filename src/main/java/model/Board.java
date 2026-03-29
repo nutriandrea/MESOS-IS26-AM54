@@ -265,14 +265,6 @@ public class Board {
         }
     }
 
-    /**
-     * Rimuove una carta dalla fila specificata
-     */
-    public void removeCard(String row) {
-        /**
-         * Rimuove una carta dalla fila specificata
-         */
-    }
 
     /**
      * Ottiene la fila specificata
@@ -338,9 +330,6 @@ public class Board {
             : buildingCardsLowerRow.size();
     }
 
-public List<EventCard> getEventLowerRow() {
-    return eventLowerRow;
-}
 
 // Ordina eventi: non-Farmer prima, Farmer dopo. Poi risolve e rimuove.
 public void resolveAllEventsInOrder(Game game) {

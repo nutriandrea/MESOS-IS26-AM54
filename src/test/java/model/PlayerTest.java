@@ -22,20 +22,32 @@ class PlayerTest {
         player = game.getPlayers().get(0);
     }
 
+    // ==================== Basic Tests ====================
+
     @Test
     void testPlayer_GetNickname() {
         assertEquals("TestPlayer", player.getNickname());
     }
 
     @Test
-    void testPlayer_ModifyFood() {
+    void testPlayer_GetTotemColor() {
+        assertEquals(TotemColors.RED, player.getTotemColors());
+    }
+
+    // ==================== Food Tests ====================
+
+    @Test
+    void testPlayer_ModifyFood_Positive() {
         int initialFood = player.getFood();
-        
         player.modifyFood(5);
         assertEquals(initialFood + 5, player.getFood());
-        
-        player.modifyFood(-3);
-        assertEquals(initialFood + 2, player.getFood());
+    }
+
+    @Test
+    void testPlayer_ModifyFood_Negative() {
+        int initialFood = player.getFood();
+        player.modifyFood(-1);
+        assertEquals(initialFood - 1, player.getFood());
     }
 
     @Test
@@ -46,37 +58,54 @@ class PlayerTest {
     }
 
     @Test
+    void testPlayer_ModifyFood_Zero() {
+        int initialFood = player.getFood();
+        player.modifyFood(0);
+        assertEquals(initialFood, player.getFood());
+    }
+
+    // ==================== Aura Tests ====================
+
+    @Test
     void testPlayer_ModifyAuraPoints() {
         int initialAura = player.getAuraPoints();
-        
         player.modifyAuraPoints(10);
         assertEquals(initialAura + 10, player.getAuraPoints());
     }
 
     @Test
+    void testPlayer_ModifyAuraPoints_Negative() {
+        int initialAura = player.getAuraPoints();
+        player.modifyAuraPoints(-5);
+        assertEquals(initialAura - 5, player.getAuraPoints());
+    }
+
+    @Test
+    void testPlayer_GetAuraPoints() {
+        int aura = player.getAuraPoints();
+        assertTrue(aura >= 0);
+    }
+
+    // ==================== Magic Points Tests ====================
+
+    @Test
     void testPlayer_ModifyMagicPoints() {
         int initialMagic = player.getMagicPoints();
-        
         player.modifyMagicPoints(3);
         assertEquals(initialMagic + 3, player.getMagicPoints());
     }
 
     @Test
+    void testPlayer_GetMagicPoints() {
+        int magic = player.getMagicPoints();
+        assertTrue(magic >= 0);
+    }
+
+    // ==================== Tribe Tests ====================
+
+    @Test
     void testPlayer_GetMyTribe() {
         assertNotNull(player.getMyTribe());
-    }
-
-    @Test
-    void testPlayer_GetBuildings() {
-        assertNotNull(player.getBuildings());
-    }
-
-    @Test
-    void testPlayer_ModifyMyBuildingDiscount() {
-        int initialDiscount = player.getMyBuildingDiscount();
-        
-        player.modifyMyBuildingDiscount(2);
-        assertEquals(initialDiscount + 2, player.getMyBuildingDiscount());
     }
 
     @Test
@@ -88,6 +117,40 @@ class PlayerTest {
         
         assertEquals(initialSize + 1, player.getMyTribe().size());
     }
+
+    @Test
+    void testPlayer_ModifyMyTribe_AllJobTypes() {
+        int initialSize = player.getMyTribe().size();
+        JobType[] validTypes = {JobType.HUNTER, JobType.SHAMAN, JobType.CONSTRUCTOR, 
+                                JobType.FARMER, JobType.INVENTOR, JobType.ARTIST};
+        for (JobType type : validTypes) {
+            CharacterCard card = new CharacterCard(1, type, 0, Phases.EVENT, null, 1);
+            player.modifyMyTribe(card);
+        }
+        assertEquals(initialSize + validTypes.length, player.getMyTribe().size());
+    }
+
+    // ==================== Buildings Tests ====================
+
+    @Test
+    void testPlayer_GetBuildings() {
+        assertNotNull(player.getBuildings());
+    }
+
+    @Test
+    void testPlayer_ModifyMyBuildingDiscount() {
+        int initialDiscount = player.getMyBuildingDiscount();
+        player.modifyMyBuildingDiscount(2);
+        assertEquals(initialDiscount + 2, player.getMyBuildingDiscount());
+    }
+
+    @Test
+    void testPlayer_GetMyBuildingDiscount() {
+        int discount = player.getMyBuildingDiscount();
+        assertTrue(discount >= 0);
+    }
+
+    // ==================== Event Cost Tests ====================
 
     @Test
     void testPlayer_SetEventCostFood() {
@@ -122,25 +185,57 @@ class PlayerTest {
         assertEquals(0, player.getEventCostAura());
     }
 
+    // ==================== Tile Tests ====================
+
     @Test
     void testPlayer_GetCurrentTile() {
-        // Initially null
         assertNull(player.getCurrentTile());
     }
 
     @Test
     void testPlayer_SetCurrentTile() {
         OfferingTile tile = game.getBoard().getOfferingTrack().get(0);
-        
         player.setCurrentTile(tile);
-        
         assertEquals(tile, player.getCurrentTile());
     }
 
+    // ==================== Totem Tests ====================
+
     @Test
-    void testPlayer_GetTotemColor() {
-        assertEquals(TotemColors.RED, player.getTotemColors());
+    void testPlayer_HasPlacedTotem_InitiallyFalse() {
+        assertFalse(player.hasPlacedTotem());
     }
+
+    @Test
+    void testPlayer_SetHasPlacedTotem() {
+        player.setHasPlacedTotem(true);
+        assertTrue(player.hasPlacedTotem());
+    }
+
+    // ==================== Food Discount Tests ====================
+
+    @Test
+    void testPlayer_GetMyFoodDiscount() {
+        int discount = player.getMyFoodDiscount();
+        assertTrue(discount >= 0);
+    }
+
+    @Test
+    void testPlayer_ModifyMyFoodDiscount() {
+        int initial = player.getMyFoodDiscount();
+        player.modifyMyFoodDiscount(1);
+        assertEquals(initial + 1, player.getMyFoodDiscount());
+    }
+
+    // ==================== Food Tokens Tests ====================
+
+    @Test
+    void testPlayer_GetFoodTokens() {
+        int tokens = player.getFoodTokens();
+        assertTrue(tokens >= 0);
+    }
+
+    // ==================== Initial Food Tests ====================
 
     @Test
     void testPlayer_InitialFoodAmounts() throws Exception {

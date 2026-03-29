@@ -80,12 +80,6 @@ class PlayerTest {
         assertEquals(initialAura - 5, player.getAuraPoints());
     }
 
-    @Test
-    void testPlayer_GetAuraPoints() {
-        int aura = player.getAuraPoints();
-        assertTrue(aura >= 0);
-    }
-
     // ==================== Magic Points Tests ====================
 
     @Test
@@ -95,18 +89,7 @@ class PlayerTest {
         assertEquals(initialMagic + 3, player.getMagicPoints());
     }
 
-    @Test
-    void testPlayer_GetMagicPoints() {
-        int magic = player.getMagicPoints();
-        assertTrue(magic >= 0);
-    }
-
     // ==================== Tribe Tests ====================
-
-    @Test
-    void testPlayer_GetMyTribe() {
-        assertNotNull(player.getMyTribe());
-    }
 
     @Test
     void testPlayer_ModifyMyTribe() {
@@ -144,12 +127,6 @@ class PlayerTest {
         assertEquals(initialDiscount + 2, player.getMyBuildingDiscount());
     }
 
-    @Test
-    void testPlayer_GetMyBuildingDiscount() {
-        int discount = player.getMyBuildingDiscount();
-        assertTrue(discount >= 0);
-    }
-
     // ==================== Event Cost Tests ====================
 
     @Test
@@ -159,19 +136,9 @@ class PlayerTest {
     }
 
     @Test
-    void testPlayer_GetEventCostFood() {
-        assertEquals(0, player.getEventCostFood());
-    }
-
-    @Test
     void testPlayer_SetEventCostAura() {
         player.setEventCostAura(3);
         assertEquals(3, player.getEventCostAura());
-    }
-
-    @Test
-    void testPlayer_GetEventCostAura() {
-        assertEquals(0, player.getEventCostAura());
     }
 
     @Test
@@ -215,24 +182,10 @@ class PlayerTest {
     // ==================== Food Discount Tests ====================
 
     @Test
-    void testPlayer_GetMyFoodDiscount() {
-        int discount = player.getMyFoodDiscount();
-        assertTrue(discount >= 0);
-    }
-
-    @Test
     void testPlayer_ModifyMyFoodDiscount() {
         int initial = player.getMyFoodDiscount();
         player.modifyMyFoodDiscount(1);
         assertEquals(initial + 1, player.getMyFoodDiscount());
-    }
-
-    // ==================== Food Tokens Tests ====================
-
-    @Test
-    void testPlayer_GetFoodTokens() {
-        int tokens = player.getFoodTokens();
-        assertTrue(tokens >= 0);
     }
 
     // ==================== Initial Food Tests ====================

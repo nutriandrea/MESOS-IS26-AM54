@@ -228,8 +228,8 @@ class EffectsTest {
     }
 
     @Test
-    void testPostpickPhaseEffect_Apply_DOUBLED_INVENTOR() {
-        PostpickPhaseEffect effect = new PostpickPhaseEffect("DOUBLED_INVENTOR", null);
+    void testPostpickPhaseEffect_Apply_DOUBLE_INVENTOR() {
+        PostpickPhaseEffect effect = new PostpickPhaseEffect("DOUBLE_INVENTOR", null);
         BuildingCard building = new BuildingCard(JobType.NULL, 6, 4, Phases.POSTPICK, null, 1);
         
         assertDoesNotThrow(() -> effect.apply(alice, game, building));
@@ -240,7 +240,134 @@ class EffectsTest {
         PostpickPhaseEffect effect = new PostpickPhaseEffect("THREE_MAGIC", null);
         BuildingCard building = new BuildingCard(JobType.NULL, 6, 4, Phases.POSTPICK, null, 1);
         
-        assertDoesNotThrow(() -> effect.apply(alice, game, building));
+        int initialMagic = alice.getMagicPoints();
+        effect.apply(alice, game, building);
+        assertEquals(initialMagic + 3, alice.getMagicPoints());
+    }
+
+    // ==================== SIX_OF_TYPE Tests ====================
+
+    @Test
+    void testPostpick_SixOfType_EmptyTribe() {
+        PostpickPhaseEffect effect = new PostpickPhaseEffect("SIX_OF_TYPE", null);
+        BuildingCard building = new BuildingCard(JobType.NULL, 4, 3, Phases.POSTPICK, null, 1);
+        
+        int initialFood = alice.getFood();
+        effect.apply(alice, game, building);
+        assertEquals(initialFood, alice.getFood());
+    }
+
+    @Test
+    void testPostpick_SixOfType_SingleCard() {
+        PostpickPhaseEffect effect = new PostpickPhaseEffect("SIX_OF_TYPE", null);
+        BuildingCard building = new BuildingCard(JobType.NULL, 4, 3, Phases.POSTPICK, null, 1);
+        
+        CharacterCard card = new CharacterCard(1, JobType.HUNTER, 1, Phases.EVENT, null, 1);
+        alice.modifyMyTribe(card);
+        
+        int initialFood = alice.getFood();
+        effect.apply(alice, game, building);
+        assertEquals(initialFood, alice.getFood());
+    }
+
+    @Test
+    void testPostpick_SixOfType_IncompleteSet() {
+        PostpickPhaseEffect effect = new PostpickPhaseEffect("SIX_OF_TYPE", null);
+        BuildingCard building = new BuildingCard(JobType.NULL, 4, 3, Phases.POSTPICK, null, 1);
+        
+        alice.modifyMyTribe(new CharacterCard(1, JobType.HUNTER, 1, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(2, JobType.HUNTER, 1, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(3, JobType.SHAMAN, 1, Phases.EVENT, null, 1));
+        
+        int initialFood = alice.getFood();
+        effect.apply(alice, game, building);
+        assertEquals(initialFood, alice.getFood());
+    }
+
+    @Test
+    void testPostpick_SixOfType_CompleteSet_SameCount() {
+        PostpickPhaseEffect effect = new PostpickPhaseEffect("SIX_OF_TYPE", null);
+        BuildingCard building = new BuildingCard(JobType.NULL, 4, 3, Phases.POSTPICK, null, 1);
+        
+        alice.modifyMyTribe(new CharacterCard(1, JobType.HUNTER, 1, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(2, JobType.SHAMAN, 1, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(3, JobType.CONSTRUCTOR, 1, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(4, JobType.FARMER, 1, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(5, JobType.INVENTOR, 1, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(6, JobType.ARTIST, 1, Phases.EVENT, null, 1));
+        
+        int initialFood = alice.getFood();
+        effect.apply(alice, game, building);
+        assertEquals(initialFood + 1, alice.getFood());
+    }
+
+    @Test
+    void testPostpick_SixOfType_CompleteSet_DifferentCount() {
+        PostpickPhaseEffect effect = new PostpickPhaseEffect("SIX_OF_TYPE", null);
+        BuildingCard building = new BuildingCard(JobType.NULL, 4, 3, Phases.POSTPICK, null, 1);
+        
+        alice.modifyMyTribe(new CharacterCard(1, JobType.HUNTER, 3, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(2, JobType.HUNTER, 3, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(3, JobType.HUNTER, 3, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(4, JobType.SHAMAN, 1, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(5, JobType.CONSTRUCTOR, 1, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(6, JobType.FARMER, 1, Phases.EVENT, null, 1));
+        
+        int initialFood = alice.getFood();
+        effect.apply(alice, game, building);
+        assertEquals(initialFood, alice.getFood());
+    }
+
+    // ==================== DOUBLE_INVENTOR Tests ====================
+
+    @Test
+    void testPostpick_DoubleInventor_EmptyTribe() {
+        PostpickPhaseEffect effect = new PostpickPhaseEffect("DOUBLE_INVENTOR", null);
+        BuildingCard building = new BuildingCard(JobType.NULL, 6, 4, Phases.POSTPICK, null, 1);
+        
+        int initialFood = alice.getFood();
+        effect.apply(alice, game, building);
+        assertEquals(initialFood, alice.getFood());
+    }
+
+    @Test
+    void testPostpick_DoubleInventor_LastNotInventor() {
+        PostpickPhaseEffect effect = new PostpickPhaseEffect("DOUBLE_INVENTOR", null);
+        BuildingCard building = new BuildingCard(JobType.NULL, 6, 4, Phases.POSTPICK, null, 1);
+        
+        alice.modifyMyTribe(new CharacterCard(1, JobType.HUNTER, 1, Phases.EVENT, null, 1));
+        
+        int initialFood = alice.getFood();
+        effect.apply(alice, game, building);
+        assertEquals(initialFood, alice.getFood());
+    }
+
+    @Test
+    void testPostpick_DoubleInventor_OddCount() {
+        PostpickPhaseEffect effect = new PostpickPhaseEffect("DOUBLE_INVENTOR", null);
+        BuildingCard building = new BuildingCard(JobType.NULL, 6, 4, Phases.POSTPICK, null, 1);
+        
+        alice.modifyMyTribe(new CharacterCard(2, JobType.INVENTOR, 1, Phases.EVENT, null, 1));
+        
+        int initialFood = alice.getFood();
+        effect.apply(alice, game, building);
+        assertEquals(initialFood, alice.getFood());
+    }
+
+    @Test
+    void testPostpick_DoubleInventor_EvenCount_SameLevel() {
+        PostpickPhaseEffect effect = new PostpickPhaseEffect("DOUBLE_INVENTOR", null);
+        BuildingCard building = new BuildingCard(JobType.NULL, 6, 4, Phases.POSTPICK, null, 1);
+        
+        alice.modifyMyTribe(new CharacterCard(2, JobType.INVENTOR, 1, Phases.EVENT, null, 1));
+        alice.modifyMyTribe(new CharacterCard(2, JobType.INVENTOR, 1, Phases.EVENT, null, 1));
+        
+        assertEquals(2, alice.getMyTribe().size());
+        assertEquals(JobType.INVENTOR, alice.getMyTribe().get(1).getJobType());
+        
+        int initialFood = alice.getFood();
+        effect.apply(alice, game, building);
+        assertEquals(initialFood + 3, alice.getFood());
     }
 
     // ==================== PostactionPhaseEffect Tests ====================

@@ -1,10 +1,5 @@
 package model;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.*;
-import java.util.*;
-
 public class TurnOrderSlot {
 
     private int position;

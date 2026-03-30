@@ -28,7 +28,7 @@ public class Board {
         this.turnOrderTile = new ArrayList<>();
     }
 
-    public void generateBoard(Game game) throws Exception {
+    public void generateBoard(Game game) {
         int numPlayers = game.getPlayersNumber();
         initializeOfferingTiles(game);
         initializeTurnOrderTile(numPlayers);
@@ -138,25 +138,31 @@ public class Board {
     }
 
 
-    public void populateLowerRow(Game game) throws Exception {
+    public void populateLowerRow(Game game) {
         int numPlayers = game.getPlayersNumber();
         int requiredCharacters = numPlayers + 1;
 
         Deck<TribeCard> tribeDeck = game.getTribeDeck();
 
+        // Continua a pescare finché la fila in basso non ha il numero giusto di Personaggi
         while (characterLowerRow.size() < requiredCharacters) {
 
             TribeCard card = tribeDeck.drawCard();
 
+            // Sicurezza: se il mazzo finisce, blocchiamo il ciclo per evitare loop infiniti
             if (card == null) {
-                throw new Exception("Tribe deck is empty!");
+                System.out.println("Attenzione: il mazzo delle Tribù è esaurito!");
+                break;
             }
 
+            // Diciamo alla carta: "Rivelati e vai nella fila in basso!"
+            // - Se è un Personaggio, andrà in characterLowerRow.
+            // - Se è un Evento, lo sportello della Board lo devierà in eventUpperRow!
             card.reveal(this, "lower");
         }
     }
 
-    public void populateUpperRow(Game game) throws Exception {
+    public void populateUpperRow(Game game) {
         int numPlayers = game.getPlayersNumber();
         int count = numPlayers + 4;
 
@@ -165,40 +171,51 @@ public class Board {
         while (characterUpperRow.size() + eventUpperRow.size() < count) {
             TribeCard card = tribeDeck.drawCard();
 
-            if (card == null) {
-                throw new Exception("Tribe deck is empty!");
+            if (card != null) {
+                // Se è un Personaggio andrà da solo in characterUpperRow.
+                // Se è un Evento andrà da solo in eventUpperRow.
+                card.reveal(this, "upper");
             }
-
-            card.reveal(this, "upper");
         }
     }
 
-    public void populateUpperRowBuildings(Game game) throws Exception {
+    public void populateUpperRowBuildings(Game game) {
         int numPlayers = game.getPlayersNumber();
         int currentEra = game.getCurrentEra();
 
+        // 1. Controlli di sicurezza con Eccezioni!
         if (numPlayers < 2 || numPlayers > 5) {
-            throw new Exception("Invalid player count!");
+            throw new IllegalArgumentException("Errore critico: Numero di giocatori non valido (" + numPlayers + ")");
         }
-
-        int[][] eraCounts = {
-                {},
-                {},
-                {1, 2, 3},
-                {2, 2, 4},
-                {2, 3, 4},
-                {2, 3, 5}
-        };
 
         if (currentEra < 1 || currentEra > 3) {
-            throw new Exception("Invalid era!");
+            throw new IllegalArgumentException("Errore critico: Era non valida (" + currentEra + ")");
         }
 
-        int cardsToDraw = eraCounts[numPlayers][currentEra - 1];
+        int cardsToDraw = 0;
+
+        // 2. Lettura dal JSON
+        try {
+            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
+            JsonNode buildingCounts = countsRoot.get("buildingCounts").get(String.valueOf(numPlayers));
+
+            if (buildingCounts != null && buildingCounts.isArray()) {
+                // currentEra parte da 1, ma gli array partono da 0. Quindi currentEra - 1
+                cardsToDraw = buildingCounts.get(currentEra - 1).asInt();
+            } else {
+                throw new IllegalStateException("Nodo 'buildingCounts' per " + numPlayers + " giocatori mancante o non valido nel JSON.");
+            }
+        } catch (Exception e) {
+            // Se il file non si trova o è scritto male, fermiamo tutto!
+            throw new IllegalStateException("Impossibile leggere il file EraCounts.json: " + e.getMessage(), e);
+        }
+
+        // 3. Controllo sulle carte da pescare
         if (cardsToDraw <= 0) {
-            throw new Exception("Invalid cards to draw count!");
+            throw new IllegalStateException("Errore: Il JSON dice di pescare " + cardsToDraw + " carte. Deve essere > 0.");
         }
 
+        // 4. Pescaggio e riempimento
         Deck<BuildingCard> buildingDeck = game.getBuildingDeck();
 
         for (int i = 0; i < cardsToDraw; i++) {
@@ -237,20 +254,27 @@ public class Board {
         buildingCardsUpperRow.clear();
     }
 
-    public void refillUpperRow(Game game) throws Exception {
+    public void refillUpperRow(Game game) {
         int numPlayers = game.getPlayersNumber();
         int targetSize = numPlayers + 4;
 
         Deck<TribeCard> tribeDeck = game.getTribeDeck();
 
+        // Il ciclo controlla la somma di Personaggi ed Eventi presenti nella riga in alto.
+        // Finché non arriviamo a "numPlayers + 4", continuiamo a pescare.
         while ((characterUpperRow.size() + eventUpperRow.size()) < targetSize) {
 
             TribeCard card = tribeDeck.drawCard();
 
+            // Sicurezza: se il mazzo è finito, ci fermiamo!
             if (card == null) {
-                throw new Exception("Tribe deck is empty!");
+                System.out.println("Attenzione: il mazzo delle Tribù è esaurito!");
+                break;
             }
 
+            // MAGIA: La carta si rivela e, grazie agli "sportelli" che abbiamo
+            // creato prima nella Board, andrà in automatico in characterUpperRow
+            // oppure in eventUpperRow. In entrambi i casi, la somma totale salirà di 1!
             card.reveal(this, "upper");
         }
     }

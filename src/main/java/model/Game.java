@@ -30,8 +30,6 @@ public class Game implements IGame{
         this.currentState = new SetUpGameState();
     }
 
-    private Game currentInstance;
-
     // ==========================================
     // METODI DELL'INTERFACCIA IGAME
     // ==========================================
@@ -53,18 +51,6 @@ public class Game implements IGame{
         currentState.placeTotem(this, nickname, offerPosition);
         notifyTotemPlaced(getPlayerByNickname(nickname), offerPosition);
     }
-
-    // @Override
-    // public void pickCharacter(String nickname, int cardIndex) throws Exception {
-    //     currentState.pickCharacter(this, nickname, cardIndex);
-    //     notifyObservers();
-    // }
-
-    // @Override
-    // public void buyBuilding(String nickname, int cardIndex) throws Exception {
-    //     currentState.buyBuilding(this, nickname, cardIndex);
-    //     notifyObservers();
-    // }
 
     @Override
     public void pickCard(String nickname, String row, int cardIndex) throws Exception {

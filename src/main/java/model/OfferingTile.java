@@ -1,7 +1,5 @@
 package model;
 
-import java.io.*;
-
 public class OfferingTile {
 
     private char id;

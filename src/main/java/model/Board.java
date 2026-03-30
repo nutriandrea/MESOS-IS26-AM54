@@ -7,6 +7,8 @@ import java.util.*;
 
 public class Board {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     private List<CharacterCard> characterUpperRow;
     private List<CharacterCard> characterLowerRow;
     private List<EventCard> eventUpperRow;
@@ -48,7 +50,6 @@ public class Board {
         List<Character> neededTiles = new ArrayList<>();
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
 
             // 1. Leggiamo tutto il file UNA SOLA VOLTA nell'albero principale
             JsonNode rootNode = mapper.readTree(new File("data/OfferingTilesSetup.json"));
@@ -100,7 +101,6 @@ public class Board {
         if (numPlayers < 2 || numPlayers > 5) return;
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
 
             // 1. Legge il file UNA SOLA VOLTA
             JsonNode rootNode = mapper.readTree(new File("data/TurnOrderConfig.json"));
@@ -134,7 +134,7 @@ public class Board {
     }
 
     public void addEventCard(EventCard card, String row) {
-            eventUpperRow.add(card);
+        eventUpperRow.add(card);
     }
 
 
@@ -305,83 +305,84 @@ public class Board {
      * Piazza un Totem su una tessera Offerta
      */
     public void addTotemToPosition(Player player, OfferingTile tile) {
-            tile.occupy(player);
+        tile.occupy(player);
     }
 
     public CharacterCard takeCharacterCard(String row, int index) {
-        List<CharacterCard> targetRow = row.equalsIgnoreCase("upper") 
-            ? characterUpperRow 
-            : characterLowerRow;
-        
+        List<CharacterCard> targetRow = row.equalsIgnoreCase("upper")
+                ? characterUpperRow
+                : characterLowerRow;
+
         if (index < 0 || index >= targetRow.size()) {
             return null;
         }
-        
+
         return targetRow.remove(index);
     }
 
     public BuildingCard takeBuildingCard(String row, int index) {
-        List<BuildingCard> targetRow = row.equalsIgnoreCase("upper") 
-            ? buildingCardsUpperRow 
-            : buildingCardsLowerRow;
-        
+        List<BuildingCard> targetRow = row.equalsIgnoreCase("upper")
+                ? buildingCardsUpperRow
+                : buildingCardsLowerRow;
+
         if (index < 0 || index >= targetRow.size()) {
             return null;
         }
-        
+
         return targetRow.remove(index);
     }
 
     public int getCharacterRowSize(String row) {
-        return row.equalsIgnoreCase("upper") 
-            ? characterUpperRow.size() 
-            : characterLowerRow.size();
+        return row.equalsIgnoreCase("upper")
+                ? characterUpperRow.size()
+                : characterLowerRow.size();
     }
 
     public int getBuildingRowSize(String row) {
-        return row.equalsIgnoreCase("upper") 
-            ? buildingCardsUpperRow.size() 
-            : buildingCardsLowerRow.size();
+        return row.equalsIgnoreCase("upper")
+                ? buildingCardsUpperRow.size()
+                : buildingCardsLowerRow.size();
     }
 
 
-// Ordina eventi: non-Farmer prima, Farmer dopo. Poi risolve e rimuove.
-public void resolveAllEventsInOrder(Game game) {
-    eventLowerRow.sort((a, b) -> {
-        if (a.shouldResolveLast() == b.shouldResolveLast()) return 0;
-        return a.shouldResolveLast() ? 1 : -1;
-    });
-    while (!eventLowerRow.isEmpty()) {
-        eventLowerRow.get(0).resolveEvent(game);
-        eventLowerRow.remove(0);
+    // Ordina eventi: non-Farmer prima, Farmer dopo. Poi risolve e rimuove.
+    public void resolveAllEventsInOrder(Game game) {
+        eventLowerRow.sort((a, b) -> {
+            if (a.shouldResolveLast() == b.shouldResolveLast()) return 0;
+            return a.shouldResolveLast() ? 1 : -1;
+        });
+        while (!eventLowerRow.isEmpty()) {
+            eventLowerRow.get(0).resolveEvent(game);
+            eventLowerRow.remove(0);
+        }
     }
+
+    // Risolvi TUTTI gli eventi visibili (upper + lower), Farmer per ultimo
+    public void resolveAllVisibleEvents(Game game) {
+        List<EventCard> allEvents = new ArrayList<>();
+        allEvents.addAll(eventUpperRow);
+        allEvents.addAll(eventLowerRow);
+        eventUpperRow.clear();
+        eventLowerRow.clear();
+
+        allEvents.sort((a, b) -> {
+            if (a.shouldResolveLast() == b.shouldResolveLast()) return 0;
+            return a.shouldResolveLast() ? 1 : -1;
+        });
+
+        allEvents.forEach(e -> e.resolveEvent(game));
+    }
+
+    // PULISCE E BASTA (solo caratteri, eventi gia' rimossi)
+    public void clearLowerRow() {
+        characterLowerRow.clear();
+    }
+
+
+    public List<OfferingTile> getOfferingTrack() { return offeringTrack; }
+    public List<TurnOrderSlot> getTurnOrderTile() { return turnOrderTile;}
+    public List<BuildingCard> getBuildingCardsUpperRow() { return buildingCardsUpperRow; }
+    public List<BuildingCard> getBuildingCardsLowerRow() { return buildingCardsLowerRow; }
+
 }
 
-// Risolvi TUTTI gli eventi visibili (upper + lower), Farmer per ultimo
-public void resolveAllVisibleEvents(Game game) {
-    List<EventCard> allEvents = new ArrayList<>();
-    allEvents.addAll(eventUpperRow);
-    allEvents.addAll(eventLowerRow);
-    eventUpperRow.clear();
-    eventLowerRow.clear();
-
-    allEvents.sort((a, b) -> {
-        if (a.shouldResolveLast() == b.shouldResolveLast()) return 0;
-        return a.shouldResolveLast() ? 1 : -1;
-    });
-
-    allEvents.forEach(e -> e.resolveEvent(game));
-}
-
-// PULISCE E BASTA (solo caratteri, eventi gia' rimossi)
-public void clearLowerRow() {
-    characterLowerRow.clear();
-}
-
-
-public List<OfferingTile> getOfferingTrack() { return offeringTrack; }
-public List<TurnOrderSlot> getTurnOrderTile() { return turnOrderTile;}
-public List<BuildingCard> getBuildingCardsUpperRow() { return buildingCardsUpperRow; }
-public List<BuildingCard> getBuildingCardsLowerRow() { return buildingCardsLowerRow; }
-
-}

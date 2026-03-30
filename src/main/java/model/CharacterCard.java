@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * 
+ *
  */
 public class CharacterCard extends TribeCard implements IDrawable {
 
@@ -30,7 +30,7 @@ public class CharacterCard extends TribeCard implements IDrawable {
 
     public String getName() {
         return type != null ? type.name() : "Unknown";
-    }   
+    }
 
     public CharacterCard(int level, JobType type, int aura, Phases phase, List<IEffect<CharacterCard>>effects, int era) {
         super(era);
@@ -39,6 +39,14 @@ public class CharacterCard extends TribeCard implements IDrawable {
         this.aura = aura;
         this.phase = phase;
         this.effects = effects;
+    }
+
+    public void resolveEffects(Player p, Game g) {
+        // Scorri tutti gli effetti assegnati a questo personaggio
+        for (IEffect effect : this.effects) {
+            // Applica l'effetto. Passi 'this' perché la lambda potrebbe aver bisogno di leggere il livello o il tipo di QUESTA carta
+            effect.apply(p, g, this);
+        }
     }
 
     @Override
@@ -53,4 +61,3 @@ public class CharacterCard extends TribeCard implements IDrawable {
         System.out.println(player.getNickname() + " ha pescato il personaggio: " + getName());
     }
 }
-

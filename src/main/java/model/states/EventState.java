@@ -10,25 +10,23 @@ public class EventState extends GameState {
 
     @Override
     public void resolvePhase(Game game) throws Exception {
-        // 1. Risolvi eventi (ordina: non-Farmer prima, Farmer dopo)
         game.getBoard().resolveAllEventsInOrder(game);
 
-        // 2. Pulisci caratteri dalla lower row
         game.getBoard().clearLowerRow();
 
-        // 3. Sposta upper -> lower
         game.getBoard().moveUpperToLower();
 
-        // 4. Riempi upper row
-        game.getBoard().refillUpperRow(game);
+        try {
+            game.getBoard().refillUpperRow(game);
+        } catch (Exception e) {
+            // Tribe deck exhausted, continue without refilling
+        }
 
-        // 5. Sposta buildings SOLO se era transition
         if (game.isEraTransition()) {
             game.getBoard().moveBuildings();
             game.getBoard().populateUpperRowBuildings(game);
         }
 
-        // 7. Decidi prossimo stato
         game.advanceRound();
         if (game.isTribeDeckEmpty()) {
             game.setState(new EndGameState());

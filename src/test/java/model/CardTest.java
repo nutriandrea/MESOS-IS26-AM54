@@ -103,4 +103,15 @@ class CardTest {
         CharacterCard card = new CharacterCard(1, JobType.HUNTER, 1, Phases.EVENT, null, 2);
         assertEquals(2, card.getEra());
     }
+
+    @Test
+    void testCard_Pick_BaseCard_ThrowsUnsupportedOperationException() {
+        Card baseCard = new Card(1);
+        
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            baseCard.pick(alice, game);
+        });
+        
+        assertEquals("Cannot pick this card type", exception.getMessage());
+    }
 }

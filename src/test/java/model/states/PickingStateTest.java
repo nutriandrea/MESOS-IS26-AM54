@@ -243,4 +243,17 @@ class PickingStateTest {
             pickingState.endTurn(game, "Nobody");
         });
     }
+
+    @Test
+    void testPickCard_NoRemainingPicks_ThrowsException() {
+        placePlayersOnTilesAndSetCurrentPicker();
+        
+        OfferingTile tile = carbicane.getCurrentTile();
+        while (tile.useUpperPick()) {
+        }
+        
+        assertThrows(Exception.class, () -> {
+            pickingState.pickCard(game, "carbicane", "upper", 0);
+        });
+    }
 }

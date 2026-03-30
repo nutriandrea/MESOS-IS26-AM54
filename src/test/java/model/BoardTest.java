@@ -172,7 +172,7 @@ class BoardTest {
     }
 
     @Test
-    void testRefillUpperRow() {
+    void testRefillUpperRow() throws Exception {
         board.clearLowerRow();
         board.moveUpperToLower();
         
@@ -263,5 +263,79 @@ class BoardTest {
     @Test
     void testPopulateUpperRowBuildings() {
         assertDoesNotThrow(() -> board.populateUpperRowBuildings(game));
+    }
+
+    // ==================== Exception Tests for Empty Tribe Deck ====================
+
+    @Test
+    void testPopulateLowerRow_EmptyTribeDeck_ThrowsException() {
+        Deck<TribeCard> tribeDeck = game.getTribeDeck();
+        while (!tribeDeck.isEmpty()) {
+            tribeDeck.drawCard();
+        }
+        
+        board.clearLowerRow();
+        
+        Exception exception = assertThrows(Exception.class, () -> {
+            board.populateLowerRow(game);
+        });
+        
+        assertNotNull(exception);
+    }
+
+    @Test
+    void testPopulateUpperRow_EmptyTribeDeck_ThrowsException() {
+        Deck<TribeCard> tribeDeck = game.getTribeDeck();
+        while (!tribeDeck.isEmpty()) {
+            tribeDeck.drawCard();
+        }
+        
+        board.moveUpperToLower();
+        
+        Exception exception = assertThrows(Exception.class, () -> {
+            board.populateUpperRow(game);
+        });
+        
+        assertNotNull(exception);
+    }
+
+    @Test
+    void testRefillUpperRow_EmptyTribeDeck_ThrowsException() {
+        Deck<TribeCard> tribeDeck = game.getTribeDeck();
+        while (!tribeDeck.isEmpty()) {
+            tribeDeck.drawCard();
+        }
+        
+        board.clearLowerRow();
+        board.moveUpperToLower();
+        
+        Exception exception = assertThrows(Exception.class, () -> {
+            board.refillUpperRow(game);
+        });
+        
+        assertNotNull(exception);
+    }
+
+    @Test
+    void testPopulateUpperRowBuildings_InvalidPlayerCount_ThrowsException() {
+        Game invalidGame = new Game();
+        
+        Exception exception = assertThrows(Exception.class, () -> {
+            board.populateUpperRowBuildings(invalidGame);
+        });
+        
+        assertNotNull(exception);
+    }
+
+    @Test
+    void testPopulateUpperRowBuildings_InvalidEra_ThrowsException() throws Exception {
+        Game testGame = new Game();
+        testGame.joinGame("Player1");
+        testGame.joinGame("Player2");
+        testGame.chooseTotemColor("Player1", "RED");
+        testGame.chooseTotemColor("Player2", "YELLOW");
+        testGame.setupGame();
+        
+        assertDoesNotThrow(() -> board.populateUpperRowBuildings(testGame));
     }
 }

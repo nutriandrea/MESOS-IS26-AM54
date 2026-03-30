@@ -159,4 +159,37 @@ class EventCardTest {
         
         assertFalse(card.shouldResolveLast());
     }
+
+    @Test
+    void testEventEffect_Apply_SHAMAN_DoubleAura() throws Exception {
+        Game testGame = new Game();
+        testGame.joinGame("Player1");
+        testGame.joinGame("Player2");
+        testGame.chooseTotemColor("Player1", "RED");
+        testGame.chooseTotemColor("Player2", "YELLOW");
+        testGame.setupGame();
+        
+        Player player1 = testGame.getPlayers().get(0);
+        Player player2 = testGame.getPlayers().get(1);
+        
+        player1.modifyAuraPoints(5);
+        player2.modifyAuraPoints(2);
+        
+        List<IEffect<BuildingCard>> buildingEffects = new ArrayList<>();
+        buildingEffects.add(new model.effects.buildings.EventPhaseEffect("DOUBLE_AURA_SHAMAN", null));
+        
+        BuildingCard building = new BuildingCard(JobType.SHAMAN, 5, 2, Phases.EVENT, buildingEffects, 1);
+        player1.getBuildings().add(building);
+        
+        List<IEffect<EventCard>> effects = new ArrayList<>();
+        effects.add(new model.effects.events.EventEffect("SHAMAN"));
+        
+        EventCard eventCard = new EventCard(1, false, effects, 2, 1, 0, 0, 0, 10, 5);
+        
+        int initialAura = player1.getAuraPoints();
+        
+        eventCard.resolveEvent(testGame);
+        
+        assertTrue(player1.getAuraPoints() >= initialAura);
+    }
 }

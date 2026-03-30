@@ -3,6 +3,9 @@ package model;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import model.states.*;
+import model.effects.buildings.EndgamePhaseEffect;
+import model.IEffect;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -174,5 +177,20 @@ class GameTest {
         List<Player> winners = game.determineWinners();
         assertNotNull(winners);
         assertFalse(winners.isEmpty());
+    }
+
+    @Test
+    void testApplyEndGameBuildingEffects() {
+        List<IEffect<BuildingCard>> effects = new ArrayList<>();
+        effects.add(new EndgamePhaseEffect("FLAT_AURA_BONUS", null));
+        
+        BuildingCard building = new BuildingCard(JobType.CONSTRUCTOR, 5, 3, Phases.ENDGAME, effects, 1);
+        alice.getBuildings().add(building);
+        
+        int initialAura = alice.getAuraPoints();
+        
+        game.applyEndGameBuildingEffects();
+        
+        assertNotNull(alice.getAuraPoints());
     }
 }

@@ -83,7 +83,7 @@ public class Game implements IGame{
      * Preparazione completa del gioco MESOS
      * Il numero di giocatori viene determinato dalla lista players
      */
-    public void setupGame() {
+    public void setupGame() throws Exception {
         this.currentEra = 1;
         this.roundCount = 0;
 

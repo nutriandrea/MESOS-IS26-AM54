@@ -23,14 +23,6 @@ public abstract class GameState {
         throw new IllegalStateException("Non puoi piazzare il totem in questa fase");
     }
 
-    public void pickCharacter(Game game, String nickname, int cardIndex) throws Exception {
-        throw new IllegalStateException("Non puoi pescare un personaggio in questa fase");
-    }
-
-    public void buyBuilding(Game game, String nickname, int cardIndex) throws Exception {
-        throw new IllegalStateException("Non puoi comprare un edificio in questa fase");
-    }
-
     public void pickCard(Game game, String nickname, String row, int cardIndex) throws Exception {
         throw new IllegalStateException("Non puoi pescare carte in questa fase");
     }

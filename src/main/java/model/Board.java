@@ -7,6 +7,8 @@ import java.util.*;
 
 public class Board {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     private List<CharacterCard> characterUpperRow;
     private List<CharacterCard> characterLowerRow;
     private List<EventCard> eventUpperRow;
@@ -48,7 +50,6 @@ public class Board {
         List<Character> neededTiles = new ArrayList<>();
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
 
             // 1. Leggiamo tutto il file UNA SOLA VOLTA nell'albero principale
             JsonNode rootNode = mapper.readTree(new File("data/OfferingTilesSetup.json"));
@@ -100,7 +101,6 @@ public class Board {
         if (numPlayers < 2 || numPlayers > 5) return;
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
 
             // 1. Legge il file UNA SOLA VOLTA
             JsonNode rootNode = mapper.readTree(new File("data/TurnOrderConfig.json"));
@@ -183,25 +183,39 @@ public class Board {
         int numPlayers = game.getPlayersNumber();
         int currentEra = game.getCurrentEra();
 
-        // Controllo di sicurezza sul numero di giocatori per evitare ArrayIndexOutOfBoundsException
-        if (numPlayers < 2 || numPlayers > 5) return; //deve lanciare eccezione
+        // 1. Controlli di sicurezza con Eccezioni!
+        if (numPlayers < 2 || numPlayers > 5) {
+            throw new IllegalArgumentException("Errore critico: Numero di giocatori non valido (" + numPlayers + ")");
+        }
 
-        // Tabella dei conteggi [giocatori][era-1]
-        int[][] eraCounts = {
-                {},                     // 0
-                {},                     // 1
-                {1, 2, 3},              // 2 giocatori → Era I, II, III
-                {2, 2, 4},              // 3 giocatori
-                {2, 3, 4},              // 4 giocatori
-                {2, 3, 5}               // 5 giocatori
-        };
+        if (currentEra < 1 || currentEra > 3) {
+            throw new IllegalArgumentException("Errore critico: Era non valida (" + currentEra + ")");
+        }
 
-        // Assicuriamoci che l'era sia valida (es. da 1 a 3)
-        if (currentEra < 1 || currentEra > 3) return; //eccezione
+        int cardsToDraw = 0;
 
-        int cardsToDraw = eraCounts[numPlayers][currentEra - 1];
-        if (cardsToDraw <= 0) return; //eccezione
+        // 2. Lettura dal JSON
+        try {
+            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
+            JsonNode buildingCounts = countsRoot.get("buildingCounts").get(String.valueOf(numPlayers));
 
+            if (buildingCounts != null && buildingCounts.isArray()) {
+                // currentEra parte da 1, ma gli array partono da 0. Quindi currentEra - 1
+                cardsToDraw = buildingCounts.get(currentEra - 1).asInt();
+            } else {
+                throw new IllegalStateException("Nodo 'buildingCounts' per " + numPlayers + " giocatori mancante o non valido nel JSON.");
+            }
+        } catch (Exception e) {
+            // Se il file non si trova o è scritto male, fermiamo tutto!
+            throw new IllegalStateException("Impossibile leggere il file EraCounts.json: " + e.getMessage(), e);
+        }
+
+        // 3. Controllo sulle carte da pescare
+        if (cardsToDraw <= 0) {
+            throw new IllegalStateException("Errore: Il JSON dice di pescare " + cardsToDraw + " carte. Deve essere > 0.");
+        }
+
+        // 4. Pescaggio e riempimento
         Deck<BuildingCard> buildingDeck = game.getBuildingDeck();
 
         for (int i = 0; i < cardsToDraw; i++) {

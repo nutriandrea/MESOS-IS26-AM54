@@ -1,6 +1,5 @@
 package model;
 
-
 public enum TotemColors {
     RED,
     YELLOW,

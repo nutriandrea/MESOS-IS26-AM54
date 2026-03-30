@@ -1,6 +1,5 @@
 package model;
 
-
 public enum JobType {
     HUNTER,
     SHAMAN,

@@ -2,6 +2,8 @@ package model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.nio.file.*;
+import java.io.IOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,8 +27,6 @@ class BoardTest {
         alice = game.getPlayers().get(0);
         bob = game.getPlayers().get(1);
     }
-
-    // ==================== Basic Tests ====================
 
     @Test
     void testOfferingTrackNotEmpty() {
@@ -63,8 +63,6 @@ class BoardTest {
         List<BuildingCard> lowerBuildings = board.getBuildingCardsLowerRow();
         assertNotNull(lowerBuildings);
     }
-
-    // ==================== Character Card Tests ====================
 
     @Test
     void testTakeCharacterCard() {
@@ -109,8 +107,6 @@ class BoardTest {
         assertEquals(initialSize + 1, board.getCharacterRowSize("lower"));
     }
 
-    // ==================== Building Card Tests ====================
-
     @Test
     void testTakeBuildingCard_Success() {
         int initialUpperSize = board.getBuildingRowSize("upper");
@@ -139,16 +135,12 @@ class BoardTest {
         assertTrue(size >= 0);
     }
 
-    // ==================== Event Card Tests ====================
-
     @Test
     void testAddEventCard() {
         EventCard eventCard = new EventCard(1, false, null, 2, 1, 0, 0, 0, 0, 0);
         
         assertDoesNotThrow(() -> board.addEventCard(eventCard, "lower"));
     }
-
-    // ==================== Row Management Tests ====================
 
     @Test
     void testMoveUpperToLower() {
@@ -182,8 +174,6 @@ class BoardTest {
         assertTrue(board.getCharacterRowSize("upper") >= sizeBefore);
     }
 
-    // ==================== Event Resolution Tests ====================
-
     @Test
     void testResolveAllEventsInOrder() {
         assertDoesNotThrow(() -> board.resolveAllEventsInOrder(game));
@@ -193,8 +183,6 @@ class BoardTest {
     void testResolveAllVisibleEvents() {
         assertDoesNotThrow(() -> board.resolveAllVisibleEvents(game));
     }
-
-    // ==================== Offering Tile Tests ====================
 
     @Test
     void testOfferingTileOccupation() {
@@ -214,8 +202,6 @@ class BoardTest {
         assertDoesNotThrow(() -> board.addTotemToPosition(alice, tile));
     }
 
-    // ==================== Turn Order Tests ====================
-
     @Test
     void testTurnOrderSlotOccupation() {
         TurnOrderSlot slot = board.getTurnOrderTile().get(0);
@@ -232,8 +218,6 @@ class BoardTest {
         TurnOrderSlot slot = board.getTurnOrderTile().get(0);
         assertTrue(slot.getBonusFood() >= 0);
     }
-
-    // ==================== Row Access Tests ====================
 
     @Test
     void testGetRow_Upper() {
@@ -253,8 +237,6 @@ class BoardTest {
         assertTrue(board.getCharacterRowSize("lower") >= 0);
     }
 
-    // ==================== Move Buildings Tests ====================
-
     @Test
     void testMoveBuildings() {
         assertDoesNotThrow(() -> board.moveBuildings());
@@ -265,5 +247,145 @@ class BoardTest {
         assertDoesNotThrow(() -> board.populateUpperRowBuildings(game));
     }
 
+    // ==================== Exception Tests ====================
 
+    @Test
+    void testPopulateUpperRowBuildings_InvalidPlayerCount_LessThanTwo() {
+        Game invalidGame = new Game();
+        
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            board.populateUpperRowBuildings(invalidGame);
+        });
+        
+        assertEquals("Errore critico: Numero di giocatori non valido (0)", ex.getMessage());
+    }
+
+    @Test
+    void testPopulateUpperRowBuildings_InvalidPlayerCount_MoreThanFive() throws Exception {
+        Game testGame = createValidGame();
+        
+        java.lang.reflect.Field playersField = Game.class.getDeclaredField("players");
+        playersField.setAccessible(true);
+        java.util.List<Player> players = (java.util.List<Player>) playersField.get(testGame);
+        
+        for (int i = 0; i < 4; i++) {
+            Player p = new Player();
+            java.lang.reflect.Field nickField = Player.class.getDeclaredField("nickname");
+            nickField.setAccessible(true);
+            nickField.set(p, "P" + (i + 3));
+            
+            java.lang.reflect.Field totemField = Player.class.getDeclaredField("totemColor");
+            totemField.setAccessible(true);
+            totemField.set(p, TotemColors.WHITE);
+            
+            players.add(p);
+        }
+        
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            board.populateUpperRowBuildings(testGame);
+        });
+        
+        assertEquals("Errore critico: Numero di giocatori non valido (6)", ex.getMessage());
+    }
+
+    @Test
+    void testPopulateUpperRowBuildings_InvalidEra_BelowOne() throws Exception {
+        Game testGame = createValidGame();
+        
+        java.lang.reflect.Field field = Game.class.getDeclaredField("currentEra");
+        field.setAccessible(true);
+        field.setInt(testGame, 0);
+        
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            board.populateUpperRowBuildings(testGame);
+        });
+        
+        assertEquals("Errore critico: Era non valida (0)", ex.getMessage());
+    }
+
+    @Test
+    void testPopulateUpperRowBuildings_InvalidEra_AboveThree() throws Exception {
+        Game testGame = createValidGame();
+        
+        java.lang.reflect.Field field = Game.class.getDeclaredField("currentEra");
+        field.setAccessible(true);
+        field.setInt(testGame, 4);
+        
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
+            board.populateUpperRowBuildings(testGame);
+        });
+        
+        assertEquals("Errore critico: Era non valida (4)", ex.getMessage());
+    }
+
+    @Test
+    void testPopulateUpperRowBuildings_InvalidJson_ZerosInCounts() throws Exception {
+        Game testGame = createValidGame();
+        
+        String tempJson = "{\n  \"buildingCounts\": {\n    \"2\": [0, 0, 0]\n  }\n}\n";
+        Path tempFile = Files.createTempFile("eraCounts_inv_" + System.nanoTime(), ".json");
+        Files.writeString(tempFile, tempJson);
+        
+        Path original = Paths.get("data/EraCounts.json");
+        Path backup = Paths.get(System.getProperty("java.io.tmpdir")).resolve("eraCounts_backup_" + System.nanoTime() + ".json");
+        try {
+            Files.copy(original, backup);
+        } catch (Exception e) {
+        }
+        
+        try {
+            Files.copy(tempFile, original, StandardCopyOption.REPLACE_EXISTING);
+            
+            IllegalStateException ex = assertThrows(IllegalStateException.class, () -> {
+                board.populateUpperRowBuildings(testGame);
+            });
+            
+            assertEquals("Errore: Il JSON dice di pescare 0 carte. Deve essere > 0.", ex.getMessage());
+        } finally {
+            try {
+                Files.copy(backup, original, StandardCopyOption.REPLACE_EXISTING);
+                Files.deleteIfExists(backup);
+            } catch (Exception e) {
+            }
+            Files.deleteIfExists(tempFile);
+        }
+    }
+
+    @Test
+    void testPopulateUpperRowBuildings_MissingJsonFile() throws Exception {
+        Game testGame = createValidGame();
+        
+        Path original = Paths.get("data/EraCounts.json");
+        Path backup = Paths.get(System.getProperty("java.io.tmpdir")).resolve("eraCounts_backup_" + System.nanoTime() + ".json");
+        try {
+            Files.copy(original, backup);
+        } catch (Exception e) {
+        }
+        
+        try {
+            Files.deleteIfExists(original);
+            
+            IllegalStateException ex = assertThrows(IllegalStateException.class, () -> {
+                board.populateUpperRowBuildings(testGame);
+            });
+            
+            assertTrue(ex.getMessage().contains("Impossibile leggere il file EraCounts.json"));
+        } finally {
+            try {
+                Files.copy(backup, original, StandardCopyOption.REPLACE_EXISTING);
+                Files.deleteIfExists(backup);
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    private Game createValidGame() throws Exception {
+        Game game = new Game();
+        game.joinGame("Player1");
+        game.joinGame("Player2");
+        game.chooseTotemColor("Player1", "RED");
+        game.chooseTotemColor("Player2", "YELLOW");
+        game.setupGame();
+        return game;
+    }
 }

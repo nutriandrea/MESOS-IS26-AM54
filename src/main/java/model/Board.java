@@ -149,11 +149,6 @@ public class Board {
 
             TribeCard card = tribeDeck.drawCard();
 
-            // Sicurezza: se il mazzo finisce, blocchiamo il ciclo per evitare loop infiniti
-            if (card == null) {
-                System.out.println("Attenzione: il mazzo delle Tribù è esaurito!");
-                break;
-            }
 
             // Diciamo alla carta: "Rivelati e vai nella fila in basso!"
             // - Se è un Personaggio, andrà in characterLowerRow.

@@ -256,4 +256,85 @@ class PickingStateTest {
             pickingState.pickCard(game, "carbicane", "upper", 0);
         });
     }
+
+    @Test
+    void testPickCard_NoUpperPicksAvailable_ThrowsException() {
+        placePlayersOnTilesAndSetCurrentPicker();
+        
+        OfferingTile tile = carbicane.getCurrentTile();
+        while (tile.useUpperPick()) {
+        }
+        
+        Exception ex = assertThrows(Exception.class, () -> {
+            pickingState.pickCard(game, "carbicane", "upper", 0);
+        });
+        
+        assertEquals("Non hai più pick disponibili per la fila upper", ex.getMessage());
+    }
+
+    @Test
+    void testPickCard_NoLowerPicksAvailable_ThrowsException() {
+        placePlayersOnTilesAndSetCurrentPicker();
+        
+        OfferingTile tile = carbicane.getCurrentTile();
+        while (tile.useLowerPick()) {
+        }
+        
+        Exception ex = assertThrows(Exception.class, () -> {
+            pickingState.pickCard(game, "carbicane", "lower", 0);
+        });
+        
+        assertEquals("Non hai più pick disponibili per la fila lower", ex.getMessage());
+    }
+
+    @Test
+    void testPickCard_CardNotFound_ThrowsException() {
+        placePlayersOnTilesAndSetCurrentPicker();
+        
+        Exception ex = assertThrows(Exception.class, () -> {
+            pickingState.pickCard(game, "carbicane", "lower", 999);
+        });
+        
+        assertEquals("Carta non trovata o non disponibile a quell'indice.", ex.getMessage());
+    }
+
+    @Test
+    void testPickCard_InvalidRow_ThrowsException() {
+        placePlayersOnTilesAndSetCurrentPicker();
+        
+        Exception ex = assertThrows(Exception.class, () -> {
+            pickingState.pickCard(game, "carbicane", "invalid", 0);
+        });
+        
+        assertEquals("Errore: Fila non valida. Usa 'upper' o 'lower'.", ex.getMessage());
+    }
+
+    @Test
+    void testPickCard_NoTileAssigned_ThrowsException() {
+        carbicane.setCurrentTile(null);
+        
+        Exception ex = assertThrows(Exception.class, () -> {
+            pickingState.pickCard(game, "carbicane", "upper", 0);
+        });
+        
+        assertEquals("Non è il tuo turno per pescare!", ex.getMessage());
+    }
+
+    @Test
+    void testPickCard_PlayerNotFound_ThrowsException() {
+        Exception ex = assertThrows(Exception.class, () -> {
+            pickingState.pickCard(game, "Nobody", "upper", 0);
+        });
+        
+        assertTrue(ex.getMessage().contains("Nobody") && ex.getMessage().contains("non trovato"));
+    }
+
+    @Test
+    void testEndTurn_PlayerNotFound_ThrowsException() {
+        Exception ex = assertThrows(Exception.class, () -> {
+            pickingState.endTurn(game, "Nobody");
+        });
+        
+        assertTrue(ex.getMessage().contains("Nobody") && ex.getMessage().contains("non trovato"));
+    }
 }

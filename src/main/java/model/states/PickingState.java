@@ -24,26 +24,22 @@ public class PickingState extends GameState {
             throw new Exception("Non hai una offering tile assegnata!");
         }
 
-        // ==========================================
-        // NUOVA LOGICA DI PESCATA
-        // Usiamo i metodi della tessera per scalare fisicamente le pescate disponibili
-        // ==========================================
+        if (!row.equalsIgnoreCase("upper") && !row.equalsIgnoreCase("lower")) {
+            throw new Exception("Errore: Fila non valida. Usa 'upper' o 'lower'.");
+        }
+
         if (row.equalsIgnoreCase("upper")) {
             if (!tile.useUpperPick()) {
                 throw new Exception("Non hai più pick disponibili per la fila upper");
             }
-        } else if (row.equalsIgnoreCase("lower")) {
+        } else {
             if (!tile.useLowerPick()) {
                 throw new Exception("Non hai più pick disponibili per la fila lower");
             }
-        } else {
-            throw new Exception("Errore: Fila non valida. Usa 'upper' o 'lower'.");
         }
-        // ==========================================
 
         Card card = null;
 
-        // Calcolo dell'indice per estrarre la carta giusta (Personaggio o Edificio)
         if (row.equalsIgnoreCase("upper")) {
             if (cardIndex < game.getBoard().getCharacterRowSize("upper")) {
                 card = game.getBoard().takeCharacterCard(row, cardIndex);
@@ -51,7 +47,7 @@ public class PickingState extends GameState {
                 int buildingIndex = cardIndex - game.getBoard().getCharacterRowSize("upper");
                 card = game.getBoard().takeBuildingCard(row, buildingIndex);
             }
-        } else if (row.equalsIgnoreCase("lower")) {
+        } else {
             if (cardIndex < game.getBoard().getCharacterRowSize("lower")) {
                 card = game.getBoard().takeCharacterCard(row, cardIndex);
             } else {
@@ -64,8 +60,8 @@ public class PickingState extends GameState {
             throw new Exception("Carta non trovata o non disponibile a quell'indice.");
         }
 
-        // Eseguiamo la logica specifica della carta (aggiunge al player, scala il cibo per gli edifici, ecc.)
         card.pick(player, game);
+
     }
 
     @Override
@@ -80,9 +76,8 @@ public class PickingState extends GameState {
             throw new Exception("Non è il tuo turno!");
         }
 
-        // Assegna al primo slot libero e ottieni il bonus cibo
         TurnOrderSlot slot = game.assignPickerToTurnOrder(player);
-        if (slot != null && slot.getBonusFood() > 0) {
+        if (slot != null) {
             player.modifyFood(slot.getBonusFood());
         }
         

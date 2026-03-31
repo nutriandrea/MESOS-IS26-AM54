@@ -327,6 +327,8 @@ public class Board {
         return targetRow.remove(index);
     }
 
+
+
     public int getCharacterRowSize(String row) {
         return row.equalsIgnoreCase("upper")
                 ? characterUpperRow.size()

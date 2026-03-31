@@ -61,9 +61,6 @@ public class PickingState extends GameState {
     @Override
     public void endTurn(Game game, String nickname) throws Exception {
         Player player = game.getPlayerByNickname(nickname);
-        if (player == null) {
-            throw new Exception("Giocatore non trovato: " + nickname);
-        }
 
         Player currentPicker = game.getCurrentPicker();
         if (currentPicker == null || !currentPicker.equals(player)) {
@@ -83,4 +80,6 @@ public class PickingState extends GameState {
             game.setState(new EventState());
         }
     }
+
+
 }

@@ -388,4 +388,64 @@ class BoardTest {
         game.setupGame();
         return game;
     }
+
+    @Test
+    void testInitializeOfferingTiles_JsonParseError() throws IOException {
+        Path original = Paths.get("data/OfferingTilesSetup.json");
+        Path backup = Paths.get("data/OfferingTilesSetup.json.bak");
+
+        // Spostiamo il file buono e mettiamo uno corrotto
+        Files.move(original, backup, StandardCopyOption.REPLACE_EXISTING);
+        Files.writeString(original, "{ questa non è una stringa json valida : [ }");
+
+        try {
+            // Chiamiamo il metodo che ora fallirà la lettura
+            assertDoesNotThrow(() -> board.generateBoard(game));
+            // Verifichiamo che la lista sia rimasta vuota a causa dell'errore gestito nel catch
+            assertTrue(board.getOfferingTrack().isEmpty());
+        } finally {
+            // RIPRISTINO FONDAMENTALE
+            Files.move(backup, original, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    @Test
+    void testInitializeTurnOrderTile_FileNotFound() throws IOException {
+        Path original = Paths.get("data/TurnOrderConfig.json");
+        Path backup = Paths.get("data/TurnOrderConfig.json.bak");
+
+        // Rinominiamo il file per renderlo inesistente
+        Files.move(original, backup, StandardCopyOption.REPLACE_EXISTING);
+
+        try {
+            // Il metodo loggherà l'errore nel catch e non aggiungerà slot
+            board.initializeTurnOrderTile(2);
+            assertTrue(board.getTurnOrderTile().isEmpty());
+        } finally {
+            // RIPRISTINO
+            Files.move(backup, original, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    @Test
+    void testPopulateUpperRowBuildings_MissingBuildingCountsNode() throws Exception {
+        Path original = Paths.get("data/EraCounts.json");
+        Path backup = Paths.get("data/EraCounts.json.bak");
+
+        // Creiamo un JSON che NON contiene la chiave per "2" giocatori
+        String incompleteJson = "{\"buildingCounts\": { \"99\": [1,2,3] }}";
+        Files.move(original, backup, StandardCopyOption.REPLACE_EXISTING);
+        Files.writeString(original, incompleteJson);
+
+        try {
+            IllegalStateException ex = assertThrows(IllegalStateException.class, () -> {
+                board.populateUpperRowBuildings(game);
+            });
+
+            assertTrue(ex.getMessage().contains("mancante o non valido"));
+        } finally {
+            // RIPRISTINO
+            Files.move(backup, original, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
 }

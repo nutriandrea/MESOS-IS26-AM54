@@ -4,6 +4,8 @@ import model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class PickingStateTest {
@@ -336,5 +338,57 @@ class PickingStateTest {
         });
         
         assertTrue(ex.getMessage().contains("Nobody") && ex.getMessage().contains("non trovato"));
+    }
+
+    @Test
+    void testPickCard_BuildingFromUpperRow_ExecutesElseBranch() throws Exception { // <--- ASSICURATI CHE CI SIA QUESTO
+        placePlayersOnTilesAndSetCurrentPicker();
+
+        // 1. Setup Risorse
+        carbicane.modifyFood(100);
+
+        Board board = game.getBoard();
+
+        // 2. FORZATURA TESSERA: Cerchiamo una tessera valida
+        OfferingTile validTile = null;
+        for (OfferingTile tile : board.getOfferingTrack()) {
+            if (tile.getRemainingUpperPicks() > 0) {
+                validTile = tile;
+                break;
+            }
+        }
+
+        // Se non troviamo una tessera adatta, la creiamo o lanciamo errore
+        assertNotNull(validTile, "Non è stata trovata nessuna OfferingTile con pick sulla riga upper!");
+
+        // Assegniamo la tessera a carbicane
+        carbicane.setCurrentTile(validTile);
+        validTile.occupy(carbicane);
+
+        // 3. SETUP BOARD: Puliamo e iniettiamo l'edificio
+        board.getBuildingCardsUpperRow().clear();
+
+        // Pesca una carta dal mazzo (metodo drawCard può lanciare Exception?)
+        BuildingCard cardToInject = game.getBuildingDeck().drawCard();
+        assertNotNull(cardToInject, "Il mazzo edifici è vuoto!");
+
+        board.getBuildingCardsUpperRow().add(cardToInject);
+
+        // 4. CALCOLO INDICI
+        int charSize = board.getCharacterRowSize("upper");
+        int cardIndexForBuilding = charSize;
+
+        int initialBuildingsCount = carbicane.getBuildings().size();
+
+        // 5. ESECUZIONE
+        // Non serve assertDoesNotThrow se il metodo dichiara 'throws Exception'
+        pickingState.pickCard(game, "carbicane", "upper", cardIndexForBuilding);
+
+        // 6. VERIFICHE FINALI
+        assertTrue(carbicane.getBuildings().contains(cardToInject),
+                "L'edificio non è stato aggiunto alla lista del player!");
+
+        assertEquals(0, board.getBuildingCardsUpperRow().size(),
+                "L'edificio è ancora sulla board!");
     }
 }

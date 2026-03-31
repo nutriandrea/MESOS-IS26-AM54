@@ -10,9 +10,6 @@ public class PickingState extends GameState {
     @Override
     public void pickCard(Game game, String nickname, String row, int cardIndex) throws Exception {
         Player player = game.getPlayerByNickname(nickname);
-        if (player == null) {
-            throw new Exception("Giocatore non trovato: " + nickname);
-        }
 
         Player currentPicker = game.getCurrentPicker();
         if (currentPicker == null || !currentPicker.equals(player)) {
@@ -20,9 +17,6 @@ public class PickingState extends GameState {
         }
 
         OfferingTile tile = player.getCurrentTile();
-        if (tile == null) {
-            throw new Exception("Non hai una offering tile assegnata!");
-        }
 
         if (!row.equalsIgnoreCase("upper") && !row.equalsIgnoreCase("lower")) {
             throw new Exception("Errore: Fila non valida. Usa 'upper' o 'lower'.");

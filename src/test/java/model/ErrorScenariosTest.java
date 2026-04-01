@@ -1,6 +1,7 @@
 package model;
 
-import model.states.*;
+import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.TotemColors;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,5 +1,9 @@
 package model;
 
+import it.polimi.ingsw.am54.model.BuildingCard;
+import it.polimi.ingsw.am54.model.Deck;
+import it.polimi.ingsw.am54.model.DeckFactory;
+import it.polimi.ingsw.am54.model.TribeCard;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

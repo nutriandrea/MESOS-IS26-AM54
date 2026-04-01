@@ -1,9 +1,9 @@
 package model;
 
-import model.states.*;
+import it.polimi.ingsw.am54.model.*;
+import it.polimi.ingsw.am54.model.states.StartTurnState;
 import org.junit.jupiter.api.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;

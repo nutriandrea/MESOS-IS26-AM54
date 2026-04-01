@@ -1,5 +1,8 @@
 package model;
 
+import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.OfferingTile;
+import it.polimi.ingsw.am54.model.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

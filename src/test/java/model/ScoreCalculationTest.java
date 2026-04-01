@@ -1,8 +1,10 @@
 package model;
 
+import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.Player;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import model.states.*;
+
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;

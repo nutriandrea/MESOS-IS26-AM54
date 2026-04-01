@@ -1,11 +1,15 @@
 package model;
 
-import model.effects.buildings.EndgamePhaseEffect;
-import model.effects.buildings.EventPhaseEffect;
-import model.effects.buildings.PostactionPhaseEffect;
-import model.effects.buildings.PostpickPhaseEffect;
-import model.effects.characters.CharacterEffect;
-import model.effects.events.EventEffect;
+import it.polimi.ingsw.am54.model.Card;
+import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.IEffect;
+import it.polimi.ingsw.am54.model.Player;
+import it.polimi.ingsw.am54.model.effects.buildings.EndgamePhaseEffect;
+import it.polimi.ingsw.am54.model.effects.buildings.EventPhaseEffect;
+import it.polimi.ingsw.am54.model.effects.buildings.PostactionPhaseEffect;
+import it.polimi.ingsw.am54.model.effects.buildings.PostpickPhaseEffect;
+import it.polimi.ingsw.am54.model.effects.characters.CharacterEffect;
+import it.polimi.ingsw.am54.model.effects.events.EventEffect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

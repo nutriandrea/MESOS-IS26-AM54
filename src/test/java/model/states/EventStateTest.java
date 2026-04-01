@@ -1,6 +1,9 @@
 package model.states;
 
-import model.*;
+import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.Player;
+import it.polimi.ingsw.am54.model.states.EventState;
+import it.polimi.ingsw.am54.model.states.StartTurnState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

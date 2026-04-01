@@ -1,6 +1,7 @@
 package model.states;
 
-import model.*;
+import it.polimi.ingsw.am54.model.*;
+import it.polimi.ingsw.am54.model.states.PickingState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

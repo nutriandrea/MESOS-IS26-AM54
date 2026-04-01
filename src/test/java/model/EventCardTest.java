@@ -1,5 +1,8 @@
 package model;
 
+import it.polimi.ingsw.am54.model.*;
+import it.polimi.ingsw.am54.model.effects.buildings.EventPhaseEffect;
+import it.polimi.ingsw.am54.model.effects.events.EventEffect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +70,7 @@ class EventCardTest {
     @Test
     void testEventCard_ResolveEvent_WithEffects() {
         List<IEffect<EventCard>> effects = new ArrayList<>();
-        effects.add(new model.effects.events.EventEffect("HUNTER"));
+        effects.add(new EventEffect("HUNTER"));
         
         EventCard card = new EventCard(1, false, effects, 2, 1, 0, 0, 0, 0, 0);
         
@@ -123,7 +126,7 @@ class EventCardTest {
     @Test
     void testEventCard_IsFarmerEvent_True() {
         List<IEffect<EventCard>> effects = new ArrayList<>();
-        effects.add(new model.effects.events.EventEffect("FARMER"));
+        effects.add(new EventEffect("FARMER"));
         
         EventCard card = new EventCard(1, false, effects, 2, 1, 0, 0, 0, 0, 0);
         
@@ -133,7 +136,7 @@ class EventCardTest {
     @Test
     void testEventCard_IsFarmerEvent_False() {
         List<IEffect<EventCard>> effects = new ArrayList<>();
-        effects.add(new model.effects.events.EventEffect("HUNTER"));
+        effects.add(new EventEffect("HUNTER"));
         
         EventCard card = new EventCard(1, false, effects, 2, 1, 0, 0, 0, 0, 0);
         
@@ -143,7 +146,7 @@ class EventCardTest {
     @Test
     void testEventCard_ShouldResolveLast_True() {
         List<IEffect<EventCard>> effects = new ArrayList<>();
-        effects.add(new model.effects.events.EventEffect("FARMER"));
+        effects.add(new EventEffect("FARMER"));
         
         EventCard card = new EventCard(1, false, effects, 2, 1, 0, 0, 0, 0, 0);
         
@@ -153,7 +156,7 @@ class EventCardTest {
     @Test
     void testEventCard_ShouldResolveLast_False() {
         List<IEffect<EventCard>> effects = new ArrayList<>();
-        effects.add(new model.effects.events.EventEffect("HUNTER"));
+        effects.add(new EventEffect("HUNTER"));
         
         EventCard card = new EventCard(1, false, effects, 2, 1, 0, 0, 0, 0, 0);
         
@@ -176,13 +179,13 @@ class EventCardTest {
         player2.modifyAuraPoints(2);
         
         List<IEffect<BuildingCard>> buildingEffects = new ArrayList<>();
-        buildingEffects.add(new model.effects.buildings.EventPhaseEffect("DOUBLE_AURA_SHAMAN", null));
+        buildingEffects.add(new EventPhaseEffect("DOUBLE_AURA_SHAMAN", null));
         
         BuildingCard building = new BuildingCard(JobType.SHAMAN, 5, 2, Phases.EVENT, buildingEffects, 1);
         player1.getBuildings().add(building);
         
         List<IEffect<EventCard>> effects = new ArrayList<>();
-        effects.add(new model.effects.events.EventEffect("SHAMAN"));
+        effects.add(new EventEffect("SHAMAN"));
         
         EventCard eventCard = new EventCard(1, false, effects, 2, 1, 0, 0, 0, 10, 5);
         

@@ -1,6 +1,8 @@
 package model.states;
 
-import model.*;
+import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.Player;
+import it.polimi.ingsw.am54.model.states.EndGameState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

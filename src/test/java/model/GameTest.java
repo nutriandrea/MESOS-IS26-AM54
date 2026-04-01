@@ -1,10 +1,11 @@
 package model;
 
+import it.polimi.ingsw.am54.model.*;
+import it.polimi.ingsw.am54.model.states.PickingState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import model.states.*;
-import model.effects.buildings.EndgamePhaseEffect;
-import model.IEffect;
+import it.polimi.ingsw.am54.model.effects.buildings.EndgamePhaseEffect;
+
 import java.util.ArrayList;
 import java.util.List;
 

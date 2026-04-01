@@ -1,5 +1,7 @@
 package model;
 
+import it.polimi.ingsw.am54.model.*;
+import it.polimi.ingsw.am54.model.effects.characters.CharacterEffect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -153,7 +155,7 @@ class CharacterCardTest {
     @Test
     void testCharacterCard_ResolveEffects_WithEffects() {
         List<IEffect<CharacterCard>> effects = new ArrayList<>();
-        effects.add(new model.effects.characters.CharacterEffect("HUNTER"));
+        effects.add(new CharacterEffect("HUNTER"));
         
         CharacterCard card = new CharacterCard(1, JobType.HUNTER, 1, Phases.EVENT, effects, 1);
         

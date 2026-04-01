@@ -1,5 +1,9 @@
 package model;
 
+import it.polimi.ingsw.am54.model.CharacterCard;
+import it.polimi.ingsw.am54.model.Deck;
+import it.polimi.ingsw.am54.model.JobType;
+import it.polimi.ingsw.am54.model.Phases;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

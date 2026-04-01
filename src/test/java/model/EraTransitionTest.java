@@ -1,10 +1,10 @@
 package model;
 
-import model.states.*;
+import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.Player;
+import it.polimi.ingsw.am54.model.TribeCard;
+import it.polimi.ingsw.am54.model.states.StartTurnState;
 import org.junit.jupiter.api.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 

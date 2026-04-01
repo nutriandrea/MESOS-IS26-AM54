@@ -1,7 +1,7 @@
 package it.polimi.ingsw.am54;
 
-import model.Game;
-import model.IGame;
+import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.IGame;
 
 public class Main {
     public static void main(String[] args) {

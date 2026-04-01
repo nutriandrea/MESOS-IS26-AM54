@@ -1,6 +1,9 @@
 package model.states;
 
-import model.*;
+import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.TotemColors;
+import it.polimi.ingsw.am54.model.states.SetUpGameState;
+import it.polimi.ingsw.am54.model.states.StartTurnState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

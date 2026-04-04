@@ -44,17 +44,19 @@ public class Board {
         offeringTrack.clear();
         int numPlayers = game.getPlayersNumber();
 
-        // Controllo di sicurezza
-        if (numPlayers < 2 || numPlayers > 5) return;
+        // controlli di sicurezza
+        if (numPlayers < 2 || numPlayers > 5) {
+            throw new IllegalArgumentException("Errore critico: Numero di giocatori non valido (" + numPlayers + ")");
+        }
 
         List<Character> neededTiles = new ArrayList<>();
 
         try {
 
-            // 1. Leggiamo tutto il file UNA SOLA VOLTA nell'albero principale
+            //leggiamo il file
             JsonNode rootNode = mapper.readTree(new File("data/OfferingTilesSetup.json"));
 
-            // 2. Peschiamo l'array delle lettere necessarie ("A", "B", "C"...)
+            // prendiamo solo le lettere necessarie (A,B,C,...)
             String playerKey = String.valueOf(numPlayers);
             JsonNode arrayTessere = rootNode.get("requiredTiles").get(playerKey);
 
@@ -64,12 +66,12 @@ public class Board {
                 }
             }
 
-            // 3. Ora peschiamo l'array con le STATISTICHE delle tessere!
-            JsonNode arrayTiles = rootNode.get("tiles"); //
+            // prendiamo dalll'array le statistiche delle tessere
+            JsonNode arrayTiles = rootNode.get("tiles");
 
             if (arrayTiles != null && arrayTiles.isArray()) {
-                // Cicliamo SOLO dentro le tessere
-                for (JsonNode node : arrayTiles) {
+
+                for (JsonNode node : arrayTiles) { //per ogni tessera
                     char idLetto = node.get("id").asText().charAt(0);
 
                     // Se la tessera corrente ci serve per questa partita, la costruiamo
@@ -85,11 +87,10 @@ public class Board {
             }
 
         } catch (Exception e) {
-            System.err.println("Errore lettura JSON Offering Tiles: " + e.getMessage());
-            e.printStackTrace(); // Ti aiuta a capire subito la riga esatta se qualcosa esplode
+            throw new RuntimeException("Fatal error: Could not initialize Offering Tiles from JSON configuration.", e);
         }
 
-        // 4. Ordine alfabetico finale per sicurezza
+        // ordine alfabetico finale per sicurezza
         offeringTrack.sort(Comparator.comparing(OfferingTile::getId));
     }
 
@@ -97,34 +98,35 @@ public class Board {
         // Svuota la lista se c'era già qualcosa
         this.turnOrderTile.clear();
 
-        // Controllo di sicurezza
-        if (numPlayers < 2 || numPlayers > 5) return;
+        // controlli di sicurezza
+        if (numPlayers < 2 || numPlayers > 5) {
+            throw new IllegalArgumentException("Errore critico: Numero di giocatori non valido (" + numPlayers + ")");
+        }
 
         try {
 
-            // 1. Legge il file UNA SOLA VOLTA
+            //legge il file
             JsonNode rootNode = mapper.readTree(new File("data/TurnOrderConfig.json"));
             JsonNode bonusArray = rootNode.get("bonusFood").get(String.valueOf(numPlayers));
 
-            // 2. Se l'array esiste, crea gli slot
+            // se l'array esiste, crea gli slot
             if (bonusArray != null && bonusArray.isArray()) {
 
-                // Se sono 4 giocatori, il ciclo gira 4 volte
                 for (int i = 0; i < bonusArray.size(); i++) {
-                    int position = i + 1; // La posizione "umana" parte da 1
+                    int position = i + 1; // la posizione "umana" parte da 1
                     int bonus = bonusArray.get(i).asInt(); // Il cibo da dare (-1, 0, 1, 2...)
 
-                    // 3. Fabbrica lo slot passandogli i dati già pronti
+                    // fabbrica lo slot passandogli i dati già pronti
                     TurnOrderSlot slot = new TurnOrderSlot(position, bonus);
                     this.turnOrderTile.add(slot);
                 }
             }
         } catch (Exception e) {
-            System.err.println("Errore lettura JSON TurnOrderConfig: " + e.getMessage());
+            throw new RuntimeException("Fatal error during Offering Tiles initialization", e);
         }
     }
 
-    // La Board offre degli "sportelli" specifici, senza fare domande
+
     public void addCharacterCard(CharacterCard card, String row) {
         if (row.equalsIgnoreCase("upper")) {
             characterUpperRow.add(card);
@@ -178,7 +180,7 @@ public class Board {
         int numPlayers = game.getPlayersNumber();
         int currentEra = game.getCurrentEra();
 
-        // 1. Controlli di sicurezza con Eccezioni!
+        // controlli di sicurezza
         if (numPlayers < 2 || numPlayers > 5) {
             throw new IllegalArgumentException("Errore critico: Numero di giocatori non valido (" + numPlayers + ")");
         }
@@ -189,12 +191,12 @@ public class Board {
 
         int cardsToDraw = 0;
 
-        // 2. Lettura dal JSON
+        // leggo dal JSON
         try {
             JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
             JsonNode buildingCounts = countsRoot.get("buildingCounts").get(String.valueOf(numPlayers));
 
-            if (buildingCounts != null && buildingCounts.isArray()) {
+            if (buildingCounts != null && buildingCounts.isArray()) { //solito controllo che quello che mi arriva sia come mi aspetto
                 // currentEra parte da 1, ma gli array partono da 0. Quindi currentEra - 1
                 cardsToDraw = buildingCounts.get(currentEra - 1).asInt();
             } else {
@@ -205,12 +207,12 @@ public class Board {
             throw new IllegalStateException("Impossibile leggere il file EraCounts.json: " + e.getMessage(), e);
         }
 
-        // 3. Controllo sulle carte da pescare
+        // Controllo sulle carte da pescare
         if (cardsToDraw <= 0) {
             throw new IllegalStateException("Errore: Il JSON dice di pescare " + cardsToDraw + " carte. Deve essere > 0.");
         }
 
-        // 4. Pescaggio e riempimento
+        // Pescaggio e riempimento
         Deck<BuildingCard> buildingDeck = game.getBuildingDeck();
 
         for (int i = 0; i < cardsToDraw; i++) {
@@ -227,18 +229,18 @@ public class Board {
             Player p = randomPlayers.get(i);
             TurnOrderSlot slot = this.turnOrderTile.get(i);
 
-            // 1. Piazza il giocatore nello slot (usa il metodo che hai in TurnOrderSlot)
+            // Piazzo il giocatore nello slot
             slot.occupy(p);
 
         }
     }
 
     public void moveUpperToLower() {
-        // 1. Facciamo scivolare giù tutti i Personaggi rimasti
+        // facciamo scivolare giù tutti i personaggi rimasti
         characterLowerRow.addAll(characterUpperRow);
         characterUpperRow.clear();
 
-        // 2. Facciamo scivolare giù tutti gli Eventi rimasti
+        // facciamo scivolare giù tutti gli eventi rimasti
         eventLowerRow.addAll(eventUpperRow);
         eventUpperRow.clear();
     }
@@ -255,29 +257,21 @@ public class Board {
 
         Deck<TribeCard> tribeDeck = game.getTribeDeck();
 
-        // Il ciclo controlla la somma di Personaggi ed Eventi presenti nella riga in alto.
-        // Finché non arriviamo a "numPlayers + 4", continuiamo a pescare.
+        // Il ciclo controlla la somma di personaggi ed eventi presenti nella riga in alto
+        // Finché non arriviamo a numPlayers + 4, continuiamo a pescare
         while ((characterUpperRow.size() + eventUpperRow.size()) < targetSize) {
 
             TribeCard card = tribeDeck.drawCard();
 
-            // Sicurezza: se il mazzo è finito, ci fermiamo!
-            if (card == null) {
-                System.out.println("Attenzione: il mazzo delle Tribù è esaurito!");
-                break;
-            }
+            // Sicurezza: se il mazzo è finito, ci fermiamo
+            if (card == null) { break; }
 
-            // MAGIA: La carta si rivela e, grazie agli "sportelli" che abbiamo
-            // creato prima nella Board, andrà in automatico in characterUpperRow
-            // oppure in eventUpperRow. In entrambi i casi, la somma totale salirà di 1!
+            // la carta si rivela e andrà in automatico in characterUpperR oppure in eventUpperRow.
+            // In entrambi i casi, la somma totale salirà di 1
             card.reveal(this, "upper");
         }
     }
 
-
-    /**
-     * Ottiene la fila specificata
-     */
     public List<Card> getRow(String row) {
         // Creiamo una nuova lista vuota che conterrà le carte unite
         List<Card> combinedRow = new ArrayList<>();
@@ -292,13 +286,11 @@ public class Board {
             combinedRow.addAll(eventLowerRow);
         }
 
-        // Restituiamo la lista fusa!
+        // Restituiamo la lista intera
         return combinedRow;
     }
 
-    /**
-     * Piazza un Totem su una tessera Offerta
-     */
+
     public void addTotemToPosition(Player player, OfferingTile tile) {
         tile.occupy(player);
     }
@@ -342,19 +334,19 @@ public class Board {
     }
 
 
-    // Ordina eventi: non-Farmer prima, Farmer dopo. Poi risolve e rimuove.
+    // Ordina eventi: sostentamento ultimo
     public void resolveAllEventsInOrder(Game game) {
         eventLowerRow.sort((a, b) -> {
             if (a.shouldResolveLast() == b.shouldResolveLast()) return 0;
             return a.shouldResolveLast() ? 1 : -1;
         });
         while (!eventLowerRow.isEmpty()) {
-            eventLowerRow.get(0).resolveEvent(game);
-            eventLowerRow.remove(0);
+            eventLowerRow.get(0).resolveEvent(game); //risolve evento
+            eventLowerRow.remove(0); //lo rimuove
         }
     }
 
-    // Risolvi TUTTI gli eventi visibili (upper + lower), Farmer per ultimo
+    // Risolviamo tutti gli eventi visibili (upper + lower), sostentamento per ultimo
     public void resolveAllVisibleEvents(Game game) {
         List<EventCard> allEvents = new ArrayList<>();
         allEvents.addAll(eventUpperRow);

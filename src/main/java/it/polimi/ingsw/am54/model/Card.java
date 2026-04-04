@@ -18,7 +18,6 @@ public class Card {
         return era;
     }
 
-
     public void addOwner(Player p) {
         this.owner = p;
     }

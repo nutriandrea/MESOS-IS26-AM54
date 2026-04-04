@@ -5,26 +5,19 @@ import java.util.*;
 
 public class Deck<T extends Card> {
 
-    /**
-     * Default constructor
-     */
+    private Stack<T> cards;
+
+
     public Deck() {
         this.cards = new Stack<>();
     }
     
-    /**
-     * Constructor with existing stack
-     */
+   //construttore con stack già presente
     public Deck(Stack<T> stack) {
         this.cards = stack;
     }
 
-    
-    private Stack<T> cards;
 
-
-
-    
     public T drawCard() {
         if (cards.isEmpty()) {
             return null;
@@ -32,7 +25,6 @@ public class Deck<T extends Card> {
         return cards.pop();
     }
 
-    
     public boolean isEmpty() {
         return cards.isEmpty();
     }

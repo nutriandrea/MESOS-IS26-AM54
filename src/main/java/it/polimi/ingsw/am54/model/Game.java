@@ -65,10 +65,7 @@ public class Game implements IGame{
         }
     }
 
-    /**
-     * Preparazione completa del gioco MESOS
-     * Il numero di giocatori viene determinato dalla lista players
-     */
+    //preparazione del gioco
     public void setupGame() throws Exception {
         this.currentEra = 1;
         this.roundCount = 0;
@@ -92,9 +89,7 @@ public class Game implements IGame{
         distributeInitialFood();
     }
 
-    /**
-     * Distribuisce il cibo iniziale ai giocatori
-     */
+
     private void distributeInitialFood() {
         // 1°: 2 Cibo
         // 2°-3°: 3 Cibo
@@ -127,19 +122,19 @@ public class Game implements IGame{
     public void nextPlayer() {
         List<TurnOrderSlot> turnTrack = board.getTurnOrderTile();
 
-        // 1. Troviamo in quale slot si trova il giocatore corrente
+        // troviamo in quale slot si trova il giocatore corrente
         int currentIndex = 0;
         boolean foundCurrent = false;
 
         while (currentIndex < turnTrack.size() && !foundCurrent) {
             if (currentPlayer.equals(turnTrack.get(currentIndex).getOccupiedBy())) {
-                foundCurrent = true; // Trovato! Al prossimo giro il while si ferma da solo.
+                foundCurrent = true;
             } else {
-                currentIndex++; // Andiamo avanti a cercare
+                currentIndex++;
             }
         }
 
-        // 2. Passiamo al prossimo slot occupato
+        // passiamo al prossimo slot occupato
         boolean nextFound = false;
         int offset = 1;
 
@@ -147,18 +142,18 @@ public class Game implements IGame{
             int nextIndex = (currentIndex + offset) % turnTrack.size();
             Player nextP = turnTrack.get(nextIndex).getOccupiedBy();
 
-            // Se in questo slot c'è seduto qualcuno, e NON ha ancora piazzato il totem
+            // Se in questo slot c'è seduto qualcuno, e non ha ancora piazzato il totem
             if (nextP != null && !nextP.hasPlacedTotem()) {
-                this.currentPlayer = nextP; // Aggiorniamo il giocatore corrente
-                nextFound = true; // Condizione soddisfatta, il while si ferma!
+                this.currentPlayer = nextP; // aggiorniamo il giocatore corrente
+                nextFound = true; // condizione soddisfatta
             } else {
-                offset++; // Altrimenti controlliamo il posto successivo
+                offset++; //posto successivo
             }
         }
         // Se abbiamo effettivamente trovato e cambiato il giocatore, avvisiamo la grafica
         if (nextFound) {
-            System.out.println("Turno passato a: " + currentPlayer.getNickname());
-            notifyTurnChanged(currentPlayer); // Aggiornato!
+            //nessun print, sarà la view dopo essere notificata a farlo
+            notifyTurnChanged(currentPlayer);
         }
     }
 
@@ -345,13 +340,7 @@ public class Game implements IGame{
     }
 
     public void notifyEndGame(List<Player> winners) {
-        System.out.println("=== FINE PARTITA ===");
-        if (winners.size() == 1) {
-            System.out.println("Vincitore: " + winners.get(0).getNickname());
-        } else {
-            System.out.println("Vittoria condivisa tra: " + 
-                winners.stream().map(Player::getNickname).reduce((a, b) -> a + ", " + b).orElse(""));
-        }
+        // anche qui il model si limita ad avvisare tutti gli osservatori (le view)
         for (IGameObserver obs : observers) {
             obs.onEndGame(this, winners);
         }

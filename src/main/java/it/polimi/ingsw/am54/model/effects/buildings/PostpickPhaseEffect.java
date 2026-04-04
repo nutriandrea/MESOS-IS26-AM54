@@ -6,9 +6,7 @@ import model.*;
 
 import java.util.List;
 
-/**
- * Gestisce tutti gli effetti della fase POSTPICK.
- */
+//Gestisce tutti gli effetti della fase POSTPICK
 public class PostpickPhaseEffect implements IEffect<BuildingCard> {
 
     private final String effectName;

@@ -2,9 +2,7 @@ package it.polimi.ingsw.am54.model;
 
 import java.util.*;
 
-/**
- *
- */
+
 public class CharacterCard extends TribeCard implements IDrawable {
 
     private int level;

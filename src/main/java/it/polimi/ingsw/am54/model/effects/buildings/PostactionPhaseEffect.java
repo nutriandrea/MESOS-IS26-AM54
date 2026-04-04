@@ -7,9 +7,7 @@ import it.polimi.ingsw.am54.model.IEffect;
 import it.polimi.ingsw.am54.model.Player;
 import model.*;
 
-/**
- * Gestisce tutti gli effetti della fase POSTACTION.
- */
+//Gestisce tutti gli effetti della fase POSTACTION
 public class PostactionPhaseEffect implements IEffect<BuildingCard> {
 
     private final String effectName;

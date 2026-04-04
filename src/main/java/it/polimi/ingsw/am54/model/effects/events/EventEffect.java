@@ -3,10 +3,8 @@ package it.polimi.ingsw.am54.model.effects.events;
 import it.polimi.ingsw.am54.model.*;
 import model.*;
 
-/**
- * Gestisce tutti gli effetti degli eventi.
- * L'effetto da applicare è determinato dalla etichettaSottoclasse letta dal JSON.
- */
+//gestisce tutti gli effetti degli eventi
+//l'effetto da applicare è determinato dalla etichettaSottoclasse letta dal JSON
 public class EventEffect implements IEffect<EventCard> {
 
     private final String effectName;

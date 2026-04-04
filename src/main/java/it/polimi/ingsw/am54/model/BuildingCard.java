@@ -29,14 +29,13 @@ public class BuildingCard extends Card implements IPurchasable {
     public void resolveEffects(Player p, Game g) {
         // Scorri tutti gli effetti assegnati a questo edificio
         for (IEffect effect : this.effects) {
-            // Applica l'effetto. Passi 'null' al posto di CharacterCard perché questo è un Edificio!
+            // Applica l'effetto. Passi null al posto di CharacterCard perché è un edificio
             effect.apply(p, g, null);
         }
     }
 
     public int getFinalAura() {
-        // TODO implement here
-        return 0;
+        return finalAura;
     }
     public List<IEffect<BuildingCard>> getEffects(){
         return this.effects;
@@ -60,19 +59,11 @@ public class BuildingCard extends Card implements IPurchasable {
     }
 
     @Override
-    public void buy(Player player) {
-        int foodAmount = this.cost-player.getMyBuildingDiscount();
-        if (foodAmount>=0) {player.modifyFood(-foodAmount);}
-
-        this.addOwner(player);
-        player.getBuildings().add(this);
-    }
-
-    @Override
     public void pick(Player player, Game game) throws Exception {
         int finalCost = this.cost - player.getMyBuildingDiscount();
         finalCost = Math.max(0, finalCost);
 
+        //controlla se il player può effettivamente acquistare
         if (player.getFood() < finalCost) {
             throw new Exception("Cibo insufficiente per comprare l'edificio! Hai " + player.getFood() + ", servono " + finalCost);
         }
@@ -80,7 +71,6 @@ public class BuildingCard extends Card implements IPurchasable {
         player.modifyFood(-finalCost);
         this.addOwner(player);
         player.getBuildings().add(this);
-        System.out.println(player.getNickname() + " ha comprato l'edificio: " + getName() + " per " + finalCost + " cibo");
     }
 
 }

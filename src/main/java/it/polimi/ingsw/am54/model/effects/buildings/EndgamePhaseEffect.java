@@ -6,9 +6,7 @@ import model.*;
 
 import java.util.Arrays;
 
-/**
- * Gestisce tutti gli effetti della fase ENDGAME.
- */
+//Gestisce tutti gli effetti della fase ENDGAME
 public class EndgamePhaseEffect implements IEffect<BuildingCard> {
 
     private final String effectName;
@@ -18,12 +16,18 @@ public class EndgamePhaseEffect implements IEffect<BuildingCard> {
 
     public EndgamePhaseEffect(String effectName, JsonNode params) {
         this.effectName = effectName;
-        this.jobType = params != null && params.has("jobType")
-                ? JobType.valueOf(params.get("jobType").asText()) : null;
-        this.multiplier = params != null && params.has("multiplier")
-                ? params.get("multiplier").asInt() : 0;
-        this.amount = params != null && params.has("amount")
-                ? params.get("amount").asInt() : 0;
+
+        // se params è null è inutile fare i controlli dopo
+        if (params == null) {
+            this.jobType = null;
+            this.multiplier = 0;
+            this.amount = 0;
+            return;
+        }
+
+        this.jobType = params.has("jobType") ? JobType.valueOf(params.get("jobType").asText()) : null;
+        this.multiplier = params.has("multiplier") ? params.get("multiplier").asInt() : 0;
+        this.amount = params.has("amount") ? params.get("amount").asInt() : 0;
     }
 
     @Override

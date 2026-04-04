@@ -3,10 +3,8 @@ package it.polimi.ingsw.am54.model.effects.characters;
 import it.polimi.ingsw.am54.model.*;
 import model.*;
 
-/**
- * Gestisce tutti gli effetti dei personaggi.
- * L'effetto da applicare è determinato dal characterType letto dal JSON.
- */
+//Ggstisce tutti gli effetti dei personaggi
+//l'effetto da applicare è determinato dal characterType letto dal JSON
 public class CharacterEffect implements IEffect<CharacterCard> {
 
     private final String effectName;

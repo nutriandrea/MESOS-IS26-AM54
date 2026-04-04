@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import it.polimi.ingsw.am54.model.*;
 import model.*;
 
-/**
- * Gestisce tutti gli effetti della fase EVENT e STARTTURN.
- */
+//abbiamo unito event e start turn dato che sono sempre modificatori passivi o bonus diretti calcolati in base ai membri della tribù
 public class EventPhaseEffect implements IEffect<BuildingCard> {
 
     private final String effectName;
@@ -17,13 +15,25 @@ public class EventPhaseEffect implements IEffect<BuildingCard> {
 
     public EventPhaseEffect(String effectName, JsonNode params) {
         this.effectName = effectName;
-        this.jobType = params != null && params.has("jobType")
+
+        if (params == null) {
+            this.jobType = null;
+            this.multiplier = 0;
+            this.food = false;
+            this.aura = false;
+            return;
+        }
+
+        this.jobType = params.has("jobType")
                 ? JobType.valueOf(params.get("jobType").asText()) : null;
-        this.multiplier = params != null && params.has("multiplier")
+
+        this.multiplier = params.has("multiplier")
                 ? params.get("multiplier").asInt() : 0;
-        this.food = params != null && params.has("food")
+
+        this.food = params.has("food")
                 ? params.get("food").asBoolean() : false;
-        this.aura = params != null && params.has("aura")
+
+        this.aura = params.has("aura")
                 ? params.get("aura").asBoolean() : false;
     }
 
@@ -54,6 +64,18 @@ public class EventPhaseEffect implements IEffect<BuildingCard> {
                         .filter(c -> c.getJobType() == jobType).count();
                 if (food) p.setEventCostFood((int) count);
                 if (aura) p.setEventCostAura((int) count);
+            }
+            case "BONUS_FOOD" -> {
+                //con il riferimento a game cerchiamo su quale slot è messo il giocatore
+                TurnOrderSlot playerSlot = g.getBoard().getTurnOrderTile().stream()
+                        .filter(slot -> slot.getOccupiedBy() != null && slot.getOccupiedBy().equals(p))
+                        .findFirst()
+                        .orElse(null);
+
+                // Se lo troviamo e quello slot fornisce effettivamente del cibo (> 0), glielo diamo
+                if (playerSlot != null && playerSlot.getBonusFood() > 0) {
+                    p.modifyFood(1);
+                }
             }
             case "NO_LOSS" -> { /* marker: controllato dall'evento SHAMAN */ }
             case "DOUBLE_AURA_SHAMAN" -> { /* marker: controllato dall'evento SHAMAN */ }

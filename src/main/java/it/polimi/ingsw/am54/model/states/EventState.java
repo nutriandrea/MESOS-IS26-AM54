@@ -4,10 +4,8 @@ import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.GameState;
 import model.*;
 
-/**
- * Stato di risoluzione eventi: nessun giocatore puo' interagire.
- * Risolve automaticamente gli eventi (normali prima, Farmer per ultimi) e decide il prossimo stato.
- */
+//Stato di risoluzione eventi: nessun giocatore puo' interagire
+//risolve automaticamente gli eventi (normali prima, Farmer per ultimi) e decide il prossimo stato
 public class EventState extends GameState {
 
     @Override

@@ -3,7 +3,7 @@ package it.polimi.ingsw.am54.model.states;
 import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.GameState;
 import it.polimi.ingsw.am54.model.Player;
-import model.*;
+
 import java.util.List;
 
 //Stato di fine partita: calcola i punteggi finali e decreta il vincitore

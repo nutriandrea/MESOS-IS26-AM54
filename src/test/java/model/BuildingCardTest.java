@@ -4,7 +4,7 @@ import it.polimi.ingsw.am54.model.*;
 import it.polimi.ingsw.am54.model.effects.buildings.EndgamePhaseEffect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import it.polimi.ingsw.am54.model.*;
 import java.util.ArrayList;
 import java.util.List;
 

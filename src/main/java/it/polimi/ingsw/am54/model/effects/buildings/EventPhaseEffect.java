@@ -2,7 +2,6 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import it.polimi.ingsw.am54.model.*;
-import model.*;
 
 //abbiamo unito event e start turn dato che sono sempre modificatori passivi o bonus diretti calcolati in base ai membri della tribù
 public class EventPhaseEffect implements IEffect<BuildingCard> {

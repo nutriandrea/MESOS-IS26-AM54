@@ -6,8 +6,13 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                         CLIENT                                  │
 │  ┌─────────────┐    ┌──────────────┐    ┌───────────────────┐   │
-│  │    View     │───▶│ ClientNetwork│───▶│ ObjectInputStream │   │
-│  └─────────────┘    └──────────────┘    └───────────────────┘   │
+│  │    View     │───▶│    Client    │───▶│ ObjectOutputStream│   │
+│  └─────────────┘    └──────┬───────┘    └───────────────────┘   │
+│                           │              ▲                      │
+│                    ┌──────▼───────┐        │                      │
+│                    │ServerHandler │────────┘                      │
+│                    │  (thread)    │   ObjectInputStream          │
+│                    └─────────────┘                               │
 └──────────────────────────┬──────────────────────────────────────┘
                            │ Socket TCP
                            ▼
@@ -30,11 +35,11 @@
 │  ┌──────────────────┐           ┌───────────────────────────┐   │
 │  │  VirtualView     │◀─────────┤       Game (Model)         │   │
 │  │  (Observer)      │          │    (State Machine)         │   │
-│  └────────┬─────────┘           └───────────────────────────┘   │
+│  └────────┬─────────┘           └───────────────────────────┘  │
 │           │                                                     │
 │           ▼                                                     │
 │  ┌─────────────────┐                                            │
-│  │ ClientHandler  │ ◀── send updates to specific client         │
+│  │ ClientHandler  │ ◀── send updates to specific client        │
 │  └─────────────────┘                                            │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -46,7 +51,7 @@
 ### 2.1 Connessione di un Client
 
 ```
-1. Server.start() → ServerSocket.accept()
+1. Server.main() / Server.start() → ServerSocket.accept()
 2. Crea SocketClientHandler(socket, controller)
 3. Crea VirtualView(handler)
 4. game.addObserver(vView)
@@ -57,19 +62,21 @@
 
 ```
 CLIENT                                    SERVER
-──────                                    ──────
-View.composeCommand()
+─────                                    ──────
+Client.connect()
      │
-     ▼ (serializza oggetto)
-ObjectOutputStream.writeObject()
+     ▼ (TCP handshake)
+ObjectOutputStream + ObjectInputStream
      │
+     ▼
+Client.sendMessage(Request)
      │──── TCP Socket ────│
      ▼                    ▼
 ServerSocket          SocketClientHandler.run()
                       ObjectInputStream.readObject()
                              │
                              ▼
-                      SocketClientHandler.parseRequest()
+                      handleRequest(Request)
                              │
                              ▼
                       Controller.handleXxx()
@@ -86,11 +93,12 @@ ServerSocket          SocketClientHandler.run()
                       VirtualView.onXxxEvent()
                              │
                              ▼
-                      ClientHandler.sendMessage()
+                      ClientHandler.sendMessage(Update)
                              │
                              │──── TCP Socket ────│
                              ▼                    ▼
-                      ObjectOutputStream    Client receives
+                      ObjectOutputStream    ServerHandler.run()
+                                           handleUpdate()
 ```
 
 ---
@@ -102,6 +110,7 @@ ServerSocket          SocketClientHandler.run()
 **Responsabilità**: Entry point del server, gestisce le connessioni in ingresso.
 
 **Funzionamento**:
+- Entry point: `main(String[] args)` - porta default 12345
 - Crea un'istanza di `Game` (Model) e `Controller`
 - Apre un `ServerSocket` sulla porta specificata
 - Loop infinito: `accept()` per ogni nuovo client
@@ -109,18 +118,12 @@ ServerSocket          SocketClientHandler.run()
   - `SocketClientHandler` - gestisce la comunicazione
   - `VirtualView` - osserva il Model per inviare update
   - Thread dedicato per gestire il client
+- Limita a massimo 4 giocatori
 
-```java
-// Pseudocodice
-public void start() {
-    while (true) {
-        Socket socket = serverSocket.accept();
-        SocketClientHandler handler = new SocketClientHandler(socket, controller);
-        VirtualView vView = new VirtualView(handler);
-        game.addObserver(vView);
-        new Thread(handler).start();
-    }
-}
+**Avvio**:
+```bash
+./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server"
+./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server" -Dexec.args="8080"
 ```
 
 ---
@@ -133,37 +136,27 @@ public void start() {
 - Implementa `Runnable` - eseguito in un Thread separato
 - Inizializza `ObjectInputStream` e `ObjectOutputStream`
 - Loop di ricezione comandi: `in.readObject()`
-- Chiama metodi del Controller per ogni comando ricevuto
-- Gestisce errori di connessione e cleanup
+- Parsa il tipo di Request e invoca metodi del Controller
+- Tiene traccia del `playerNickname` per autenticazione
 
-**Nota**: Il loop di ricezione (riga 28-32) è attualmente **vuoto** - deve essere implementato.
-
-```java
-public void run() {
-    out = new ObjectOutputStream(socket.getOutputStream());
-    in = new ObjectInputStream(socket.getInputStream());
-    
-    while (connected) {
-        Object input = in.readObject();
-        // TODO: parse e chiama controller
-    }
-}
-```
+**Request gestite**:
+- `JoinGameRequest` → `controller.handleJoinGame(nickname, this)`
+- `SetupGameRequest` → `controller.handleSetupGame(nickname)`
+- `ChooseTotemRequest` → `controller.handleChooseTotemColor(nickname, color)`
+- `PlaceTotemRequest` → `controller.handlePlaceTotem(nickname, position)`
+- `PickCardRequest` → `controller.handlePickCard(nickname, row, index)`
 
 ---
 
 ### 3.3 ClientHandler (`it.polimi.ingsw.am54.network.server.ClientHandler`)
 
-**Responsabilità**: Interfaccia per l'invio di messaggi al client.
-
-**Metodi**:
-- `sendMessage(Serializable message)` - invia un messaggio
-- `sendError(String errorMessage)` - invia un errore
+**Interfaccia** per l'invio di messaggi al client.
 
 ```java
 public interface ClientHandler {
-    void sendMessage(Serializable message);
+    void sendMessage(Update message);
     void sendError(String errorMessage);
+    void disconnect();
 }
 ```
 
@@ -190,21 +183,75 @@ public interface ClientHandler {
 
 ---
 
-### 3.5 Messaggi (Package `it.polimi.ingsw.am54.network.messages`)
+### 3.5 Controller (`it.polimi.ingsw.am54.controller.Controller`)
 
-Tutti i messaggi implementano `Serializable` per la trasmissione su socket.
+**Responsabilità**: Gestisce i comandi e sincronizza l'accesso al Model.
 
-#### Request (Client → Server)
+**Funzionamento**:
+- Mantiene una mappa `nickname → ClientHandler` per inviare errori
+- Ogni handler `handleXxx()` chiama il metodo corrispondente sul Game
+- uso di `synchronized(game)` per thread safety
+- In caso di errore, `signalError()` invia `ErrorMessageUpdate` al client
 
-| Classe | Contenuto | Interfaccia |
-|--------|-----------|-------------|
-| `JoinGameRequest` | `String nickname` | `ClientMessage` |
-| `ChooseTotemRequest` | `String nickname, String color` | `ClientMessage` |
-| `SetupGameRequest` | `String nickname` | `ClientMessage` |
-| `PlaceTotemRequest` | `String nickname, int offerPosition` | `ClientMessage` |
-| `PickCardRequest` | `String nickname, String row, int cardIndex` | `ClientMessage` |
+---
 
-#### Update Messages (Server → Client)
+### 3.6 Client (`it.polimi.ingsw.am54.network.client.Client`)
+
+**Responsabilità**: Punto di ingresso lato client per la connessione di rete.
+
+**Funzionamento**:
+- `connect(ip, port)` - stabilisce connessione TCP, aspetta ACK, avvia ServerHandler
+- `sendMessage(ClientMessage)` - serializza e invia al server
+- `disconnect()` - chiude socket e ferma ServerHandler
+
+---
+
+### 3.7 ServerHandler (`it.polimi.ingsw.am54.network.client.ServerHandler`)
+
+**Responsabilità**: Thread parallelo per ricevere Update dal server.
+
+**Funzionamento**:
+- Costruttore riceve `ObjectInputStream` già aperto
+- Loop infinito: `in.readObject()` bloccante
+- `handleUpdate(Update)` - dispatch del messaggio (da collegare a GUI)
+
+---
+
+## 4. Messaggi (Package `it.polimi.ingsw.am54.network.messages`)
+
+### Gerarchia delle Interfacce
+
+```
+ClientMessage extends Serializable
+    ├── Request (Client → Server)
+    │    ├── JoinGameRequest
+    │    ├── ChooseTotemRequest
+    │    ├── SetupGameRequest
+    │    ├── PlaceTotemRequest
+    │    └── PickCardRequest
+    │
+    └── Update (Server → Client)
+         ├── ErrorMessageUpdate
+         ├── PlayerJoinedUpdate
+         ├── TotemColorUpdate
+         ├── TotemPlacedUpdate
+         ├── CardPickedUpdate
+         ├── TurnChangedUpdate
+         ├── StateChangedUpdate
+         └── EndGameUpdate
+```
+
+### Request (Client → Server)
+
+| Classe | Contenuto |
+|--------|-----------|
+| `JoinGameRequest` | `String nickname` |
+| `ChooseTotemRequest` | `String nickname, String color` |
+| `SetupGameRequest` | `String nickname` |
+| `PlaceTotemRequest` | `String nickname, int offerPosition` |
+| `PickCardRequest` | `String nickname, String row, int cardIndex` |
+
+### Update (Server → Client)
 
 | Classe | Contenuto |
 |--------|-----------|
@@ -215,68 +262,11 @@ Tutti i messaggi implementano `Serializable` per la trasmissione su socket.
 | `TurnChangedUpdate` | `String newCurrentPlayer` |
 | `StateChangedUpdate` | `String newState` (nome classe) |
 | `EndGameUpdate` | `List<String> winners` |
-
-#### Error Messages (Server → Client)
-
-| Classe | Contenuto |
-|--------|-----------|
-| `ErrorMessage` | `String message` |
+| `ErrorMessageUpdate` | `String message` |
 
 ---
 
-## 4. Problemi e Limiti Attuali
-
-### 4.1 Controller.signalError() Incompleto
-
-**Posizione**: `Controller.java:76-79`
-
-**Problema**: Il metodo `signalError()` non ha accesso al `ClientHandler` per inviare l'errore al client corretto.
-
-```java
-// Codice attuale - non funziona
-private void signalError(String nickname, String message) {
-    LOGGER.warning("Segnalazione errore a " + nickname + ": " + message);
-    // TODO: Qui serve accesso al ClientHandler
-}
-```
-
-**Soluzione**: Passare una mappa `nickname → ClientHandler` al Controller.
-
----
-
-### 4.2 Loop di Ricezione Vuoto
-
-**Posizione**: `SocketClientHandler.java:28-32`
-
-**Problema**: Il loop che legge i comandi dal client è vuoto.
-
-```java
-// Codice attuale
-while (connected) {
-    Object input = in.readObject();
-    // MANCA: parsing del comando e chiamata al controller
-}
-```
-
-**Soluzione**: Creare classi Request (es. `PickCardRequest`) e implementare il parsing.
-
----
-
-### 4.3 Request Create
-
-**Stato**: ✅ Implementate
-
-Classi create nel package `network.messages`:
-- `ClientMessage` (interfaccia base)
-- `JoinGameRequest`
-- `ChooseTotemRequest`
-- `SetupGameRequest`
-- `PlaceTotemRequest`
-- `PickCardRequest`
-
----
-
-## 5. Flusso Sincronizzazione
+## 5. Flusso di Sincronizzazione
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -317,18 +307,36 @@ Classi create nel package `network.messages`:
 | **MVC** | Controller interpola View e Model |
 | **Thread per Client** | Ogni socket in un Thread separato |
 | **Command** | Azioni incapsulate in `GameAction` (lambda) |
+| **Virtual View** | Traduce eventi Model in messaggi di rete |
 
 ---
 
 ## 7. Avvio del Sistema
 
+### Server
 ```bash
-# Server
-Server server = new Server(1234);
-server.start();
+# Porta default 12345
+./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server"
 
-# Client (da implementare)
-Socket socket = new Socket("localhost", 1234);
-ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-out.writeObject(new JoinGameRequest("Player1"));
+# Porta personalizzata
+./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server" -Dexec.args="8080"
 ```
+
+### Client (da GUI/TUI)
+```java
+Client client = new Client();
+client.connect("localhost", 12345);
+client.sendMessage(new JoinGameRequest("Player1"));
+```
+
+---
+
+## 8. Limitazioni e Prossimi Passi
+
+| Funzionalità | Stato |
+|--------------|-------|
+| Socket communication | ✅ Completo |
+| Multiple games support | 🔄 Da implementare |
+| RMI communication | 🔄 Da implementare |
+| Reconnection handling | 🔄 Da implementare |
+| Client GUI/TUI integration | 🔄 Da implementare |

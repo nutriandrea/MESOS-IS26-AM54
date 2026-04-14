@@ -122,7 +122,12 @@ mvn test
 ### Run Server
 
 ```bash
-java -jar target/Server.jar
+./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server"
+```
+
+Porta default: `12345`. Per usare altra porta:
+```bash
+./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server" -Dexec.args="8080"
 ```
 
 ### Run Client

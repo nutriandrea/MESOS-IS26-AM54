@@ -15,16 +15,19 @@ public class Server {
     private final Game game;
     private final Controller controller;
 
-    // Flag per spegnere il server in modo pulito
     private volatile boolean isRunning;
-
-    // Lista thread-safe per tenere traccia di chi è online
     private final List<ClientHandler> activeClients;
+
+    public static void main(String[] args) {
+        int port = args.length > 0 ? Integer.parseInt(args[0]) : 12345;
+        System.out.println("=== AVVIO SERVER DI RETE ===");
+        new Server(port).start();
+    }
 
     public Server(int port) {
         this.port = port;
-        this.game = new Game(); // Il Model reale
-        this.controller = new Controller(game); // Il Controller
+        this.game = new Game();
+        this.controller = new Controller(game);
         this.activeClients = Collections.synchronizedList(new ArrayList<>());
     }
 
@@ -35,32 +38,21 @@ public class Server {
             System.out.println("[Server] Avviato con successo sulla porta " + port);
 
             while (isRunning) {
-                // Il server si ferma qui finché non bussa qualcuno
                 Socket socket = serverSocket.accept();
                 System.out.println("[Server] Nuova connessione da: " + socket.getInetAddress());
 
-                // --- IL BUTTAFUORI ---
-                // Se la partita è piena (es. max 4 giocatori) o già iniziata, rifiutiamo gentilmente.
-                // Sostituisci "4" e "isStarted()" con la logica reale del tuo gioco.
-                if (game.getPlayers().size() >= 4 /* || game.isStarted() */) {
+                if (game.getPlayers().size() >= 4) {
                     System.out.println("[Server] Partita piena. Connessione rifiutata.");
                     socket.close();
-                    continue; // Torna su ad aspettare un'altra connessione
+                    continue;
                 }
 
-                // Crea l'Handler per il client
                 SocketClientHandler handler = new SocketClientHandler(socket, controller);
-
-                // Lo aggiungiamo alla lista dei presenti
                 activeClients.add(handler);
 
-                // Crea la VirtualView per ingannare l'MVC
                 VirtualView vView = new VirtualView(handler);
-
-                // La VirtualView inizia a spiare il Model
                 game.addObserver(vView);
 
-                // Avvia il thread dedicato a questo giocatore
                 new Thread(handler).start();
             }
         } catch (IOException e) {
@@ -72,13 +64,9 @@ public class Server {
         }
     }
 
-    /**
-     * Metodo per spegnere il server chiudendo tutte le connessioni attive.
-     */
     public void stop() {
         this.isRunning = false;
 
-        // Disconnetti brutalmente tutti i client per evitare che rimangano appesi
         for (ClientHandler client : activeClients) {
             client.disconnect();
         }
@@ -87,9 +75,6 @@ public class Server {
         System.out.println("[Server] Spento correttamente.");
     }
 
-    /**
-     * (Opzionale) Metodo utile se in futuro il Controller dovrà buttare fuori qualcuno.
-     */
     public void removeClient(ClientHandler handler) {
         activeClients.remove(handler);
     }

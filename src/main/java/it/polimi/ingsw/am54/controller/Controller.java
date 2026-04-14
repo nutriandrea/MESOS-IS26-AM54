@@ -2,6 +2,7 @@ package it.polimi.ingsw.am54.controller;
 
 import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.network.server.ClientHandler;
+import it.polimi.ingsw.am54.network.server.VirtualView;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +37,12 @@ public class Controller {
         synchronized (clientHandlers) {
             clientHandlers.put(nickname, handler);
         }
+
+        // 1. Creiamo la vista virtuale per questo specifico giocatore
+        VirtualView playerView = new VirtualView(handler);
+        // 2. Iscriviamo la vista al Model così riceverà tutti i broadcast!
+        game.addObserver(playerView);
+
         executeCommand(nickname, () -> game.joinGame(nickname));
     }
 

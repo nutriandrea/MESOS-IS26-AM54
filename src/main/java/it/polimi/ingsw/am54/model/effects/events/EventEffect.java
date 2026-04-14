@@ -1,7 +1,7 @@
 package it.polimi.ingsw.am54.model.effects.events;
 
 import it.polimi.ingsw.am54.model.*;
-import model.*;
+
 
 //gestisce tutti gli effetti degli eventi
 //l'effetto da applicare è determinato dalla etichettaSottoclasse letta dal JSON

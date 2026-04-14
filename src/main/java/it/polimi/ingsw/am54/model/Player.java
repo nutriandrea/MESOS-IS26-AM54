@@ -18,38 +18,17 @@ public class Player {
 
     
     private String nickname;
-
-    
     private TotemColors totemColor;
-
-    
     private int food;
-
-    
     private int aura;
-
     private int magicPoints;
-
-    
     private boolean extraPick;
-
-    
     private ArrayList<CharacterCard> myTribe;
-
-    
     private ArrayList<BuildingCard> myBuildings;
-
-    
     private int myBuildingDiscount;
-
-    
     private int myFoodDiscount;
-
-
     private int eventCostFood;
-
     private int eventCostAura;
-
     private boolean hasPlacedTotem = false;
     
     private OfferingTile currentTile;

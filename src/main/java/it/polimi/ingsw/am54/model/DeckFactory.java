@@ -6,7 +6,7 @@ import it.polimi.ingsw.am54.model.effects.buildings.EndgamePhaseEffect;
 import it.polimi.ingsw.am54.model.effects.buildings.EventPhaseEffect;
 import it.polimi.ingsw.am54.model.effects.buildings.PostactionPhaseEffect;
 import it.polimi.ingsw.am54.model.effects.buildings.PostpickPhaseEffect;
-import model.effects.buildings.*;
+import it.polimi.ingsw.am54.model.effects.buildings.*;
 import it.polimi.ingsw.am54.model.effects.characters.CharacterEffect;
 import it.polimi.ingsw.am54.model.effects.events.EventEffect;
 import java.io.*;

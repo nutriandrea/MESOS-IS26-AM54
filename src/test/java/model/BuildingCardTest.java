@@ -42,7 +42,7 @@ class BuildingCardTest {
         BuildingCard card = new BuildingCard(
             JobType.CONSTRUCTOR, 5, 3, Phases.ENDGAME, null, 1
         );
-        assertEquals(0, card.getFinalAura());
+        assertEquals(3, card.getFinalAura());
     }
 
     @Test
@@ -82,7 +82,7 @@ class BuildingCardTest {
         
         assertEquals(JobType.FARMER, card.getBuildingType());
         assertEquals(7, card.getCost());
-        assertEquals(0, card.getFinalAura());
+        assertEquals(4, card.getFinalAura());
         assertNotNull(card.getEffects());
         assertEquals(1, card.getEffects().size());
         assertEquals(3, card.getEra());
@@ -179,7 +179,7 @@ class BuildingCardTest {
             JobType.CONSTRUCTOR, 1, 2, Phases.ENDGAME, null, 1
         );
         
-        card.buy(buyer);
+        card.pick(buyer, game);
         
         assertEquals(initialBuildings + 1, buyer.getBuildings().size());
         assertTrue(buyer.getBuildings().contains(card));
@@ -201,7 +201,7 @@ class BuildingCardTest {
             JobType.CONSTRUCTOR, 2, 2, Phases.ENDGAME, null, 1
         );
         
-        card.buy(buyer);
+        card.pick(buyer, game);
         
         assertTrue(buyer.getFood() <= initialFood);
     }

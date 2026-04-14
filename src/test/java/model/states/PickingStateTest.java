@@ -304,12 +304,13 @@ class PickingStateTest {
     @Test
     void testPickCard_InvalidRow_ThrowsException() {
         placePlayersOnTilesAndSetCurrentPicker();
-        
+
         Exception ex = assertThrows(Exception.class, () -> {
+            // "carbicane" deve corrispondere al nickname del currentPicker generato nel tuo setup
             pickingState.pickCard(game, "carbicane", "invalid", 0);
         });
-        
-        assertEquals("Errore: Fila non valida. Usa 'upper' o 'lower'.", ex.getMessage());
+
+        assertEquals("Error: Line not found", ex.getMessage());
     }
 
     @Test

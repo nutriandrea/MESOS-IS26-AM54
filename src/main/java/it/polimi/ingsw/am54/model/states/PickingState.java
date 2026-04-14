@@ -19,7 +19,7 @@ public class PickingState extends GameState {
         boolean isLower = row.equalsIgnoreCase("lower");
 
         if (!isUpper && !isLower) {
-            throw new Exception("Errore: Fila non valida.");
+            throw new Exception("Error: Line not found");
         }
 
         if (isUpper) {

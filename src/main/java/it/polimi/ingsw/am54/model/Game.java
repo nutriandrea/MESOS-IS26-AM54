@@ -312,7 +312,7 @@ public class Game implements IGame{
         applyEndGameBuildingEffects();
 
         List<Player> winners = new ArrayList<>();
-        int maxScore = 0;
+        int maxScore = -999;
 
         for (Player p : players) {
             int score = calculatePlayerScore(p);

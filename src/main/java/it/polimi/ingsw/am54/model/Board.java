@@ -122,7 +122,7 @@ public class Board {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException("Fatal error during Offering Tiles initialization", e);
+            throw new RuntimeException("Fatal error during Turn Order initialization", e);
         }
     }
 

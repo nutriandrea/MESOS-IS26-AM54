@@ -400,10 +400,14 @@ class BoardTest {
         Files.writeString(original, "{ questa non è una stringa json valida : [ }");
 
         try {
-            // Chiamiamo il metodo che ora fallirà la lettura
-            assertDoesNotThrow(() -> board.generateBoard(game));
-            // Verifichiamo che la lista sia rimasta vuota a causa dell'errore gestito nel catch
-            assertTrue(board.getOfferingTrack().isEmpty());
+
+            //si deve aspettare una eccezione
+            RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+                board.generateBoard(game);
+            });
+
+            // Verifichiamo che il messaggio sia quello giusto:
+            assertTrue(ex.getMessage().contains("Offering Tiles"));
         } finally {
             // RIPRISTINO FONDAMENTALE
             Files.move(backup, original, StandardCopyOption.REPLACE_EXISTING);
@@ -419,10 +423,14 @@ class BoardTest {
         Files.move(original, backup, StandardCopyOption.REPLACE_EXISTING);
 
         try {
-            // Il metodo loggherà l'errore nel catch e non aggiungerà slot
-            board.initializeTurnOrderTile(2);
-            assertTrue(board.getTurnOrderTile().isEmpty());
+            // ci aspettiamo l'eccezione:
+            RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+                board.initializeTurnOrderTile(2);
+            });
+            // verifichiamo che il messaggio sia quello corretto:
+            assertTrue(ex.getMessage().contains("Turn Order"));
         } finally {
+
             // RIPRISTINO
             Files.move(backup, original, StandardCopyOption.REPLACE_EXISTING);
         }

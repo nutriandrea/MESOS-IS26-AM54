@@ -1,7 +1,7 @@
 package it.polimi.ingsw.am54.model.effects.characters;
 
 import it.polimi.ingsw.am54.model.*;
-import model.*;
+
 
 /**
  * Gestisce tutti gli effetti dei personaggi.

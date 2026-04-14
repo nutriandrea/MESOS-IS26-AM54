@@ -1,11 +1,8 @@
 package it.polimi.ingsw.am54.model.effects.buildings;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import it.polimi.ingsw.am54.model.BuildingCard;
-import it.polimi.ingsw.am54.model.Game;
-import it.polimi.ingsw.am54.model.IEffect;
-import it.polimi.ingsw.am54.model.Player;
-import model.*;
+import it.polimi.ingsw.am54.model.*;
+
 
 /**
  * Gestisce tutti gli effetti della fase POSTACTION.

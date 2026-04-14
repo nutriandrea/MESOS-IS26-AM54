@@ -1,9 +1,6 @@
 package it.polimi.ingsw.am54.model.states;
 
-import it.polimi.ingsw.am54.model.Game;
-import it.polimi.ingsw.am54.model.GameState;
-import it.polimi.ingsw.am54.model.Player;
-import model.*;
+import it.polimi.ingsw.am54.model.*;
 import java.util.List;
 
 /**

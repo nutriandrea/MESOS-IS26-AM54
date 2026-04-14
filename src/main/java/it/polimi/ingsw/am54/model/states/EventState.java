@@ -1,8 +1,6 @@
 package it.polimi.ingsw.am54.model.states;
 
-import it.polimi.ingsw.am54.model.Game;
-import it.polimi.ingsw.am54.model.GameState;
-import model.*;
+import it.polimi.ingsw.am54.model.*;
 
 /**
  * Stato di risoluzione eventi: nessun giocatore puo' interagire.

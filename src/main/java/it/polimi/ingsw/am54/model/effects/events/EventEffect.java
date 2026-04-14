@@ -1,7 +1,7 @@
 package it.polimi.ingsw.am54.model.effects.events;
 
 import it.polimi.ingsw.am54.model.*;
-import model.*;
+
 
 /**
  * Gestisce tutti gli effetti degli eventi.

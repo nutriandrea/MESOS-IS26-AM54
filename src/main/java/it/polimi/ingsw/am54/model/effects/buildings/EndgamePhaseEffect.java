@@ -2,8 +2,6 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import it.polimi.ingsw.am54.model.*;
-import model.*;
-
 import java.util.Arrays;
 
 /**

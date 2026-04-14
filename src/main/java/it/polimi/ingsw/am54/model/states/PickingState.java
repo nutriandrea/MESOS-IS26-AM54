@@ -1,7 +1,7 @@
 package it.polimi.ingsw.am54.model.states;
 
 import it.polimi.ingsw.am54.model.*;
-import model.*;
+
 
 /**
  * Stato di pesca: i giocatori pescano personaggi e comprano edifici dalle offering tiles.

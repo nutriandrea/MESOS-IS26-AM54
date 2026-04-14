@@ -1,19 +1,18 @@
 package it.polimi.ingsw.am54.network.messages;
 
-public class PickCardRequest implements ClientMessage {
-    private final String nickname;
+/**
+ * Richiesta inviata dal Client per pescare una carta.
+ * Sicura al 100%: il server dedurrà il mittente dal Socket associato.
+ */
+public class PickCardRequest implements Request {
+
+    // Niente nickname!
     private final String row;
     private final int cardIndex;
 
-    public PickCardRequest(String nickname, String row, int cardIndex) {
-        this.nickname = nickname;
+    public PickCardRequest(String row, int cardIndex) {
         this.row = row;
         this.cardIndex = cardIndex;
-    }
-
-    @Override
-    public String getNickname() {
-        return nickname;
     }
 
     public String getRow() {

@@ -1,9 +1,10 @@
 package it.polimi.ingsw.am54.network.messages;
 
-import java.io.Serializable;
 import java.util.List;
 
-public class EndGameUpdate implements Serializable {
+// 1. Sostituisci Serializable con ClientMessage
+public class EndGameUpdate implements Update {
+
     private final List<String> winners;
 
     public EndGameUpdate(List<String> winners) {

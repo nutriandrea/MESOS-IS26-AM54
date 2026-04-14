@@ -1,8 +1,8 @@
 package it.polimi.ingsw.am54.network.messages;
 
-import java.io.Serializable;
+// Mettiamo ClientMessage. Nel prossimo step diventerà "implements Update"!
+public class TurnChangedUpdate implements Update {
 
-public class TurnChangedUpdate implements Serializable {
     private final String nickname;
 
     public TurnChangedUpdate(String nickname) {

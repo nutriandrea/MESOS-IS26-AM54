@@ -1,20 +1,20 @@
 package it.polimi.ingsw.am54.network.messages;
 
-public class ChooseTotemRequest implements ClientMessage {
-    private final String nickname;
-    private final String color;
+import it.polimi.ingsw.am54.model.TotemColors;
 
-    public ChooseTotemRequest(String nickname, String color) {
-        this.nickname = nickname;
+/**
+ * Richiesta inviata dal Client per scegliere il colore del proprio Totem.
+ */
+public class ChooseTotemRequest implements Request {
+
+    // Niente nickname! Solo la scelta nuda e cruda.
+    private final TotemColors color;
+
+    public ChooseTotemRequest(TotemColors color) {
         this.color = color;
     }
 
-    @Override
-    public String getNickname() {
-        return nickname;
-    }
-
-    public String getColor() {
+    public TotemColors getColor() {
         return color;
     }
 }

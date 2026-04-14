@@ -1,8 +1,6 @@
 package it.polimi.ingsw.am54.network.messages;
 
-import java.io.Serializable;
-
-public class CardPickedUpdate implements Serializable {
+public class CardPickedUpdate implements Update {
     private final String nickname;
     private final String row;
     private final int cardIndex;

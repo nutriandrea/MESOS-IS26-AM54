@@ -1,6 +1,10 @@
 package it.polimi.ingsw.am54.controller;
 
 import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.network.server.ClientHandler;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -9,6 +13,8 @@ import java.util.logging.Logger;
  */
 public class Controller {
     private final Game game;
+    // Associa il nome del giocatore al suo "tubo" di rete
+    private final Map<String, ClientHandler> clientHandlers = new HashMap<>();
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
     public Controller(Game game) {
@@ -16,9 +22,20 @@ public class Controller {
     }
 
     /**
-     * Gestisce l'unione di un nuovo giocatore alla partita.
+     * Interfaccia funzionale interna per rappresentare un'azione sul Model.
      */
-    public void handleJoinGame(String nickname) {
+    @FunctionalInterface
+    private interface GameAction {
+        void execute() throws Exception;
+    }
+
+    /**
+     * Gestisce l'unione di un nuovo giocatore alla partita. Accetta anche l'handler e lo registra.
+     */
+    public void handleJoinGame(String nickname, ClientHandler handler) {
+        synchronized (clientHandlers) {
+            clientHandlers.put(nickname, handler);
+        }
         executeCommand(nickname, () -> game.joinGame(nickname));
     }
 
@@ -71,18 +88,27 @@ public class Controller {
     }
 
     /**
-     * Invia un segnale di errore alla View del client specifico[cite: 39, 41].
+     * Recupera l'handler dalla mappa e invia l'errore.
      */
     private void signalError(String nickname, String message) {
         LOGGER.warning("Segnalazione errore a " + nickname + ": " + message);
-        // Qui si integrerà il middleware di rete (Socket/RMI) per spedire il messaggio[cite: 17, 18].
+
+        ClientHandler handler;
+        synchronized (clientHandlers) {
+            handler = clientHandlers.get(nickname);
+        }
+
+        if (handler != null) {
+            handler.sendError(message);
+        } else {
+            LOGGER.severe("Impossibile inviare errore: handler non trovato per " + nickname);
+        }
     }
 
-    /**
-     * Interfaccia funzionale interna per rappresentare un'azione sul Model.
-     */
-    @FunctionalInterface
-    private interface GameAction {
-        void execute() throws Exception;
+    // Per pulire il registro quando un client si disconnette
+    public void removeClient(String nickname) {
+        synchronized (clientHandlers) {
+            clientHandlers.remove(nickname);
+        }
     }
 }

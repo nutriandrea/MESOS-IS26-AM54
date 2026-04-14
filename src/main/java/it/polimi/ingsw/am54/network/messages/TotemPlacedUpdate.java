@@ -1,8 +1,8 @@
 package it.polimi.ingsw.am54.network.messages;
 
-import java.io.Serializable;
+// Mettiamo ClientMessage. Dopo diventerà "implements Update"!
+public class TotemPlacedUpdate implements Update {
 
-public class TotemPlacedUpdate implements Serializable {
     private final String nickname;
     private final int offerPosition;
 

@@ -1,16 +1,18 @@
 package it.polimi.ingsw.am54.network.messages;
 
-import java.io.Serializable;
+import it.polimi.ingsw.am54.model.TotemColors; // Ricordati l'import!
 
-public class TotemColorUpdate implements Serializable {
+// Per ora mettiamo ClientMessage (poi diventerà Update)
+public class TotemColorUpdate implements Update {
+
     private final String nickname;
-    private final String color;
+    private final TotemColors color;
 
-    public TotemColorUpdate(String nickname, String color) {
+    public TotemColorUpdate(String nickname, TotemColors color) {
         this.nickname = nickname;
         this.color = color;
     }
 
     public String getNickname() { return nickname; }
-    public String getColor() { return color; }
+    public TotemColors getColor() { return color; }
 }

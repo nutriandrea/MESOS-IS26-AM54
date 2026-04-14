@@ -1,17 +1,16 @@
 package it.polimi.ingsw.am54.network.messages;
 
-public class PlaceTotemRequest implements ClientMessage {
-    private final String nickname;
+/**
+ * Richiesta inviata dal Client per piazzare il proprio Totem su un'offerta.
+ * Sicura al 100%: il server dedurrà il mittente dal Socket associato.
+ */
+public class PlaceTotemRequest implements Request {
+
+    // Rimosso il nickname per sicurezza e rimosso @Override!
     private final int offerPosition;
 
-    public PlaceTotemRequest(String nickname, int offerPosition) {
-        this.nickname = nickname;
+    public PlaceTotemRequest(int offerPosition) {
         this.offerPosition = offerPosition;
-    }
-
-    @Override
-    public String getNickname() {
-        return nickname;
     }
 
     public int getOfferPosition() {

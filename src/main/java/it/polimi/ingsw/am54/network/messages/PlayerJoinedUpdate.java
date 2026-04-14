@@ -1,8 +1,8 @@
 package it.polimi.ingsw.am54.network.messages;
 
-import java.io.Serializable;
+// Sostituisci Serializable con ClientMessage!
+public class PlayerJoinedUpdate implements Update {
 
-public class PlayerJoinedUpdate implements Serializable {
     private final String nickname;
 
     public PlayerJoinedUpdate(String nickname) {

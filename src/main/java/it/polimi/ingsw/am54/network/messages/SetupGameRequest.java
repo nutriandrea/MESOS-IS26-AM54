@@ -1,14 +1,12 @@
 package it.polimi.ingsw.am54.network.messages;
 
-public class SetupGameRequest implements ClientMessage {
-    private final String nickname;
+/**
+ * Richiesta inviata dal Client per segnalare di essere pronto per il Setup.
+ * Essendo un "Trigger", non ha bisogno di parametri: basta il suo arrivo!
+ */
+public class SetupGameRequest implements Request {
 
-    public SetupGameRequest(String nickname) {
-        this.nickname = nickname;
-    }
+    // Classe volutamente vuota.
+    // Nessun parametro necessario, nessun costruttore speciale richiesto.
 
-    @Override
-    public String getNickname() {
-        return nickname;
-    }
 }

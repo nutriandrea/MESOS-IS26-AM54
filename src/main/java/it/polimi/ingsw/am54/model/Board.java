@@ -337,8 +337,12 @@ public class Board {
     // Ordina eventi: sostentamento ultimo
     public void resolveAllEventsInOrder(Game game) {
         eventLowerRow.sort((a, b) -> {
-            if (a.shouldResolveLast() == b.shouldResolveLast()) return 0;
-            return a.shouldResolveLast() ? 1 : -1;
+            // Se uno deve essere risolto per ultimo (Sostentamento), va in fondo
+            if (a.shouldResolveLast() != b.shouldResolveLast()) {
+                return a.shouldResolveLast() ? 1 : -1;
+            }
+            // Altrimenti, a parità, si risolvono in ordine crescente di Era!
+            return Integer.compare(a.getEra(), b.getEra());
         });
         while (!eventLowerRow.isEmpty()) {
             eventLowerRow.get(0).resolveEvent(game); //risolve evento

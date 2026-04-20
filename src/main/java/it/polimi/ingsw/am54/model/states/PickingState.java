@@ -59,7 +59,16 @@ public class PickingState extends GameState {
 
         TurnOrderSlot slot = game.assignPickerToTurnOrder(player);
         if (slot != null) {
-            player.modifyFood(slot.getBonusFood());
+            int bonus = slot.getBonusFood();
+            if(bonus<0){
+                if(player.getFood()>=bonus){
+                    player.modifyFood(bonus);
+                }
+                else{
+                    player.modifyAuraPoints(-2);
+                }
+            }
+            else{player.modifyFood(bonus);}
         }
 
 

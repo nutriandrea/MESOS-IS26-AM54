@@ -55,7 +55,8 @@ public class ClientModel {
         offeringTrack.values().remove(nickname);
         if (!turnOrderTrack.contains(nickname)) turnOrderTrack.add(nickname);
 
-        support.firePropertyChange("board", null, null);
+        //prima era null -> null, ora è false -> true così si attiva per forza sempre
+        support.firePropertyChange("board", false , true);
     }
 
     public synchronized void updateStats(String nickname, int food, int pp) {
@@ -69,9 +70,9 @@ public class ClientModel {
         support.firePropertyChange("era", null, era);
     }
 
-    // --- GETTER PER LA VIEW ---
-    public Map<Integer, String> getOfferingTrack() { return offeringTrack; }
-    public List<String> getTurnOrderTrack() { return turnOrderTrack; }
-    public List<String> getTopRow() { return topRow; }
-    public List<String> getBottomRow() { return bottomRow; }
+    // --- GETTER PER LA VIEW --- (synchronized perche senno la view potrebbe leggere nel mezzo di un cambiamento)
+    public synchronized Map<Integer, String> getOfferingTrack() { return offeringTrack; }
+    public synchronized List<String> getTurnOrderTrack() { return turnOrderTrack; }
+    public synchronized List<String> getTopRow() { return topRow; }
+    public synchronized List<String> getBottomRow() { return bottomRow; }
 }

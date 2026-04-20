@@ -71,6 +71,8 @@ public class BuildingCard extends Card implements IPurchasable {
         player.modifyFood(-finalCost);
         this.addOwner(player);
         player.getBuildings().add(this);
+
+        this.resolveEffects(player, game);
     }
 
 }

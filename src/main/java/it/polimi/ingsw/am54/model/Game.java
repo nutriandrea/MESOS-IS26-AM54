@@ -86,16 +86,16 @@ public class Game implements IGame{
         // 4. Passiamo la lista mescolata alla Board
         this.board.setupInitialTurnOrder(tempPlayers);
 
-        distributeInitialFood();
+        distributeInitialFood(tempPlayers);
     }
 
 
-    private void distributeInitialFood() {
+    private void distributeInitialFood(List<Player> orderedPlayers) {
         // 1°: 2 Cibo
         // 2°-3°: 3 Cibo
         // 4°-5°: 4 Cibo
-        for (int i = 0; i < players.size(); i++) {
-            Player player = players.get(i);
+        for (int i = 0; i < orderedPlayers.size(); i++) {
+            Player player = orderedPlayers.get(i);
             int foodAmount = 0;
             
             if (i == 0) {
@@ -157,6 +157,9 @@ public class Game implements IGame{
         }
     }
 
+    public void advanceEra(){this.currentEra++;}
+    public void advanceRound(){this.roundCount++;}
+
 
 
     public Player getPlayerByNickname(String nickname) throws Exception {
@@ -189,6 +192,7 @@ public class Game implements IGame{
     private void notifyStateChanged(GameState newState) {
         for (IGameObserver obs : observers) obs.onStateChanged(this, newState);
     }
+
 
     // ==========================================
     // GETTERS & SETTERS ESSENZIALI
@@ -259,16 +263,6 @@ public class Game implements IGame{
         return nextCard.getEra() > currentEra;
     }
 
-    public void advanceRound() {
-        roundCount++;
-        if (isEraTransition()) {
-            if (currentEra == 2) {
-                board.getBuildingCardsLowerRow().clear();
-            }
-            currentEra++;
-        }
-    }
-
     public void applyEndGameBuildingEffects() {
         for (Player p : players) {
             for (BuildingCard b : p.getBuildings()) {
@@ -299,7 +293,8 @@ public class Game implements IGame{
         score += (int) (artists / 2) * 10;
 
         long CONSTRUCTORs = p.getMyTribe().stream()
-                .filter(c -> c.getJobType() == JobType.CONSTRUCTOR).count();
+                .filter(c -> c.getJobType() == JobType.CONSTRUCTOR)
+                .mapToInt(CharacterCard::getAura).sum();
         score += (int) CONSTRUCTORs;
 
         score += p.getBuildings().stream()

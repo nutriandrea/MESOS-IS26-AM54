@@ -82,8 +82,8 @@ public class EventEffect implements IEffect<EventCard> {
     }
 
     private void resolveShaman(Game g, EventCard ec) {
-        int max = g.getPlayers().stream().mapToInt(Player::getAuraPoints).max().orElse(0);
-        int min = g.getPlayers().stream().mapToInt(Player::getAuraPoints).min().orElse(0);
+        int max = g.getPlayers().stream().mapToInt(Player::getMagicPoints).max().orElse(0);
+        int min = g.getPlayers().stream().mapToInt(Player::getMagicPoints).min().orElse(0);
 
         g.getPlayers().forEach(pl -> {
             boolean isZero = pl.getBuildings().stream()

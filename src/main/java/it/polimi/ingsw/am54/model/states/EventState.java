@@ -10,28 +10,37 @@ public class EventState extends GameState {
 
     @Override
     public void resolvePhase(Game game) throws Exception {
-        game.getBoard().resolveAllEventsInOrder(game);
-
-        game.getBoard().clearLowerRow();
-
-        game.getBoard().moveUpperToLower();
-
-        try {
-            game.getBoard().refillUpperRow(game);
-        } catch (Exception e) {
-            // Tribe deck exhausted, continue without refilling
-        }
-
-        if (game.isEraTransition()) {
-            game.getBoard().moveBuildings();
-            game.getBoard().populateUpperRowBuildings(game);
-        }
-
-        game.advanceRound();
-        if (game.isTribeDeckEmpty()) {
+        if(game.isTribeDeckEmpty()){
+            game.getBoard().resolveAllVisibleEvents(game);
             game.setState(new EndGameState());
-        } else {
-            game.setState(new StartTurnState());
         }
-    }
+        else{
+            game.getBoard().resolveAllEventsInOrder(game);
+
+            game.getBoard().clearLowerRow();
+
+            game.getBoard().moveUpperToLower();
+
+            try {
+                game.getBoard().refillUpperRow(game);
+            } catch (Exception e) {
+                // Tribe deck exhausted, continue without refilling
+            }
+
+            if (game.isEraTransition()) {
+                game.getBoard().moveBuildings();
+                game.getBoard().populateUpperRowBuildings(game);
+
+                game.advanceEra();
+            }
+
+            game.advanceRound();
+
+
+            if (game.isTribeDeckEmpty()) {
+                game.setState(new EndGameState());
+            } else {
+                game.setState(new StartTurnState());
+            }
+        }}
 }

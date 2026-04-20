@@ -1,41 +1,51 @@
 package it.polimi.ingsw.am54.network.client;
 
-import it.polimi.ingsw.am54.network.messages.Update;
+import it.polimi.ingsw.am54.network.messages.*;
 import java.io.ObjectInputStream;
 
 public class ServerHandler implements Runnable {
+    private final ObjectInputStream in;
+    private final ClientModel clientModel;
+    private volatile boolean running = true;
 
-    private ObjectInputStream in;
-    private volatile boolean running;
-
-    // ECCO IL COSTRUTTORE AGGIORNATO: ora accetta l'ObjectInputStream
-    public ServerHandler(ObjectInputStream in) {
+    public ServerHandler(ObjectInputStream in, ClientModel clientModel) {
         this.in = in;
-        this.running = true;
+        this.clientModel = clientModel;
     }
 
     @Override
     public void run() {
         while (running) {
             try {
-                // Legge l'Update inviato dal server
                 Update message = (Update) in.readObject();
                 handleUpdate(message);
             } catch (Exception e) {
-                if (running) {
-                    System.err.println("[ServerHandler] Connessione col server persa: " + e.getMessage());
-                    stop();
-                }
+                if (running) stop();
             }
         }
     }
 
     private void handleUpdate(Update message) {
-        // Qui ci sarà la logica per smistare i messaggi alla GUI/TUI
-        System.out.println("[ServerHandler] Ricevuto aggiornamento: " + message.getClass().getSimpleName());
+        // Uso i getter definiti nei tuoi messaggi (quelli del primo prompt)
+        if (message instanceof PlayerJoinedUpdate msg) {
+            clientModel.updatePlayerJoined(msg.getNickname());
+        }
+        else if (message instanceof TotemPlacedUpdate msg) {
+            // Qui uso getOfferPosition() perché è un int, come nel tuo messaggio
+            clientModel.updateTotemPlacement(msg.getNickname(), msg.getOfferPosition());
+        }
+        else if (message instanceof CardPickedUpdate msg) {
+            // Qui uso i getter che mi hai appena mandato: getRow() e getCardIndex()
+            clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex());
+        }
+        else if (message instanceof TurnChangedUpdate msg) {
+            clientModel.updateTurn(msg.getNickname());
+        }
+        else if (message instanceof StateChangedUpdate msg) {
+            // Se il tuo messaggio ha getState() invece di getNewState()
+            // clientModel.updateState(msg.getState());
+        }
     }
 
-    public void stop() {
-        this.running = false;
-    }
+    public void stop() { this.running = false; }
 }

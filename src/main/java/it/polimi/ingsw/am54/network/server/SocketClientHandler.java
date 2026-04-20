@@ -2,20 +2,24 @@ package it.polimi.ingsw.am54.network.server;
 
 import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.network.messages.*;
-import java.io.*;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public class SocketClientHandler implements ClientHandler, Runnable {
+public class SocketClientHandler implements Runnable, ClientHandler, ClientConnection {
     private final Socket socket;
     private final Controller controller;
     private ObjectOutputStream out;
     private ObjectInputStream in;
-    private boolean connected = true;
-    private String playerNickname = null;
+    private volatile boolean connected;
+    private String playerNickname;
 
     public SocketClientHandler(Socket socket, Controller controller) {
         this.socket = socket;
         this.controller = controller;
+        this.connected = true;
     }
 
     @Override
@@ -25,85 +29,44 @@ public class SocketClientHandler implements ClientHandler, Runnable {
             out.flush();
             in = new ObjectInputStream(socket.getInputStream());
 
-            System.out.println("[Server] Nuovo client in ascolto.");
+            System.out.println("[Server TCP] Nuovo client in ascolto.");
 
             while (connected) {
                 Object input = in.readObject();
-
-                // Usiamo la nuova interfaccia Request!
                 if (input instanceof Request) {
                     handleRequest((Request) input);
-                } else {
-                    System.err.println("[Server] Messaggio non autorizzato ricevuto.");
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("[Server] Client disconnesso.");
+            System.out.println("[Server TCP] Client disconnesso.");
         } finally {
             disconnect();
         }
     }
 
-    /**
-     * Gestisce le richieste (Request) che arrivano dal Client.
-     * Traduce i messaggi di rete in chiamate ai metodi del Controller.
-     */
     private void handleRequest(Request request) {
-
-        // --- 1. JOIN GAME ---
         if (request instanceof JoinGameRequest req) {
             this.playerNickname = req.getNickname();
-            // Passiamo il nome E noi stessi (this) al controller
             controller.handleJoinGame(this.playerNickname, this);
-        }
-
-        // --- 2. SETUP GAME ---
-        else if (request instanceof SetupGameRequest) {
-            checkAndExecute(() -> controller.handleSetupGame(this.playerNickname));
-        }
-
-        // --- 3. CHOOSE TOTEM COLOR ---
-        else if (request instanceof ChooseTotemRequest req) {
-            // Nota: Se la tua ChooseTotemRequest usa l'Enum TotemColors,
-            // ma il Controller accetta String, usiamo .toString()
-            checkAndExecute(() -> controller.handleChooseTotemColor(this.playerNickname, req.getColor().toString()));
-        }
-
-        // --- 4. PLACE TOTEM ---
-        else if (request instanceof PlaceTotemRequest req) {
-            checkAndExecute(() -> controller.handlePlaceTotem(this.playerNickname, req.getOfferPosition()));
-        }
-
-        // --- 5. PICK CARD ---
-        else if (request instanceof PickCardRequest req) {
-            checkAndExecute(() -> controller.handlePickCard(this.playerNickname, req.getRow(), req.getCardIndex()));
-        }
-
-        // --- 6. UNKNOWN REQUEST ---
-        else {
-            System.err.println("[Server] Messaggio non gestito: " + request.getClass().getSimpleName());
-            sendError("Azione non supportata.");
-        }
-    }
-
-    /**
-     * Helper interno per assicurarsi che il giocatore sia identificato prima di agire.
-     */
-    private void checkAndExecute(Runnable action) {
-        if (this.playerNickname != null) {
-            action.run();
-        } else {
-            sendError("Devi prima unirti alla partita con un nickname!");
+        } else if (request instanceof SetupGameRequest) {
+            controller.handleSetupGame(this.playerNickname);
+        } else if (request instanceof ChooseTotemRequest req) {
+        // Aggiungi .name() per convertire l'Enum in Stringa!
+            controller.handleChooseTotemColor(this.playerNickname, req.getColor().name());
+        } else if (request instanceof PlaceTotemRequest req) {
+            controller.handlePlaceTotem(this.playerNickname, req.getOfferPosition());
+        } else if (request instanceof PickCardRequest req) {
+            controller.handlePickCard(this.playerNickname, req.getRow(), req.getCardIndex());
         }
     }
 
     @Override
-    public synchronized void sendMessage(Update message) { // Deve essere Update!
+    public synchronized void sendUpdate(Update update) {
         if (!connected) return;
         try {
-            out.writeObject(message);
+            out.writeObject(update);
             out.flush();
-            out.reset(); // Fondamentale per pulire la cache degli oggetti serializzati
+            out.reset();
         } catch (IOException e) {
             disconnect();
         }
@@ -111,23 +74,18 @@ public class SocketClientHandler implements ClientHandler, Runnable {
 
     @Override
     public void sendError(String errorMessage) {
-        // ErrorMessage deve implementare Update per funzionare qui!
-        sendMessage(new ErrorMessageUpdate(errorMessage));
+        sendUpdate(new ErrorMessageUpdate(errorMessage));
     }
-
 
     @Override
     public void disconnect() {
-        if (!connected) return; // Evita loop di chiusura
+        if (!connected) return;
         connected = false;
-        // Avvisiamo il controller che questo nickname non è più raggiungibile
+        try {
+            if (socket != null && !socket.isClosed()) socket.close();
+        } catch (IOException ignored) {}
         if (playerNickname != null) {
             controller.removeClient(playerNickname);
-        }
-        try {
-            socket.close();
-        } catch (IOException e) {
-            // Ignoriamo gli errori in chiusura
         }
     }
 }

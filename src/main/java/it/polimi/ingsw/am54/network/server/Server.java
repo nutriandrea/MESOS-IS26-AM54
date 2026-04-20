@@ -6,76 +6,59 @@ import it.polimi.ingsw.am54.model.Game;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 
 public class Server {
-    private final int port;
     private final Game game;
     private final Controller controller;
+    private boolean isRunning;
 
-    private volatile boolean isRunning;
-    private final List<ClientHandler> activeClients;
-
-    public static void main(String[] args) {
-        int port = args.length > 0 ? Integer.parseInt(args[0]) : 12345;
-        System.out.println("=== AVVIO SERVER DI RETE ===");
-        new Server(port).start();
-    }
-
-    public Server(int port) {
-        this.port = port;
+    public Server() {
         this.game = new Game();
         this.controller = new Controller(game);
-        this.activeClients = Collections.synchronizedList(new ArrayList<>());
+        this.isRunning = true;
     }
 
-    public void start() {
-        this.isRunning = true;
+    public void start(int tcpPort, int rmiPort) {
+        startRMI(rmiPort);
+        startTCP(tcpPort);
+    }
 
+    private void startRMI(int port) {
+        try {
+            System.setProperty("java.rmi.server.hostname", "localhost"); // Utile per test locali
+            Registry registry = LocateRegistry.createRegistry(port);
+            RMIServerImpl rmiServer = new RMIServerImpl(game, controller);
+            registry.rebind("AM54-Server", rmiServer);
+            System.out.println("[Server] Motore RMI avviato su porta " + port);
+        } catch (Exception e) {
+            System.err.println("[Server] Impossibile avviare RMI: " + e.getMessage());
+        }
+    }
+
+    private void startTCP(int port) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("[Server] Avviato con successo sulla porta " + port);
+            System.out.println("[Server] Motore TCP avviato su porta " + port);
 
             while (isRunning) {
-                Socket socket = serverSocket.accept();
-                System.out.println("[Server] Nuova connessione da: " + socket.getInetAddress());
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("[Server TCP] Nuova connessione socket!");
 
-                if (game.getPlayers().size() >= 4) {
-                    System.out.println("[Server] Partita piena. Connessione rifiutata.");
-                    socket.close();
-                    continue;
-                }
-
-                SocketClientHandler handler = new SocketClientHandler(socket, controller);
-                activeClients.add(handler);
-
-                VirtualView vView = new VirtualView(handler);
-                game.addObserver(vView);
+                SocketClientHandler handler = new SocketClientHandler(clientSocket, controller);
+                VirtualView virtualView = new VirtualView(handler);
+                game.addObserver(virtualView);
 
                 new Thread(handler).start();
             }
         } catch (IOException e) {
-            if (isRunning) {
-                System.err.println("[Server] Errore critico nel ServerSocket: " + e.getMessage());
-            } else {
-                System.out.println("[Server] Spegnimento in corso...");
-            }
+            System.err.println("[Server] Errore critico TCP: " + e.getMessage());
         }
     }
 
-    public void stop() {
-        this.isRunning = false;
-
-        for (ClientHandler client : activeClients) {
-            client.disconnect();
-        }
-        activeClients.clear();
-
-        System.out.println("[Server] Spento correttamente.");
-    }
-
-    public void removeClient(ClientHandler handler) {
-        activeClients.remove(handler);
+    public static void main(String[] args) {
+        System.out.println("=== Avvio Server AM54 ===");
+        Server server = new Server();
+        server.start(12345, 1099); // 12345 per TCP, 1099 per RMI
     }
 }

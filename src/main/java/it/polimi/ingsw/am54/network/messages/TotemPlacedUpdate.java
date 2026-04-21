@@ -1,6 +1,6 @@
 package it.polimi.ingsw.am54.network.messages;
 
-// Mettiamo ClientMessage. Dopo diventerà "implements Update"!
+
 public class TotemPlacedUpdate implements Update {
 
     private final String nickname;

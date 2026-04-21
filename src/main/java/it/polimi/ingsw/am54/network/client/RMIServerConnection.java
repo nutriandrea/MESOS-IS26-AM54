@@ -23,7 +23,7 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     @Override
     public void sendRequest(Request request) {
         try {
-            serverStub.sendRequest(request);
+            serverStub.handleRequest(request);
         } catch (RemoteException e) {
             disconnect();
         }

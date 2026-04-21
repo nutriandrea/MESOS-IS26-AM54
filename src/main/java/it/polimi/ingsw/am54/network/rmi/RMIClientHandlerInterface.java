@@ -6,6 +6,6 @@ import java.rmi.RemoteException;
 
 public interface RMIClientHandlerInterface extends Remote {
     // Il client usa questo metodo per inviare Request (comandi) al server
-    void sendRequest(Request request) throws RemoteException;
+    void handleRequest(Request request) throws RemoteException;
     void disconnect() throws RemoteException;
 }

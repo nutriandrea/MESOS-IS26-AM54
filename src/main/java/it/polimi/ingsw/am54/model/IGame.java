@@ -7,7 +7,9 @@ public interface IGame {
     // void pickCharacter(String nickname, int cardIndex) throws Exception;
     // void buyBuilding(String nickname, int cardIndex) throws Exception;
     void pickCard(String nickname, String row, int cardIndex) throws Exception;
+
     void setupGame() throws Exception;
+
     // Gestione Observer
     // Permette alla UI o alla rete di "iscriversi" per ricevere aggiornamenti
     void addObserver(IGameObserver observer);

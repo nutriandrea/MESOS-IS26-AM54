@@ -2,7 +2,6 @@ package it.polimi.ingsw.am54.network.messages;
 
 import it.polimi.ingsw.am54.model.TotemColors; // Ricordati l'import!
 
-// Per ora mettiamo ClientMessage (poi diventerà Update)
 public class TotemColorUpdate implements Update {
 
     private final String nickname;

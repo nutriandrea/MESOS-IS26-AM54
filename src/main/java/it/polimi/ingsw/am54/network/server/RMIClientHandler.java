@@ -22,7 +22,7 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
 
     @Override
-    public void sendRequest(Request request) throws RemoteException {
+    public void handleRequest(Request request) throws RemoteException {
         if (!connected) return;
 
         if (request instanceof JoinGameRequest req) {

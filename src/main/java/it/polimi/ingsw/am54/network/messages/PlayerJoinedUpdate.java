@@ -1,6 +1,6 @@
 package it.polimi.ingsw.am54.network.messages;
 
-// Sostituisci Serializable con ClientMessage!
+
 public class PlayerJoinedUpdate implements Update {
 
     private final String nickname;

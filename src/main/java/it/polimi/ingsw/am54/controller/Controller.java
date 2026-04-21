@@ -42,6 +42,7 @@ public class Controller {
             virtualViews.put(nickname, playerView);
         }
         game.addObserver(playerView);
+
         // 2. Passiamo la palla al MODEL
         executeCommand(nickname, () -> {
             try {

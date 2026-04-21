@@ -22,11 +22,8 @@ public class RMIServerImpl extends UnicastRemoteObject implements RMIGameServer 
     @Override
     public RMIClientHandlerInterface connect(RMIClientInterface clientStub) throws RemoteException {
         System.out.println("[Server RMI] Nuova connessione accettata.");
-
-        RMIClientHandler handler = new RMIClientHandler(clientStub, controller);
-        VirtualView vView = new VirtualView(handler);
-        game.addObserver(vView);
-
-        return handler;
+        // Crea solo l'handler e passalo al client.
+        // La VirtualView nascerà dopo, nel Controller.
+        return new RMIClientHandler(clientStub, controller);
     }
 }

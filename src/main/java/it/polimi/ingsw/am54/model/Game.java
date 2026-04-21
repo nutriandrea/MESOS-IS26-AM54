@@ -1,6 +1,10 @@
 package it.polimi.ingsw.am54.model;
 
 import it.polimi.ingsw.am54.model.states.SetUpGameState;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import it.polimi.ingsw.am54.model.states.StartTurnState;
 
 import java.util.*;
 
@@ -65,11 +69,20 @@ public class Game implements IGame{
         }
     }
 
-    //preparazione del gioco
+    @Override
+    public void removeObserver(IGameObserver observer) {
+        observers.remove(observer);
+    }
+
+    // ==========================================
+    // FASE DI SETUP (Rifattorizzata)
+    // ==========================================
+
     public void setupGame() throws Exception {
         this.currentEra = 1;
-        this.roundCount = 0;
+        this.roundCount = 1; // Corretto: il gioco inizia dal Round 1, non da 0
 
+        // 1. Creazione Mazzi (Delegata alla Factory)
         this.deckTribu = DeckFactory.createTribeDeck(
                 "data/CharacterCardsSetup.json",
                 "data/EventCardsSetup.json",
@@ -77,16 +90,76 @@ public class Game implements IGame{
         );
         this.deckBuildings = DeckFactory.createBuildingDeck("data/BuildingCardsSetup.json", players.size());
 
+        // 2. Inizializzazione Board
         this.board = new Board();
-        this.board.generateBoard(this);
+        this.board.initializeLayout(players.size());
 
+        // 3. Popolamento iniziale delle carte (Il Game agisce da Orchestratore)
+        fillInitialTribeRows();
+        fillInitialBuildingRow();
+
+        // 4. Calcolo ordine di turno casuale e distribuzione Cibo iniziale
         List<Player> tempPlayers = new ArrayList<>(this.players);
         Collections.shuffle(tempPlayers);
-
-        // 4. Passiamo la lista mescolata alla Board
         this.board.setupInitialTurnOrder(tempPlayers);
-
         distributeInitialFood(tempPlayers);
+
+        // 5. Imposta esplicitamente il PRIMO giocatore prima di cambiare stato (Risolve il bug di avvio)
+        this.currentPlayer = tempPlayers.get(0);
+
+        // 6. Passaggio allo stato di Inizio Turno
+        this.setState(new StartTurnState());
+    }
+
+    private void fillInitialTribeRows() {
+        int numPlayers = players.size();
+
+        // REGOLE: Fila in basso = Giocatori + 1
+        int requiredCharactersLower = numPlayers + 1;
+        while (board.getCharacterRowSize("lower") < requiredCharactersLower) {
+            TribeCard card = deckTribu.drawCard();
+            if (card != null) {
+                // Il metodo reveal manderà automaticamente i Personaggi giù (gli eventi tornano su se pescati, come da tua logica)
+                card.reveal(board, "lower");
+            } else break;
+        }
+
+        // REGOLE: Fila in alto = Giocatori + 4 (Somma di Personaggi + Eventi)
+        int requiredTotalUpper = numPlayers + 4;
+        while ((board.getCharacterRowSize("upper") + board.getEventRowSize("upper")) < requiredTotalUpper) {
+            TribeCard card = deckTribu.drawCard();
+            if (card != null) {
+                card.reveal(board, "upper");
+            } else break;
+        }
+    }
+
+    private void fillInitialBuildingRow() {
+        int numPlayers = players.size();
+        int cardsToDraw = 0;
+
+        // Leggiamo la configurazione JSON degli edifici dall'interno del Model, non dalla Board
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
+            JsonNode buildingCounts = countsRoot.get("buildingCounts").get(String.valueOf(numPlayers));
+
+            if (buildingCounts != null && buildingCounts.isArray()) {
+                cardsToDraw = buildingCounts.get(currentEra - 1).asInt();
+            } else {
+                throw new IllegalStateException("Nodo 'buildingCounts' mancante o non valido.");
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("Impossibile leggere il file EraCounts.json: " + e.getMessage(), e);
+        }
+
+        // Pescaggio e posizionamento Edifici
+        for (int i = 0; i < cardsToDraw; i++) {
+            BuildingCard card = deckBuildings.drawCard();
+            if (card != null) {
+                board.addBuildingCard(card, "upper");
+            }
+        }
     }
 
 
@@ -161,6 +234,42 @@ public class Game implements IGame{
     public void advanceRound(){this.roundCount++;}
 
 
+    // ==========================================
+    // METODI DI REFILL FINE ROUND
+    // ==========================================
+
+    public void refillUpperTribeRow() {
+        int targetSize = players.size() + 4;
+
+        // Continua a pescare finché la somma di Personaggi + Eventi in alto non raggiunge il target
+        while ((board.getCharacterRowSize("upper") + board.getEventRowSize("upper")) < targetSize) {
+            TribeCard card = deckTribu.drawCard();
+            if (card == null) break; // Mazzo finito, ci fermiamo
+            card.reveal(board, "upper");
+        }
+    }
+
+    public void refillUpperBuildings() {
+        int cardsToDraw = 0;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
+            JsonNode buildingCounts = countsRoot.get("buildingCounts").get(String.valueOf(players.size()));
+
+            if (buildingCounts != null && buildingCounts.isArray()) {
+                cardsToDraw = buildingCounts.get(currentEra - 1).asInt();
+            }
+        } catch (Exception e) {
+            System.err.println("Errore lettura EraCounts: " + e.getMessage());
+        }
+
+        for (int i = 0; i < cardsToDraw; i++) {
+            BuildingCard card = deckBuildings.drawCard();
+            if (card != null) {
+                board.addBuildingCard(card, "upper");
+            }
+        }
+    }
 
     public Player getPlayerByNickname(String nickname) throws Exception {
         return this.players.stream()

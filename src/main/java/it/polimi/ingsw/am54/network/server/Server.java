@@ -42,13 +42,14 @@ public class Server {
             System.out.println("[Server] Motore TCP avviato su porta " + port);
 
             while (isRunning) {
+                // 1. Aspetta e accetta il collegamento di un computer
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("[Server TCP] Nuova connessione socket!");
+                System.out.println("[Server TCP] Nuova connessione da: " + clientSocket.getInetAddress());
 
+                // 2. Crea l'Handler passandogli il Socket e il controller
                 SocketClientHandler handler = new SocketClientHandler(clientSocket, controller);
-                VirtualView virtualView = new VirtualView(handler);
-                game.addObserver(virtualView);
 
+                // 3. Lo lancia in un Thread separato e torna subito ad aspettare altri client
                 new Thread(handler).start();
             }
         } catch (IOException e) {

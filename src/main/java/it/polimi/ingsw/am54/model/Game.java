@@ -86,16 +86,16 @@ public class Game implements IGame{
         // 4. Passiamo la lista mescolata alla Board
         this.board.setupInitialTurnOrder(tempPlayers);
 
-        distributeInitialFood(tempPlayers);
+        distributeInitialFood();
     }
 
 
-    private void distributeInitialFood(List<Player> orderedPlayers) {
+    private void distributeInitialFood() {
         // 1°: 2 Cibo
         // 2°-3°: 3 Cibo
         // 4°-5°: 4 Cibo
-        for (int i = 0; i < orderedPlayers.size(); i++) {
-            Player player = orderedPlayers.get(i);
+        for (int i = 0; i < players.size(); i++) {
+            Player player = players.get(i);
             int foodAmount = 0;
             
             if (i == 0) {
@@ -213,7 +213,7 @@ public class Game implements IGame{
 
     public Player getCurrentPicker() {
         List<OfferingTile> tiles = board.getOfferingTrack();
-        
+
         for (OfferingTile tile : tiles) {
             Player occupant = tile.getOccupiedBy();
             if (occupant != null && !isInTurnOrder(occupant)) {

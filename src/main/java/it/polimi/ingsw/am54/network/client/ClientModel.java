@@ -1,19 +1,22 @@
 package it.polimi.ingsw.am54.network.client;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
+import it.polimi.ingsw.am54.model.TotemColors;
 import java.util.*;
 
+/**
+ * Rappresenta lo stato logico del gioco lato Client.
+ * Viene aggiornato dal ServerHandler in ricezione dei messaggi di Update.
+ */
 public class ClientModel {
-    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
 
-    // --- STATO GLOBALE (Mesos) ---
+    // --- STATO GLOBALE ---
     private int currentRound = 1;
     private String currentEra = "I";
-    private final List<String> turnOrderTrack = new ArrayList<>(); // Ordine sulla tessera turno
-    private final Map<Integer, String> offeringTrack = new TreeMap<>(); // Posizione (0,1,2..) -> Nickname
+    private String currentState = "Lobby"; // Stato iniziale di default
+    private final List<String> turnOrderTrack = new ArrayList<>();
+    private final Map<Integer, String> offeringTrack = new TreeMap<>();
 
-    // Le file di carte (ID delle carte)
+    // Tabellone (ID delle carte o rappresentazione testuale)
     private final List<String> topRow = new ArrayList<>();
     private final List<String> bottomRow = new ArrayList<>();
 
@@ -21,58 +24,78 @@ public class ClientModel {
     private final List<String> players = new ArrayList<>();
     private final Map<String, Integer> playerFood = new HashMap<>();
     private final Map<String, Integer> playerPP = new HashMap<>();
+    private final Map<String, TotemColors> playerColors = new HashMap<>();
     private String currentPlayer;
 
-    public void addObserver(PropertyChangeListener l) { support.addPropertyChangeListener(l); }
+    // --- STATO FINALE E NOTIFICHE ---
+    private List<String> winners = new ArrayList<>();
+    private String lastErrorMessage;
 
-    // --- METODI DI AGGIORNAMENTO (Sincronizzati con i tuoi Messages) ---
+    // --- METODI DI AGGIORNAMENTO (Sincronizzati con ServerHandler) ---
 
     public synchronized void updatePlayerJoined(String nickname) {
-        players.add(nickname);
-        turnOrderTrack.add(nickname);
-        support.firePropertyChange("players", null, players);
+        if (!players.contains(nickname)) {
+            players.add(nickname);
+            turnOrderTrack.add(nickname);
+        }
     }
 
     public synchronized void updateTurn(String nickname) {
         this.currentPlayer = nickname;
-        support.firePropertyChange("turn", null, nickname);
     }
 
     public synchronized void updateTotemPlacement(String nickname, int position) {
         turnOrderTrack.remove(nickname);
         offeringTrack.put(position, nickname);
-        support.firePropertyChange("offeringTrack", null, offeringTrack);
     }
 
-    // Riceve il delta: chi ha preso cosa e da dove (come nel tuo CardPickedUpdate)
     public synchronized void updateCardPicked(String nickname, String row, int index) {
         List<String> targetRow = row.equalsIgnoreCase("TOP") ? topRow : bottomRow;
         if (index >= 0 && index < targetRow.size()) {
-            targetRow.set(index, null); // La carta viene rimossa dal tavolo
+            targetRow.set(index, null); // Rimuove la carta dal tavolo
         }
 
-        // Quando una carta viene presa, il totem torna in fondo al Turn Order
+        // Il totem torna nel turn order dopo aver preso la carta
         offeringTrack.values().remove(nickname);
-        if (!turnOrderTrack.contains(nickname)) turnOrderTrack.add(nickname);
+        if (!turnOrderTrack.contains(nickname)) {
+            turnOrderTrack.add(nickname);
+        }
+    }
 
-        //prima era null -> null, ora è false -> true così si attiva per forza sempre
-        support.firePropertyChange("board", false , true);
+    public synchronized void updateState(String stateName) {
+        this.currentState = stateName;
+    }
+
+    public synchronized void updateTotemColor(String nickname, TotemColors color) {
+        playerColors.put(nickname, color);
+    }
+
+    public synchronized void updateEndGame(List<String> winners) {
+        this.winners = winners;
+    }
+
+    public synchronized void updateError(String message) {
+        this.lastErrorMessage = message;
     }
 
     public synchronized void updateStats(String nickname, int food, int pp) {
         playerFood.put(nickname, food);
         playerPP.put(nickname, pp);
-        support.firePropertyChange("stats", null, nickname);
     }
 
     public synchronized void updateEra(String era) {
         this.currentEra = era;
-        support.firePropertyChange("era", null, era);
     }
 
-    // --- GETTER PER LA VIEW --- (synchronized perche senno la view potrebbe leggere nel mezzo di un cambiamento)
+    // --- GETTER ---
+    public synchronized String getCurrentState() { return currentState; }
+    public synchronized Map<String, TotemColors> getPlayerColors() { return playerColors; }
+    public synchronized List<String> getWinners() { return winners; }
+    public synchronized String getLastErrorMessage() { return lastErrorMessage; }
     public synchronized Map<Integer, String> getOfferingTrack() { return offeringTrack; }
     public synchronized List<String> getTurnOrderTrack() { return turnOrderTrack; }
     public synchronized List<String> getTopRow() { return topRow; }
     public synchronized List<String> getBottomRow() { return bottomRow; }
+    public synchronized String getCurrentPlayer() { return currentPlayer; }
+    public synchronized List<String> getPlayers() { return players; }
 }

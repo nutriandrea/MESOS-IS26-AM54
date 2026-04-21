@@ -6,5 +6,6 @@ import java.rmi.RemoteException;
 
 public interface RMIClientInterface extends Remote {
     // Il server usa questo metodo per inviare Update al client
+    // SEVER -> CLIENT
     void receiveUpdate(Update update) throws RemoteException;
 }

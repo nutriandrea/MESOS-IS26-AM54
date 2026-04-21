@@ -4,14 +4,22 @@ import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.network.messages.*;
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class SocketClientHandler implements ClientHandler, Runnable {
     private final Socket socket;
     private final Controller controller;
     private ObjectOutputStream out;
     private ObjectInputStream in;
-    private boolean connected = true;
+    private volatile boolean connected = true;
     private String playerNickname = null;
+
+    private static final long PING_INTERVAL_MS = 5000;
+    private static final long PING_TIMEOUT_MS = 15000;
+    private long lastPongTime = System.currentTimeMillis();
+    private final ScheduledExecutorService pingScheduler = Executors.newSingleThreadScheduledExecutor();
 
     public SocketClientHandler(Socket socket, Controller controller) {
         this.socket = socket;
@@ -27,21 +35,53 @@ public class SocketClientHandler implements ClientHandler, Runnable {
 
             System.out.println("[Server] Nuovo client in ascolto.");
 
+            out.writeObject("CONNECTION_ESTABLISHED");
+            out.flush();
+
+            startPingLoop();
+
             while (connected) {
                 Object input = in.readObject();
 
-                // Usiamo la nuova interfaccia Request!
-                if (input instanceof Request) {
+                if (input instanceof PongResponse pong) {
+                    handlePong(pong);
+                } else if (input instanceof Request) {
                     handleRequest((Request) input);
                 } else {
                     System.err.println("[Server] Messaggio non autorizzato ricevuto.");
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("[Server] Client disconnesso.");
+            System.out.println("[Server] Client disconnesso: " + e.getMessage());
         } finally {
             disconnect();
         }
+    }
+
+    private void startPingLoop() {
+        pingScheduler.scheduleAtFixedRate(() -> {
+            if (!connected) {
+                pingScheduler.shutdown();
+                return;
+            }
+
+            long now = System.currentTimeMillis();
+            if (now - lastPongTime > PING_TIMEOUT_MS) {
+                System.out.println("[Server] Timeout: client non risponde ai ping");
+                disconnect();
+                return;
+            }
+
+            try {
+                sendMessage(new PingRequest());
+            } catch (Exception e) {
+                disconnect();
+            }
+        }, PING_INTERVAL_MS, PING_INTERVAL_MS, TimeUnit.MILLISECONDS);
+    }
+
+    private void handlePong(PongResponse pong) {
+        lastPongTime = System.currentTimeMillis();
     }
 
     /**
@@ -53,8 +93,13 @@ public class SocketClientHandler implements ClientHandler, Runnable {
         // --- 1. JOIN GAME ---
         if (request instanceof JoinGameRequest req) {
             this.playerNickname = req.getNickname();
-            // Passiamo il nome E noi stessi (this) al controller
             controller.handleJoinGame(this.playerNickname, this);
+        }
+
+        // --- 1B. RECONNECT ---
+        else if (request instanceof ReconnectRequest req) {
+            this.playerNickname = req.getNickname();
+            controller.handleReconnect(this.playerNickname, this);
         }
 
         // --- 2. SETUP GAME ---
@@ -118,16 +163,15 @@ public class SocketClientHandler implements ClientHandler, Runnable {
 
     @Override
     public void disconnect() {
-        if (!connected) return; // Evita loop di chiusura
+        if (!connected) return;
         connected = false;
-        // Avvisiamo il controller che questo nickname non è più raggiungibile
+        pingScheduler.shutdownNow();
         if (playerNickname != null) {
-            controller.removeClient(playerNickname);
+            controller.markDisconnected(playerNickname);
         }
         try {
             socket.close();
         } catch (IOException e) {
-            // Ignoriamo gli errori in chiusura
         }
     }
 }

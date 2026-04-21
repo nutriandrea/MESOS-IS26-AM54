@@ -204,7 +204,7 @@ src/
    └── Players join with nickname
 
 2. Setup Phase
-   └── Players choose totem color (RED, YELLOW, WHITE, BLACK)
+   └── Players choose totem color (RED, YELLOW, WHITE, BLACK, BLUE)
    └── One player calls setupGame()
 
 3. Turn Loop (3 Eras)

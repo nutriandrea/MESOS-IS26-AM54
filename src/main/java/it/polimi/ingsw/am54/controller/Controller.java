@@ -38,12 +38,29 @@ public class Controller {
             clientHandlers.put(nickname, handler);
         }
 
-        // 1. Creiamo la vista virtuale per questo specifico giocatore
         VirtualView playerView = new VirtualView(handler);
-        // 2. Iscriviamo la vista al Model così riceverà tutti i broadcast!
         game.addObserver(playerView);
 
         executeCommand(nickname, () -> game.joinGame(nickname));
+    }
+
+    /**
+     * Gestisce la riconnessione di un giocatore esistente.
+     * Il giocatore viene registrato con un nuovo handler.
+     */
+    public void handleReconnect(String nickname, ClientHandler handler) {
+        synchronized (clientHandlers) {
+            ClientHandler oldHandler = clientHandlers.get(nickname);
+            if (oldHandler != null && oldHandler != handler) {
+                oldHandler.disconnect();
+            }
+            clientHandlers.put(nickname, handler);
+        }
+
+        VirtualView playerView = new VirtualView(handler);
+        game.addObserver(playerView);
+
+        LOGGER.info("Giocatore riconnesso: " + nickname);
     }
 
     /**
@@ -114,6 +131,17 @@ public class Controller {
 
     // Per pulire il registro quando un client si disconnette
     public void removeClient(String nickname) {
+        synchronized (clientHandlers) {
+            clientHandlers.remove(nickname);
+        }
+    }
+
+    /**
+     * Marca un giocatore come disconnesso.
+     * Il giocatore rimane nel gioco ma senza connessione di rete.
+     */
+    public void markDisconnected(String nickname) {
+        LOGGER.info("Giocatore disconnesso: " + nickname);
         synchronized (clientHandlers) {
             clientHandlers.remove(nickname);
         }

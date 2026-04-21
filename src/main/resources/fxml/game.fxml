@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="it.polimi.ingsw.am54.view.GameController" 
+      spacing="10" style="-fx-padding: 20;">
+
+    <!-- Connection Panel -->
+    <HBox spacing="10" alignment="CENTER">
+        <Text text="Server:" />
+        <TextField fx:id="serverField" promptText="localhost" />
+        
+        <Text text="Port:" />
+        <TextField fx:id="portField" promptText="12345" />
+        
+        <Text text="Nickname:" />
+        <TextField fx:id="nicknameField" promptText="Your name" />
+        
+        <ComboBox fx:id="connectionTypeCombo" />
+        
+        <Button text="Connect" onAction="#connect" />
+    </HBox>
+
+    <!-- Game Status -->
+    <HBox spacing="20" alignment="CENTER" style="-fx-background-color: #e0e0e0; -fx-padding: 10;">
+        <Text fx:id="gameStateText" text="Stato: In attesa..." />
+        <Text fx:id="currentPlayerText" text="Giocatore: -" />
+    </HBox>
+
+    <!-- Main Game Area -->
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+        
+        <!-- Left Panel: Player List and My Cards -->
+        <VBox spacing="10" minWidth="200">
+            <Text text="Giocatori" style="-fx-font-weight: bold;" />
+            <VBox fx:id="playerList" spacing="5" />
+            
+            <Separator />
+            
+            <Text text="Le Mie Carte" style="-fx-font-weight: bold;" />
+            <VBox fx:id="myCards" spacing="5" />
+        </VBox>
+
+        <!-- Center Panel: Board -->
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Text text="Offering Tiles" style="-fx-font-weight: bold;" />
+            <HBox fx:id="offeringTiles" spacing="10" />
+            
+            <Separator />
+            
+            <Text text="Upper Row (Personaggi/Eventi)" style="-fx-font-weight: bold;" />
+            <HBox fx:id="upperRow" spacing="5" />
+            
+            <Text text="Lower Row (Personaggi)" style="-fx-font-weight: bold;" />
+            <HBox fx:id="lowerRow" spacing="5" />
+        </VBox>
+
+        <!-- Right Panel: Actions -->
+        <VBox spacing="10" minWidth="250">
+            <Text text="Azioni" style="-fx-font-weight: bold;" />
+            
+            <ComboBox fx:id="colorCombo" promptText="Scegli colore" />
+            <Button text="Conferma Colore" onAction="#chooseColor" />
+            
+            <Button text="Setup Partita" onAction="#setupGame" />
+            
+            <Separator />
+            
+            <Text text="Messaging Area" style="-fx-font-weight: bold;" />
+            <TextArea fx:id="messageArea" VBox.vgrow="ALWAYS" editable="false" />
+        </VBox>
+    </HBox>
+
+</VBox>

@@ -7,6 +7,7 @@ import java.util.List;
 public interface IGameObserver {
     // Eventi di Setup
     void onPlayerJoined(Game game, Player player);
+    void onPlayerReconnected(Game game, Player player);
     void onTotemColorChosen(Game game, Player player, TotemColors color);
 
     // Eventi di Gioco

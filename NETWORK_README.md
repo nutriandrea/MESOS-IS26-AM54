@@ -9,10 +9,10 @@
 │  │    View     │───▶│    Client    │───▶│ ObjectOutputStream│   │
 │  └─────────────┘    └──────┬───────┘    └───────────────────┘   │
 │                           │              ▲                      │
-│                    ┌──────▼───────┐        │                      │
-│                    │ServerHandler │────────┘                      │
-│                    │  (thread)    │   ObjectInputStream          │
-│                    └─────────────┘                               │
+│                    ┌──────▼───────┐        │                    │
+│                    │ServerHandler │────────┘                    │
+│                    │  (thread)    │   ObjectInputStream         │
+│                    └─────────────┘                              │
 └──────────────────────────┬──────────────────────────────────────┘
                            │ Socket TCP
                            ▼
@@ -33,13 +33,13 @@
 │                                              │                  │
 │                                              ▼                  │
 │  ┌──────────────────┐           ┌───────────────────────────┐   │
-│  │  VirtualView     │◀─────────┤       Game (Model)         │   │
-│  │  (Observer)      │          │    (State Machine)         │   │
-│  └────────┬─────────┘           └───────────────────────────┘  │
+│  │  VirtualView     │◀──────────┤       Game (Model)        │   │
+│  │  (Observer)      │           │    (State Machine)        │   │
+│  └────────┬─────────┘           └───────────────────────────┘   │
 │           │                                                     │
 │           ▼                                                     │
 │  ┌─────────────────┐                                            │
-│  │ ClientHandler  │ ◀── send updates to specific client        │
+│  │ ClientHandler   │ ◀── send updates to specific client        │
 │  └─────────────────┘                                            │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -48,21 +48,76 @@
 
 ## 2. Flusso Dati Completo
 
-### 2.1 Connessione di un Client
-
-```
-1. Server.main() / Server.start() → ServerSocket.accept()
-2. Crea SocketClientHandler(socket, controller)
-3. Crea VirtualView(handler)
-4. game.addObserver(vView)
-5. new Thread(handler).start()
-```
-
-### 2.2 Ciclo di Vita di un Comando
+### 2.1 Connessione di un Client (Handshake)
 
 ```
 CLIENT                                    SERVER
 ─────                                    ──────
+new Socket(ip, port)
+     │
+     ▼
+ObjectOutputStream.flush()
+     │──── TCP connection ──────▶
+     │                         ServerSocket.accept()
+     │                         new SocketClientHandler()
+     │                         
+     │                    out.writeObject("CONNECTION_ESTABLISHED")
+     │◀──── ACK ─────────────────┘
+     │
+     ▼
+ObjectInputStream in = ...
+new ServerHandler(in)
+new Thread(serverHandler).start()
+     │
+     ▼ (connected!)
+GUI can send requests
+```
+
+### 2.2 Invio Richiesta (Request)
+
+```
+CLIENT                                    SERVER
+─────                                    ──────
+client.sendMessage(Request)
+     │
+     ▼ (serializza)
+ObjectOutputStream.writeObject()
+     │──── TCP Socket ────▶
+     ▼                    ▼
+ServerSocket         SocketClientHandler.run()
+                      ObjectInputStream.readObject()
+                             │
+                             ▼
+                      handleRequest(Request)
+                             │
+                             ▼
+                      Controller.handleXxx()
+                             │
+                             ▼
+                      synchronized(game) {
+                          game.executeAction()
+                      }
+                             │
+                             ▼
+                      Game.notifyObservers()
+                             │
+                             ▼
+                      VirtualView.onXxxEvent()
+                             │
+                             ▼
+                      ClientHandler.sendMessage(Update)
+                             │
+                             │──── TCP Socket ────│
+                             ▼                    ▼
+                      ObjectOutputStream    ServerHandler.run()
+                                           handleUpdate()
+```
+
+### 2.3 Disconnessione
+
+```
+CLIENT                                    SERVER
+──────                                    ──────
 Client.connect()
      │
      ▼ (TCP handshake)
@@ -101,6 +156,75 @@ ServerSocket          SocketClientHandler.run()
                                            handleUpdate()
 ```
 
+### 2.3 Disconnessione
+
+```
+CLIENT                                    SERVER
+─────                                    ──────
+client.disconnect()
+     │
+     ▼
+serverHandler.stop()
+socket.close()
+     │──── TCP close ──────▶
+                             │
+                             SocketClientHandler.run() catches IOException
+                             │
+                             ▼
+                      disconnect()
+                      controller.markDisconnected(nickname)
+                      game.setPlayerDisconnected(nickname)
+```
+
+### 2.4 Riconnessione
+
+```
+CLIENT                                    SERVER
+─────                                    ──────
+client.connect()
+     │
+     ▼
+ReconnectRequest(nickname)
+     │──── TCP ────▶
+                      SocketClientHandler.handleRequest()
+                             │
+                             ▼
+                      controller.handleReconnect(nickname, handler)
+                             │
+                             ▼
+                      game.reconnectPlayer(nickname)
+                      Player.setConnected(true)
+                      notifyPlayerReconnected()
+                             │
+                             ▼
+                      ClientHandler.sendMessage(PlayerReconnectedUpdate)
+```
+
+### 2.5 Gestione Giocatori Disconnessi
+
+- Quando un client si disconnette (o non risponde ai ping), il suo stato `connected = false` viene salvato
+- Il giocatore **rimane nel gioco** con i suoi dati (carte, risorse, ecc.)
+- Gli altri giocatori possono continuare a giocare
+- Quando il giocatore si riconnette, riceve lo stato corrente del gioco
+
+### 2.6 Heartbeat (Ping/Pong)
+
+Il server invia periodicamente `PingRequest` al client per verificare che la connessione sia attiva.
+
+```
+SERVER                                    CLIENT
+──────                                    ──────
+PingRequest(timestamp) ──────────────────▶
+                    ◀─────────────────── PongResponse(timestamp)
+
+Se nessun Pong in 15 secondi:
+        → disconnect() → markDisconnected()
+```
+
+**Parametri**:
+- Intervallo ping: 5 secondi
+- Timeout: 15 secondi
+
 ---
 
 ## 3. Descrizione delle Classi Network
@@ -135,16 +259,24 @@ ServerSocket          SocketClientHandler.run()
 **Funzionamento**:
 - Implementa `Runnable` - eseguito in un Thread separato
 - Inizializza `ObjectInputStream` e `ObjectOutputStream`
+- **Invia ACK** `"CONNECTION_ESTABLISHED"` al client appena connesso
 - Loop di ricezione comandi: `in.readObject()`
 - Parsa il tipo di Request e invoca metodi del Controller
 - Tiene traccia del `playerNickname` per autenticazione
+- Gestisce disconnessione e cleanup
 
 **Request gestite**:
 - `JoinGameRequest` → `controller.handleJoinGame(nickname, this)`
+- `ReconnectRequest` → `controller.handleReconnect(nickname, this)`
 - `SetupGameRequest` → `controller.handleSetupGame(nickname)`
 - `ChooseTotemRequest` → `controller.handleChooseTotemColor(nickname, color)`
 - `PlaceTotemRequest` → `controller.handlePlaceTotem(nickname, position)`
 - `PickCardRequest` → `controller.handlePickCard(nickname, row, index)`
+- `PongResponse` → aggiorna timestamp ultimo contatto
+
+**Heartbeat**:
+- Ping ogni 5 secondi
+- Timeout 15 secondi → disconnessione automatica
 
 ---
 
@@ -200,9 +332,24 @@ public interface ClientHandler {
 **Responsabilità**: Punto di ingresso lato client per la connessione di rete.
 
 **Funzionamento**:
-- `connect(ip, port)` - stabilisce connessione TCP, aspetta ACK, avvia ServerHandler
+- `connect(ip, port)`:
+  1. Crea `Socket` verso server
+  2. Inizializza `ObjectOutputStream` e fa flush
+  3. Inizializza `ObjectInputStream`
+  4. **Attende ACK** `"CONNECTION_ESTABLISHED"` dal server
+  5. Avvia `ServerHandler` in un thread separato
+  6. Restituisce `true` se connesso, `false` altrimenti
 - `sendMessage(ClientMessage)` - serializza e invia al server
 - `disconnect()` - chiude socket e ferma ServerHandler
+
+```java
+// Esempio utilizzo
+Client client = new Client();
+if (client.connect("localhost", 12345)) {
+    client.sendMessage(new JoinGameRequest("Player1"));
+    client.sendMessage(new ChooseTotemRequest("Player1", "RED"));
+}
+```
 
 ---
 
@@ -246,16 +393,20 @@ ClientMessage extends Serializable
 | Classe | Contenuto |
 |--------|-----------|
 | `JoinGameRequest` | `String nickname` |
+| `ReconnectRequest` | `String nickname` |
 | `ChooseTotemRequest` | `String nickname, String color` |
 | `SetupGameRequest` | `String nickname` |
 | `PlaceTotemRequest` | `String nickname, int offerPosition` |
 | `PickCardRequest` | `String nickname, String row, int cardIndex` |
+| `PongResponse` | `long timestamp` |
 
 ### Update (Server → Client)
 
 | Classe | Contenuto |
 |--------|-----------|
+| `PingRequest` | `long timestamp` |
 | `PlayerJoinedUpdate` | `String nickname` |
+| `PlayerReconnectedUpdate` | `String nickname` |
 | `TotemColorUpdate` | `String nickname, String color` |
 | `TotemPlacedUpdate` | `String nickname, int offerPosition` |
 | `CardPickedUpdate` | `String nickname, String row, int cardIndex` |
@@ -336,7 +487,7 @@ client.sendMessage(new JoinGameRequest("Player1"));
 | Funzionalità | Stato |
 |--------------|-------|
 | Socket communication | ✅ Completo |
+| Reconnection handling | ✅ Completo |
 | Multiple games support | 🔄 Da implementare |
 | RMI communication | 🔄 Da implementare |
-| Reconnection handling | 🔄 Da implementare |
 | Client GUI/TUI integration | 🔄 Da implementare |

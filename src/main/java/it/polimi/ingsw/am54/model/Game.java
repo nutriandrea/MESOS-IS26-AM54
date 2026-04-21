@@ -1,8 +1,8 @@
 package it.polimi.ingsw.am54.model;
 
 import it.polimi.ingsw.am54.model.states.SetUpGameState;
-
 import java.util.*;
+import java.util.logging.Logger;
 
 
 public class Game implements IGame{
@@ -22,6 +22,7 @@ public class Game implements IGame{
     private GameState currentState;
 
     private List<IGameObserver> observers;
+    private static final Logger LOGGER = Logger.getLogger(Game.class.getName());
 
     // I campi offeringTiles, turnOrderSlots, upperRow, lowerRow sono gestiti da Board
     public Game() {
@@ -67,6 +68,11 @@ public class Game implements IGame{
 
     //preparazione del gioco
     public void setupGame() throws Exception {
+        if (this.board != null) {
+            System.out.println("[Game] Setup già completato, salto...");
+            return;
+        }
+        System.out.println("[Game] Setup inizio...");
         this.currentEra = 1;
         this.roundCount = 0;
 
@@ -75,10 +81,15 @@ public class Game implements IGame{
                 "data/EventCardsSetup.json",
                 players.size()
         );
+        System.out.println("[Game] Deck tribù creato: " + (deckTribu != null ? deckTribu.size() : "NULL"));
+
         this.deckBuildings = DeckFactory.createBuildingDeck("data/BuildingCardsSetup.json", players.size());
+        System.out.println("[Game] Deck edifici creato: " + (deckBuildings != null ? deckBuildings.size() : "NULL"));
 
         this.board = new Board();
+        System.out.println("[Game] Board creato, genero...");
         this.board.generateBoard(this);
+        System.out.println("[Game] Board generato! Offering track size: " + board.getOfferingTrack().size());
 
         List<Player> tempPlayers = new ArrayList<>(this.players);
         Collections.shuffle(tempPlayers);
@@ -88,7 +99,6 @@ public class Game implements IGame{
 
         distributeInitialFood();
     }
-
 
     private void distributeInitialFood() {
         // 1°: 2 Cibo

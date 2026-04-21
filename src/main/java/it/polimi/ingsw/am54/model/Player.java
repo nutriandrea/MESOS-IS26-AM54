@@ -5,18 +5,6 @@ import java.util.*;
 
 public class Player {
 
-    /**
-     * Default constructor
-     */
-    public Player() {
-        this.food = 0;
-        this.aura = 0;
-        this.magicPoints = 0;
-        this.myTribe = new ArrayList<>();
-        this.myBuildings = new ArrayList<>();
-    }
-
-    
     private String nickname;
     private TotemColors totemColor;
     private int food;

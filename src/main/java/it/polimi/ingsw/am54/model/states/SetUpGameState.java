@@ -59,11 +59,7 @@ public class SetUpGameState extends GameState {
             }
         }
 
-
-        // costruzione fisica del gioco delegata a Game
         game.setupGame();
-
-        // Cambio di stato
         game.setState(new StartTurnState());
     }
 }

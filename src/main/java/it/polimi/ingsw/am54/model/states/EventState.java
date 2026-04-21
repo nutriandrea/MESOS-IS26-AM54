@@ -3,44 +3,55 @@ package it.polimi.ingsw.am54.model.states;
 import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.GameState;
 
-
-//Stato di risoluzione eventi: nessun giocatore puo' interagire
-//risolve automaticamente gli eventi (normali prima, Farmer per ultimi) e decide il prossimo stato
 public class EventState extends GameState {
 
     @Override
     public void resolvePhase(Game game) throws Exception {
-        if(game.isTribeDeckEmpty()){
+
+        // 1. Sicurezza: Se il mazzo è già vuoto all'inizio, risolvi tutto e chiudi
+        if (game.isTribeDeckEmpty()) {
             game.getBoard().resolveAllVisibleEvents(game);
             game.setState(new EndGameState());
+            return;
         }
-        else{
-            game.getBoard().resolveAllEventsInOrder(game);
 
-            game.getBoard().clearLowerRow();
+        // 2. Risoluzione Eventi della fila inferiore (Sostentamento per ultimo)
+        game.getBoard().resolveAllEventsInOrder(game);
 
-            game.getBoard().moveUpperToLower();
+        // 3. Scarto tutte le carte (Personaggi) rimaste nella fila inferiore
+        game.getBoard().clearLowerRow();
 
-            try {
-                game.getBoard().refillUpperRow(game);
-            } catch (Exception e) {
-                // Tribe deck exhausted, continue without refilling
+        // 4. Sposta Personaggi ed Eventi dalla fila superiore alla fila inferiore
+        game.getBoard().moveUpperToLower();
+
+        // 5. Riempi la fila superiore (delegato al Game)
+        game.refillUpperTribeRow();
+
+        // 6. INIZIO NUOVA ERA (Se la prossima carta nel deck è dell'era successiva)
+        if (game.isEraTransition()) {
+            game.advanceEra();
+
+            // REGOLE: Se transizione a Era III -> scarta eventuali Edifici dalla fila inferiore
+            if (game.getCurrentEra() == 3) {
+                game.getBoard().discardLowerRowBuildings();
             }
 
-            if (game.isEraTransition()) {
-                game.getBoard().moveBuildings();
-                game.getBoard().populateUpperRowBuildings(game);
+            // Sposta gli Edifici dalla fila superiore alla fila inferiore
+            game.getBoard().moveBuildings();
 
-                game.advanceEra();
-            }
+            // Piazza i nuovi Edifici dell'Era nella fila superiore
+            game.refillUpperBuildings();
+        }
 
-            game.advanceRound();
+        // 7. Avanzamento logico del round
+        game.advanceRound();
 
-
-            if (game.isTribeDeckEmpty()) {
-                game.setState(new EndGameState());
-            } else {
-                game.setState(new StartTurnState());
-            }
-        }}
+        // 8. Controllo Condizione Fine Partita (Regola: Il mazzo Tribù è esaurito)
+        if (game.isTribeDeckEmpty()) {
+            game.setState(new EndGameState());
+        } else {
+            // Se c'è ancora gioco, passiamo il testimone al piazzamento Totem!
+            game.setState(new StartTurnState());
+        }
+    }
 }

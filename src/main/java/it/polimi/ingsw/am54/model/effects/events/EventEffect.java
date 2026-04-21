@@ -93,12 +93,11 @@ public class EventEffect implements IEffect<EventCard> {
                     .flatMap(b -> b.getEffects().stream())
                     .anyMatch(IEffect::isDoubleAuraShamanEffect);
 
-            if (pl.getAuraPoints() == max) {
+            if (pl.getMagicPoints() == max) {
                 if (isDouble)
                     pl.modifyAuraPoints(2 * ec.getBonus());
                 else pl.modifyAuraPoints(ec.getBonus());
-            }
-            if (pl.getAuraPoints() == min) {
+            } else if (pl.getMagicPoints() == min) {
                 if (!isZero) pl.modifyAuraPoints(-ec.getMalus());
             }
             pl.resetEventAttributes();

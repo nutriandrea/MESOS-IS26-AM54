@@ -30,21 +30,16 @@ public class Board {
         this.turnOrderTile = new ArrayList<>();
     }
 
-    public void generateBoard(Game game) {
-        int numPlayers = game.getPlayersNumber();
-        initializeOfferingTiles(game);
+    // Sostituisce la vecchia generateBoard. Ora la Board riceve solo il numero di giocatori (Dati, non Logica).
+    public void initializeLayout(int numPlayers) {
+        initializeOfferingTiles(numPlayers);
         initializeTurnOrderTile(numPlayers);
-
-        populateLowerRow(game);
-        populateUpperRow(game);
-        populateUpperRowBuildings(game);
     }
 
-    private void initializeOfferingTiles(Game game) {
+    // Modificato: non prende più "Game", ma solo "numPlayers"
+    private void initializeOfferingTiles(int numPlayers) {
         offeringTrack.clear();
-        int numPlayers = game.getPlayersNumber();
 
-        // controlli di sicurezza
         if (numPlayers < 2 || numPlayers > 5) {
             throw new IllegalArgumentException("Errore critico: Numero di giocatori non valido (" + numPlayers + ")");
         }
@@ -52,11 +47,7 @@ public class Board {
         List<Character> neededTiles = new ArrayList<>();
 
         try {
-
-            //leggiamo il file
             JsonNode rootNode = mapper.readTree(new File("data/OfferingTilesSetup.json"));
-
-            // prendiamo solo le lettere necessarie (A,B,C,...)
             String playerKey = String.valueOf(numPlayers);
             JsonNode arrayTessere = rootNode.get("requiredTiles").get(playerKey);
 
@@ -66,15 +57,11 @@ public class Board {
                 }
             }
 
-            // prendiamo dalll'array le statistiche delle tessere
             JsonNode arrayTiles = rootNode.get("tiles");
 
             if (arrayTiles != null && arrayTiles.isArray()) {
-
-                for (JsonNode node : arrayTiles) { //per ogni tessera
+                for (JsonNode node : arrayTiles) {
                     char idLetto = node.get("id").asText().charAt(0);
-
-                    // Se la tessera corrente ci serve per questa partita, la costruiamo
                     if (neededTiles.contains(idLetto)) {
                         int upper = node.get("cardsFromUpper").asInt();
                         int lower = node.get("cardsFromLower").asInt();
@@ -85,14 +72,27 @@ public class Board {
                     }
                 }
             }
-
         } catch (Exception e) {
             throw new RuntimeException("Fatal error: Could not initialize Offering Tiles from JSON configuration.", e);
         }
 
-        // ordine alfabetico finale per sicurezza
         offeringTrack.sort(Comparator.comparing(OfferingTile::getId));
     }
+
+    // Aggiungi questo metodo per permettere al Game di inserire gli Edifici in modo pulito
+    public void addBuildingCard(BuildingCard card, String row) {
+        if (row.equalsIgnoreCase("upper")) {
+            buildingCardsUpperRow.add(card);
+        } else {
+            buildingCardsLowerRow.add(card);
+        }
+    }
+
+    // Aggiungi questo metodo di utilità per contare gli eventi presenti in una fila (serve al Game per il Setup)
+    public int getEventRowSize(String row) {
+        return row.equalsIgnoreCase("upper") ? eventUpperRow.size() : eventLowerRow.size();
+    }
+
 
     public void initializeTurnOrderTile(int numPlayers) {
         // Svuota la lista se c'era già qualcosa
@@ -138,91 +138,6 @@ public class Board {
     public void addEventCard(EventCard card, String row) {
         eventUpperRow.add(card);
     }
-
-
-    public void populateLowerRow(Game game) {
-        int numPlayers = game.getPlayersNumber();
-        int requiredCharacters = numPlayers + 1;
-
-        Deck<TribeCard> tribeDeck = game.getTribeDeck();
-
-        // Continua a pescare finché la fila in basso non ha il numero giusto di Personaggi
-        while (characterLowerRow.size() < requiredCharacters) {
-
-            TribeCard card = tribeDeck.drawCard();
-
-
-            // Diciamo alla carta: "Rivelati e vai nella fila in basso!"
-            // - Se è un Personaggio, andrà in characterLowerRow.
-            // - Se è un Evento, lo sportello della Board lo devierà in eventUpperRow!
-            card.reveal(this, "lower");
-        }
-    }
-
-    public void populateUpperRow(Game game) {
-        int numPlayers = game.getPlayersNumber();
-        int count = numPlayers + 4;
-
-        Deck<TribeCard> tribeDeck = game.getTribeDeck();
-
-        while (characterUpperRow.size() + eventUpperRow.size() < count) {
-            TribeCard card = tribeDeck.drawCard();
-
-            if (card != null) {
-                // Se è un Personaggio andrà da solo in characterUpperRow.
-                // Se è un Evento andrà da solo in eventUpperRow.
-                card.reveal(this, "upper");
-            }
-        }
-    }
-
-    public void populateUpperRowBuildings(Game game) {
-        int numPlayers = game.getPlayersNumber();
-        int currentEra = game.getCurrentEra();
-
-        // controlli di sicurezza
-        if (numPlayers < 2 || numPlayers > 5) {
-            throw new IllegalArgumentException("Errore critico: Numero di giocatori non valido (" + numPlayers + ")");
-        }
-
-        if (currentEra < 1 || currentEra > 3) {
-            throw new IllegalArgumentException("Errore critico: Era non valida (" + currentEra + ")");
-        }
-
-        int cardsToDraw = 0;
-
-        // leggo dal JSON
-        try {
-            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
-            JsonNode buildingCounts = countsRoot.get("buildingCounts").get(String.valueOf(numPlayers));
-
-            if (buildingCounts != null && buildingCounts.isArray()) { //solito controllo che quello che mi arriva sia come mi aspetto
-                // currentEra parte da 1, ma gli array partono da 0. Quindi currentEra - 1
-                cardsToDraw = buildingCounts.get(currentEra - 1).asInt();
-            } else {
-                throw new IllegalStateException("Nodo 'buildingCounts' per " + numPlayers + " giocatori mancante o non valido nel JSON.");
-            }
-        } catch (Exception e) {
-            // Se il file non si trova o è scritto male, fermiamo tutto!
-            throw new IllegalStateException("Impossibile leggere il file EraCounts.json: " + e.getMessage(), e);
-        }
-
-        // Controllo sulle carte da pescare
-        if (cardsToDraw <= 0) {
-            throw new IllegalStateException("Errore: Il JSON dice di pescare " + cardsToDraw + " carte. Deve essere > 0.");
-        }
-
-        // Pescaggio e riempimento
-        Deck<BuildingCard> buildingDeck = game.getBuildingDeck();
-
-        for (int i = 0; i < cardsToDraw; i++) {
-            BuildingCard card = buildingDeck.drawCard();
-            if (card != null) {
-                buildingCardsUpperRow.add(card);
-            }
-        }
-    }
-
 
     public void setupInitialTurnOrder(List<Player> randomPlayers) {
         for (int i = 0; i < randomPlayers.size(); i++) {
@@ -364,6 +279,32 @@ public class Board {
         });
 
         allEvents.forEach(e -> e.resolveEvent(game));
+    }
+
+    // Controlla se tutti i giocatori hanno piazzato il loro totem
+    public boolean allTotemsPlaced(int numPlayers) {
+        int placedCount = 0;
+        for (OfferingTile tile : offeringTrack) {
+            if (!tile.isAvailable()) {
+                placedCount++;
+            }
+        }
+        return placedCount == numPlayers;
+    }
+
+    // Trova il giocatore più a sinistra sul tracciato delle offerte
+    public Player getFirstPlayerFromOfferingTrack() {
+        for (OfferingTile tile : offeringTrack) {
+            if (!tile.isAvailable()) {
+                return tile.getOccupiedBy();
+            }
+        }
+        return null;
+    }
+
+    // Regola specifica per l'ingresso nell'Era III
+    public void discardLowerRowBuildings() {
+        buildingCardsLowerRow.clear();
     }
 
     // PULISCE E BASTA (solo caratteri, eventi gia' rimossi)

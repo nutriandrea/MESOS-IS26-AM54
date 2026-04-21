@@ -11,4 +11,5 @@ public interface IGame {
     // Gestione Observer
     // Permette alla UI o alla rete di "iscriversi" per ricevere aggiornamenti
     void addObserver(IGameObserver observer);
+    void removeObserver(IGameObserver observer);
 }

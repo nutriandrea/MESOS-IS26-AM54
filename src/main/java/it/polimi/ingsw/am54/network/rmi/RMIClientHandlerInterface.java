@@ -1,6 +1,6 @@
 package it.polimi.ingsw.am54.network.rmi;
 
-import it.polimi.ingsw.am54.network.messages.Request;
+import it.polimi.ingsw.am54.network.messages.*;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 

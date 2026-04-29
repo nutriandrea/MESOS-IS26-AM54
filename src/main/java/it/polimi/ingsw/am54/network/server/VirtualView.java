@@ -85,7 +85,14 @@ public class VirtualView implements IGameObserver {
     @Override
     public void onCardPicked(Game game, Player player, String row, int cardIndex, int newFoodBalance) {
         // Crei il nuovo pacchetto e lo invii a tutti!
-        updateAll(new CardPickedUpdate(player.getNickname(), row, cardIndex, newFoodBalance));
+        connection.sendUpdate(new CardPickedUpdate(player.getNickname(), row, cardIndex, newFoodBalance));
+    }
+
+    @Override
+    public void onTotemReturned(Game game, Player player) {
+        // Crea il nuovo messaggio dedicato che abbiamo definito prima
+        Update update = new TotemReturnedUpdate(player.getNickname());
+        connection.sendUpdate(update);
     }
 
     /**

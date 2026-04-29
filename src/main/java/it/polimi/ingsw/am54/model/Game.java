@@ -305,6 +305,13 @@ public class Game implements IGame{
         for (IGameObserver obs : observers) obs.onStateChanged(this, newState);
     }
 
+    public void notifyTotemReturned(Player player) {
+        for (IGameObserver obs : observers) {
+            // Supponendo che in IGameObserver e VirtualView tu abbia aggiunto onTotemReturned
+            obs.onTotemReturned(this, player);
+        }
+    }
+
 
     // ==========================================
     // GETTERS & SETTERS ESSENZIALI
@@ -321,7 +328,10 @@ public class Game implements IGame{
     public int getRoundCount() { return roundCount; }
 
     public Player getCurrentPlayer() { return currentPlayer; }
-    public void setCurrentPlayer(Player player) { this.currentPlayer = player; }
+    public void setCurrentPlayer(Player player) {
+        this.currentPlayer = player;
+        notifyTurnChanged(player);
+    }
 
     public Player getCurrentPicker() {
         List<OfferingTile> tiles = board.getOfferingTrack();

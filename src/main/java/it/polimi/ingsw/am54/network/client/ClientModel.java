@@ -86,11 +86,18 @@ public class ClientModel {
             }
         }
 
-        // Il totem torna nel turn order dopo aver preso la carta
+    }
+
+    public synchronized void updateTotemReturned(String nickname) {
+        // Rimuove il totem dalle offerte
         offeringTrack.values().remove(nickname);
+
+        // Lo rimette in fondo all'ordine di turno per il prossimo round
         if (!turnOrderTrack.contains(nickname)) {
             turnOrderTrack.add(nickname);
         }
+        //playerfood.put(nickname, newFoodBalance);
+        //playeraura.put(nickname, auraBalance);
 
     }
 

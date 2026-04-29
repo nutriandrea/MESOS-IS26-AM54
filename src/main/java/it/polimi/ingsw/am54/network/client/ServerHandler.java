@@ -46,6 +46,9 @@ public class ServerHandler implements Runnable {
         else if (message instanceof TurnChangedUpdate msg) {
             clientModel.updateTurn(msg.getNickname());
         }
+        else if (message instanceof TotemReturnedUpdate msg) {
+            clientModel.updateTotemReturned(msg.getNickname());
+        }
         else if (message instanceof StateChangedUpdate msg) {
             clientModel.updateState(msg.getStateName());
         }

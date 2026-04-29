@@ -34,6 +34,8 @@ public class StartTurnState extends GameState {
         player.setHasPlacedTotem(true);
         player.setCurrentTile(targetTile);
 
+        game.notifyTotemPlaced(player, offerPosition);
+
         // 4. Liberiamo il giocatore dallo slot dell'ordine di turno precedente
         game.getBoard().getTurnOrderTile().stream()
                 .filter(slot -> player.equals(slot.getOccupiedBy()))

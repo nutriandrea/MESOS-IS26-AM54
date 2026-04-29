@@ -83,8 +83,9 @@ public class VirtualView implements IGameObserver {
      * PERCHÉ LO FA: Quando il pacchetto arriva, il Client rimuove quella carta dal tabellone grafico e la mette nella tribù del giocatore.
      */
     @Override
-    public void onCardPicked(Game game, Player player, String row, int cardIndex) {
-        connection.sendUpdate(new CardPickedUpdate(player.getNickname(), row, cardIndex));
+    public void onCardPicked(Game game, Player player, String row, int cardIndex, int newFoodBalance) {
+        // Crei il nuovo pacchetto e lo invii a tutti!
+        updateAll(new CardPickedUpdate(player.getNickname(), row, cardIndex, newFoodBalance));
     }
 
     /**

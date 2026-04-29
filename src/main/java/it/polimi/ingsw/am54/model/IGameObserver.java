@@ -11,7 +11,7 @@ public interface IGameObserver {
 
     // Eventi di Gioco
     void onTotemPlaced(Game game, Player player, int offerPosition);
-    void onCardPicked(Game game, Player player, String row, int cardIndex);
+    void onCardPicked(Game game, Player player, String row, int cardIndex, int newFoodBalance);
 
     // Eventi di Flusso (Turni e Stati)
     void onTurnChanged(Game game, Player newCurrentPlayer);

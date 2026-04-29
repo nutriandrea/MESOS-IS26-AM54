@@ -53,13 +53,16 @@ public class Game implements IGame{
     @Override
     public void placeTotem(String nickname, int offerPosition) throws Exception {
         currentState.placeTotem(this, nickname, offerPosition);
-        notifyTotemPlaced(getPlayerByNickname(nickname), offerPosition);
     }
 
     @Override
     public void pickCard(String nickname, String row, int cardIndex) throws Exception {
         currentState.pickCard(this, nickname, row, cardIndex);
-        notifyCardPicked(getPlayerByNickname(nickname), row, cardIndex);
+
+        Player p = getPlayerByNickname(nickname);
+        int finalFood = p.getFood();
+
+        notifyCardPicked(p, row, cardIndex, finalFood);
     }
 
     @Override
@@ -286,12 +289,12 @@ public class Game implements IGame{
         for (IGameObserver obs : observers) obs.onTotemColorChosen(this, player, color);
     }
 
-    private void notifyTotemPlaced(Player player, int offerPosition) {
+    public void notifyTotemPlaced(Player player, int offerPosition) {
         for (IGameObserver obs : observers) obs.onTotemPlaced(this, player, offerPosition);
     }
 
-    private void notifyCardPicked(Player player, String row, int cardIndex) {
-        for (IGameObserver obs : observers) obs.onCardPicked(this, player, row, cardIndex);
+    private void notifyCardPicked(Player player, String row, int cardIndex, int newFoodBalance) {
+        for (IGameObserver obs : observers) obs.onCardPicked(this, player, row, cardIndex, newFoodBalance);
     }
 
     private void notifyTurnChanged(Player player) {

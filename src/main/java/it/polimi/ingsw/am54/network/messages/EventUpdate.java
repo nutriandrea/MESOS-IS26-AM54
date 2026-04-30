@@ -1,0 +1,46 @@
+// Nel file: network/messages/EventUpdate.java
+package it.polimi.ingsw.am54.network.messages;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+
+public class EventUpdate implements Update {
+
+    // DTO compatto per le statistiche di un singolo giocatore
+    public static class PlayerSnapshot implements Serializable {
+        public final int food;
+        public final int aura;
+        public final int magicPoints;
+
+        public PlayerSnapshot(int food, int aura, int magicPoints) {
+            this.food = food;
+            this.aura = aura;
+            this.magicPoints = magicPoints;
+        }
+    }
+
+    private final Map<String, PlayerSnapshot> playersStats;
+    private final List<String> charUpper, charLower, eventUpper, eventLower, buildUpper, buildLower;
+
+    public EventUpdate(Map<String, PlayerSnapshot> playersStats,
+                       List<String> charUpper, List<String> charLower,
+                       List<String> eventUpper, List<String> eventLower,
+                       List<String> buildUpper, List<String> buildLower) {
+        this.playersStats = playersStats;
+        this.charUpper = charUpper;
+        this.charLower = charLower;
+        this.eventUpper = eventUpper;
+        this.eventLower = eventLower;
+        this.buildUpper = buildUpper;
+        this.buildLower = buildLower;
+    }
+
+    public Map<String, PlayerSnapshot> getPlayersStats() { return playersStats; }
+    public List<String> getCharUpper() { return charUpper; }
+    public List<String> getCharLower() { return charLower; }
+    public List<String> getEventUpper() { return eventUpper; }
+    public List<String> getEventLower() { return eventLower; }
+    public List<String> getBuildUpper() { return buildUpper; }
+    public List<String> getBuildLower() { return buildLower; }
+}

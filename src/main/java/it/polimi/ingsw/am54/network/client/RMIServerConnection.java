@@ -42,13 +42,13 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
             clientModel.updateTotemPlacement(msg.getNickname(), msg.getOfferPosition());
         }
         else if (update instanceof CardPickedUpdate msg) {
-            clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex());
+            clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex(), msg.getNewFoodBalance());
         }
         else if (update instanceof TurnChangedUpdate msg) {
             clientModel.updateTurn(msg.getNickname());
         }
         else if (update instanceof StateChangedUpdate msg) {
-            clientModel.updateState(msg.getStateName());
+            clientModel.updateState(msg);
         }
         else if (update instanceof TotemColorUpdate msg) {
             clientModel.updateTotemColor(msg.getNickname(), msg.getColor());
@@ -58,6 +58,9 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
         }
         else if (update instanceof ErrorMessageUpdate msg) {
             clientModel.updateError(msg.getMessage());
+        }
+        else if (update instanceof EventUpdate msg) {
+            clientModel.updateEventSnapshot(msg);
         }
     }
 

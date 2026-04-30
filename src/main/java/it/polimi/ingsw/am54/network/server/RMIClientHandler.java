@@ -31,12 +31,13 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         } else if (request instanceof SetupGameRequest) {
             controller.handleSetupGame(this.playerNickname);
         } else if (request instanceof ChooseTotemRequest req) {
-            // Aggiungi .name() per convertire l'Enum in Stringa!
             controller.handleChooseTotemColor(this.playerNickname, req.getColor().name());
         } else if (request instanceof PlaceTotemRequest req) {
             controller.handlePlaceTotem(this.playerNickname, req.getOfferPosition());
         } else if (request instanceof PickCardRequest req) {
             controller.handlePickCard(this.playerNickname, req.getRow(), req.getCardIndex());
+        } else if (request instanceof EndTurnRequest) {
+            controller.handleEndTurn(this.playerNickname);
         }
     }
 

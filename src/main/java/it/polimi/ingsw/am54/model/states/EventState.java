@@ -1,5 +1,6 @@
 package it.polimi.ingsw.am54.model.states;
 
+import it.polimi.ingsw.am54.model.EventCard;
 import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.GameState;
 
@@ -8,15 +9,15 @@ public class EventState extends GameState {
     @Override
     public void resolvePhase(Game game) throws Exception {
 
-        // 1. Sicurezza: Se il mazzo è già vuoto all'inizio, risolvi tutto e chiudi
-        if (game.isTribeDeckEmpty()) {
-            game.getBoard().resolveAllVisibleEvents(game);
-            game.setState(new EndGameState());
-            return;
-        }
+        EventCard currentEvent;
+        while ((currentEvent = game.getBoard().popNextEvent()) != null) {
 
-        // 2. Risoluzione Eventi della fila inferiore (Sostentamento per ultimo)
-        game.getBoard().resolveAllEventsInOrder(game);
+            //RISOLVIAMO L'EVENTO
+            // Questo modificherà le statistiche dei giocatori (Cibo, PP)
+            currentEvent.resolveEvent(game);
+
+            game.notifyEventResolved();
+        }
 
         // 3. Scarto tutte le carte (Personaggi) rimaste nella fila inferiore
         game.getBoard().clearLowerRow();
@@ -43,14 +44,12 @@ public class EventState extends GameState {
             game.refillUpperBuildings();
         }
 
-        // 7. Avanzamento logico del round
-        game.advanceRound();
-
         // 8. Controllo Condizione Fine Partita (Regola: Il mazzo Tribù è esaurito)
         if (game.isTribeDeckEmpty()) {
             game.setState(new EndGameState());
         } else {
             // Se c'è ancora gioco, passiamo il testimone al piazzamento Totem!
+            game.advanceRound();
             game.setState(new StartTurnState());
         }
     }

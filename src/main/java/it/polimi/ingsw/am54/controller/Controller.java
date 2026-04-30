@@ -94,6 +94,11 @@ public class Controller {
         executeCommand(nickname, () -> game.pickCard(nickname, row, cardIndex));
     }
 
+    // Nel file Controller.java
+    public void handleEndTurn(String nickname) {
+        executeCommand(nickname, () -> game.endTurn(nickname));
+    }
+
     /**
      * Metodo helper per centralizzare la sincronizzazione e la gestione errori.
      * Implementa il flusso: Comando -> Validazione -> [on ok] Update / [on error] SignalError.

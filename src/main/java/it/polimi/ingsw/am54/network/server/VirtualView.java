@@ -89,10 +89,40 @@ public class VirtualView implements IGameObserver {
     }
 
     @Override
-    public void onTotemReturned(Game game, Player player) {
-        // Crea il nuovo messaggio dedicato che abbiamo definito prima
-        Update update = new TotemReturnedUpdate(player.getNickname());
+    public void onTotemReturned(Game game, Player player, int position, int newFoodBalance, int newAuraBalance) {
+        Update update = new TotemReturnedUpdate(
+                player.getNickname(),
+                position,
+                newFoodBalance,
+                newAuraBalance
+        );
         connection.sendUpdate(update);
+    }
+
+    @Override
+    public void onEventResolved(Game game) {
+        Board b = game.getBoard();
+
+        // 1. Mappatura statistiche giocatori
+        java.util.Map<String, EventUpdate.PlayerSnapshot> stats = new java.util.HashMap<>();
+        for (Player p : game.getPlayers()) {
+            stats.put(p.getNickname(), new EventUpdate.PlayerSnapshot(
+                    p.getFood(), p.getAuraPoints(), p.getMagicPoints()
+            ));
+        }
+
+        // 2. Trasformazione delle carte in Stringhe (Nomi o identificativi)
+        List<String> charUp = b.getCharacterUpperRow().stream().map(c -> c.getName()).collect(Collectors.toList());
+        List<String> charLow = b.getCharacterLowerRow().stream().map(c -> c.getName()).collect(Collectors.toList());
+        List<String> eventUp = b.getEventUpperRow().stream().map(c -> "EVENT").collect(Collectors.toList());
+        List<String> eventLow = b.getEventLowerRow().stream().map(c -> "EVENT").collect(Collectors.toList());
+        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
+        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
+
+        // 3. Spedisci lo Snapshot completo!
+        connection.sendUpdate(new EventUpdate(
+                stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow
+        ));
     }
 
     /**
@@ -112,7 +142,43 @@ public class VirtualView implements IGameObserver {
      */
     @Override
     public void onStateChanged(Game game, GameState newState) {
-        connection.sendUpdate(new StateChangedUpdate(newState.getClass().getSimpleName()));
+        Board b = game.getBoard();
+
+        // 1. Statistiche e Colori Giocatori
+        java.util.Map<String, StateChangedUpdate.PlayerSnapshot> stats = new java.util.HashMap<>();
+        for (Player p : game.getPlayers()) {
+            stats.put(p.getNickname(), new StateChangedUpdate.PlayerSnapshot(
+                    p.getFood(), p.getAuraPoints(), p.getMagicPoints(), p.getTotemColors()
+            ));
+        }
+
+        // 2. Ordine di turno e Tracciato Offerte
+        List<String> turnOrder = b.getTurnOrderTile().stream()
+                .map(slot -> slot.getOccupiedBy() != null ? slot.getOccupiedBy().getNickname() : null)
+                .collect(Collectors.toList());
+
+        java.util.Map<Integer, String> offering = new java.util.HashMap<>();
+        for (int i = 0; i < b.getOfferingTrack().size(); i++) {
+            Player occ = b.getOfferingTrack().get(i).getOccupiedBy();
+            if (occ != null) {
+                offering.put(i, occ.getNickname());
+            }
+        }
+
+        // 3. Carte sul tavolo
+        List<String> charUp = b.getCharacterUpperRow().stream().map(c -> c.getName()).collect(Collectors.toList());
+        List<String> charLow = b.getCharacterLowerRow().stream().map(c -> c.getName()).collect(Collectors.toList());
+        List<String> eventUp = b.getEventUpperRow().stream().map(c -> "EVENT").collect(Collectors.toList());
+        List<String> eventLow = b.getEventLowerRow().stream().map(c -> "EVENT").collect(Collectors.toList());
+        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
+        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
+
+        // Spedisci il super-pacchetto!
+        connection.sendUpdate(new StateChangedUpdate(
+                newState.getClass().getSimpleName(),
+                stats, turnOrder, offering,
+                charUp, charLow, eventUp, eventLow, buildUp, buildLow
+        ));
     }
 
     /**

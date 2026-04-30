@@ -58,11 +58,6 @@ public class Game implements IGame{
     @Override
     public void pickCard(String nickname, String row, int cardIndex) throws Exception {
         currentState.pickCard(this, nickname, row, cardIndex);
-
-        Player p = getPlayerByNickname(nickname);
-        int finalFood = p.getFood();
-
-        notifyCardPicked(p, row, cardIndex, finalFood);
     }
 
     @Override
@@ -293,7 +288,7 @@ public class Game implements IGame{
         for (IGameObserver obs : observers) obs.onTotemPlaced(this, player, offerPosition);
     }
 
-    private void notifyCardPicked(Player player, String row, int cardIndex, int newFoodBalance) {
+    public void notifyCardPicked(Player player, String row, int cardIndex, int newFoodBalance) {
         for (IGameObserver obs : observers) obs.onCardPicked(this, player, row, cardIndex, newFoodBalance);
     }
 
@@ -305,11 +300,26 @@ public class Game implements IGame{
         for (IGameObserver obs : observers) obs.onStateChanged(this, newState);
     }
 
-    public void notifyTotemReturned(Player player) {
+    // Dentro Game.java
+    public void notifyTotemReturned(Player player, int position) {
+        // Leggo i saldi definitivi dal server!
+        int finalFood = player.getFood();
+        int finalAura = player.getAuraPoints();
+
         for (IGameObserver obs : observers) {
-            // Supponendo che in IGameObserver e VirtualView tu abbia aggiunto onTotemReturned
-            obs.onTotemReturned(this, player);
+            obs.onTotemReturned(this, player, position, finalFood, finalAura);
         }
+    }
+
+    public void notifyEventResolved() {
+        for (IGameObserver obs : observers) {
+            obs.onEventResolved(this);
+        }
+    }
+
+    @Override
+    public void endTurn(String nickname) throws Exception {
+        currentState.endTurn(this, nickname);
     }
 
 

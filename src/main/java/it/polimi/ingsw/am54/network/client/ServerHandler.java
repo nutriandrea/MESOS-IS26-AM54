@@ -47,10 +47,10 @@ public class ServerHandler implements Runnable {
             clientModel.updateTurn(msg.getNickname());
         }
         else if (message instanceof TotemReturnedUpdate msg) {
-            clientModel.updateTotemReturned(msg.getNickname());
+            clientModel.updateTotemReturned(msg.getNickname(), msg.getNewFoodBalance(), msg.getNewAuraBalance());
         }
         else if (message instanceof StateChangedUpdate msg) {
-            clientModel.updateState(msg.getStateName());
+            clientModel.updateState(msg);
         }
         else if (message instanceof TotemColorUpdate msg) {
             clientModel.updateTotemColor(msg.getNickname(), msg.getColor());
@@ -60,6 +60,9 @@ public class ServerHandler implements Runnable {
         }
         else if (message instanceof ErrorMessageUpdate msg) {
             clientModel.updateError(msg.getMessage());
+        }
+        else if (message instanceof EventUpdate msg) {
+            clientModel.updateEventSnapshot(msg);
         }
     }
 }

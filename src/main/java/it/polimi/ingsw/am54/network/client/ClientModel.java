@@ -1,6 +1,9 @@
 package it.polimi.ingsw.am54.network.client;
 
 import it.polimi.ingsw.am54.model.TotemColors;
+import it.polimi.ingsw.am54.network.messages.EventUpdate;
+import it.polimi.ingsw.am54.network.messages.StateChangedUpdate;
+
 import java.util.*;
 
 public class ClientModel {
@@ -88,7 +91,7 @@ public class ClientModel {
 
     }
 
-    public synchronized void updateTotemReturned(String nickname) {
+    public synchronized void updateTotemReturned(String nickname, int newFoodBalance, int newAuraBalance) {
         // Rimuove il totem dalle offerte
         offeringTrack.values().remove(nickname);
 
@@ -96,13 +99,51 @@ public class ClientModel {
         if (!turnOrderTrack.contains(nickname)) {
             turnOrderTrack.add(nickname);
         }
-        //playerfood.put(nickname, newFoodBalance);
-        //playeraura.put(nickname, auraBalance);
+        playerFood.put(nickname, newFoodBalance);
+        playerAura.put(nickname, newAuraBalance);
 
     }
 
-    public synchronized void updateState(String stateName) {
-        this.currentState = stateName;
+    public synchronized void updateEventSnapshot(EventUpdate msg) {
+        // Aggiorna Risorse di TUTTI i Giocatori simultaneamente
+        msg.getPlayersStats().forEach((nick, stats) -> {
+            playerFood.put(nick, stats.food);
+            playerAura.put(nick, stats.aura);
+            // playerMagicPoints.put(nick, stats.magicPoints); // (Se ti serve per la GUI)
+        });
+
+        // Pialla e Ricostruisci la Board in un colpo solo
+        characterUpperRow.clear(); characterUpperRow.addAll(msg.getCharUpper());
+        characterLowerRow.clear(); characterLowerRow.addAll(msg.getCharLower());
+        eventUpperRow.clear();     eventUpperRow.addAll(msg.getEventUpper());
+        eventLowerRow.clear();     eventLowerRow.addAll(msg.getEventLower());
+        upperBuildingRow.clear();  upperBuildingRow.addAll(msg.getBuildUpper());
+        lowerBuildingRow.clear();  lowerBuildingRow.addAll(msg.getBuildLower());
+    }
+
+    public synchronized void updateState(StateChangedUpdate msg) {
+        // 1. Aggiorna lo stato testuale
+        this.currentState = msg.getStateName();
+
+        // 2. Sincronizza giocatori, colori e statistiche
+        msg.getPlayersStats().forEach((nick, stats) -> {
+            if (!players.contains(nick)) players.add(nick);
+            playerColors.put(nick, stats.color);
+            playerFood.put(nick, stats.food);
+            playerAura.put(nick, stats.aura);
+        });
+
+        // 3. Sincronizza posizioni dei totem
+        turnOrderTrack.clear(); turnOrderTrack.addAll(msg.getTurnOrderTrack());
+        offeringTrack.clear();  offeringTrack.putAll(msg.getOfferingTrack());
+
+        // 4. Sincronizza plancia di gioco
+        characterUpperRow.clear(); characterUpperRow.addAll(msg.getCharUpper());
+        characterLowerRow.clear(); characterLowerRow.addAll(msg.getCharLower());
+        eventUpperRow.clear();     eventUpperRow.addAll(msg.getEventUpper());
+        eventLowerRow.clear();     eventLowerRow.addAll(msg.getEventLower());
+        upperBuildingRow.clear();  upperBuildingRow.addAll(msg.getBuildUpper());
+        lowerBuildingRow.clear();  lowerBuildingRow.addAll(msg.getBuildLower());
     }
 
     public synchronized void updateTotemColor(String nickname, TotemColors color) {

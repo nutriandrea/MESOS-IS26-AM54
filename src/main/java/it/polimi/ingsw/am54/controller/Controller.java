@@ -1,21 +1,44 @@
 package it.polimi.ingsw.am54.controller;
 
 import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.Player;
+import it.polimi.ingsw.am54.model.TotemColors;
+import it.polimi.ingsw.am54.network.messages.*;
 import it.polimi.ingsw.am54.network.server.ClientConnection;
+import it.polimi.ingsw.am54.network.server.Server;
 import it.polimi.ingsw.am54.network.server.VirtualView;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
- * Controller lato Server.
- * Gestisce i comandi inviati dalla View e modifica il Model.
+ * ============================================================================
+ * Controller — Coordinatore lato Server (UNA istanza per partita)
+ * ============================================================================
+ *
+ * RESPONSABILITA':
+ * - Ricevere le Request dai client (tramite SocketClientHandler/RMIClientHandler)
+ * - Inoltrarle al Model (Game) in modo thread-safe (synchronized)
+ * - Gestire il ciclo di vita dei giocatori (join, disconnect, reconnect)
+ * - Inviare SOLO messaggi di sistema (disconnessione/riconnessione), MAI eventi di gioco
+ *
+ * DISCONNESSIONE VS RIMOZIONE:
+ * - markDisconnected(): il ping/pong rileva che un client non risponde.
+ *   Il giocatore viene marcato come disconnesso ma NON rimosso dal gioco.
+ *   Gli altri giocatori ricevono PlayerDisconnectedUpdate.
+ * - removeClient(): pulizia definitiva. Succede quando il socket si chiude
+ * ============================================================================
  */
 public class Controller {
     private final Game game;
-    // Il Controller memorizza ESCLUSIVAMENTE le Viste. Ignora l'esistenza dei Socket o di RMI.
+    private Server server;
+
+    /** Mappa nickname -> VirtualView. Ogni VirtualView e' observer del Game */
     private final Map<String, VirtualView> virtualViews = new HashMap<>();
+
+    /** Set di nickname dei giocatori temporaneamente disconnessi */
+    private final Set<String> disconnectedPlayers = new HashSet<>();
+
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
     public Controller(Game game) {
@@ -23,128 +46,184 @@ public class Controller {
     }
 
     /**
-     * Interfaccia funzionale interna per rappresentare un'azione sul Model.
+     * Imposta il riferimento al Server.
+     * Necessario per permettere al Controller di chiamare saveState()
+     * sul PersistenceManager dopo ogni azione di gioco.
+     *
+     * @param server l'istanza del Server
      */
+    public void setServer(Server server) {
+        this.server = server;
+    }
+
+    /**
+     * Salva lo stato corrente del gioco su file JSON.
+     * Chiamato dal Controller dopo ogni azione di gioco
+     * (setup, chooseTotemColor, placeTotem, pickCard).
+     * 
+     * Se il server non è inizializzato (server null), non fa nulla.
+     */
+    private void saveState() {
+        if (server != null && server.getPersistenceManager() != null) {
+            server.getPersistenceManager().saveState();
+        }
+    }
+
     @FunctionalInterface
     private interface GameAction {
         void execute() throws Exception;
     }
 
-    /**
-     * Gestisce l'unione di un nuovo giocatore alla partita.
-     */
+    /* =====================================================================
+     * JOIN / RECONNECT
+     * ===================================================================== */
+
     public void handleJoinGame(String nickname, ClientConnection connection) {
-        // 1. Creiamo la vista (ma non sappiamo ancora se il Model l'accetterà)
+        synchronized (disconnectedPlayers) {
+            if (disconnectedPlayers.contains(nickname)) {
+                handleReconnect(nickname, connection);
+                return;
+            }
+        }
+
+        synchronized (virtualViews) {
+            if (virtualViews.containsKey(nickname)) {
+                handleReconnect(nickname, connection);
+                return;
+            }
+        }
+
         VirtualView playerView = new VirtualView(connection, nickname);
 
-        // La agganciamo temporaneamente per permetterle di ricevere eventuali messaggi
         synchronized (virtualViews) {
             virtualViews.put(nickname, playerView);
         }
         game.addObserver(playerView);
 
-        // 2. Passiamo la palla al MODEL
         executeCommand(nickname, () -> {
             try {
-
-                // IL MODEL DECIDE QUI:
-                // Se il nome è già preso, joinGame lancerà un'eccezione!
                 game.joinGame(nickname);
-
+                connection.startHeartbeat();
             } catch (Exception e) {
-                // IL MODEL HA DETTO NO! (Nome duplicato, partita piena, ecc.)
-                // Dobbiamo fare "marcia indietro" e pulire il Controller.
                 synchronized (virtualViews) {
                     virtualViews.remove(nickname);
-                    game.removeObserver(playerView);
                 }
-
-                // Rilanciamo l'eccezione così executeCommand la cattura
-                // e chiama in automatico signalError() per avvisare il client!
+                game.removeObserver(playerView);
                 throw e;
             }
         });
     }
 
-    /**
-     * Gestisce la scelta del colore del totem.
-     */
-    public void handleChooseTotemColor(String nickname, String color) {
-        executeCommand(nickname, () -> game.chooseTotemColor(nickname, color));
-    }
-
-    /**
-     * Avvia il setup del gioco (solo se le condizioni sono soddisfatte).
-     */
-    public void handleSetupGame(String nickname) {
-        executeCommand(nickname, game::setupGame);
-    }
-
-    /**
-     * Gestisce il piazzamento del totem sulle tessere offerta.
-     */
-    public void handlePlaceTotem(String nickname, int offerPosition) {
-        executeCommand(nickname, () -> game.placeTotem(nickname, offerPosition));
-    }
-
-    /**
-     * Gestisce la pesca di una carta (Personaggio o Edificio).
-     */
-    public void handlePickCard(String nickname, String row, int cardIndex) {
-        executeCommand(nickname, () -> game.pickCard(nickname, row, cardIndex));
-    }
-
-    /**
-     * Metodo helper per centralizzare la sincronizzazione e la gestione errori.
-     * Implementa il flusso: Comando -> Validazione -> [on ok] Update / [on error] SignalError.
-     */
-    private void executeCommand(String nickname, GameAction action) {
-        try {
-            // Sincronizzazione sulla risorsa condivisa (il Model).
-            synchronized (game) {
-                action.execute();
-            }
-            // Se l'azione ha successo, il Model notificherà gli Observer (Virtual Views) in automatico.
-            LOGGER.info("Comando eseguito con successo per: " + nickname);
-
-        } catch (Exception e) {
-            // Se il Model lancia un'eccezione (es. "Non è il tuo turno!"), la catturiamo.
-            signalError(nickname, e.getMessage());
+    public void handleReconnect(String nickname, ClientConnection connection) {
+        synchronized (disconnectedPlayers) {
+            disconnectedPlayers.remove(nickname);
         }
+
+        synchronized (virtualViews) {
+            VirtualView oldView = virtualViews.get(nickname);
+            if (oldView != null) {
+                game.removeObserver(oldView);
+            }
+            VirtualView newView = new VirtualView(connection, nickname);
+            virtualViews.put(nickname, newView);
+        }
+        game.addObserver(virtualViews.get(nickname));
+
+        connection.startHeartbeat();
+        LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
+
+        // TODO: implementare sendFullStateToPlayer usando StateChangedUpdate
+
+        broadcastSystemUpdate(new PlayerReconnectedUpdate(nickname));
     }
 
-    /**
-     * Recupera la VirtualView dalla mappa e le chiede di inviare l'errore.
-     */
-    private void signalError(String nickname, String message) {
-        LOGGER.warning("Segnalazione errore a " + nickname + ": " + message);
+    /* =====================================================================
+     * GESTIONE COMANDI DI GIOCO
+     * ===================================================================== */
 
+    public void handleSetupGame(String nickname) {
+        executeCommand(nickname, () -> {
+            game.setupGame();
+            saveState();
+        });
+    }
+
+    public void handleChooseTotemColor(String nickname, String color) {
+        executeCommand(nickname, () -> {
+            game.chooseTotemColor(nickname, color);
+            saveState();
+        });
+    }
+
+    public void handlePlaceTotem(String nickname, int position) {
+        executeCommand(nickname, () -> {
+            game.placeTotem(nickname, position);
+            saveState();
+        });
+    }
+
+    public void handlePickCard(String nickname, String row, int index) {
+        executeCommand(nickname, () -> {
+            game.pickCard(nickname, row, index);
+            saveState();
+        });
+    }
+
+    /* =====================================================================
+     * DISCONNESSIONE
+     * ===================================================================== */
+
+    public void markDisconnected(String nickname) {
+        synchronized (disconnectedPlayers) {
+            disconnectedPlayers.add(nickname);
+        }
+        LOGGER.warning("Giocatore " + nickname + " marcato come disconnesso.");
+        broadcastSystemUpdate(new PlayerDisconnectedUpdate(nickname));
+    }
+
+    public void removeClient(String nickname) {
         VirtualView view;
         synchronized (virtualViews) {
-            // CORREZIONE: Usiamo la mappa corretta!
-            view = virtualViews.get(nickname);
+            view = virtualViews.remove(nickname);
         }
-
+        synchronized (disconnectedPlayers) {
+            disconnectedPlayers.remove(nickname);
+        }
         if (view != null) {
-            // CORREZIONE: Chiamiamo il metodo della VirtualView!
-            view.showError(message);
-        } else {
-            LOGGER.severe("Impossibile inviare errore: vista non trovata per " + nickname);
+            game.removeObserver(view);
+        }
+        LOGGER.info("Giocatore " + nickname + " rimosso dal server.");
+    }
+
+    public boolean isDisconnected(String nickname) {
+        synchronized (disconnectedPlayers) {
+            return disconnectedPlayers.contains(nickname);
         }
     }
 
-    /**
-     * Pulisce il registro quando un client si disconnette.
-     */
-    public void removeClient(String nickname) {
-        synchronized (virtualViews) {
-            // CORREZIONE: Rimuoviamo la vista dalla mappa corretta
-            VirtualView view = virtualViews.remove(nickname);
+    public int getPlayerCount() {
+        return game.getPlayersNumber();
+    }
 
-            // CORREZIONE VITALE: Dobbiamo dire al Model di smettere di parlare con questa Vista!
+    /* =====================================================================
+     * METODI PRIVATI
+     * ===================================================================== */
+
+    private void executeCommand(String nickname, GameAction action) {
+        try {
+            action.execute();
+        } catch (Exception e) {
+            VirtualView view = virtualViews.get(nickname);
             if (view != null) {
-                game.removeObserver(view);
-                LOGGER.info("Giocatore " + nickname + " rimosso dal server.");
+                view.sendUpdate(new ErrorMessageUpdate(e.getMessage()));
+            }
+        }
+    }
+
+    private void broadcastSystemUpdate(Update update) {
+        synchronized (virtualViews) {
+            for (VirtualView vv : virtualViews.values()) {
+                vv.sendUpdate(update);
             }
         }
     }

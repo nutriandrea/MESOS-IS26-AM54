@@ -145,6 +145,16 @@ public class Player {
         this.extraPick = extraPick;
     }
 
+    /**
+     * Verifica se il giocatore ha un pick extra.
+     * Utilizzato dal PersistenceManager per salvare lo stato.
+     *
+     * @return true se il giocatore ha un pick extra, false altrimenti
+     */
+    public boolean hasExtraPick() {
+        return extraPick;
+    }
+
     public void resetEventAttributes(){
         this.eventCostAura=0;
         this.eventCostFood=0;

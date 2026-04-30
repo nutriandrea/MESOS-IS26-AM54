@@ -17,7 +17,7 @@ public class SocketServerConnection implements ServerConnection {
         this.out.flush();
         this.in = new ObjectInputStream(socket.getInputStream());
         this.connected = true;
-        this.serverHandler = new ServerHandler(this.in, clientModel);
+        this.serverHandler = new ServerHandler(this.in, this.out, clientModel);
 
         new Thread(this.serverHandler).start();
     }

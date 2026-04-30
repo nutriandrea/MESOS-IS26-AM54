@@ -35,4 +35,15 @@ public class Deck<T extends Card> {
         return cards.peek();
     }
 
+    /**
+     * Restituisce tutte le carte presenti nel mazzo.
+     * Utilizzato dal PersistenceManager per salvare lo stato dei mazzi.
+     * Ritorna una copia per evitare modifiche esterne.
+     *
+     * @return lista di tutte le carte nel mazzo
+     */
+    public List<T> getAllCards() {
+        return new ArrayList<>(cards);
+    }
+
 }

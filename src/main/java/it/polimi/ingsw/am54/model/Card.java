@@ -18,6 +18,16 @@ public class Card {
         return era;
     }
 
+    /**
+     * Imposta l'era della carta.
+     * Utilizzato dal EventCard.getName() per generare il nome della carta.
+     *
+     * @param era l'era della carta (1-3)
+     */
+    public void setEra(int era) {
+        this.era = era;
+    }
+
     public void addOwner(Player p) {
         this.owner = p;
     }

@@ -30,6 +30,17 @@ public class EventCard extends TribeCard {
         this.malus = malus;
     }
 
+    /**
+     * Restituisce il nome della carta evento.
+     * Il nome è generato come "Event-" + era.
+     * Utilizzato dal PersistenceManager per salvare le carte nei mazzi.
+     *
+     * @return nome della carta (es. "Event-1", "Event-2")
+     */
+    public String getName() {
+        return "Event-" + getEra();
+    }
+
     public int getBaseFood() {
         return baseFood;
     }

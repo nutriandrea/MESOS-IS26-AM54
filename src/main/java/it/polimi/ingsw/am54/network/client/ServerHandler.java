@@ -1,41 +1,137 @@
 package it.polimi.ingsw.am54.network.client;
 
 import it.polimi.ingsw.am54.network.messages.*;
+
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 /**
- * È un Thread indipendente che rimane in ascolto continuo dei messaggi asincroni (Update)
- * provenienti dal server.
- * Viene utilizzato principalmente in accoppiata con i Socket TCP.
+ * ============================================================================
+ * ServerHandler — Thread di ascolto asincrono lato client (Socket TCP)
+ * ============================================================================
+ *
+ * RUOLO:
+ * Thread indipendente che rimane in ascolto continuo dei messaggi provenienti
+ * dal server sulla connessione Socket TCP.
+ *
+ * COSA FA:
+ * 1. Legge oggetti dallo stream di input del socket
+ * 2. Se e' un PingRequest: risponde AUTOMATICAMENTE con un PongResponse
+ *    (il client non deve fare nulla, e' tutto automatico)
+ * 3. Se e' un Update: aggiorna il ClientModel di conseguenza
+ * 4. Se il socket si chiude: ferma il thread
+ *
+ * GESTIONE PING (trasparente per il client):
+ * Quando il server invia un PingRequest, il client risponde immediatamente
+ * con un PongResponse contenente lo stesso timestamp. Questo permette al
+ * server di calcolare il round-trip time e rilevare disconnessioni.
+ *
+ * ============================================================================
  */
 public class ServerHandler implements Runnable {
+
+    /** Stream di input per ricevere messaggi dal server */
     private final ObjectInputStream in;
+
+    /** Stream di output per rispondere ai ping */
+    private final ObjectOutputStream out;
+
+    /** Modello locale del client: viene aggiornato con gli update ricevuti */
     private final ClientModel clientModel;
+
+    /** Flag di stato: true = in ascolto, false = fermato */
     private volatile boolean running = true;
 
-    public ServerHandler(ObjectInputStream in, ClientModel clientModel) {
+    /**
+     * Costruttore.
+     *
+     * @param in stream di input dal server
+     * @param out stream di output verso il server (usato per rispondere ai ping)
+     * @param clientModel modello locale da aggiornare
+     */
+    public ServerHandler(ObjectInputStream in, ObjectOutputStream out, ClientModel clientModel) {
         this.in = in;
+        this.out = out;
         this.clientModel = clientModel;
     }
 
+    /**
+     * Loop principale: legge messaggi dal server finche' running == true.
+     *
+     * Per ogni messaggio ricevuto:
+     * - Se e' un PingRequest -> rispondi con PongResponse (automatico)
+     * - Se e' un Update -> aggiorna il ClientModel
+     * - Se eccezione -> ferma il thread
+     */
     @Override
     public void run() {
         while (running) {
             try {
-                Update message = (Update) in.readObject();
-                handleUpdate(message);
+                Object message = in.readObject();
+                if (message instanceof PingRequest ping) {
+                    handlePing(ping);
+                } else if (message instanceof Update update) {
+                    handleUpdate(update);
+                }
             } catch (Exception e) {
                 if (running) stop();
             }
         }
     }
 
+    /**
+     * Risponde automaticamente a un PingRequest del server.
+     * Invia un PongResponse con lo stesso timestamp ricevuto.
+     *
+     * Questo e' completamente trasparente per il client: il giocatore
+     * non vede nulla, il ping/pong avviene in background.
+     */
+    private void handlePing(PingRequest ping) {
+        try {
+            out.writeObject(new PongResponse(ping.getTimestamp()));
+            out.flush();
+            out.reset();
+        } catch (Exception e) {
+            stop();
+        }
+    }
+
+    /** Ferma il thread di ascolto */
     public void stop() { this.running = false; }
 
-    // Modifica il clientModel in base al messaggio ricevuto
+    /**
+     * Smista gli Update ricevuti dal server al ClientModel.
+     *
+     * Ogni tipo di Update chiama un metodo specifico del ClientModel:
+     * - PlayerJoinedUpdate -> updatePlayerJoined()
+     * - PlayerDisconnectedUpdate -> updatePlayerDisconnected()
+     * - PlayerReconnectedUpdate -> updatePlayerReconnected()
+     * - TotemPlacedUpdate -> updateTotemPlacement()
+     * - CardPickedUpdate -> updateCardPicked()
+     * - TurnChangedUpdate -> updateTurn()
+     * - StateChangedUpdate -> updateState() [ora contiene stato completo]
+     * - TotemColorUpdate -> updateTotemColor()
+     * - EndGameUpdate -> updateEndGame()
+     * - ErrorMessageUpdate -> updateError()
+     */
     private void handleUpdate(Update message) {
+        // StateChangedUpdate può contenere stato completo per riconnessione
+        if (message instanceof StateChangedUpdate stateUpdate) {
+            // TODO: implementare loadFullState con StateChangedUpdate
+            // clientModel.loadFullState(stateUpdate);
+            clientModel.updateState(stateUpdate.getStateName());
+            return;
+        }
+
+        // Gestione dei normali update
         if (message instanceof PlayerJoinedUpdate msg) {
             clientModel.updatePlayerJoined(msg.getNickname());
+        }
+        else if (message instanceof PlayerDisconnectedUpdate msg) {
+            clientModel.updatePlayerDisconnected(msg.getNickname());
+        }
+        else if (message instanceof PlayerReconnectedUpdate msg) {
+            clientModel.updatePlayerReconnected(msg.getNickname());
         }
         else if (message instanceof TotemPlacedUpdate msg) {
             clientModel.updateTotemPlacement(msg.getNickname(), msg.getOfferPosition());

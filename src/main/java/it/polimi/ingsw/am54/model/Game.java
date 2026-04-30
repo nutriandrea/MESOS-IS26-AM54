@@ -323,9 +323,27 @@ public class Game implements IGame{
     public Board getBoard() { return this.board; }
     public Deck<TribeCard> getTribeDeck() { return deckTribu; }
     public Deck<BuildingCard> getBuildingDeck() { return deckBuildings; }
+    public void setTribeDeck(Deck<TribeCard> deck) { this.deckTribu = deck; }
+    public void setBuildingDeck(Deck<BuildingCard> deck) { this.deckBuildings = deck; }
 
     public int getCurrentEra() { return currentEra; }
     public int getRoundCount() { return roundCount; }
+
+    /**
+     * Imposta l'era corrente.
+     * Utilizzato dal Server per ripristinare lo stato del gioco dopo un crash.
+     *
+     * @param era l'era da impostare (1-6)
+     */
+    public void setCurrentEra(int era) { this.currentEra = era; }
+
+    /**
+     * Imposta il numero del round corrente.
+     * Utilizzato dal Server per ripristinare lo stato del gioco dopo un crash.
+     *
+     * @param round il numero del round da impostare
+     */
+    public void setRoundCount(int round) { this.roundCount = round; }
 
     public Player getCurrentPlayer() { return currentPlayer; }
     public void setCurrentPlayer(Player player) {

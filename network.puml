@@ -1,0 +1,459 @@
+@startuml
+skinparam linetype ortho
+skinparam maxmessagesize 300
+skinparam packageStyle rectangle
+
+
+
+' ============================================================
+' NETWORK SERVER
+' ============================================================
+
+package "it.polimi.ingsw.am54.network.server" {
+
+    class Server {
+        -Game game
+        -Controller controller
+        -PersistenceManager persistenceManager
+        -boolean isRunning
+        +start(int, int) : void
+        +startTCP(int) : void
+        +startRMI(int) : void
+        +getController() : Controller
+        +getPersistenceManager() : PersistenceManager
+    }
+
+    class PersistenceManager {
+        -ObjectMapper objectMapper
+        -File saveFile
+        -ScheduledExecutorService scheduler
+        +saveState() : boolean
+        +loadState() : GameFullSnapshot
+        +hasSavedGame() : boolean
+        +startPeriodicSave() : void
+        +stopPeriodicSave() : void
+    }
+
+    class GameFullSnapshot {
+        -int currentEra
+        -int roundCount
+        -String currentPlayerNickname
+        -String currentStateName
+        -int playerCount
+        -List<CardInfo> deckTribuCards
+        -List<CardInfo> deckBuildingsCards
+        -BoardSnapshot boardSnapshot
+        -List<PlayerSnapshot> players
+    }
+
+    class PlayerSnapshot {
+        -String nickname
+        -String totemColor
+        -int food
+        -int aura
+        -int magicPoints
+        -boolean extraPick
+        -boolean hasPlacedTotem
+        -int eventCostFood
+        -int eventCostAura
+        -int buildingDiscount
+        -int foodDiscount
+        -Character currentTileId
+        -List<CardInfo> myTribe
+        -List<CardInfo> myBuildings
+    }
+
+    class BoardSnapshot {
+        -List<CardInfo> characterUpperRow
+        -List<CardInfo> characterLowerRow
+        -List<CardInfo> eventUpperRow
+        -List<CardInfo> eventLowerRow
+        -List<CardInfo> buildingUpperRow
+        -List<CardInfo> buildingLowerRow
+        -List<OfferingTileInfo> offeringTrack
+        -List<TurnOrderSlotInfo> turnOrderTile
+    }
+
+    class CardInfo {
+        -String name
+        -String type
+        -int cost
+    }
+
+    class OfferingTileInfo {
+        -char id
+        -int cardsFromUpper
+        -int cardsFromLower
+        -int foodBonus
+    }
+
+    class TurnOrderSlotInfo {
+        -char id
+        -String occupiedByNickname
+        -boolean occupied
+    }
+
+    class SocketClientHandler implements Runnable, ClientConnection {
+        -Socket socket
+        -Server server
+        -ObjectInputStream in
+        -ObjectOutputStream out
+        -String playerNickname
+        -boolean connected
+        -long lastPongTime
+        -ScheduledExecutorService pingScheduler
+        +run() : void
+        +handleRequest(Request) : void
+        +startPingScheduler() : void
+        +sendUpdate(Update) : void
+        +sendError(String) : void
+        +disconnect() : void
+    }
+
+    class RMIServerImpl extends UnicastRemoteObject implements RMIGameServer {
+        -Server server
+        +connect(RMIClientInterface) : RMIClientHandlerInterface
+    }
+
+    class RMIClientHandler extends UnicastRemoteObject implements RMIClientHandlerInterface, ClientConnection {
+        -RMIClientInterface clientStub
+        -Server server
+        -String playerNickname
+        -boolean connected
+        -long lastPongTime
+        +handleRequest(Request) : void
+        +startPingScheduler() : void
+        +sendUpdate(Update) : void
+        +sendError(String) : void
+        +disconnect() : void
+    }
+
+    class VirtualView implements IGameObserver, ClientConnection {
+        -ClientConnection connection
+        -String nickname
+        +getNickname() : String
+        +sendUpdate(Update) : void
+        +sendError(String) : void
+        +disconnect() : void
+        +onPlayerJoined(Game, Player) : void
+        +onTotemColorChosen(Game, Player, TotemColors) : void
+        +onTotemPlaced(Game, Player, int) : void
+        +onCardPicked(Game, Player, String, int, int) : void
+        +onTurnChanged(Game, Player) : void
+        +onStateChanged(Game, GameState) : void
+        +onEndGame(Game, List<Player>) : void
+    }
+
+    interface ClientConnection {
+        +sendUpdate(Update) : void
+        +sendError(String) : void
+        +disconnect() : void
+        +startHeartbeat() : void
+    }
+
+    class Controller {
+        -Game game
+        -Map<String, VirtualView> virtualViews
+        -Set<String> disconnectedPlayers
+        +Controller(Game)
+        +handleJoinGame(String, ClientConnection) : void
+        +handleReconnect(String, ClientConnection) : void
+        +sendFullStateToPlayer(String) : void
+        +broadcastSystemUpdate(Update) : void
+        +handleSetupGame(String) : void
+        +handleChooseTotemColor(String, String) : void
+        +handlePlaceTotem(String, int) : void
+        +handlePickCard(String, String, int) : void
+        +markDisconnected(String) : void
+        +removeClient(String) : void
+        +isDisconnected(String) : boolean
+        +getPlayerCount() : int
+    }
+}
+
+' SERVER RELATIONSHIPS
+Server --> Game
+Server --> Controller
+Server --> PersistenceManager
+
+PersistenceManager --> GameFullSnapshot
+GameFullSnapshot --> PlayerSnapshot
+GameFullSnapshot --> BoardSnapshot
+GameFullSnapshot --> CardInfo
+Server --> SocketClientHandler
+Server --> RMIServerImpl
+
+SocketClientHandler --> Server
+SocketClientHandler --> ClientConnection
+SocketClientHandler --> VirtualView
+
+RMIServerImpl --> Server
+RMIServerImpl --> RMIClientHandler
+
+RMIClientHandler --> Server
+RMIClientHandler --> RMIClientInterface
+
+VirtualView --> IGameObserver
+VirtualView --> ClientConnection
+
+ClientConnection <|.. SocketClientHandler
+ClientConnection <|.. RMIClientHandler
+ClientConnection <|.. VirtualView
+
+Controller --> Game
+Controller --> VirtualView
+
+' ============================================================
+' NETWORK CLIENT
+' ============================================================
+
+package "it.polimi.ingsw.am54.network.client" {
+
+    class Client {
+        -ClientModel clientModel
+        -ServerConnection connection
+        +connect(String, boolean) : void
+        +sendRequest(Request) : void
+        +disconnect() : void
+    }
+
+    class ClientModel {
+        -String currentState
+        -String currentPlayer
+        -List<String> players
+        -Map<String, TotemColors> playerColors
+        -Map<String, Integer> playerFood
+        -Map<String, Integer> playerAura
+        -Map<String, List<String>> playerTribe
+        -Map<String, List<String>> playerBuildings
+        -Map<Integer, String> offeringTrack
+        -List<String> turnOrderTrack
+        -List<String> characterUpperRow
+        -List<String> characterLowerRow
+        -List<String> eventUpperRow
+        -List<String> eventLowerRow
+        -List<String> upperBuildingRow
+        -List<String> lowerBuildingRow
+        -List<String> winners
+        -String lastErrorMessage
+        +updatePlayerJoined(String) : void
+        +updatePlayerDisconnected(String) : void
+        +updatePlayerReconnected(String) : void
+        +updateTotemPlacement(String, int) : void
+        +updateCardPicked(String, String, int, int) : void
+        +updateTurn(String) : void
+        +updateState(String) : void
+        +updateTotemColor(String, TotemColors) : void
+        +updateEndGame(List<String>) : void
+        +updateError(String) : void
+        +getCurrentState() : String
+        +getCurrentPlayer() : String
+        +getPlayers() : List<String>
+        +getPlayerColors() : Map
+    }
+
+    class ServerHandler implements Runnable {
+        -ObjectInputStream in
+        -ObjectOutputStream out
+        -ClientModel clientModel
+        -volatile boolean running
+        +run() : void
+        +handlePing(PingRequest) : void
+        +handleUpdate(Update) : void
+        +stop() : void
+    }
+
+    class SocketServerConnection extends ServerConnection {
+        -Socket socket
+        -ObjectInputStream in
+        -ObjectOutputStream out
+        +connect(String, int) : void
+        +sendRequest(Request) : void
+        +receiveUpdate() : Object
+    }
+
+    class RMIServerConnection extends UnicastRemoteObject implements ServerConnection, RMIClientInterface {
+        -RMIGameServer server
+        -ClientModel clientModel
+        +connect(RMIGameServer, ClientModel) : void
+        +receiveUpdate(Update) : void
+    }
+
+    abstract class ServerConnection {
+        +connect(String, int) : void
+        +sendRequest(Request) : void
+        +close() : void
+    }
+}
+
+' CLIENT RELATIONSHIPS
+Client --> ClientModel
+Client --> ServerConnection
+
+ServerConnection <|-- SocketServerConnection
+ServerConnection <|-- RMIServerConnection
+
+ServerHandler --> ClientModel
+ServerHandler --> Request
+
+' ============================================================
+' NETWORK RMI
+' ============================================================
+
+package "it.polimi.ingsw.am54.network.rmi" {
+
+    interface RMIGameServer extends Remote {
+        +connect(RMIClientInterface) : RMIClientHandlerInterface
+    }
+
+    interface RMIClientInterface extends Remote {
+        +receiveUpdate(Update) : void
+    }
+
+    interface RMIClientHandlerInterface extends Remote {
+        +handleRequest(Request) : void
+    }
+}
+
+' RMI RELATIONSHIPS
+RMIGameServer <|.. RMIServerImpl
+RMIClientInterface <|.. RMIServerConnection
+RMIClientHandlerInterface <|.. RMIClientHandler
+
+' ============================================================
+' NETWORK MESSAGES
+' ============================================================
+
+package "it.polimi.ingsw.am54.network.messages" {
+
+    interface Request extends ClientMessage
+    interface Update extends ClientMessage
+    interface ClientMessage
+
+    class JoinGameRequest implements Request {
+        -String nickname
+        -String gameId
+        +getNickname() : String
+        +getGameId() : String
+    }
+
+    class SetupGameRequest implements Request
+    class ChooseTotemRequest implements Request {
+        -String color
+        +getColor() : String
+    }
+    class PlaceTotemRequest implements Request {
+        -int offerPosition
+        +getOfferPosition() : int
+    }
+    class PickCardRequest implements Request {
+        -String row
+        -int cardIndex
+        +getRow() : String
+        +getCardIndex() : int
+    }
+    class ListGamesRequest implements Request
+    class CreateGameRequest implements Request
+    class PongResponse implements Request {
+        -long timestamp
+        +getTimestamp() : long
+    }
+
+    class PlayerJoinedUpdate implements Update {
+        -String nickname
+        +getNickname() : String
+    }
+    class PlayerDisconnectedUpdate implements Update {
+        -String nickname
+    }
+    class PlayerReconnectedUpdate implements Update {
+        -String nickname
+    }
+    class TotemColorUpdate implements Update {
+        -String nickname
+        -TotemColors color
+    }
+    class TotemPlacedUpdate implements Update {
+        -String nickname
+        -int offerPosition
+    }
+    class CardPickedUpdate implements Update {
+        -String nickname
+        -String row
+        -int cardIndex
+        -int newFoodBalance
+    }
+    class TurnChangedUpdate implements Update {
+        -String nickname
+    }
+    class StateChangedUpdate implements Update {
+        -String stateName
+    }
+    class EndGameUpdate implements Update {
+        -List<String> winners
+    }
+    class ErrorMessageUpdate implements Update {
+        -String message
+    }
+    class PingRequest implements Update {
+        -long timestamp
+        +getTimestamp() : long
+    }
+
+
+    class GameListUpdate implements Update {
+        -List<String> gameIds
+        -List<Integer> playerCounts
+    }
+
+    class GameCreatedUpdate implements Update {
+        -String gameId
+    }
+
+    class PlayerStatsUpdate implements Update {
+        -String nickname
+        -int food
+        -int aura
+        -List<String> tribeCards
+        -List<String> buildingCards
+        +getNickname() : String
+        +getFood() : int
+        +getAura() : int
+        +getTribeCards() : List<String>
+        +getBuildingCards() : List<String>
+    }
+}
+
+' MESSAGES RELATIONSHIPS
+Request <|-- JoinGameRequest
+Request <|-- SetupGameRequest
+Request <|-- ChooseTotemRequest
+Request <|-- PlaceTotemRequest
+Request <|-- PickCardRequest
+Request <|-- ListGamesRequest
+Request <|-- CreateGameRequest
+Request <|-- PongResponse
+
+Update <|-- PlayerJoinedUpdate
+Update <|-- PlayerDisconnectedUpdate
+Update <|-- PlayerReconnectedUpdate
+Update <|-- TotemColorUpdate
+Update <|-- TotemPlacedUpdate
+Update <|-- CardPickedUpdate
+Update <|-- TurnChangedUpdate
+Update <|-- StateChangedUpdate
+Update <|-- EndGameUpdate
+Update <|-- ErrorMessageUpdate
+Update <|-- PingRequest
+Update <|-- GameListUpdate
+Update <|-- GameCreatedUpdate
+Update <|-- PlayerStatsUpdate
+
+' ============================================================
+' CROSS-PACKAGE
+' ============================================================
+
+Controller ..> Game
+Game -- IGameObserver
+
+@enduml

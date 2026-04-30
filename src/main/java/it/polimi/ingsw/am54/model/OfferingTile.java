@@ -24,6 +24,26 @@ public class OfferingTile {
         return id;
     }
 
+    /**
+     * Restituisce il numero di carte che possono essere prese dalla fila superiore.
+     * Utilizzato dal PersistenceManager per salvare lo stato della tessera.
+     *
+     * @return numero di carte dalla fila superiore
+     */
+    public int getCardsFromUpper() {
+        return cardsFromUpper;
+    }
+
+    /**
+     * Restituisce il numero di carte che possono essere prese dalla fila inferiore.
+     * Utilizzato dal PersistenceManager per salvare lo stato della tessera.
+     *
+     * @return numero di carte dalla fila inferiore
+     */
+    public int getCardsFromLower() {
+        return cardsFromLower;
+    }
+
     public int getFoodBonus() {
         return foodBonus;
     }

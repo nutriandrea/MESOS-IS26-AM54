@@ -8,15 +8,14 @@
 
 Il progetto consiste nello sviluppo di una versione software del gioco da tavolo **mesos**. L'applicazione è un sistema distribuito client-server che permette a 2-5 giocatori di partecipare a partite multiplayer in rete.
 
-### Obiettivi 
+### Obiettivi
 
 - Implementazione completa delle regole del gioco
 - Comunicazione via Socket TCP
 - Comunicazione via RMI
-- Interfaccia Grafica (GUI) JavaFX
-- Interfaccia Testuale (TUI) a riga di comando
 - Sistema di heartbeat per rilevamento disconnessioni
-- Gestione riconnessioni
+- Gestione riconnessioni con sincronizzazione stato
+- Supporto multi-partita (max 5 partite simultanee)
 - Pattern MVC
 
 ---
@@ -27,39 +26,28 @@ Il progetto consiste nello sviluppo di una versione software del gioco da tavolo
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                          CLIENT                                 │
-│   ┌─────────────┐     ┌─────────────┐     ┌──────────────────┐  │
-│   │  GUI        │     │  Client     │     │ ObjectOutputStream│ │
-│   │  (JavaFX)   │────▶│  ServerHandler│───▶│                  │  │
-│   └─────────────┘     └─────────────┘     └──────────────────┘  │
-│   ┌─────────────────────────────────────────────────────────────┐ │
-│   │                TUI  │ ServerHandler │ ObjectInputStream   │ │
-│   │   (ClientMain)      │───────▶        │                    │ │
-│   └─────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│                         Socket TCP / RMI                        │
-│                              │                                  │
-└──────────────────────────────┼──────────────────────────────────┘
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
 │                          SERVER                                 │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │   ServerSocket   │ SocketClientHandler                     │   │
-│   │   (port 1234)   │   (Thread per client)                   │   │
+│   │   ServerSocket   │ SocketClientHandler (TCP)            │   │
+│   │   RMIServerImpl  │ RMIClientHandler (RMI)                │   │
+│   │   (port 12345)  │   (Thread per client)                   │   │
 │   └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
+│   ┌─────────────────────────────────────────────────────────┐   │
+│   │                  Server                                  │   │
+│   │   (singola partita: Game + Controller)                  │   │
+│   └─────────────────────────────────────────────────────────┘   │
+│                         │                                       │
+│                         ▼                                       │
 │   ┌───────────────────┐              ┌─────────────────────┐   │
-│   │      Controller   │──────���────────│  Game (Model)        │   │
+│   │      Controller   │──────────────│  Game (Model)        │   │
 │   │ (synchronized access)  │         │  (State Machine)    │   │
 │   └───────────────────┘              └─────────────────────┘   │
 │                                                                 │
 │   ┌───────────────┐          ┌────────────────────────────────┐   │
 │   │ VirtualView  │─────────▶│      Game (Model)              │   │
-│   │ (Observer)  │          │     (State Machine)             │   │
+│   │ (Observer)  │          │     (Observer pattern)          │   │
 │   └───────────────┘          └────────────────────────────────┘   │
-│   ┌─────────────────────────────────────────────────────────────┐   │
-│   │  ClientHandler  │   send updates to specific client         │   │
-│   └─────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -67,7 +55,7 @@ Il progetto consiste nello sviluppo di una versione software del gioco da tavolo
 
 ```
 it.polimi.ingsw.am54/
-├── Main.java                    # Entry point per test
+├── Main.java                    # Entry point test (4 giocatori)
 ├── model/
 │   ├── Game.java               # Core game engine
 │   ├── Player.java              # Player entity
@@ -84,32 +72,45 @@ it.polimi.ingsw.am54/
 │   │   └── EndGameState.java
 │   └── effects/                 # Card effects
 ├── controller/
-│   └── Controller.java          # Command handler
+│   └── Controller.java          # Command handler (1 per partita)
 ├── network/
 │   ├── server/
-│   │   ├── Server.java          # Socket server
+│   │   ├── Server.java          # Socket + RMI server
 │   │   ├── SocketClientHandler.java
+│   │   ├── RMIServerImpl.java   # RMI implementation
+│   │   ├── RMIClientHandler.java
 │   │   ├── VirtualView.java
-│   │   └── ClientHandler.java
+│   │   └── ClientConnection.java
 │   ├── client/
-│   │   ├── Client.java
-│   │   ├── ClientMain.java      # TUI entry
-│   │   └── ServerHandler.java
+│   │   ├── Client.java          # Client base
+│   │   ├── ClientModel.java     # Stato locale client
+│   │   ├── ServerHandler.java   # Thread ascolto TCP
+│   │   ├── SocketServerConnection.java
+│   │   └── RMIServerConnection.java
 │   ├── rmi/
-│   │   ├── RMIServer.java
-│   │   ├── RMIServerInterface.java
-│   │   ├── RMIServerImplementation.java
-│   │   ├── RMIClientConnector.java
-│   │   └── RMIClientHandler.java
+│   │   ├── RMIGameServer.java
+│   │   ├── RMIClientInterface.java
+│   │   └── RMIClientHandlerInterface.java
 │   └── messages/
-│       ├── ClientMessage.java   # Base interface
-│       ├── Request.java       # Client → Server
-│       ├── Update.java        # Server → Client
-│       └── *Request.java, *Update.java
-└── view/
-    ├── GameApplication.java   # GUI entry
-    ├── GameController.java
-    └── game.fxml
+│       ├── Request.java         # Interfaccia base
+│       ├── Update.java          # Interfaccia base
+│       ├── JoinGameRequest.java    # nickname del giocatore
+│       ├── SetupGameRequest.java
+│       ├── ChooseTotemRequest.java
+│       ├── PlaceTotemRequest.java
+│       ├── PickCardRequest.java
+│       ├── PingRequest.java
+│       ├── PongResponse.java
+│       ├── PlayerJoinedUpdate.java
+│       ├── PlayerDisconnectedUpdate.java
+│       ├── PlayerReconnectedUpdate.java
+│       ├── TotemColorUpdate.java
+│       ├── TotemPlacedUpdate.java
+│       ├── CardPickedUpdate.java
+│       ├── TurnChangedUpdate.java
+│       ├── StateChangedUpdate.java
+│       ├── EndGameUpdate.java
+│       └── ErrorMessageUpdate.java
 ```
 
 ---
@@ -138,19 +139,19 @@ ObjectInputStream + ServerHandler thread starts
 
 | Messaggio | Parametri | Descrizione |
 |:----------|:----------|:-------------|
-| `JoinGameRequest` | nickname | Primo contatto |
+| `JoinGameRequest` | nickname | Primo contatto / Riconnessione |
 | `ChooseTotemRequest` | color (RED/YELLOW/WHITE/BLACK) | Scelta colore |
 | `SetupGameRequest` | - | Avvia partita |
 | `PlaceTotemRequest` | offerPosition (1-6) | Piazza totem |
 | `PickCardRequest` | row (UPPER/LOWER), cardIndex | Pesca carta |
-| `ReconnectRequest` | nickname | Riconnessione |
-| `PongResponse` | timestamp | Risposta a ping |
+| `PongResponse` | timestamp | Risposta automatica a ping |
 
 ### 3.3 Aggiornamenti (Server → Client)
 
 | Messaggio | Parametri | Descrizione |
 |:----------|:----------|:-------------|
 | `PlayerJoinedUpdate` | nickname | Nuovo giocatore |
+| `PlayerDisconnectedUpdate` | nickname | Giocatore disconnesso |
 | `PlayerReconnectedUpdate` | nickname | Giocatore riconnesso |
 | `TotemColorUpdate` | nickname, color | Colore scelto |
 | `TotemPlacedUpdate` | nickname, position | Totem piazzato |
@@ -159,7 +160,8 @@ ObjectInputStream + ServerHandler thread starts
 | `StateChangedUpdate` | stateName | Cambio stato |
 | `EndGameUpdate` | winners[] | Fine partita |
 | `ErrorMessageUpdate` | message | Errore |
-| `PingRequest` | timestamp | Heartbeat |
+| `PingRequest` | timestamp | Heartbeat (ogni 5s) |
+| `StateChangedUpdate` | stateName | Sync stato completo (reconnect) |
 
 ### 3.4 Heartbeat
 
@@ -191,20 +193,50 @@ Se nessun Pong in 15 secondi:
 
 ### 5.1 Resilienza alle Disconnessioni
 
-- Sistema di heartbeat Ping/Pong ogni 5 secondi
-- Timeout 15 secondi per rilevamento disconnessioni
-- Giocatore mantenuto nel gioco durante disconnessione
-- Possibilità di riconnessione
+- **Heartbeat**: PingRequest ogni 5 secondi, PongResponse automatico dal client
+- **Timeout**: 15 secondi senza risposta -> markDisconnected()
+- **Giocatori disconnessi**: Mantenuti nel gioco, NON saltati nei turni
+- **Riconnessione**: JoinGameRequest con nickname esistente -> handleReconnect()
+- **Sync stato**: StateChangedUpdate completo inviato al reconnect
+- **Broadcast**: PlayerDisconnectedUpdate e PlayerReconnectedUpdate a tutti
 
 ### 5.2 Socket + RMI
 
-- Supporto per entrambe le tecnologie
-- Client può scegliere all'avvio
+- **Socket TCP**: SocketClientHandler per ogni connessione (porta 12345)
+- **RMI**: RMIServerImpl + RMIClientHandler (porta 1099)
+- Entrambi supportano ping-pong e riconnessione
 
-### 5.3 GUI + TUI
+### 5.3 Architettura Server
 
-- Interfaccia Grafica JavaFX
-- Interfaccia Testuale ClientMain
+- **Server**: tiene una singola istanza di Game + Controller
+- **JoinGame**: il primo player che si connette avvia la partita
+- **Riconnessione**: StateChangedUpdate per sincronizzare stato completo
+
+### 5.4 Persistenza (Crash Recovery)
+
+Il server salva periodicamente lo stato della partita su disco per permettere il recovery dopo un crash.
+
+**File di salvataggio:** `game_state.json`
+
+**Cosa viene salvato:**
+- **Game**: currentEra, roundCount, currentStateName, currentPlayerNickname
+- **Players**: nickname, totemColor, food, aura, magicPoints, extraPick, hasPlacedTotem, eventCostFood, eventCostAura, buildingDiscount, foodDiscount, myTribe (carte in mano), myBuildings (edifici in mano)
+- **Board**: characterUpperRow, characterLowerRow, eventUpperRow, eventLowerRow, buildingUpperRow, buildingLowerRow, offeringTrack (con bonus), turnOrderTile (ordine turni)
+- **Decks**: deckTribuCards[], deckBuildingsCards[] (tutte le carte rimaste)
+
+**Trigger di salvataggio:**
+- Salvataggio automatico ogni 30 secondi (ScheduledExecutorService)
+- Dopo ogni azione di gioco: setupGame, chooseTotemColor, placeTotem, pickCard
+- Su shutdown del server (ShutdownHook JVM)
+
+**Recovery:**
+1. All'avvio, Server carica game_state.json se esiste
+2. Ripristina i player con joinGame() + chooseTotemColor()
+3. Chiama setupGame() per inizializzare board
+4. Ripristina era, round e stato del gioco
+5. Giocatori che si riconnettono con stesso nickname ricevono StateChangedUpdate per sync completo
+
+**Classe:** `PersistenceManager.java` con nested classes: GameFullSnapshot, PlayerSnapshot, BoardSnapshot, CardInfo, OfferingTileInfo, TurnOrderSlotInfo
 
 ---
 
@@ -226,37 +258,39 @@ Se nessun Pong in 15 secondi:
 
 ## 7. Avvio del Sistema
 
-### 7.1 Server Socket
+### 7.1 Server (Socket TCP + RMI)
 
 ```bash
 ./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server"
 ```
 
-### 7.2 Server RMI
+Il server avvia:
+- Socket TCP sulla porta 12345
+- RMI sulla porta 1099
+- Una singola partita (Game + Controller)
 
-```bash
-./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.rmi.RMIServer"
-```
+### 7.2 Client (programmatico)
 
-### 7.3 Client TUI
+Il client deve creare un'istanza di Client e connettersi tramite:
+- `SocketServerConnection` (TCP)
+- `RMIServerConnection` (RMI)
 
-```bash
-./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.client.ClientMain"
-```
-
-### 7.4 Client GUI
-
-```bash
-./mvnw javafx:run
-```
+Vedi `it.polimi.ingsw.am54.network.client.Client` come punto di partenza.
 
 ---
 
 ## 8. Tabella di Valutazione
 
-| Regole Complete + TUI + GUI + Socket + RMI + 1 FA 
-
-**Stato attuale**: 
+| Feature | Stato |
+|:--------|:------|
+| Regole complete gioco | ✅ |
+| Socket TCP | ✅ |
+| RMI | ✅ |
+| Disconnection handling (ping/pong) | ✅ |
+| Riconnessione (state sync) | ✅ |
+| Persistence (crash recovery) | ✅ |
+| GUI (JavaFX) | ❌ |
+| TUI (CLI) | ❌ | 
 
 ---
 

@@ -318,5 +318,11 @@ public class Board {
     public List<BuildingCard> getBuildingCardsUpperRow() { return buildingCardsUpperRow; }
     public List<BuildingCard> getBuildingCardsLowerRow() { return buildingCardsLowerRow; }
 
+    // Getter per le liste di carte personaggio ed eventi
+    public List<CharacterCard> getCharacterUpperRowList() { return characterUpperRow; }
+    public List<CharacterCard> getCharacterLowerRowList() { return characterLowerRow; }
+    public List<EventCard> getEventUpperRowList() { return eventUpperRow; }
+    public List<EventCard> getEventLowerRowList() { return eventLowerRow; }
+
 }
 

@@ -134,26 +134,20 @@ public class VirtualView implements IGameObserver {
         connection.sendUpdate(new TotemPlacedUpdate(player.getNickname(), offerPosition));
     }
 
-    @Override
+@Override
     public void onCardPicked(Game game, Player player, String row, int cardIndex, int newFoodBalance) {
-<<<<<<< HEAD
-        // Crei il nuovo pacchetto e lo invii a tutti!
-        connection.sendUpdate(new CardPickedUpdate(player.getNickname(), row, cardIndex, newFoodBalance));
-    }
-
-    @Override
-    public void onTotemReturned(Game game, Player player) {
-        // Crea il nuovo messaggio dedicato che abbiamo definito prima
-        Update update = new TotemReturnedUpdate(player.getNickname());
-        connection.sendUpdate(update);
-=======
         // Tutti vedono la carta pescata. Il client:
         //   - Rimuove la carta dalla riga corretta (upper/lower)
         //   - Aggiunge la carta alla tribu' del giocatore
         //   - Aggiorna il cibo del giocatore
         //   - Rimette il giocatore nel turnOrderTrack
         connection.sendUpdate(new CardPickedUpdate(player.getNickname(), row, cardIndex, newFoodBalance));
->>>>>>> 9499a20 (persistance manager + pingpong + more)
+    }
+
+    @Override
+    public void onTotemReturned(Game game, Player player) {
+        Update update = new TotemReturnedUpdate(player.getNickname());
+        connection.sendUpdate(update);
     }
 
     @Override

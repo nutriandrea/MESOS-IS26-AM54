@@ -245,14 +245,8 @@ public class ClientModel {
 
         // Lo rimette in fondo all'ordine di turno per il prossimo round
         if (!turnOrderTrack.contains(nickname)) {
-            turnOrderTrack.add(nickname);
+turnOrderTrack.add(nickname);
         }
-<<<<<<< HEAD
-        //playerfood.put(nickname, newFoodBalance);
-        //playeraura.put(nickname, auraBalance);
-
-=======
->>>>>>> 9499a20 (persistance manager + pingpong + more)
     }
 
     /** Aggiornato quando cambia lo stato del gioco (fase) */

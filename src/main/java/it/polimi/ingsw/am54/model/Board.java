@@ -336,7 +336,6 @@ public class Board {
     public List<TurnOrderSlot> getTurnOrderTile() { return turnOrderTile;}
     public List<BuildingCard> getBuildingCardsUpperRow() { return buildingCardsUpperRow; }
     public List<BuildingCard> getBuildingCardsLowerRow() { return buildingCardsLowerRow; }
-<<<<<<< HEAD
 
     // Getter per le liste di carte personaggio ed eventi
     public List<CharacterCard> getCharacterUpperRowList() { return characterUpperRow; }

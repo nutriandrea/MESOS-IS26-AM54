@@ -114,60 +114,9 @@ public class Controller {
         });
     }
 
-<<<<<<< HEAD
     public void handleReconnect(String nickname, ClientConnection connection) {
         synchronized (disconnectedPlayers) {
             disconnectedPlayers.remove(nickname);
-=======
-    /**
-     * Gestisce la scelta del colore del totem.
-     */
-    public void handleChooseTotemColor(String nickname, String color) {
-        executeCommand(nickname, () -> game.chooseTotemColor(nickname, color));
-    }
-
-    /**
-     * Avvia il setup del gioco (solo se le condizioni sono soddisfatte).
-     */
-    public void handleSetupGame(String nickname) {
-        executeCommand(nickname, game::setupGame);
-    }
-
-    /**
-     * Gestisce il piazzamento del totem sulle tessere offerta.
-     */
-    public void handlePlaceTotem(String nickname, int offerPosition) {
-        executeCommand(nickname, () -> game.placeTotem(nickname, offerPosition));
-    }
-
-    /**
-     * Gestisce la pesca di una carta (Personaggio o Edificio).
-     */
-    public void handlePickCard(String nickname, String row, int cardIndex) {
-        executeCommand(nickname, () -> game.pickCard(nickname, row, cardIndex));
-    }
-
-    // Nel file Controller.java
-    public void handleEndTurn(String nickname) {
-        executeCommand(nickname, () -> game.endTurn(nickname));
-    }
-
-    /**
-     * Metodo helper per centralizzare la sincronizzazione e la gestione errori.
-     * Implementa il flusso: Comando -> Validazione -> [on ok] Update / [on error] SignalError.
-     */
-    private void executeCommand(String nickname, GameAction action) {
-        try {
-            // Sincronizzazione sulla risorsa condivisa (il Model).
-            synchronized (game) {
-                action.execute();
-            }
-            // Se l'azione ha successo, il Model notificherà gli Observer (Virtual Views) in automatico.
-            LOGGER.info("Comando eseguito con successo per: " + nickname);
-
-} catch (Exception e) {
-            // Se il Model lancia un'eccezione (es. "Non è il tuo turno!"), la catturiamo.
-            signalError(nickname, e.getMessage());
         }
 
         synchronized (virtualViews) {
@@ -185,7 +134,7 @@ public class Controller {
 
         // TODO: implementare sendFullStateToPlayer usando StateChangedUpdate
 
-        broadcastSystemUpdate(new PlayerReconnectedUpdate(nickname));
+broadcastSystemUpdate(new PlayerReconnectedUpdate(nickname));
     }
 
     /* =====================================================================
@@ -216,6 +165,13 @@ public class Controller {
     public void handlePickCard(String nickname, String row, int index) {
         executeCommand(nickname, () -> {
             game.pickCard(nickname, row, index);
+            saveState();
+        });
+    }
+
+    public void handleEndTurn(String nickname) {
+        executeCommand(nickname, () -> {
+            game.endTurn(nickname);
             saveState();
         });
     }

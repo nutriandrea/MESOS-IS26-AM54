@@ -84,9 +84,7 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
 
         // StateChangedUpdate può contenere stato completo per riconnessione
         if (update instanceof StateChangedUpdate stateUpdate) {
-            // TODO: implementare loadFullState con StateChangedUpdate
-            // clientModel.loadFullState(stateUpdate);
-            clientModel.updateState(stateUpdate.getStateName());
+            clientModel.updateState(stateUpdate);
             return;
         }
 

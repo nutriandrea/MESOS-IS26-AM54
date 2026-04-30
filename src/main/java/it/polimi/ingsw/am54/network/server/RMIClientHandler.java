@@ -51,15 +51,13 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
             controller.handleChooseTotemColor(this.playerNickname, req.getColor().name());
         } else if (request instanceof PlaceTotemRequest req) {
             controller.handlePlaceTotem(this.playerNickname, req.getOfferPosition());
-        } else if (request instanceof PickCardRequest req) {
+} else if (request instanceof PickCardRequest req) {
             controller.handlePickCard(this.playerNickname, req.getRow(), req.getCardIndex());
-<<<<<<< HEAD
-} else if (request instanceof PongResponse pong) {
+        } else if (request instanceof PongResponse pong) {
             lastPongTime = System.currentTimeMillis();
         } else if (request instanceof EndTurnRequest) {
             controller.handleEndTurn(this.playerNickname);
         }
-    }
     }
 
     public void startPingScheduler() {

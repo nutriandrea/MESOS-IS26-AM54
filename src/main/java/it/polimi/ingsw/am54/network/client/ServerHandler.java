@@ -117,9 +117,7 @@ public class ServerHandler implements Runnable {
     private void handleUpdate(Update message) {
         // StateChangedUpdate può contenere stato completo per riconnessione
         if (message instanceof StateChangedUpdate stateUpdate) {
-            // TODO: implementare loadFullState con StateChangedUpdate
-            // clientModel.loadFullState(stateUpdate);
-            clientModel.updateState(stateUpdate.getStateName());
+            clientModel.updateState(stateUpdate);
             return;
         }
 

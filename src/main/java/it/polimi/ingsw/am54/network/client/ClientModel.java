@@ -246,15 +246,8 @@ public class ClientModel {
 
         // Lo rimette in fondo all'ordine di turno per il prossimo round
         if (!turnOrderTrack.contains(nickname)) {
-turnOrderTrack.add(nickname);
+            turnOrderTrack.add(nickname);
         }
-<<<<<<< HEAD
-    }
-
-    /** Aggiornato quando cambia lo stato del gioco (fase) */
-    public synchronized void updateState(String stateName) {
-        this.currentState = stateName;
-=======
         playerFood.put(nickname, newFoodBalance);
         playerAura.put(nickname, newAuraBalance);
 

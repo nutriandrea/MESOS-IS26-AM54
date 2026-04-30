@@ -144,14 +144,7 @@ public class VirtualView implements IGameObserver {
         connection.sendUpdate(new CardPickedUpdate(player.getNickname(), row, cardIndex, newFoodBalance));
     }
 
-    @Override
-<<<<<<< HEAD
-    public void onTotemReturned(Game game, Player player) {
-        Update update = new TotemReturnedUpdate(player.getNickname());
-        connection.sendUpdate(update);
-    }
-
-=======
+@Override
     public void onTotemReturned(Game game, Player player, int position, int newFoodBalance, int newAuraBalance) {
         Update update = new TotemReturnedUpdate(
                 player.getNickname(),

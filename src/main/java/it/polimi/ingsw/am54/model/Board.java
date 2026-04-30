@@ -250,35 +250,54 @@ public class Board {
 
 
     // Ordina eventi: sostentamento ultimo
-    public void resolveAllEventsInOrder(Game game) {
-        eventLowerRow.sort((a, b) -> {
-            // Se uno deve essere risolto per ultimo (Sostentamento), va in fondo
-            if (a.shouldResolveLast() != b.shouldResolveLast()) {
-                return a.shouldResolveLast() ? 1 : -1;
-            }
-            // Altrimenti, a parità, si risolvono in ordine crescente di Era!
-            return Integer.compare(a.getEra(), b.getEra());
-        });
-        while (!eventLowerRow.isEmpty()) {
-            eventLowerRow.get(0).resolveEvent(game); //risolve evento
-            eventLowerRow.remove(0); //lo rimuove
+    public EventCard popNextEvent() {
+        if (eventLowerRow.isEmpty()) {
+            return null; // Non ci sono più eventi
         }
+
+        // Troviamo l'evento da risolvere in base alle regole:
+        // Sostentamento alla fine, a parità di quello l'Era più bassa
+        EventCard nextEvent = eventLowerRow.stream()
+                .min((a, b) -> {
+                    if (a.shouldResolveLast() != b.shouldResolveLast()) {
+                        return a.shouldResolveLast() ? 1 : -1;
+                    }
+                    return Integer.compare(a.getEra(), b.getEra());
+                })
+                .orElse(null);
+
+        if (nextEvent != null) {
+            eventLowerRow.remove(nextEvent); // Rimuove fisicamente la carta dal tavolo
+        }
+
+        return nextEvent;
     }
 
-    // Risolviamo tutti gli eventi visibili (upper + lower), sostentamento per ultimo
-    public void resolveAllVisibleEvents(Game game) {
-        List<EventCard> allEvents = new ArrayList<>();
-        allEvents.addAll(eventUpperRow);
-        allEvents.addAll(eventLowerRow);
-        eventUpperRow.clear();
-        eventLowerRow.clear();
 
-        allEvents.sort((a, b) -> {
-            if (a.shouldResolveLast() == b.shouldResolveLast()) return 0;
-            return a.shouldResolveLast() ? 1 : -1;
-        });
+    public EventCard popNextVisibleEvent() {
+        // Prima cerchiamo nella fila inferiore (regola standard)
+        EventCard next = popNextEvent(); // Il metodo creato in precedenza per la fila inferiore
 
-        allEvents.forEach(e -> e.resolveEvent(game));
+        // Se la fila inferiore è vuota, cerchiamo in quella superiore
+        if (next == null && !eventUpperRow.isEmpty()) {
+            next = eventUpperRow.stream()
+                    .min((a, b) -> {
+                        // Prima priorità: Eventi Sostentamento (vanno in fondo)
+                        if (a.shouldResolveLast() != b.shouldResolveLast()) {
+                            return a.shouldResolveLast() ? 1 : -1;
+                        }
+                        // Seconda priorità: Ordine crescente di Era[cite: 2]
+                        return Integer.compare(a.getEra(), b.getEra());
+                    })
+                    .orElse(null);
+
+            // Se abbiamo trovato un evento, rimuoviamolo fisicamente dal tavolo
+            if (next != null) {
+                eventUpperRow.remove(next);
+            }
+        }
+
+        return next;
     }
 
     // Controlla se tutti i giocatori hanno piazzato il loro totem
@@ -317,6 +336,7 @@ public class Board {
     public List<TurnOrderSlot> getTurnOrderTile() { return turnOrderTile;}
     public List<BuildingCard> getBuildingCardsUpperRow() { return buildingCardsUpperRow; }
     public List<BuildingCard> getBuildingCardsLowerRow() { return buildingCardsLowerRow; }
+<<<<<<< HEAD
 
     // Getter per le liste di carte personaggio ed eventi
     public List<CharacterCard> getCharacterUpperRowList() { return characterUpperRow; }
@@ -324,5 +344,10 @@ public class Board {
     public List<EventCard> getEventUpperRowList() { return eventUpperRow; }
     public List<EventCard> getEventLowerRowList() { return eventLowerRow; }
 
+    // Original getters
+    public List<CharacterCard> getCharacterUpperRow() { return characterUpperRow; }
+    public List<CharacterCard> getCharacterLowerRow() { return characterLowerRow; }
+    public List<EventCard> getEventUpperRow() { return eventUpperRow; }
+    public List<EventCard> getEventLowerRow() { return eventLowerRow; }
 }
 

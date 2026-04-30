@@ -51,6 +51,9 @@ public class PickingState extends GameState {
         // In un design perfetto dovremmo rimettere la carta sulla board, ma per ora ci affidiamo ai check del Client)
         card.pick(player, game);
 
+        int finalFood = player.getFood();
+        game.notifyCardPicked(player, row, cardIndex, finalFood);
+
         // ==========================================
         // AUTO-FINE TURNO
         // ==========================================
@@ -122,6 +125,7 @@ public class PickingState extends GameState {
             }
         }
 
+        game.notifyTotemReturned(player, slot.getPosition());
         // Libera la tessera offerta
         player.getCurrentTile().freeSlot();
         player.setCurrentTile(null); // Pulizia del riferimento

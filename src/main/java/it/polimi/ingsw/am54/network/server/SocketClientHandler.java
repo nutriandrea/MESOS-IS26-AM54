@@ -86,9 +86,13 @@ public class SocketClientHandler implements Runnable, ClientHandler, ClientConne
             controller.handlePlaceTotem(this.playerNickname, req.getOfferPosition());
         } else if (request instanceof PickCardRequest req) {
             controller.handlePickCard(this.playerNickname, req.getRow(), req.getCardIndex());
-        } else if (request instanceof PongResponse pong) {
+<<<<<<< HEAD
+} else if (request instanceof PongResponse pong) {
             lastPongTime = System.currentTimeMillis();
+        } else if (request instanceof EndTurnRequest) {
+            controller.handleEndTurn(this.playerNickname);
         }
+    }
     }
 
     public void startPingScheduler() {

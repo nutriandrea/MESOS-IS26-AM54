@@ -50,4 +50,9 @@ public class VirtualServer {
     public void pickCard(String row, int index) {
         connection.sendRequest(new PickCardRequest(row, index));
     }
+
+    // Nel file VirtualServer.java
+    public void endTurn() {
+        connection.sendRequest(new EndTurnRequest());
+    }
 }

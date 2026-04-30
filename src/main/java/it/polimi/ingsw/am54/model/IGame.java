@@ -7,6 +7,7 @@ public interface IGame {
     // void pickCharacter(String nickname, int cardIndex) throws Exception;
     // void buyBuilding(String nickname, int cardIndex) throws Exception;
     void pickCard(String nickname, String row, int cardIndex) throws Exception;
+    void endTurn(String nickname) throws Exception;
 
     void setupGame() throws Exception;
 

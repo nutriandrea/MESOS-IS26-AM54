@@ -1,5 +1,6 @@
 package it.polimi.ingsw.am54.model.states;
 
+import it.polimi.ingsw.am54.model.EventCard;
 import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.GameState;
 import it.polimi.ingsw.am54.model.Player;
@@ -12,13 +13,21 @@ public class EndGameState extends GameState {
 
     @Override
     public void resolvePhase(Game game) throws Exception {
-        // risolvi tutti gli eventi visibili (upper + lower), sostentamento per ultimo
-        game.getBoard().resolveAllVisibleEvents(game);
+        EventCard currentFinalEvent;
 
-        // calcola punteggi e determina vincitore
+        // Cicliamo finché la Board ci restituisce eventi
+        while ((currentFinalEvent = game.getBoard().popNextVisibleEvent()) != null) {
+
+            // Risolviamo l'evento (modifica i punteggi/cibo dei giocatori)
+            currentFinalEvent.resolveEvent(game);
+
+            game.notifyEventResolved();
+        }
+
+        // CALCOLO PUNTEGGI
         List<Player> winners = game.determineWinners();
 
-        // notifica observers per schermata vittoria
+        // NOTIFICA VITTORIA
         game.notifyEndGame(winners);
     }
 }

@@ -243,4 +243,53 @@ public class VirtualView implements IGameObserver {
                 .collect(Collectors.toList());
         connection.sendUpdate(new EndGameUpdate(winnerNames));
     }
+
+    //PER LA RECONNECT
+    public void sendFullStateOnReconnect(Game game) {
+        Board b = game.getBoard();
+
+        // 1. Statistiche
+        java.util.Map<String, StateChangedUpdate.PlayerSnapshot> stats = new java.util.LinkedHashMap<>();
+        for (Player p : game.getPlayers()) {
+            stats.put(p.getNickname(), new StateChangedUpdate.PlayerSnapshot(
+                    p.getFood(), p.getAuraPoints(), p.getMagicPoints(), p.getTotemColors()
+            ));
+        }
+
+        // 2. Ordine e Offerte
+        List<String> turnOrder = b.getTurnOrderTile().stream()
+                .map(slot -> slot.getOccupiedBy() != null ? slot.getOccupiedBy().getNickname() : null)
+                .collect(Collectors.toList());
+        java.util.Map<Integer, String> offering = new java.util.HashMap<>();
+        for (int i = 0; i < b.getOfferingTrack().size(); i++) {
+            Player occ = b.getOfferingTrack().get(i).getOccupiedBy();
+            if (occ != null) offering.put(i, occ.getNickname());
+        }
+
+        // 3. Carte
+        List<String> charUp = b.getCharacterUpperRow().stream().map(c -> c.getName()).collect(Collectors.toList());
+        List<String> charLow = b.getCharacterLowerRow().stream().map(c -> c.getName()).collect(Collectors.toList());
+        List<String> eventUp = b.getEventUpperRow().stream().map(c -> "EVENT").collect(Collectors.toList());
+        List<String> eventLow = b.getEventLowerRow().stream().map(c -> "EVENT").collect(Collectors.toList());
+        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
+        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
+
+        // Manda il pacchetto solo a QUESTA connessione
+        connection.sendUpdate(new StateChangedUpdate(
+                game.getCurrentState().getClass().getSimpleName(),
+                stats, turnOrder, offering,
+                charUp, charLow, eventUp, eventLow, buildUp, buildLow
+        ));
+    }
+
+    private String formatCharacterForClient(CharacterCard c) {
+        if (c == null) return null;
+        return c.getName() + "|" + c.getLevel() + "|" + c.getAura();
+    }
+
+    private String formatBuildingForClient(BuildingCard b) {
+        if (b == null) return null;
+        String nomeEdificio = b.getName() != null ? b.getName() : "Edificio Speciale";
+        return "BUILDING|" + b.getCost() + "|" + b.getFinalAura() + "|" + nomeEdificio;
+    }
 }

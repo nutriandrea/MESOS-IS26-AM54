@@ -99,9 +99,18 @@ public class Controller {
             virtualViews.put(nickname, playerView);
         }
         game.addObserver(playerView);
-
         executeCommand(nickname, () -> {
             try {
+                // --- AGGIUNTA FONDAMENTALE PER SINCRONIZZARE IL NUOVO CLIENT ---
+                // Facciamo un "riassunto" al nuovo arrivato dicendogli chi c'è già
+                for (Player p : game.getPlayers()) {
+                    playerView.sendUpdate(new PlayerJoinedUpdate(p.getNickname()));
+                    if (p.getTotemColors() != null) {
+                        playerView.sendUpdate(new TotemColorUpdate(p.getNickname(), p.getTotemColors()));
+                    }
+                }
+                // ---------------------------------------------------------------
+
                 game.joinGame(nickname);
                 connection.startHeartbeat();
             } catch (Exception e) {
@@ -119,22 +128,24 @@ public class Controller {
             disconnectedPlayers.remove(nickname);
         }
 
+        VirtualView newView; // Salviamo un riferimento alla nuova vista
         synchronized (virtualViews) {
             VirtualView oldView = virtualViews.get(nickname);
             if (oldView != null) {
                 game.removeObserver(oldView);
             }
-            VirtualView newView = new VirtualView(connection, nickname);
+            newView = new VirtualView(connection, nickname);
             virtualViews.put(nickname, newView);
         }
-        game.addObserver(virtualViews.get(nickname));
-
+        game.addObserver(newView);
         connection.startHeartbeat();
         LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
 
-        // TODO: implementare sendFullStateToPlayer usando StateChangedUpdate
+        // 1. Invio lo snapshot SOLO al giocatore che è appena rientrato
+        newView.sendFullStateOnReconnect(game);
 
-broadcastSystemUpdate(new PlayerReconnectedUpdate(nickname));
+        // 2. Avviso TUTTI gli altri che lui è tornato
+        broadcastSystemUpdate(new PlayerReconnectedUpdate(nickname));
     }
 
     /* =====================================================================

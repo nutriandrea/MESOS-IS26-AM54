@@ -35,6 +35,21 @@ import java.util.*;
  */
 public class ClientModel {
 
+    //------------------------------------------------------------------------------
+    //Attributi e metodi per notificare UI di cambiamenti
+    private Runnable onModelUpdatedCallback;
+
+    public void setOnModelUpdatedCallback(Runnable callback) {
+        this.onModelUpdatedCallback = callback;
+    }
+
+    private void notifyUI() {
+        if (onModelUpdatedCallback != null) {
+            onModelUpdatedCallback.run();
+        }
+    }
+    //------------------------------------------------------------------------------
+
     // --- 1. STATO GLOBALE ---
     /** Round corrente (inizia da 1 dopo il setup) */
     private int currentRound = 1;
@@ -131,6 +146,7 @@ public class ClientModel {
             turnOrderTrack.add(nickname);
         }
         disconnectedPlayers.remove(nickname);
+        notifyUI();
     }
 
     /**
@@ -146,6 +162,7 @@ public class ClientModel {
      */
     public synchronized void updatePlayerDisconnected(String nickname) {
         disconnectedPlayers.add(nickname);
+        notifyUI();
     }
 
     /**
@@ -160,6 +177,7 @@ public class ClientModel {
      */
     public synchronized void updatePlayerReconnected(String nickname) {
         disconnectedPlayers.remove(nickname);
+        notifyUI();
     }
 
     /** Controlla se un giocatore e' attualmente disconnesso */
@@ -175,6 +193,7 @@ public class ClientModel {
     /** Aggiornato quando cambia il giocatore di turno */
     public synchronized void updateTurn(String nickname) {
         this.currentPlayer = nickname;
+        notifyUI();
     }
 
     /**
@@ -187,6 +206,7 @@ public class ClientModel {
     public synchronized void updateTotemPlacement(String nickname, int position) {
         turnOrderTrack.remove(nickname);
         offeringTrack.put(position, nickname);
+        notifyUI();
     }
 
     /**
@@ -237,7 +257,7 @@ public class ClientModel {
                 playerBuildings.get(nickname).add(temp);
             }
         }
-
+        notifyUI();
     }
 
     public synchronized void updateTotemReturned(String nickname, int newFoodBalance, int newAuraBalance) {
@@ -250,7 +270,7 @@ public class ClientModel {
         }
         playerFood.put(nickname, newFoodBalance);
         playerAura.put(nickname, newAuraBalance);
-
+        notifyUI();
     }
 
     public synchronized void updateEventSnapshot(EventUpdate msg) {
@@ -258,7 +278,7 @@ public class ClientModel {
         msg.getPlayersStats().forEach((nick, stats) -> {
             playerFood.put(nick, stats.food);
             playerAura.put(nick, stats.aura);
-            // playerMagicPoints.put(nick, stats.magicPoints); // (Se ti serve per la GUI)
+            // playerMagicPoints.put(nick, stats.magicPoints); // (Se serve per la GUI)
         });
 
         // Pialla e Ricostruisci la Board in un colpo solo
@@ -268,6 +288,7 @@ public class ClientModel {
         eventLowerRow.clear();     eventLowerRow.addAll(msg.getEventLower());
         upperBuildingRow.clear();  upperBuildingRow.addAll(msg.getBuildUpper());
         lowerBuildingRow.clear();  lowerBuildingRow.addAll(msg.getBuildLower());
+        notifyUI();
     }
 
     public synchronized void updateState(StateChangedUpdate msg) {
@@ -291,31 +312,38 @@ public class ClientModel {
         characterLowerRow.clear(); characterLowerRow.addAll(msg.getCharLower());
         eventUpperRow.clear();     eventUpperRow.addAll(msg.getEventUpper());
         eventLowerRow.clear();     eventLowerRow.addAll(msg.getEventLower());
-upperBuildingRow.clear();  upperBuildingRow.addAll(msg.getBuildUpper());
+        upperBuildingRow.clear();  upperBuildingRow.addAll(msg.getBuildUpper());
         lowerBuildingRow.clear();  lowerBuildingRow.addAll(msg.getBuildLower());
+        notifyUI();
     }
 
     /** Aggiornato quando un giocatore sceglie il colore del totem */
     public synchronized void updateTotemColor(String nickname, TotemColors color) {
         playerColors.put(nickname, color);
+        notifyUI();
     }
 
     /** Aggiornato quando la partita finisce */
     public synchronized void updateEndGame(List<String> winners) {
         this.winners = winners;
+        notifyUI();
     }
 
     /** Aggiornato quando si riceve un messaggio di errore */
     public synchronized void updateError(String message) {
         this.lastErrorMessage = message;
+        notifyUI();
     }
 
     /** Aggiornato per aggiornare cibo e aura di un giocatore */
+    //PROBABILMENTE INUTILE
     public synchronized void updateStats(String nickname, int food, int pp) {
         playerFood.put(nickname, food);
         playerAura.put(nickname, pp);
+        notifyUI();
     }
 
+    //PROBABILMENTE INUTILE
     /** Aggiornato quando cambia l'era */
     public synchronized void updateEra(int era) {
         this.currentEra = era;
@@ -352,4 +380,5 @@ upperBuildingRow.clear();  upperBuildingRow.addAll(msg.getBuildUpper());
     public synchronized List<String> getLowerBuildingRow() { return lowerBuildingRow; }
     public synchronized String getCurrentPlayer() { return currentPlayer; }
     public synchronized List<String> getPlayers() { return players; }
+    public synchronized int getCurrentEra() { return currentEra; }
 }

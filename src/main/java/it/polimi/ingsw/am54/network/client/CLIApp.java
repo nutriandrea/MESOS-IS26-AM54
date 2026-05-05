@@ -3,6 +3,7 @@ package it.polimi.ingsw.am54.network.client;
 import it.polimi.ingsw.am54.model.TotemColors;
 import java.util.Scanner;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class CLIApp {
     private final VirtualServer server;
@@ -10,8 +11,7 @@ public class CLIApp {
     private final Scanner scanner;
     private final String myNickname;
 
-    // Flag per evitare di stampare mille volte mentre si aspetta input
-    private boolean isWaitingForInput = false;
+    private Consumer<String> currentInputHandler = null;
 
     public CLIApp(VirtualServer server, ClientModel model, String nickname, Scanner scanner) {
         this.server = server;
@@ -21,15 +21,36 @@ public class CLIApp {
 
         // Quando il server aggiorna i dati, la CLI ristampa tutto in automatico!
         this.model.setOnModelUpdatedCallback(this::render);
+
+        startInputListener();
+    }
+
+    private void startInputListener() {
+        Thread inputThread = new Thread(() -> {
+            while (true) {
+                if (scanner.hasNextLine()) {
+                    String input = scanner.nextLine();
+
+                    if (currentInputHandler != null) {
+                        // 1. È il nostro turno! Passiamo l'input alla logica di gioco.
+                        currentInputHandler.accept(input);
+                    } else {
+                        // 2. NON è il nostro turno! Ignoriamo l'input e avvisiamo.
+                        System.out.println("⏳ Non è il tuo turno! Attendi la tua mossa.");
+                    }
+                }
+            }
+        });
+        inputThread.setDaemon(true); // Permette al programma di chiudersi correttamente
+        inputThread.start();
     }
 
     // Metodo "Cuore" della CLI: decide cosa stampare in base alla fase del gioco
     public synchronized void render() {
         // Se sto già aspettando che l'utente scriva, non ristampo per non "spaccare" la console
-        if (isWaitingForInput) return;
+        if (currentInputHandler != null) return;
 
         clearConsole(); // (Vedi metodo helper in fondo)
-        System.out.println("=== MESOS - BENVENUTO " + myNickname.toUpperCase() + " ===");
 
         String state = model.getCurrentState();
 
@@ -49,8 +70,8 @@ public class CLIApp {
 
         // Stampa eventuali messaggi di errore
         if (model.getLastErrorMessage() != null) {
-            System.out.println("\n[ERRORE DAL SERVER]: " + model.getLastErrorMessage());
-            // Poi puliamo l'errore o gestiamo come vogliamo
+            System.out.println("\n❌ [ERRORE DAL SERVER]: " + model.getLastErrorMessage());
+            model.clearError();
         }
     }
 
@@ -58,6 +79,7 @@ public class CLIApp {
     // SCHERMATA SETUP
     // -------------------------------------------------------------
     private void renderSetup() {
+        System.out.println("=== MESOS - BENVENUTO " + myNickname.toUpperCase() + " ===");
         System.out.println("\n--- LOBBY E SETUP ---");
         System.out.println("Giocatori connessi: " + model.getPlayers());
         System.out.println("Colori scelti: " + model.getPlayerColors());
@@ -117,66 +139,67 @@ public class CLIApp {
     }
 
     // -------------------------------------------------------------
-    // METODI CHE CHIEDONO INPUT (SBLOCCANO IL THREAD)
+    // METODI CHE CHIEDONO INPUT
     // -------------------------------------------------------------
-    // (Devi lanciarli in un Thread separato per non bloccare il render di rete)
 
     private void askForColor() {
-        isWaitingForInput = true;
-        new Thread(() -> {
-            String colorStr = scanner.nextLine().toUpperCase();
+        currentInputHandler = (input) -> {
             try {
-                TotemColors color = TotemColors.valueOf(colorStr);
+                TotemColors color = TotemColors.valueOf(input.toUpperCase());
                 server.chooseTotem(color);
+                currentInputHandler = null; // Chiudiamo l'ascolto.
             } catch (Exception e) {
                 System.out.println("Colore non valido. Riprova.");
             }
-            isWaitingForInput = false;
-        }).start();
+        };
     }
 
     private void askForStart() {
-        isWaitingForInput = true;
-        new Thread(() -> {
-            String cmd = scanner.nextLine();
-            if (cmd.equalsIgnoreCase("START")) {
+        currentInputHandler = (input) -> {
+            if (input.equalsIgnoreCase("START")) {
                 server.setupGame();
+                currentInputHandler = null; // Chiudiamo l'ascolto.
             }
-            isWaitingForInput = false;
-        }).start();
+        };
     }
 
     private void askForTotemPlacement() {
-        isWaitingForInput = true;
-        new Thread(() -> {
+        currentInputHandler = (input) -> {
             try {
-                int pos = Integer.parseInt(scanner.nextLine());
+                int pos = Integer.parseInt(input);
                 server.placeTotem(pos);
+                currentInputHandler = null;
             } catch (NumberFormatException e) {
                 System.out.println("Inserisci un numero valido.");
-                askForTotemPlacement();
             }
-            isWaitingForInput = false;
-        }).start();
+        };
     }
 
     private void askForPick() {
-        isWaitingForInput = true;
-        new Thread(() -> {
-            String choice = scanner.nextLine();
-            if (choice.equals("1")) {
+        currentInputHandler = (input) -> {
+            if (input.equals("1") || input.equals("2")) {
+                String row = input.equals("1") ? "upper" : "lower";
                 System.out.print("Indice della carta (0, 1...): ");
-                int idx = Integer.parseInt(scanner.nextLine());
-                server.pickCard("upper", idx);
-            } else if (choice.equals("2")) {
-                System.out.print("Indice della carta (0, 1...): ");
-                int idx = Integer.parseInt(scanner.nextLine());
-                server.pickCard("lower", idx);
-            } else if (choice.equals("3")) {
+
+                // Mossa avanzata: Cambiamo l'handler "al volo" per aspettare il secondo input!
+                currentInputHandler = (idxInput) -> {
+                    try {
+                        int idx = Integer.parseInt(idxInput);
+                        server.pickCard(row, idx);
+                        currentInputHandler = null;
+                    } catch (NumberFormatException e) {
+                        System.out.println("Indice non valido. Operazione annullata.");
+                        currentInputHandler = null;
+                        render(); // Ridisegna per riniziare la scelta
+                    }
+                };
+            } else if (input.equals("3")) {
                 server.endTurn();
+                currentInputHandler = null;
+            } else {
+                System.out.println("Scelta non valida. Inserisci 1, 2 o 3.");
             }
-            isWaitingForInput = false;
-        }).start();
+        };
     }
 
     // -------------------------------------------------------------
@@ -278,10 +301,7 @@ public class CLIApp {
             System.out.println("  " + entry.getKey() + ") " + entry.getValue());
         }
 
-        System.out.println("\n▼ --- FILA INFERIORE --- ▼");
-        System.out.println("Eventi:     " + formattaRiga(model.getEventLowerRow()));
-        System.out.println("Personaggi: " + formattaRiga(model.getCharacterLowerRow()));
-        System.out.println("Edifici:    " + formattaRiga(model.getLowerBuildingRow()));
+        loweRow();
 
         System.out.println("\n👥 --- STATISTICHE GIOCATORI --- 👥");
         for (String p : model.getPlayers()) {
@@ -297,6 +317,13 @@ public class CLIApp {
         System.out.println("=================================================================");
     }
 
+    private void loweRow() {
+        System.out.println("\n▼ --- FILA INFERIORE --- ▼");
+        System.out.println("Eventi:     " + formattaRiga(model.getEventLowerRow()));
+        System.out.println("Personaggi: " + formattaRiga(model.getCharacterLowerRow()));
+        System.out.println("Edifici:    " + formattaRiga(model.getLowerBuildingRow()));
+    }
+
     private void renderEndGame() {
         System.out.println("\n!!! PARTITA TERMINATA !!!");
         System.out.println("Vincitori: " + model.getWinners());
@@ -305,5 +332,16 @@ public class CLIApp {
     public static void clearConsole() {
         // Stampa tante righe vuote per pulire lo schermo
         for (int i = 0; i < 20; i++) System.out.println();
+    }
+
+    private void clearInputBuffer() {
+        try {
+            // System.in.available() restituisce il numero di byte pronti nel buffer
+            while (System.in.available() > 0) {
+                System.in.read(); // Legge e scarta i byte accumulati
+            }
+        } catch (java.io.IOException e) {
+            // Se c'è un errore nella lettura del buffer, non facciamo nulla
+        }
     }
 }

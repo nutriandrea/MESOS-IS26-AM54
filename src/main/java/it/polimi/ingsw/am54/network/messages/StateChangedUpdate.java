@@ -17,7 +17,7 @@ public class StateChangedUpdate implements Update {
         public final List<String> tribe;
         public final List<String> buildings;
 
-        public PlayerSnapshot(int food, int aura, int magicPoints, TotemColors color,  List<String> tribe, List<String> buildings) {
+        public PlayerSnapshot(int food, int aura, int magicPoints, TotemColors color, List<String> tribe, List<String> buildings) {
             this.food = food;
             this.aura = aura;
             this.magicPoints = magicPoints;
@@ -27,6 +27,7 @@ public class StateChangedUpdate implements Update {
         }
     }
 
+    private final int currentEra;
     private final String stateName;
     private final Map<String, PlayerSnapshot> playersStats;
     private final List<String> turnOrderTrack;
@@ -34,6 +35,7 @@ public class StateChangedUpdate implements Update {
     private final List<String> charUpper, charLower, eventUpper, eventLower, buildUpper, buildLower;
 
     public StateChangedUpdate(String stateName,
+                              int currentEra,
                               Map<String, PlayerSnapshot> playersStats,
                               List<String> turnOrderTrack,
                               Map<Integer, String> offeringTrack,
@@ -50,16 +52,50 @@ public class StateChangedUpdate implements Update {
         this.eventLower = eventLower;
         this.buildUpper = buildUpper;
         this.buildLower = buildLower;
+        this.currentEra = currentEra;
     }
 
-    public String getStateName() { return stateName; }
-    public Map<String, PlayerSnapshot> getPlayersStats() { return playersStats; }
-    public List<String> getTurnOrderTrack() { return turnOrderTrack; }
-    public Map<Integer, String> getOfferingTrack() { return offeringTrack; }
-    public List<String> getCharUpper() { return charUpper; }
-    public List<String> getCharLower() { return charLower; }
-    public List<String> getEventUpper() { return eventUpper; }
-    public List<String> getEventLower() { return eventLower; }
-    public List<String> getBuildUpper() { return buildUpper; }
-    public List<String> getBuildLower() { return buildLower; }
+    public String getStateName() {
+        return stateName;
+    }
+
+    public Map<String, PlayerSnapshot> getPlayersStats() {
+        return playersStats;
+    }
+
+    public List<String> getTurnOrderTrack() {
+        return turnOrderTrack;
+    }
+
+    public Map<Integer, String> getOfferingTrack() {
+        return offeringTrack;
+    }
+
+    public List<String> getCharUpper() {
+        return charUpper;
+    }
+
+    public List<String> getCharLower() {
+        return charLower;
+    }
+
+    public List<String> getEventUpper() {
+        return eventUpper;
+    }
+
+    public List<String> getEventLower() {
+        return eventLower;
+    }
+
+    public List<String> getBuildUpper() {
+        return buildUpper;
+    }
+
+    public List<String> getBuildLower() {
+        return buildLower;
+    }
+
+    public int getCurrentEra() {
+        return currentEra;
+    }
 }

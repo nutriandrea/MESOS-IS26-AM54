@@ -53,18 +53,38 @@ public class EventEffect implements IEffect<EventCard> {
 
     private void resolveFarmer(Game g, EventCard ec) {
         g.getPlayers().forEach(pl -> {
-            int playerMaxFood = pl.getFood();
-            int sconto = pl.getEventCostFood();
-            int costo = pl.getMyTribe().size() + sconto;
+            int playerFood = pl.getFood();
 
-            if (costo > 0) {
-                if (costo > playerMaxFood) {
-                    pl.modifyFood(-playerMaxFood);
-                    pl.modifyAuraPoints((playerMaxFood - costo) * ec.getAuraPerCharacter());
+            // 1. REGOLA FISSA: Conta i Farmer e moltiplica per 3
+            int scontoContadini = (int) pl.getMyTribe().stream()
+                    .filter(c -> c.getJobType() == JobType.FARMER)
+                    .count() * 3;
+
+            // 2. Sommiamo lo sconto dei Farmer con eventuali sconti degli Edifici
+            int scontoTotale = scontoContadini + pl.getEventCostFood();
+
+            // 3. Il costo base è 1 cibo per OGNI carta nella tribù (inclusi i Farmer stessi)
+            int costoBase = pl.getMyTribe().size();
+
+            // 4. Calcoliamo il costo netto
+            int costoFinale = costoBase - scontoTotale;
+
+            if (costoFinale > 0) {
+                if (costoFinale > playerFood) {
+                    // Non ha abbastanza cibo: paga quello che ha e prende il malus in Aura
+                    pl.modifyFood(-playerFood);
+
+                    int ciboMancante = costoFinale - playerFood;
+                    int auraPenalty = Math.abs(ec.getAuraPerCharacter());
+                    if (auraPenalty == 0) auraPenalty = 2; // Paracadute di sicurezza
+
+                    pl.modifyAuraPoints(-(ciboMancante * auraPenalty));
                 } else {
-                    pl.modifyFood(-costo);
+                    // Paga normalmente
+                    pl.modifyFood(-costoFinale);
                 }
             }
+
             pl.resetEventAttributes();
         });
     }

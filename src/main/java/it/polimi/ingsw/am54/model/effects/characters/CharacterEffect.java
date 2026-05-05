@@ -16,11 +16,16 @@ public class CharacterEffect implements IEffect<CharacterCard> {
     @Override
     public void apply(Player p, Game g, CharacterCard card) {
         switch (effectName) {
-            case "HUNTER" -> p.modifyFood((int) (p.getMyTribe().stream()
-                    .filter(c -> c.getJobType() == JobType.HUNTER).count() + 1));
+            case "HUNTER" -> {
+                if (card.getLevel() > 0) {
+                    int totalHunters = (int) p.getMyTribe().stream()
+                            .filter(c -> c.getJobType() == JobType.HUNTER).count();
+                    p.modifyFood(totalHunters);
+                }
+            }
             case "CONSTRUCTOR" -> p.modifyMyBuildingDiscount(card.getLevel());
             case "SHAMAN" -> p.modifyMagicPoints(card.getLevel());
-            case "FARMER" -> p.modifyMyFoodDiscount(card.getLevel());
+            case "FARMER" -> p.modifyMyFoodDiscount(p.getMyFoodDiscount()+3);
         }
     }
 }

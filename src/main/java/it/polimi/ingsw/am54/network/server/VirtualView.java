@@ -229,7 +229,18 @@ public class VirtualView implements IGameObserver {
 
         // 2. Ordine di turno e Tracciato Offerte (FORMATTATI)
         List<String> turnOrder = b.getTurnOrderTile().stream()
-                .map(slot -> "[Slot " + slot.getPosition() + " | Cibo: " + (slot.getBonusFood() > 0 ? "+" : "") + slot.getBonusFood() + "] -> " + (slot.getOccupiedBy() != null ? slot.getOccupiedBy().getNickname() : "VUOTO"))
+                .map(slot -> {
+                    int bonus = slot.getBonusFood();
+                    // Crea la stringa del cibo (es. "+2", "0", "-1")
+                    String foodStr = (bonus > 0 ? "+" : "") + bonus;
+
+                    // Se il bonus è negativo, aggiunge l'avviso dell'Aura (basato sulla logica di PickingState)
+                    String auraWarning = (bonus < 0) ? " (-2 ✨ se non hai cibo)" : "";
+
+                    String occName = (slot.getOccupiedBy() != null) ? slot.getOccupiedBy().getNickname() : "VUOTO";
+
+                    return "[Slot " + slot.getPosition() + " | Cibo: " + foodStr + auraWarning + "] -> " + occName;
+                })
                 .collect(Collectors.toList());
 
         java.util.Map<Integer, String> offering = new java.util.LinkedHashMap<>();
@@ -249,7 +260,7 @@ public class VirtualView implements IGameObserver {
 
         // Spedisci il super-pacchetto!
         connection.sendUpdate(new StateChangedUpdate(
-                newState.getClass().getSimpleName(),
+                newState.getClass().getSimpleName(), game.getCurrentEra(),
                 stats, turnOrder, offering,
                 charUp, charLow, eventUp, eventLow, buildUp, buildLow
         ));
@@ -281,7 +292,13 @@ public class VirtualView implements IGameObserver {
 
         // 2. Ordine di turno e Tracciato Offerte (FORMATTATI)
         List<String> turnOrder = b.getTurnOrderTile().stream()
-                .map(slot -> "[Slot " + slot.getPosition() + " | Cibo: " + (slot.getBonusFood() > 0 ? "+" : "") + slot.getBonusFood() + "] -> " + (slot.getOccupiedBy() != null ? slot.getOccupiedBy().getNickname() : "VUOTO"))
+                .map(slot -> {
+                    int bonus = slot.getBonusFood();
+                    String foodStr = (bonus > 0 ? "+" : "") + bonus;
+                    String auraWarning = (bonus < 0) ? " (-2 ✨ se non hai cibo)" : "";
+                    String occName = (slot.getOccupiedBy() != null) ? slot.getOccupiedBy().getNickname() : "VUOTO";
+                    return "[Slot " + slot.getPosition() + " | Cibo: " + foodStr + auraWarning + "] -> " + occName;
+                })
                 .collect(Collectors.toList());
 
         java.util.Map<Integer, String> offering = new java.util.LinkedHashMap<>();
@@ -302,6 +319,7 @@ public class VirtualView implements IGameObserver {
         // Manda il pacchetto solo a QUESTA connessione
         connection.sendUpdate(new StateChangedUpdate(
                 game.getCurrentState().getClass().getSimpleName(),
+                game.getCurrentEra(),
                 stats, turnOrder, offering,
                 charUp, charLow, eventUp, eventLow, buildUp, buildLow
         ));

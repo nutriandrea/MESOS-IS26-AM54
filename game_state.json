@@ -1,0 +1,294 @@
+{
+  "currentEra" : 1,
+  "roundCount" : 1,
+  "currentPlayerNickname" : "andrea",
+  "currentStateName" : "StartTurnState",
+  "playerCount" : 2,
+  "deckTribuCards" : [ {
+    "name" : "Event-3",
+    "type" : "EventCard",
+    "cost" : 0
+  }, {
+    "name" : "Event-3",
+    "type" : "EventCard",
+    "cost" : 0
+  }, {
+    "name" : "ARTIST",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "CONSTRUCTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "HUNTER",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "ARTIST",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "SHAMAN",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "HUNTER",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "Event-3",
+    "type" : "EventCard",
+    "cost" : 0
+  }, {
+    "name" : "Event-3",
+    "type" : "EventCard",
+    "cost" : 0
+  }, {
+    "name" : "INVENTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "INVENTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "INVENTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "CONSTRUCTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "HUNTER",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "SHAMAN",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "Event-2",
+    "type" : "EventCard",
+    "cost" : 0
+  }, {
+    "name" : "HUNTER",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "SHAMAN",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "Event-2",
+    "type" : "EventCard",
+    "cost" : 0
+  }, {
+    "name" : "SHAMAN",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "Event-2",
+    "type" : "EventCard",
+    "cost" : 0
+  }, {
+    "name" : "Event-2",
+    "type" : "EventCard",
+    "cost" : 0
+  }, {
+    "name" : "CONSTRUCTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "HUNTER",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "INVENTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "INVENTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "FARMER",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "INVENTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "ARTIST",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "INVENTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "CONSTRUCTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "INVENTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "INVENTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "HUNTER",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "INVENTOR",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "ARTIST",
+    "type" : "CharacterCard",
+    "cost" : 0
+  }, {
+    "name" : "Event-1",
+    "type" : "EventCard",
+    "cost" : 0
+  }, {
+    "name" : "SHAMAN",
+    "type" : "CharacterCard",
+    "cost" : 0
+  } ],
+  "deckBuildingsCards" : [ {
+    "name" : "EXTRA_PICK",
+    "type" : "BuildingCard",
+    "cost" : 9
+  }, {
+    "name" : "AURA_PER_JOB",
+    "type" : "BuildingCard",
+    "cost" : 6
+  }, {
+    "name" : "AURA_PER_JOB",
+    "type" : "BuildingCard",
+    "cost" : 7
+  }, {
+    "name" : "DOUBLE_AURA_SHAMAN",
+    "type" : "BuildingCard",
+    "cost" : 7
+  }, {
+    "name" : "EVENT_FOOD_DISCOUNT",
+    "type" : "BuildingCard",
+    "cost" : 7
+  } ],
+  "boardSnapshot" : {
+    "characterUpperRow" : [ {
+      "name" : "FARMER",
+      "type" : "CHARACTER",
+      "cost" : 0
+    }, {
+      "name" : "HUNTER",
+      "type" : "CHARACTER",
+      "cost" : 0
+    }, {
+      "name" : "CONSTRUCTOR",
+      "type" : "CHARACTER",
+      "cost" : 0
+    } ],
+    "characterLowerRow" : [ {
+      "name" : "FARMER",
+      "type" : "CHARACTER",
+      "cost" : 0
+    }, {
+      "name" : "CONSTRUCTOR",
+      "type" : "CHARACTER",
+      "cost" : 0
+    }, {
+      "name" : "ARTIST",
+      "type" : "CHARACTER",
+      "cost" : 0
+    } ],
+    "eventUpperRow" : [ {
+      "name" : "FARMER - ERA: 1",
+      "type" : "EVENT",
+      "cost" : 0
+    }, {
+      "name" : "SHAMAN - ERA: 1",
+      "type" : "EVENT",
+      "cost" : 0
+    }, {
+      "name" : "HUNTER - ERA: 1",
+      "type" : "EVENT",
+      "cost" : 0
+    } ],
+    "eventLowerRow" : [ ],
+    "buildingUpperRow" : [ {
+      "name" : "SIX_OF_TYPE",
+      "type" : "BUILDING",
+      "cost" : 4
+    } ],
+    "buildingLowerRow" : [ ],
+    "offeringTrack" : [ {
+      "id" : "B",
+      "cardsFromUpper" : 0,
+      "cardsFromLower" : 1,
+      "foodBonus" : 0
+    }, {
+      "id" : "C",
+      "cardsFromUpper" : 1,
+      "cardsFromLower" : 0,
+      "foodBonus" : 0
+    }, {
+      "id" : "E",
+      "cardsFromUpper" : 1,
+      "cardsFromLower" : 1,
+      "foodBonus" : 0
+    }, {
+      "id" : "F",
+      "cardsFromUpper" : 2,
+      "cardsFromLower" : 0,
+      "foodBonus" : 0
+    } ],
+    "turnOrderTile" : [ {
+      "id" : "B",
+      "occupiedByNickname" : "andrea",
+      "occupied" : true
+    }, {
+      "id" : "C",
+      "occupiedByNickname" : "silvano",
+      "occupied" : true
+    } ]
+  },
+  "players" : [ {
+    "nickname" : "andrea",
+    "totemColor" : "RED",
+    "food" : 2,
+    "aura" : 0,
+    "magicPoints" : 0,
+    "extraPick" : false,
+    "hasPlacedTotem" : false,
+    "eventCostFood" : 0,
+    "eventCostAura" : 0,
+    "buildingDiscount" : 0,
+    "foodDiscount" : 0,
+    "currentTileId" : null,
+    "myTribe" : [ ],
+    "myBuildings" : [ ]
+  }, {
+    "nickname" : "silvano",
+    "totemColor" : "BLACK",
+    "food" : 3,
+    "aura" : 0,
+    "magicPoints" : 0,
+    "extraPick" : false,
+    "hasPlacedTotem" : false,
+    "eventCostFood" : 0,
+    "eventCostAura" : 0,
+    "buildingDiscount" : 0,
+    "foodDiscount" : 0,
+    "currentTileId" : null,
+    "myTribe" : [ ],
+    "myBuildings" : [ ]
+  } ]
+}

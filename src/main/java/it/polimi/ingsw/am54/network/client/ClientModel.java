@@ -249,13 +249,13 @@ public class ClientModel {
             if(index < characterUpperRow.size()) {
                 // Carta personaggio dalla fila superiore
                 String temp = characterUpperRow.get(index);
-                characterUpperRow.set(index, null);
+                characterUpperRow.remove(index);
                 playerTribe.get(nickname).add(temp);
             } else {
                 // Carta edificio dalla fila superiore
                 int buildingIndex = index - characterUpperRow.size();
                 String temp = upperBuildingRow.get(buildingIndex);
-                upperBuildingRow.set(buildingIndex, null);
+                upperBuildingRow.remove(buildingIndex);
                 playerFood.put(nickname, newFoodBalance);
                 playerBuildings.get(nickname).add(temp);
             }
@@ -263,17 +263,19 @@ public class ClientModel {
             if(index < characterLowerRow.size()) {
                 // Carta personaggio dalla fila inferiore
                 String temp = characterLowerRow.get(index);
-                characterLowerRow.set(index, null);
+                characterLowerRow.remove(index);
                 playerTribe.get(nickname).add(temp);
             } else {
                 // Carta edificio dalla fila inferiore
                 int buildingIndex = index - characterLowerRow.size();
                 String temp = lowerBuildingRow.get(buildingIndex);
-                lowerBuildingRow.set(buildingIndex, null);
+                lowerBuildingRow.remove(buildingIndex);
                 playerFood.put(nickname, newFoodBalance);
                 playerBuildings.get(nickname).add(temp);
             }
         }
+
+        playerFood.put(nickname, newFoodBalance);
         this.offeringTrack.clear();
         this.offeringTrack.putAll(updatedOffering);
         notifyUI();
@@ -315,6 +317,7 @@ public class ClientModel {
     public synchronized void updateState(StateChangedUpdate msg) {
         // 1. Aggiorna lo stato testuale
         this.currentState = msg.getStateName();
+        this.currentEra = msg.getCurrentEra();
 
         // 2. Sincronizza giocatori, colori e statistiche
         msg.getPlayersStats().forEach((nick, stats) -> {
@@ -358,18 +361,8 @@ public class ClientModel {
         notifyUI();
     }
 
-    /** Aggiornato per aggiornare cibo e aura di un giocatore */
-    //PROBABILMENTE INUTILE
-    public synchronized void updateStats(String nickname, int food, int pp) {
-        playerFood.put(nickname, food);
-        playerAura.put(nickname, pp);
-        notifyUI();
-    }
-
-    //PROBABILMENTE INUTILE
-    /** Aggiornato quando cambia l'era */
-    public synchronized void updateEra(int era) {
-        this.currentEra = era;
+    public synchronized void clearError() {
+        this.lastErrorMessage = null;
     }
 
     /* =====================================================================

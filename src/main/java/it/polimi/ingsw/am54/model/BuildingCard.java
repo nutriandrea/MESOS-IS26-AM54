@@ -75,4 +75,8 @@ public class BuildingCard extends Card implements IPurchasable {
         this.resolveEffects(player, game);
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
 }

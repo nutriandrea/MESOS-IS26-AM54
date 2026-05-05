@@ -14,12 +14,16 @@ public class StateChangedUpdate implements Update {
         public final int aura;
         public final int magicPoints;
         public final TotemColors color; // Utile da mandare all'inizio
+        public final List<String> tribe;
+        public final List<String> buildings;
 
-        public PlayerSnapshot(int food, int aura, int magicPoints, TotemColors color) {
+        public PlayerSnapshot(int food, int aura, int magicPoints, TotemColors color,  List<String> tribe, List<String> buildings) {
             this.food = food;
             this.aura = aura;
             this.magicPoints = magicPoints;
             this.color = color;
+            this.tribe = tribe;
+            this.buildings = buildings;
         }
     }
 

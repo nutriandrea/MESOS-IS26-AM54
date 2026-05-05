@@ -13,6 +13,9 @@ public class MainClient {
 
         System.out.print("Inserisci IP Server [IP o localhost]: ");
         String ip = scanner.nextLine();
+        if (ip.trim().isEmpty()) {
+            ip = "localhost";
+        }
 
 
         try {

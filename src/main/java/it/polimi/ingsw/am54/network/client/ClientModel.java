@@ -4,6 +4,8 @@ import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.messages.EventUpdate;
 import it.polimi.ingsw.am54.network.messages.StateChangedUpdate;
 import java.util.*;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * ============================================================================
@@ -38,6 +40,7 @@ public class ClientModel {
     //------------------------------------------------------------------------------
     //Attributi e metodi per notificare UI di cambiamenti
     private Runnable onModelUpdatedCallback;
+    private Timer debounceTimer;
 
     public void setOnModelUpdatedCallback(Runnable callback) {
         this.onModelUpdatedCallback = callback;
@@ -45,7 +48,18 @@ public class ClientModel {
 
     private void notifyUI() {
         if (onModelUpdatedCallback != null) {
-            onModelUpdatedCallback.run();
+            // Se c'è già un aggiornamento in coda, lo annulliamo
+            if (debounceTimer != null) {
+                debounceTimer.cancel();
+            }
+            // Ne creiamo uno nuovo che aspetterà 100 millisecondi prima di ridisegnare
+            debounceTimer = new Timer(true); // "true" significa che non bloccherà la chiusura del gioco
+            debounceTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    onModelUpdatedCallback.run();
+                }
+            }, 100);
         }
     }
     //------------------------------------------------------------------------------
@@ -204,8 +218,11 @@ public class ClientModel {
      * - Aggiunge il giocatore all'offeringTrack alla posizione specificata
      */
     public synchronized void updateTotemPlacement(String nickname, int position) {
-        turnOrderTrack.remove(nickname);
-        offeringTrack.put(position, nickname);
+        turnOrderTrack.removeIf(s -> s.contains(nickname));
+        String oldTile = offeringTrack.get(position);
+        if (oldTile != null) {
+            offeringTrack.put(position, oldTile.replace("VUOTO", nickname));
+        }
         notifyUI();
     }
 
@@ -226,7 +243,7 @@ public class ClientModel {
      * @param index indice della carta nella riga
      * @param newFoodBalance nuovo bilancio cibo del giocatore
      */
-    public synchronized void updateCardPicked(String nickname, String row, int index, int newFoodBalance) {
+    public synchronized void updateCardPicked(String nickname, String row, int index, int newFoodBalance, java.util.Map<Integer, String> updatedOffering) {
         boolean isUpper = row.equalsIgnoreCase("upper");
         if(isUpper){
             if(index < characterUpperRow.size()) {
@@ -257,6 +274,8 @@ public class ClientModel {
                 playerBuildings.get(nickname).add(temp);
             }
         }
+        this.offeringTrack.clear();
+        this.offeringTrack.putAll(updatedOffering);
         notifyUI();
     }
 
@@ -278,6 +297,8 @@ public class ClientModel {
         msg.getPlayersStats().forEach((nick, stats) -> {
             playerFood.put(nick, stats.food);
             playerAura.put(nick, stats.aura);
+            playerTribe.put(nick, new ArrayList<>(stats.tribe));
+            playerBuildings.put(nick, new ArrayList<>(stats.buildings));
             // playerMagicPoints.put(nick, stats.magicPoints); // (Se serve per la GUI)
         });
 
@@ -301,6 +322,8 @@ public class ClientModel {
             playerColors.put(nick, stats.color);
             playerFood.put(nick, stats.food);
             playerAura.put(nick, stats.aura);
+            playerTribe.put(nick, new ArrayList<>(stats.tribe));
+            playerBuildings.put(nick, new ArrayList<>(stats.buildings));
         });
 
         // 3. Sincronizza posizioni dei totem
@@ -381,4 +404,8 @@ public class ClientModel {
     public synchronized String getCurrentPlayer() { return currentPlayer; }
     public synchronized List<String> getPlayers() { return players; }
     public synchronized int getCurrentEra() { return currentEra; }
+    public synchronized Map<String, Integer> getPlayerFood() { return playerFood; }
+    public synchronized Map<String, Integer> getPlayerAura() { return playerAura; }
+    public synchronized Map<String, List<String>> getPlayerTribe() { return playerTribe; }
+    public synchronized Map<String, List<String>> getPlayerBuildings() { return playerBuildings; }
 }

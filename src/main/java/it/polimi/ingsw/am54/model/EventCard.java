@@ -14,6 +14,7 @@ public class EventCard extends TribeCard {
     private int penalty;
     private int bonus;
     private int malus;
+    private String name;
 
     public EventCard(int era, boolean finalEvent, List<IEffect<EventCard>> effects,
                      int baseFood, int auraPerCharacter, int threshold,
@@ -38,7 +39,7 @@ public class EventCard extends TribeCard {
      * @return nome della carta (es. "Event-1", "Event-2")
      */
     public String getName() {
-        return "Event-" + getEra();
+        return this.name != null ? this.name + " - ERA: " + getEra() : "Event - Era: " + getEra();
     }
 
     public int getBaseFood() {
@@ -87,5 +88,10 @@ public class EventCard extends TribeCard {
     public boolean shouldResolveLast() {
         return effects.stream().anyMatch(IEffect::shouldResolveLast);
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
 
 }

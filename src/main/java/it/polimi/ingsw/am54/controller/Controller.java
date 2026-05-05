@@ -144,6 +144,10 @@ public class Controller {
         // 1. Invio lo snapshot SOLO al giocatore che è appena rientrato
         newView.sendFullStateOnReconnect(game);
 
+        if (game.getCurrentPlayer() != null) {
+            newView.sendUpdate(new TurnChangedUpdate(game.getCurrentPlayer().getNickname()));
+        }
+
         // 2. Avviso TUTTI gli altri che lui è tornato
         broadcastSystemUpdate(new PlayerReconnectedUpdate(nickname));
     }
@@ -176,6 +180,7 @@ public class Controller {
     public void handlePickCard(String nickname, String row, int index) {
         executeCommand(nickname, () -> {
             game.pickCard(nickname, row, index);
+            checkAndResolveAutomaticPhases();
             saveState();
         });
     }
@@ -183,6 +188,7 @@ public class Controller {
     public void handleEndTurn(String nickname) {
         executeCommand(nickname, () -> {
             game.endTurn(nickname);
+            checkAndResolveAutomaticPhases();
             saveState();
         });
     }
@@ -243,6 +249,18 @@ public class Controller {
             for (VirtualView vv : virtualViews.values()) {
                 vv.sendUpdate(update);
             }
+        }
+    }
+
+    private void checkAndResolveAutomaticPhases() throws Exception {
+        // Se siamo finiti nella fase Eventi, risolvila automaticamente
+        if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.EventState) {
+            game.getCurrentState().resolvePhase(game);
+        }
+
+        // Se dopo gli eventi (o in altri modi) siamo finiti nella fase finale, calcola i vincitori
+        if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.EndGameState) {
+            game.getCurrentState().resolvePhase(game);
         }
     }
 }

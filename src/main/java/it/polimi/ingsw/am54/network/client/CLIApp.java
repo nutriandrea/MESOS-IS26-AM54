@@ -154,6 +154,7 @@ public class CLIApp {
                 server.placeTotem(pos);
             } catch (NumberFormatException e) {
                 System.out.println("Inserisci un numero valido.");
+                askForTotemPlacement();
             }
             isWaitingForInput = false;
         }).start();
@@ -182,46 +183,70 @@ public class CLIApp {
     // METODI HELPER GRAFICI
     // -------------------------------------------------------------
     private String renderizzaCarta(String cardData) {
+        // 1. Controllo sicurezza base
         if (cardData == null || cardData.equals("null")) return "[ VUOTO ]";
-        if (cardData.equals("EVENT")) return "[ ! EVENTO ! ]";
 
+        // 2. Divisione dei dati inviati dal Server
         String[] parts = cardData.split("\\|");
-        if (parts.length < 3) return "[" + cardData + "]";
+
+        // Se il server ha inviato per sbaglio solo il nome crudo (fallback di emergenza)
+        if (parts.length < 2) return "[ " + cardData + " ]";
 
         String tipo = parts[0];
-        int val1 = Integer.parseInt(parts[1]);
-        int val2 = Integer.parseInt(parts[2]);
+
+        // 3. Gestione speciale per gli EVENTI (che hanno solo TIPO e NOME)
+        if (tipo.equals("EVENT")) {
+            String nomeEvento = parts.length > 1 ? parts[1] : "Sconosciuto";
+            return "[ 📜 " + nomeEvento + " ]";
+        }
+
+        // 4. Da qui in poi assumiamo sia Personaggio o Edificio (Servono almeno 3 parametri)
+        if (parts.length < 3) return "[ " + cardData + " ]";
+
+        int val1 = Integer.parseInt(parts[1]); // Livello o Costo
+        int val2 = Integer.parseInt(parts[2]); // Aura
 
         StringBuilder visual = new StringBuilder();
-        visual.append("[ ").append(tipo).append(" ");
+        visual.append("[ ");
 
+        // 5. Disegno della carta con Emoji
         switch (tipo) {
             case "SHAMAN":
+                visual.append("SHAMAN ");
                 if (val1 > 0) visual.append("★".repeat(val1));
                 break;
             case "HUNTER":
+                visual.append("HUNTER ");
                 if (val1 > 0) visual.append("🍖".repeat(val1));
                 break;
             case "CONSTRUCTOR":
+                visual.append("CONSTRUCTOR ");
                 if (val1 > 0) visual.append("🧱-").append(val1);
                 if (val2 > 0) visual.append(" ✨").append(val2);
                 break;
             case "FARMER":
+                visual.append("FARMER ");
                 if (val1 > 0) visual.append("🌾-").append(val1);
                 break;
             case "INVENTOR":
+                visual.append("INVENTOR ");
                 if (val1 > 0) visual.append("⚙️ Liv.").append(val1);
                 break;
             case "ARTIST":
-                visual.append("🎨");
+                visual.append("ARTIST 🎨");
                 break;
             case "BUILDING":
+                // L'edificio ha un 4° parametro: il Nome
                 String nome = parts.length > 3 ? parts[3] : "Speciale";
-                visual.append("🏛️ ").append(nome).append(" (Cost:🍖").append(val1).append(" Aura:✨").append(val2).append(")");
+                visual.append("🏛️ ").append(nome)
+                        .append(" (Cost:🍖").append(val1)
+                        .append(" Aura:✨").append(val2).append(")");
                 break;
             default:
+                visual.append(tipo);
                 break;
         }
+
         visual.append(" ]");
         return visual.toString();
     }
@@ -235,25 +260,41 @@ public class CLIApp {
     }
 
     private void stampaTabellone() {
-        System.out.println("\n================= TABELLONE ==================");
+        System.out.println("\n=========================== TABELLONE ===========================");
         System.out.println("Era: " + model.getCurrentEra());
-        // 1. CARTE IN ALTO
+
         System.out.println("\n▲ --- FILA SUPERIORE --- ▲");
         System.out.println("Eventi:     " + formattaRiga(model.getEventUpperRow()));
         System.out.println("Personaggi: " + formattaRiga(model.getCharacterUpperRow()));
         System.out.println("Edifici:    " + formattaRiga(model.getUpperBuildingRow()));
 
-        // 2. TRACCIATI CENTRALI
-        System.out.println("\n▶ --- TRACCIATO --- ◀");
-        System.out.println("Ordine Turno: " + String.join(" -> ", model.getTurnOrderTrack()));
-        System.out.println("Offerte:      " + model.getOfferingTrack());
+        System.out.println("\n▶ --- TRACCIATI CENTRALI --- ◀");
+        System.out.println("Ordine Turno:");
+        for (String slot : model.getTurnOrderTrack()) {
+            System.out.println("  " + slot);
+        }
+        System.out.println("\nOfferte:");
+        for (java.util.Map.Entry<Integer, String> entry : model.getOfferingTrack().entrySet()) {
+            System.out.println("  " + entry.getKey() + ") " + entry.getValue());
+        }
 
-        // 3. CARTE IN BASSO
         System.out.println("\n▼ --- FILA INFERIORE --- ▼");
         System.out.println("Eventi:     " + formattaRiga(model.getEventLowerRow()));
         System.out.println("Personaggi: " + formattaRiga(model.getCharacterLowerRow()));
         System.out.println("Edifici:    " + formattaRiga(model.getLowerBuildingRow()));
-        System.out.println("==============================================");
+
+        System.out.println("\n👥 --- STATISTICHE GIOCATORI --- 👥");
+        for (String p : model.getPlayers()) {
+            Integer food = model.getPlayerFood().get(p);
+            Integer aura = model.getPlayerAura().get(p);
+            System.out.println("🔹 " + p.toUpperCase() + " | 🍖 Cibo: " + (food != null ? food : 0) + " | ✨ Aura: " + (aura != null ? aura : 0));
+
+            List<String> tribe = model.getPlayerTribe().get(p);
+            List<String> bldgs = model.getPlayerBuildings().get(p);
+            System.out.println("   Tribù:   " + (tribe != null && !tribe.isEmpty() ? formattaRiga(tribe) : "[ VUOTA ]"));
+            System.out.println("   Edifici: " + (bldgs != null && !bldgs.isEmpty() ? formattaRiga(bldgs) : "[ VUOTI ]"));
+        }
+        System.out.println("=================================================================");
     }
 
     private void renderEndGame() {
@@ -263,6 +304,6 @@ public class CLIApp {
 
     public static void clearConsole() {
         // Stampa tante righe vuote per pulire lo schermo
-        for (int i = 0; i < 50; i++) System.out.println();
+        for (int i = 0; i < 20; i++) System.out.println();
     }
 }

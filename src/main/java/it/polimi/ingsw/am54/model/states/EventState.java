@@ -7,7 +7,7 @@ import it.polimi.ingsw.am54.model.GameState;
 public class EventState extends GameState {
 
     @Override
-    public void resolvePhase(Game game) throws Exception {
+    public void resolvePhase(Game game){
 
         EventCard currentEvent;
         while ((currentEvent = game.getBoard().popNextEvent()) != null) {
@@ -45,11 +45,28 @@ public class EventState extends GameState {
         }
 
         // 8. Controllo Condizione Fine Partita (Regola: Il mazzo Tribù è esaurito)
-        if (game.isTribeDeckEmpty()) {
+        if (game.isTribeDeckEmpty() && game.getCurrentEra() == 3) {
             game.setState(new EndGameState());
         } else {
             // Se c'è ancora gioco, passiamo il testimone al piazzamento Totem!
             game.advanceRound();
+            // A. Resetta la flag dei totem per tutti i giocatori
+            for(it.polimi.ingsw.am54.model.Player p : game.getPlayers()) {
+                p.setHasPlacedTotem(false);
+            }
+
+            // B. Il nuovo primo giocatore è quello seduto nel primo slot dell'Ordine di Turno
+            for (it.polimi.ingsw.am54.model.TurnOrderSlot slot : game.getBoard().getTurnOrderTile()) {
+                if (slot.getOccupiedBy() != null) {
+                    game.setCurrentPlayer(slot.getOccupiedBy());
+                    break; // Trovato il primo, ci fermiamo
+                }
+            }
+            for (it.polimi.ingsw.am54.model.OfferingTile tile : game.getBoard().getOfferingTrack()) {
+                tile.freeSlot(); // Libera l'occupante
+                tile.resetPicks();
+            }
+
             game.setState(new StartTurnState());
         }
     }

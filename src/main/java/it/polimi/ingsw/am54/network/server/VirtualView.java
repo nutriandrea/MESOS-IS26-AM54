@@ -134,14 +134,32 @@ public class VirtualView implements IGameObserver {
         connection.sendUpdate(new TotemPlacedUpdate(player.getNickname(), offerPosition));
     }
 
-@Override
+    private java.util.Map<Integer, String> generateOfferingSnapshot(Board b) {
+        java.util.Map<Integer, String> offering = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < b.getOfferingTrack().size(); i++) {
+            OfferingTile tile = b.getOfferingTrack().get(i);
+            String occName = (tile.getOccupiedBy() != null) ? tile.getOccupiedBy().getNickname() : "VUOTO";
+
+            // Se la tessera è vuota mostriamo il totale (cardsFromUpper), se è occupata mostriamo i rimanenti (remainingUpperPicks)
+            int up = tile.getRemainingUpperPicks();
+            int low = tile.getRemainingLowerPicks();
+
+            offering.put(i, "[Tessera " + tile.getId() + " | Pick Su:" + up + " Giù:" + low + " | Bonus 🍖:+" + tile.getFoodBonus() + "] -> " + occName);
+        }
+        return offering;
+    }
+
+    @Override
     public void onCardPicked(Game game, Player player, String row, int cardIndex, int newFoodBalance) {
         // Tutti vedono la carta pescata. Il client:
         //   - Rimuove la carta dalla riga corretta (upper/lower)
         //   - Aggiunge la carta alla tribu' del giocatore
         //   - Aggiorna il cibo del giocatore
         //   - Rimette il giocatore nel turnOrderTrack
-        connection.sendUpdate(new CardPickedUpdate(player.getNickname(), row, cardIndex, newFoodBalance));
+        java.util.Map<Integer, String> currentOffering = generateOfferingSnapshot(game.getBoard());
+
+
+        connection.sendUpdate(new CardPickedUpdate(player.getNickname(), row, cardIndex, newFoodBalance, currentOffering));
     }
 
 @Override
@@ -162,18 +180,20 @@ public class VirtualView implements IGameObserver {
         // 1. Mappatura statistiche giocatori
         java.util.Map<String, EventUpdate.PlayerSnapshot> stats = new java.util.HashMap<>();
         for (Player p : game.getPlayers()) {
+            List<String> tribeStr = p.getMyTribe().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+            List<String> buildStr = p.getBuildings().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
             stats.put(p.getNickname(), new EventUpdate.PlayerSnapshot(
-                    p.getFood(), p.getAuraPoints(), p.getMagicPoints()
+                    p.getFood(), p.getAuraPoints(), p.getMagicPoints(), tribeStr, buildStr
             ));
         }
 
         // 2. Trasformazione delle carte in Stringhe (Nomi o identificativi)
-        List<String> charUp = b.getCharacterUpperRow().stream().map(c -> c.getName()).collect(Collectors.toList());
-        List<String> charLow = b.getCharacterLowerRow().stream().map(c -> c.getName()).collect(Collectors.toList());
-        List<String> eventUp = b.getEventUpperRow().stream().map(c -> "EVENT").collect(Collectors.toList());
-        List<String> eventLow = b.getEventLowerRow().stream().map(c -> "EVENT").collect(Collectors.toList());
-        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
-        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
+        List<String> charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+        List<String> charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+        List<String> eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
+        List<String> eventLow = b.getEventLowerRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
+        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
 
         // 3. Spedisci lo Snapshot completo!
         connection.sendUpdate(new EventUpdate(
@@ -197,34 +217,35 @@ public class VirtualView implements IGameObserver {
     public void onStateChanged(Game game, GameState newState) {
         Board b = game.getBoard();
 
-        // 1. Statistiche e Colori Giocatori
-        java.util.Map<String, StateChangedUpdate.PlayerSnapshot> stats = new java.util.HashMap<>();
+        // 1. Statistiche e Carte Giocatori
+        java.util.Map<String, StateChangedUpdate.PlayerSnapshot> stats = new java.util.LinkedHashMap<>();
         for (Player p : game.getPlayers()) {
+            List<String> tribeStr = p.getMyTribe().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+            List<String> buildStr = p.getBuildings().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
             stats.put(p.getNickname(), new StateChangedUpdate.PlayerSnapshot(
-                    p.getFood(), p.getAuraPoints(), p.getMagicPoints(), p.getTotemColors()
+                    p.getFood(), p.getAuraPoints(), p.getMagicPoints(), p.getTotemColors(), tribeStr, buildStr
             ));
         }
 
-        // 2. Ordine di turno e Tracciato Offerte
+        // 2. Ordine di turno e Tracciato Offerte (FORMATTATI)
         List<String> turnOrder = b.getTurnOrderTile().stream()
-                .map(slot -> slot.getOccupiedBy() != null ? slot.getOccupiedBy().getNickname() : null)
+                .map(slot -> "[Slot " + slot.getPosition() + " | Cibo: " + (slot.getBonusFood() > 0 ? "+" : "") + slot.getBonusFood() + "] -> " + (slot.getOccupiedBy() != null ? slot.getOccupiedBy().getNickname() : "VUOTO"))
                 .collect(Collectors.toList());
 
-        java.util.Map<Integer, String> offering = new java.util.HashMap<>();
+        java.util.Map<Integer, String> offering = new java.util.LinkedHashMap<>();
         for (int i = 0; i < b.getOfferingTrack().size(); i++) {
-            Player occ = b.getOfferingTrack().get(i).getOccupiedBy();
-            if (occ != null) {
-                offering.put(i, occ.getNickname());
-            }
+            OfferingTile tile = b.getOfferingTrack().get(i);
+            String occName = (tile.getOccupiedBy() != null) ? tile.getOccupiedBy().getNickname() : "VUOTO";
+            offering.put(i, "[Tessera " + tile.getId() + " | Pick Su:" + tile.getRemainingUpperPicks() + " Giù:" + tile.getRemainingLowerPicks() + " | Bonus 🍖:+" + tile.getFoodBonus() + "] -> " + occName);
         }
 
         // 3. Carte sul tavolo
-        List<String> charUp = b.getCharacterUpperRow().stream().map(c -> c.getName()).collect(Collectors.toList());
-        List<String> charLow = b.getCharacterLowerRow().stream().map(c -> c.getName()).collect(Collectors.toList());
-        List<String> eventUp = b.getEventUpperRow().stream().map(c -> "EVENT").collect(Collectors.toList());
-        List<String> eventLow = b.getEventLowerRow().stream().map(c -> "EVENT").collect(Collectors.toList());
-        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
-        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
+        List<String> charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+        List<String> charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+        List<String> eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
+        List<String> eventLow = b.getEventLowerRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
+        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
 
         // Spedisci il super-pacchetto!
         connection.sendUpdate(new StateChangedUpdate(
@@ -248,31 +269,35 @@ public class VirtualView implements IGameObserver {
     public void sendFullStateOnReconnect(Game game) {
         Board b = game.getBoard();
 
-        // 1. Statistiche
+        // 1. Statistiche e Carte Giocatori
         java.util.Map<String, StateChangedUpdate.PlayerSnapshot> stats = new java.util.LinkedHashMap<>();
         for (Player p : game.getPlayers()) {
+            List<String> tribeStr = p.getMyTribe().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+            List<String> buildStr = p.getBuildings().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
             stats.put(p.getNickname(), new StateChangedUpdate.PlayerSnapshot(
-                    p.getFood(), p.getAuraPoints(), p.getMagicPoints(), p.getTotemColors()
+                    p.getFood(), p.getAuraPoints(), p.getMagicPoints(), p.getTotemColors(), tribeStr, buildStr
             ));
         }
 
-        // 2. Ordine e Offerte
+        // 2. Ordine di turno e Tracciato Offerte (FORMATTATI)
         List<String> turnOrder = b.getTurnOrderTile().stream()
-                .map(slot -> slot.getOccupiedBy() != null ? slot.getOccupiedBy().getNickname() : null)
+                .map(slot -> "[Slot " + slot.getPosition() + " | Cibo: " + (slot.getBonusFood() > 0 ? "+" : "") + slot.getBonusFood() + "] -> " + (slot.getOccupiedBy() != null ? slot.getOccupiedBy().getNickname() : "VUOTO"))
                 .collect(Collectors.toList());
-        java.util.Map<Integer, String> offering = new java.util.HashMap<>();
+
+        java.util.Map<Integer, String> offering = new java.util.LinkedHashMap<>();
         for (int i = 0; i < b.getOfferingTrack().size(); i++) {
-            Player occ = b.getOfferingTrack().get(i).getOccupiedBy();
-            if (occ != null) offering.put(i, occ.getNickname());
+            OfferingTile tile = b.getOfferingTrack().get(i);
+            String occName = (tile.getOccupiedBy() != null) ? tile.getOccupiedBy().getNickname() : "VUOTO";
+            offering.put(i, "[Tessera " + tile.getId() + " | Pick Su:" + tile.getRemainingUpperPicks() + " Giù:" + tile.getRemainingLowerPicks() + " | Bonus 🍖:+" + tile.getFoodBonus() + "] -> " + occName);
         }
 
         // 3. Carte
-        List<String> charUp = b.getCharacterUpperRow().stream().map(c -> c.getName()).collect(Collectors.toList());
-        List<String> charLow = b.getCharacterLowerRow().stream().map(c -> c.getName()).collect(Collectors.toList());
-        List<String> eventUp = b.getEventUpperRow().stream().map(c -> "EVENT").collect(Collectors.toList());
-        List<String> eventLow = b.getEventLowerRow().stream().map(c -> "EVENT").collect(Collectors.toList());
-        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
-        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(c -> c.getBuildingType() != null ? c.getBuildingType().name() : "BUILDING").collect(Collectors.toList());
+        List<String> charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+        List<String> charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+        List<String> eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
+        List<String> eventLow = b.getEventLowerRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
+        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
 
         // Manda il pacchetto solo a QUESTA connessione
         connection.sendUpdate(new StateChangedUpdate(
@@ -291,5 +316,11 @@ public class VirtualView implements IGameObserver {
         if (b == null) return null;
         String nomeEdificio = b.getName() != null ? b.getName() : "Edificio Speciale";
         return "BUILDING|" + b.getCost() + "|" + b.getFinalAura() + "|" + nomeEdificio;
+    }
+
+    private String formatEventForClient(EventCard e) {
+        if (e == null) return null;
+        // Invia "EVENT|NomeEvento"
+        return "EVENT|" + e.getName();
     }
 }

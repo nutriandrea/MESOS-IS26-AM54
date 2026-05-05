@@ -103,7 +103,7 @@ public class Game implements IGame{
         distributeInitialFood(tempPlayers);
 
         // 5. Imposta esplicitamente il PRIMO giocatore prima di cambiare stato (Risolve il bug di avvio)
-        this.currentPlayer = tempPlayers.get(0);
+        this.setCurrentPlayer(tempPlayers.get(0));
 
         // 6. Passaggio allo stato di Inizio Turno
         this.setState(new StartTurnState());

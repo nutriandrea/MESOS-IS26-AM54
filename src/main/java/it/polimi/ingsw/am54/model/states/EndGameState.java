@@ -12,7 +12,7 @@ import java.util.List;
 public class EndGameState extends GameState {
 
     @Override
-    public void resolvePhase(Game game) throws Exception {
+    public void resolvePhase(Game game) {
         EventCard currentFinalEvent;
 
         // Cicliamo finché la Board ci restituisce eventi

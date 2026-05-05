@@ -17,6 +17,8 @@ public class OfferingTile {
         this.cardsFromLower = cardsFromLower;
         this.foodBonus = foodBonus;
         this.occupiedBy = null; // default (non inzializzo occupato)
+        this.remainingUpperPicks = cardsFromUpper;
+        this.remainingLowerPicks = cardsFromLower;
     }
 
 
@@ -65,6 +67,10 @@ public class OfferingTile {
     //sembra essere bad practice usare il occupy ma con null come riferimento
     public void freeSlot() {
         this.occupiedBy = null;
+    }
+    public void resetPicks() {
+        this.remainingUpperPicks = this.cardsFromUpper;
+        this.remainingLowerPicks = this.cardsFromLower;
     }
 
     public boolean useUpperPick() {

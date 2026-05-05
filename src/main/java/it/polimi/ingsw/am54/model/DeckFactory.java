@@ -64,6 +64,9 @@ public class DeckFactory {
                 }
 
                 BuildingCard card = new BuildingCard(type, cost, finalAura, phase, effects, era);
+
+                card.setName(nomeLambda);
+
                 if (era == 1) e1.add(card);
                 else if (era == 2) e2.add(card);
                 else if (era == 3) e3.add(card);
@@ -176,6 +179,8 @@ public class DeckFactory {
                         node.has("bonus") ? node.get("bonus").asInt() : 0,
                         node.has("malus") ? node.get("malus").asInt() : 0
                 );
+
+                event.setName(etichetta);
 
                 if (finalEvent) {
                     finalEvents.add(event);

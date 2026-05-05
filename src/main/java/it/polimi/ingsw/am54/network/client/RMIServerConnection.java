@@ -102,7 +102,7 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
             clientModel.updateTotemPlacement(msg.getNickname(), msg.getOfferPosition());
         }
         else if (update instanceof CardPickedUpdate msg) {
-            clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex(), msg.getNewFoodBalance());
+            clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex(), msg.getNewFoodBalance(), msg.getUpdatedOfferingTrack());
         }
         else if (update instanceof TurnChangedUpdate msg) {
             clientModel.updateTurn(msg.getNickname());

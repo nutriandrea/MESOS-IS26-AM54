@@ -12,11 +12,15 @@ public class EventUpdate implements Update {
         public final int food;
         public final int aura;
         public final int magicPoints;
+        public final List<String> tribe;
+        public final List<String> buildings;
 
-        public PlayerSnapshot(int food, int aura, int magicPoints) {
+        public PlayerSnapshot(int food, int aura, int magicPoints, List<String> tribe, List<String> buildings) {
             this.food = food;
             this.aura = aura;
             this.magicPoints = magicPoints;
+            this.tribe = tribe;
+            this.buildings = buildings;
         }
     }
 

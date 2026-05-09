@@ -100,16 +100,34 @@ public class LobbyController {
                 statusLabel.setText("Scegli il tuo totem  " + myNickname.toUpperCase());
             }
 
-            // Gestione del tasto START (askForStart nella CLI)
+            // Gestione del tasto START
+            // 1. Devi essere il primo della lista (il "Capo Tribù")
             if (!model.getPlayers().isEmpty() && model.getPlayers().get(0).equals(myNickname)) {
+
+                // 2. Il tasto appare solo se TUTTI hanno scelto il totem E siete almeno in 2
                 if (colors.size() == model.getPlayers().size() && model.getPlayers().size() >= 2) {
                     startGameButton.setVisible(true);
-                    statusLabel.setText("Tutti pronti! Avvia la partita.");
+                    startGameButton.setManaged(true);
+                    statusLabel.setText("TUTTI PRONTI! AVVIA LA PARTITA");
                 } else {
                     startGameButton.setVisible(false);
+                    startGameButton.setManaged(false);
+
+                    // Suggerimento dinamico in base a cosa manca
+                    if (model.getPlayers().size() < 2) {
+                        statusLabel.setText("In attesa di altri giocatori (Minimo 2)...");
+                    } else {
+                        statusLabel.setText("In attesa che tutti scelgano un totem...");
+                    }
                 }
-            } else if (colors.containsKey(myNickname)) {
-                statusLabel.setText("In attesa del capo tribù...");
+            } else {
+                // Se non sei il leader, il tasto non deve mai occupare spazio
+                startGameButton.setVisible(false);
+                startGameButton.setManaged(false);
+
+                if (colors.containsKey(myNickname)) {
+                    statusLabel.setText("In attesa che l'host avvii la partita...");
+                }
             }
 
             // Transizione alla fase di gioco

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="it.polimi.ingsw.am54.gui.BoardController" prefWidth="1000" prefHeight="800">
+    <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
+
+    <top>
+        <VBox alignment="CENTER" spacing="5">
+            <Label fx:id="eraLabel" text="ERA: 1" style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
+            <Label fx:id="phaseLabel" text="Stato: Inizializzazione..." style="-fx-font-size: 16px;"/>
+            <Label fx:id="turnLabel" text="Tocca a: ..." style="-fx-font-size: 18px; -fx-text-fill: #0066cc; -fx-font-weight: bold;"/>
+            <Label fx:id="errorLabel" textFill="RED" style="-fx-font-weight: bold;"/>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="20" alignment="CENTER">
+
+            <VBox spacing="5" style="-fx-border-color: #555555; -fx-border-width: 2; -fx-padding: 10;">
+                <Label text="FILA SUPERIORE" style="-fx-font-weight: bold;"/>
+                <HBox fx:id="upperRowBox" spacing="10" alignment="CENTER"/>
+            </VBox>
+
+            <HBox spacing="30" alignment="CENTER">
+                <VBox spacing="5" style="-fx-border-color: #28a745; -fx-border-width: 2; -fx-padding: 10; -fx-background-color: #e6ffe6;">
+                    <Label text="Ordine di Turno" style="-fx-font-weight: bold;"/>
+                    <VBox fx:id="turnOrderBox" spacing="5"/>
+                </VBox>
+
+                <VBox spacing="5" style="-fx-border-color: #ffc107; -fx-border-width: 2; -fx-padding: 10; -fx-background-color: #fff8e1;">
+                    <Label text="Tessere Offerta" style="-fx-font-weight: bold;"/>
+                    <HBox fx:id="offeringTrackBox" spacing="10"/>
+                </VBox>
+            </HBox>
+
+            <VBox spacing="5" style="-fx-border-color: #555555; -fx-border-width: 2; -fx-padding: 10;">
+                <Label text="FILA INFERIORE" style="-fx-font-weight: bold;"/>
+                <HBox fx:id="lowerRowBox" spacing="10" alignment="CENTER"/>
+            </VBox>
+
+            <Button fx:id="endTurnButton" text="TERMINA TURNO" onAction="#onEndTurnClicked"
+                    style="-fx-font-size: 16px; -fx-background-color: #dc3545; -fx-text-fill: white;" disable="true"/>
+        </VBox>
+    </center>
+
+    <right>
+        <VBox fx:id="playersStatsBox" spacing="15" style="-fx-border-color: #333333; -fx-border-width: 1; -fx-padding: 15;" prefWidth="250">
+            <Label text="👥 GIOCATORI" style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
+        </VBox>
+    </right>
+
+</BorderPane>

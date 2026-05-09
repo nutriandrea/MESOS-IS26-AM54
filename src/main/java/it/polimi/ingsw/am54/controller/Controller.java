@@ -64,9 +64,7 @@ public class Controller {
      * Se il server non è inizializzato (server null), non fa nulla.
      */
     private void saveState() {
-        if (server != null && server.getPersistenceManager() != null) {
-            server.getPersistenceManager().saveState();
-        }
+        return;
     }
 
     @FunctionalInterface

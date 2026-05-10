@@ -102,9 +102,9 @@ public class Controller {
                 // --- AGGIUNTA FONDAMENTALE PER SINCRONIZZARE IL NUOVO CLIENT ---
                 // Facciamo un "riassunto" al nuovo arrivato dicendogli chi c'è già
                 for (Player p : game.getPlayers()) {
-                    playerView.sendUpdate(new PlayerJoinedUpdate(p.getNickname()));
+                    playerView.onPlayerJoined(game, p);
                     if (p.getTotemColors() != null) {
-                        playerView.sendUpdate(new TotemColorUpdate(p.getNickname(), p.getTotemColors()));
+                        playerView.onTotemColorChosen(game, p, p.getTotemColors());
                     }
                 }
                 // ---------------------------------------------------------------
@@ -143,11 +143,11 @@ public class Controller {
         newView.sendFullStateOnReconnect(game);
 
         if (game.getCurrentPlayer() != null) {
-            newView.sendUpdate(new TurnChangedUpdate(game.getCurrentPlayer().getNickname()));
+            newView.onTurnChanged(game,  game.getCurrentPlayer());
         }
 
         // 2. Avviso TUTTI gli altri che lui è tornato
-        broadcastSystemUpdate(new PlayerReconnectedUpdate(nickname));
+        broadcastPlayerReconnected(nickname);
     }
 
     /* =====================================================================
@@ -200,7 +200,7 @@ public class Controller {
             disconnectedPlayers.add(nickname);
         }
         LOGGER.warning("Giocatore " + nickname + " marcato come disconnesso.");
-        broadcastSystemUpdate(new PlayerDisconnectedUpdate(nickname));
+        broadcastPlayerDisconnected(nickname);
     }
 
     public void removeClient(String nickname) {
@@ -231,21 +231,29 @@ public class Controller {
      * METODI PRIVATI
      * ===================================================================== */
 
+    private void broadcastPlayerReconnected(String reconnectedNickname) {
+        synchronized (virtualViews) {
+            for (VirtualView vv : virtualViews.values()) {
+                vv.showPlayerReconnected(reconnectedNickname);
+            }
+        }
+    }
+
+    private void broadcastPlayerDisconnected(String disconnectedNickname) {
+        synchronized (virtualViews) {
+            for (VirtualView vv : virtualViews.values()) {
+                vv.showPlayerDisconnected(disconnectedNickname);
+            }
+        }
+    }
+
     private void executeCommand(String nickname, GameAction action) {
         try {
             action.execute();
         } catch (Exception e) {
             VirtualView view = virtualViews.get(nickname);
             if (view != null) {
-                view.sendUpdate(new ErrorMessageUpdate(e.getMessage()));
-            }
-        }
-    }
-
-    private void broadcastSystemUpdate(Update update) {
-        synchronized (virtualViews) {
-            for (VirtualView vv : virtualViews.values()) {
-                vv.sendUpdate(update);
+                view.showError(e.getMessage());
             }
         }
     }

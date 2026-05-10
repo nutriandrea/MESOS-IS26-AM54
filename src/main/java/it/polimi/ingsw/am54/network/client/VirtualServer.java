@@ -16,43 +16,29 @@ public class VirtualServer {
         this.nickname = nickname;
     }
 
-    /**
-     * L'unica richiesta che DEVE contenere il nickname per presentarsi al server.
-     */
+
     public void joinGame() {
-        connection.sendRequest(new JoinGameRequest(nickname));
+        connection.joinGame(nickname);
     }
 
-    /**
-     * SetupGameRequest non ha parametri nel tuo file.
-     */
     public void setupGame() {
-        connection.sendRequest(new SetupGameRequest());
+        connection.setupGame();
     }
 
-    /**
-     * ChooseTotemRequest accetta solo il colore (TotemColors color).
-     */
     public void chooseTotem(TotemColors color) {
-        connection.sendRequest(new ChooseTotemRequest(color));
+        connection.chooseTotem(color);
     }
 
-    /**
-     * PlaceTotemRequest accetta solo la posizione (int offerPosition).
-     */
     public void placeTotem(int position) {
-        connection.sendRequest(new PlaceTotemRequest(position));
+        connection.placeTotem(position);
     }
 
-    /**
-     * PickCardRequest accetta solo (String row, int cardIndex).
-     */
     public void pickCard(String row, int index) {
-        connection.sendRequest(new PickCardRequest(row, index));
+        connection.pickCard(row, index);
     }
 
-    // Nel file VirtualServer.java
     public void endTurn() {
-        connection.sendRequest(new EndTurnRequest());
+        connection.endTurn();
     }
+
 }

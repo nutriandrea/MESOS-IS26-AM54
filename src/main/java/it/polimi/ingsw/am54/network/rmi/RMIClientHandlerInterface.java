@@ -1,11 +1,21 @@
 package it.polimi.ingsw.am54.network.rmi;
 
-import it.polimi.ingsw.am54.network.messages.*;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface RMIClientHandlerInterface extends Remote {
-    // Il client usa questo metodo per inviare Request (comandi) al server
-    void handleRequest(Request request) throws RemoteException;
+    // RMI sfruttato al massimo non funziona come socket,
+    // ma ha un metodo specifico per ogni azione che il client può chiamare
+
+    void joinGameRequest(String nickname) throws RemoteException;
+    void setupGameRequest() throws RemoteException;
+    void chooseTotemColorRequest(String color) throws RemoteException;
+    void placeTotemRequest(int offerPosition) throws RemoteException;
+    void pickCardRequest(String row, int cardIndex) throws RemoteException;
+    void endTurnRequest() throws RemoteException;
+
+    void pong() throws RemoteException;
+
+
     void disconnect() throws RemoteException;
 }

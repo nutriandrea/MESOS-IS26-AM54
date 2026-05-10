@@ -1,6 +1,12 @@
 package it.polimi.ingsw.am54.network.server;
 
+import it.polimi.ingsw.am54.network.messages.EventUpdate;
+import it.polimi.ingsw.am54.network.messages.StateChangedUpdate;
 import it.polimi.ingsw.am54.network.messages.Update;
+import it.polimi.ingsw.am54.model.TotemColors;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * ============================================================================
@@ -31,12 +37,37 @@ import it.polimi.ingsw.am54.network.messages.Update;
 public interface ClientConnection {
 
     /**
-     * Invia un Update al client.
-     * L'implementazione specifica dipende dal tipo di connessione (Socket o RMI).
-     *
-     * @param update il messaggio da inviare
+     * Metodi per mandare al client gli update
      */
-    void sendUpdate(Update update);
+
+    // metodi specifici (non più il generico sendUpdate(Update))
+    void notifyPlayerJoined(String nickname);
+    void notifyTotemColor(String nickanme, TotemColors color);
+    void notifyTotemPlaced(String nickname, int position);
+    void notifyCardPicked(String nickname, String row, int index, int food, Map<Integer, String> offering);
+    void notifyTotemReturned(String nickname, int position, int food, int aura);
+    void notifyEventResolved(Map<String, EventUpdate.PlayerSnapshot> stats,
+                             List<String> charUp, List<String> charLow,
+                             List<String> eventUp, List<String> eventLow,
+                             List<String> buildUp, List<String> buildLow);
+    void notifyTurnChanged(String nickname);
+    void notifyStateChanged( String stateName,
+                            int currentEra,
+                            Map<String, StateChangedUpdate.PlayerSnapshot> playersStats,
+                            List<String> turnOrderTrack,
+                            Map<Integer, String> offeringTrack,
+                            List<String> charUpper, List<String> charLower,
+                            List<String> eventUpper, List<String> eventLower,
+                            List<String> buildUpper, List<String> buildLower);
+    void notifyEndGame(List<String> winnerNames);
+    void notifyError(String message);
+    void sendPing();
+
+    /**
+     * Metodi per gestire giocatori che si sconnettono e riconettono
+     */
+    void notifyPlayerDisconnected(String nickname);
+    void notifyPlayerReconnected(String nickname);
 
     /**
      * Chiude la connessione e pulisce le risorse.

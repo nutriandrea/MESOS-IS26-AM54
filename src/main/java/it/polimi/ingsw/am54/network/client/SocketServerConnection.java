@@ -1,5 +1,6 @@
 package it.polimi.ingsw.am54.network.client;
 
+import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.messages.*;
 import java.io.*;
 import java.net.Socket;
@@ -22,13 +23,46 @@ public class SocketServerConnection implements ServerConnection {
         new Thread(this.serverHandler).start();
     }
 
-    @Override
-    public void sendRequest(Request request) {
+    // metodo privato per inviare i dati sullo stream in modo più pulito
+    private void sendObject(Object request) {
         try {
             out.writeObject(request);
             out.flush();
             out.reset();
-        } catch (IOException e) { disconnect(); }
+        } catch (IOException e) {
+            disconnect();
+        }
+    }
+
+    //Gestiamo tutte le richieste
+    @Override
+    public void joinGame(String nickname) {
+        sendObject(new JoinGameRequest(nickname));
+    }
+
+    @Override
+    public void setupGame() {
+        sendObject(new SetupGameRequest());
+    }
+
+    @Override
+    public void chooseTotem(TotemColors color) {
+        sendObject(new ChooseTotemRequest(color));
+    }
+
+    @Override
+    public void placeTotem(int position) {
+        sendObject(new PlaceTotemRequest(position));
+    }
+
+    @Override
+    public void pickCard(String row, int index) {
+        sendObject(new PickCardRequest(row, index));
+    }
+
+    @Override
+    public void endTurn() {
+        sendObject(new EndTurnRequest());
     }
 
     @Override

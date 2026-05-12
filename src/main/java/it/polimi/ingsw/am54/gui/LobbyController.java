@@ -6,19 +6,11 @@ import it.polimi.ingsw.am54.network.client.SocketServerConnection;
 import it.polimi.ingsw.am54.network.client.VirtualServer;
 import javafx.animation.ScaleTransition;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.HBox;
+import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
@@ -26,135 +18,128 @@ import java.util.Map;
 
 public class LobbyController {
 
-    @FXML private VBox nicknameContainer;
-    @FXML private VBox lobbyContainer;
+    @FXML private VBox nicknameContainer, lobbyContainer;
     @FXML private TextField nicknameField;
-    @FXML private Label errorLabel;
-
+    @FXML private Label errorLabel, statusLabel;
     @FXML private ListView<String> playersListView;
-    @FXML private HBox colorSelectionBox;
     @FXML private Button startGameButton;
-    @FXML private Label statusLabel;
+
+    @FXML private Button btnYellow, btnRed, btnBlack, btnBlue, btnWhite;
+    @FXML private ImageView imgYellow, imgRed, imgBlack, imgBlue, imgWhite;
+    @FXML private Label xYellow, xRed, xBlack, xBlue, xWhite;
 
     private VirtualServer virtualServer;
     private ClientModel model;
     private String myNickname;
 
-    /**
-     * Metodo chiamato quando l'utente preme "ENTRA NELLA TRIBÙ".
-     * Gestisce la connessione a localhost e l'ingresso in gioco.
-     */
     @FXML
     public void onJoinClicked() {
         String name = nicknameField.getText().trim();
-        if (name.isEmpty()) {
-            errorLabel.setText("Inserisci un nome valido!");
-            return;
-        }
-
+        if (name.isEmpty()) { errorLabel.setText("Inserisci un nome!"); return; }
         try {
             this.myNickname = name;
             this.model = new ClientModel();
-            // Assumiamo localhost come richiesto
             SocketServerConnection connection = new SocketServerConnection("localhost", 12345, model);
             this.virtualServer = new VirtualServer(connection, name);
-
-            // Configuriamo il callback per aggiornare la UI ogni volta che il modello cambia
             this.model.setOnModelUpdatedCallback(this::updateUI);
-
-            // Inviamo la richiesta di join
             virtualServer.joinGame();
-
-            // Passiamo alla visualizzazione della lobby
-            nicknameContainer.setVisible(false);
-            nicknameContainer.setManaged(false);
-            lobbyContainer.setVisible(true);
-            lobbyContainer.setManaged(true);
-
-            updateUI();
-
-        } catch (IOException e) {
-            errorLabel.setText("Errore: Il server è spento o irraggiungibile.");
-            e.printStackTrace();
-        }
+            nicknameContainer.setVisible(false); nicknameContainer.setManaged(false);
+            lobbyContainer.setVisible(true); lobbyContainer.setManaged(true);
+        } catch (IOException e) { errorLabel.setText("Connessione fallita!"); }
     }
 
     private void updateUI() {
         Platform.runLater(() -> {
-            // Seguiamo la logica renderSetup() della CLI
             playersListView.getItems().clear();
-            Map<String, TotemColors> colors = model.getPlayerColors();
-
-            for (String player : model.getPlayers()) {
-                String c = colors.containsKey(player) ? " - " + colors.get(player) : " - Scegliendo...";
-                playersListView.getItems().add(player.toUpperCase() + c);
+            Map<String, TotemColors> chosenColors = model.getPlayerColors();
+            for (String p : model.getPlayers()) {
+                String c = chosenColors.containsKey(p) ? " - " + chosenColors.get(p) : " - Scelta...";
+                playersListView.getItems().add(p.toUpperCase() + c);
             }
 
-            // Mostra/Nascondi totem (askForColor nella CLI)
-            if (colors.containsKey(myNickname)) {
-                colorSelectionBox.setVisible(false);
-                colorSelectionBox.setManaged(false);
-            } else {
-                colorSelectionBox.setVisible(true);
-                colorSelectionBox.setManaged(true);
-                statusLabel.setText("Scegli il tuo totem  " + myNickname.toUpperCase());
-            }
+            resetTotemUI();
 
-            // Gestione del tasto START
-            // 1. Devi essere il primo della lista (il "Capo Tribù")
-            if (!model.getPlayers().isEmpty() && model.getPlayers().get(0).equals(myNickname)) {
+            for (Map.Entry<String, TotemColors> entry : chosenColors.entrySet()) {
+                String playerName = entry.getKey();
+                TotemColors color = entry.getValue();
 
-                // 2. Il tasto appare solo se TUTTI hanno scelto il totem E siete almeno in 2
-                if (colors.size() == model.getPlayers().size() && model.getPlayers().size() >= 2) {
-                    startGameButton.setVisible(true);
-                    startGameButton.setManaged(true);
-                    statusLabel.setText("TUTTI PRONTI! AVVIA LA PARTITA");
+                if (playerName.equals(myNickname)) {
+                    // SE È IL MIO TOTEM: Glow dorato
+                    highlightMyTotem(color);
                 } else {
-                    startGameButton.setVisible(false);
-                    startGameButton.setManaged(false);
-
-                    // Suggerimento dinamico in base a cosa manca
-                    if (model.getPlayers().size() < 2) {
-                        statusLabel.setText("In attesa di altri giocatori (Minimo 2)...");
-                    } else {
-                        statusLabel.setText("In attesa che tutti scelgano un totem...");
-                    }
-                }
-            } else {
-                // Se non sei il leader, il tasto non deve mai occupare spazio
-                startGameButton.setVisible(false);
-                startGameButton.setManaged(false);
-
-                if (colors.containsKey(myNickname)) {
-                    statusLabel.setText("In attesa che l'host avvii la partita...");
+                    // SE È IL TOTEM DI UN ALTRO: X Rossa e Trasparenza
+                    showXOnOtherTotem(color);
                 }
             }
 
-            // Transizione alla fase di gioco
-            if (model.getCurrentState().equals("StartTurnState")) {
-                goToBoard();
+            // Gestione visibilità tasto START
+            if (!model.getPlayers().isEmpty() && model.getPlayers().get(0).equals(myNickname)) {
+                if (chosenColors.size() == model.getPlayers().size() && model.getPlayers().size() >= 2) {
+                    startGameButton.setVisible(true); startGameButton.setManaged(true);
+                }
             }
         });
     }
 
-    private void goToBoard() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Board.fxml"));
-            Parent boardRoot = loader.load();
-            Stage stage = (Stage) statusLabel.getScene().getWindow();
-            stage.getScene().setRoot(boardRoot);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void resetTotemUI() {
+        Button[] btns = {btnYellow, btnRed, btnBlack, btnBlue, btnWhite};
+        ImageView[] imgs = {imgYellow, imgRed, imgBlack, imgBlue, imgWhite};
+        Label[] xs = {xYellow, xRed, xBlack, xBlue, xWhite};
+        for (int i = 0; i < 5; i++) {
+            btns[i].setDisable(false);
+            imgs[i].getStyleClass().removeAll("immagine-occupata", "totem-selezionato-mio");
+            xs[i].setVisible(false);
         }
     }
 
-    // --- ANIMAZIONI E BOTTONI ---
-    @FXML public void onHoverEnter(MouseEvent event) {
-        Node node = (Node) event.getSource();
-        ScaleTransition st = new ScaleTransition(Duration.millis(150), node);
-        st.setToX(1.15); st.setToY(1.15); st.play();
+    private void highlightMyTotem(TotemColors color) {
+        ImageView targetImg = getImageViewByColor(color);
+        if (targetImg != null) {
+            targetImg.getStyleClass().add("totem-selezionato-mio");
+        }
     }
-    @FXML public void onHoverExit(MouseEvent event) {
+
+    private void showXOnOtherTotem(TotemColors color) {
+        Button targetBtn = getButtonByColor(color);
+        ImageView targetImg = getImageViewByColor(color);
+        Label targetX = getLabelXByColor(color);
+
+        if (targetBtn != null) targetBtn.setDisable(true);
+        if (targetImg != null) targetImg.getStyleClass().add("immagine-occupata");
+        if (targetX != null) targetX.setVisible(true);
+    }
+
+    // Metodi helper per recuperare i nodi in base al colore
+    private Button getButtonByColor(TotemColors color) {
+        return switch (color) {
+            case YELLOW -> btnYellow; case RED -> btnRed; case BLACK -> btnBlack;
+            case BLUE -> btnBlue; case WHITE -> btnWhite;
+        };
+    }
+
+    private ImageView getImageViewByColor(TotemColors color) {
+        return switch (color) {
+            case YELLOW -> imgYellow; case RED -> imgRed; case BLACK -> imgBlack;
+            case BLUE -> imgBlue; case WHITE -> imgWhite;
+        };
+    }
+
+    private Label getLabelXByColor(TotemColors color) {
+        return switch (color) {
+            case YELLOW -> xYellow; case RED -> xRed; case BLACK -> xBlack;
+            case BLUE -> xBlue; case WHITE -> xWhite;
+        };
+    }
+
+    @FXML public void onHoverEnter(javafx.scene.input.MouseEvent event) {
+        Node node = (Node) event.getSource();
+        if (!node.isDisable()) {
+            ScaleTransition st = new ScaleTransition(Duration.millis(150), node);
+            st.setToX(1.15); st.setToY(1.15); st.play();
+        }
+    }
+
+    @FXML public void onHoverExit(javafx.scene.input.MouseEvent event) {
         Node node = (Node) event.getSource();
         ScaleTransition st = new ScaleTransition(Duration.millis(150), node);
         st.setToX(1.0); st.setToY(1.0); st.play();

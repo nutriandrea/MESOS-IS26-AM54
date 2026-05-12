@@ -338,4 +338,19 @@ public class VirtualView implements IGameObserver {
         // Invia "EVENT|NomeEvento"
         return "EVENT|" + e.getName();
     }
+    /**
+     * Invia notifica di sospensione SOLO a questo giocatore.
+     * Usata dal Controller per broadcast.
+     */
+    public void showGameSuspended() {
+        connection.notifyGameSuspended();
+    }
+
+    /**
+     * Invia notifica di ripresa SOLO a questo giocatore.
+     * Usata dal Controller per broadcast.
+     */
+    public void showGameResumed() {
+        connection.notifyGameResumed();
+    }
 }

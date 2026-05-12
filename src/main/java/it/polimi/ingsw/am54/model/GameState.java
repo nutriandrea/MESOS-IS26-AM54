@@ -34,4 +34,15 @@ public abstract class GameState {
     public void resolvePhase(Game game) throws Exception {
         throw new IllegalStateException("Non puoi risolvere la fase in questo momento");
     }
+
+    /**
+     * Salta il turno del giocatore disconnesso.
+     * Il comportamento dipende dallo stato corrente:
+     * - StartTurnState: marca hasPlacedTotem=true e avanza
+     * - PickingState: termina automaticamente il turno di pesca
+     * - Altri stati: non permesso (eccezione)
+     */
+    public void skipTurn(Game game, String nickname) throws Exception {
+        throw new IllegalStateException("Non puoi saltare il turno in questa fase");
+    }
 }

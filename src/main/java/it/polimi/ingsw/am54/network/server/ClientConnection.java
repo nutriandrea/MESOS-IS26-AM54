@@ -70,6 +70,18 @@ public interface ClientConnection {
     void notifyPlayerReconnected(String nickname);
 
     /**
+     * Notifica al client che il gioco e' stato sospeso (1 solo giocatore attivo).
+     * Implementazione di default vuota per retrocompatibilita'.
+     */
+    default void notifyGameSuspended() {}
+
+    /**
+     * Notifica al client che il gioco e' stato ripreso.
+     * Implementazione di default vuota per retrocompatibilita'.
+     */
+    default void notifyGameResumed() {}
+
+    /**
      * Chiude la connessione e pulisce le risorse.
      * Chiama anche controller.removeClient() per deregistrare il giocatore.
      */

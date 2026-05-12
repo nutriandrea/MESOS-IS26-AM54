@@ -370,6 +370,18 @@ public class ClientModel {
         notifyUI();
     }
 
+    /** Aggiornato quando il gioco viene sospeso (1 solo giocatore attivo) */
+    public synchronized void updateGameSuspended() {
+        this.lastSystemMessage = "⏸️ GIOCO SOSPESO: in attesa di riconnessioni...";
+        notifyUI();
+    }
+
+    /** Aggiornato quando il gioco viene ripreso */
+    public synchronized void updateGameResumed() {
+        this.lastSystemMessage = "▶️ GIOCO RIPRESO: almeno 2 giocatori attivi!";
+        notifyUI();
+    }
+
     public synchronized void clearError() {
         this.lastErrorMessage = null;
     }

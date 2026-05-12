@@ -300,15 +300,18 @@ public class Board {
         return next;
     }
 
-    // Controlla se tutti i giocatori hanno piazzato il loro totem
-    public boolean allTotemsPlaced(int numPlayers) {
+    /**
+     * Controlla se tutti i giocatori attivi hanno piazzato il loro totem.
+     * @param expectedCount numero di giocatori che devono piazzare (attivi, non totali)
+     */
+    public boolean allTotemsPlaced(int expectedCount) {
         int placedCount = 0;
         for (OfferingTile tile : offeringTrack) {
             if (!tile.isAvailable()) {
                 placedCount++;
             }
         }
-        return placedCount == numPlayers;
+        return placedCount == expectedCount;
     }
 
     // Trova il giocatore più a sinistra sul tracciato delle offerte

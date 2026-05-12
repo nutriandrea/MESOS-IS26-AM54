@@ -152,6 +152,16 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
      * ===================================================================== */
 
     @Override
+    public void onGameSuspended() throws RemoteException {
+        clientModel.updateGameSuspended();
+    }
+
+    @Override
+    public void onGameResumed() throws RemoteException {
+        clientModel.updateGameResumed();
+    }
+
+    @Override
     public void ping() throws RemoteException {
         try {
             // Risposta immediata al server per confermare che siamo vivi

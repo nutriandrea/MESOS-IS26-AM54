@@ -9,6 +9,7 @@ import it.polimi.ingsw.am54.network.server.Server;
 import it.polimi.ingsw.am54.network.server.VirtualView;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
@@ -34,10 +35,10 @@ public class Controller {
     private Server server;
 
     /** Mappa nickname -> VirtualView. Ogni VirtualView e' observer del Game */
-    private final Map<String, VirtualView> virtualViews = new HashMap<>();
+    private final Map<String, VirtualView> virtualViews = new ConcurrentHashMap<>();
 
     /** Set di nickname dei giocatori temporaneamente disconnessi */
-    private final Set<String> disconnectedPlayers = new HashSet<>();
+    private final Set<String> disconnectedPlayers = ConcurrentHashMap.newKeySet();
 
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
@@ -77,76 +78,55 @@ public class Controller {
      * ===================================================================== */
 
     public void handleJoinGame(String nickname, ClientConnection connection) {
-        synchronized (disconnectedPlayers) {
-            if (disconnectedPlayers.contains(nickname)) {
+        synchronized (game.getPlayers()) {
+            if (disconnectedPlayers.contains(nickname) || virtualViews.containsKey(nickname)) {
                 handleReconnect(nickname, connection);
                 return;
             }
-        }
 
-        synchronized (virtualViews) {
-            if (virtualViews.containsKey(nickname)) {
-                handleReconnect(nickname, connection);
-                return;
-            }
-        }
-
-        VirtualView playerView = new VirtualView(connection, nickname);
-
-        synchronized (virtualViews) {
+            VirtualView playerView = new VirtualView(connection, nickname);
             virtualViews.put(nickname, playerView);
-        }
-        game.addObserver(playerView);
-        executeCommand(nickname, () -> {
-            try {
-                // --- AGGIUNTA FONDAMENTALE PER SINCRONIZZARE IL NUOVO CLIENT ---
-                // Facciamo un "riassunto" al nuovo arrivato dicendogli chi c'è già
-                for (Player p : game.getPlayers()) {
-                    playerView.onPlayerJoined(game, p);
-                    if (p.getTotemColors() != null) {
-                        playerView.onTotemColorChosen(game, p, p.getTotemColors());
-                    }
-                }
-                // ---------------------------------------------------------------
+            game.addObserver(playerView);
 
+            for (Player p : game.getPlayers()) {
+                playerView.onPlayerJoined(game, p);
+                if (p.getTotemColors() != null) {
+                    playerView.onTotemColorChosen(game, p, p.getTotemColors());
+                }
+            }
+
+            try {
                 game.joinGame(nickname);
                 connection.startHeartbeat();
             } catch (Exception e) {
-                synchronized (virtualViews) {
-                    virtualViews.remove(nickname);
-                }
+                virtualViews.remove(nickname);
                 game.removeObserver(playerView);
-                throw e;
+                LOGGER.warning("Join fallito per " + nickname + ": " + e.getMessage());
             }
-        });
+        }
     }
 
     public void handleReconnect(String nickname, ClientConnection connection) {
-        synchronized (disconnectedPlayers) {
+        synchronized (game.getPlayers()) {
             disconnectedPlayers.remove(nickname);
-        }
 
-        VirtualView newView; // Salviamo un riferimento alla nuova vista
-        synchronized (virtualViews) {
             VirtualView oldView = virtualViews.get(nickname);
             if (oldView != null) {
                 game.removeObserver(oldView);
             }
-            newView = new VirtualView(connection, nickname);
+            VirtualView newView = new VirtualView(connection, nickname);
             virtualViews.put(nickname, newView);
+            game.addObserver(newView);
+            connection.startHeartbeat();
+            LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
+
+            newView.sendFullStateOnReconnect(game);
+
+            if (game.getCurrentPlayer() != null) {
+                newView.onTurnChanged(game, game.getCurrentPlayer());
+            }
         }
-        game.addObserver(newView);
-        connection.startHeartbeat();
-        LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
 
-        // 1. Invio lo snapshot SOLO al giocatore che è appena rientrato
-        newView.sendFullStateOnReconnect(game);
-
-        if (game.getCurrentPlayer() != null) {
-            newView.onTurnChanged(game,  game.getCurrentPlayer());
-        }
-
-        // 2. Avviso TUTTI gli altri che lui è tornato
         broadcastPlayerReconnected(nickname);
     }
 
@@ -196,31 +176,24 @@ public class Controller {
      * ===================================================================== */
 
     public void markDisconnected(String nickname) {
-        synchronized (disconnectedPlayers) {
-            disconnectedPlayers.add(nickname);
-        }
+        disconnectedPlayers.add(nickname);
         LOGGER.warning("Giocatore " + nickname + " marcato come disconnesso.");
         broadcastPlayerDisconnected(nickname);
     }
 
     public void removeClient(String nickname) {
-        VirtualView view;
-        synchronized (virtualViews) {
-            view = virtualViews.remove(nickname);
-        }
-        synchronized (disconnectedPlayers) {
-            disconnectedPlayers.remove(nickname);
-        }
+        VirtualView view = virtualViews.remove(nickname);
+        disconnectedPlayers.remove(nickname);
         if (view != null) {
-            game.removeObserver(view);
+            synchronized (game.getPlayers()) {
+                game.removeObserver(view);
+            }
         }
         LOGGER.info("Giocatore " + nickname + " rimosso dal server.");
     }
 
     public boolean isDisconnected(String nickname) {
-        synchronized (disconnectedPlayers) {
-            return disconnectedPlayers.contains(nickname);
-        }
+        return disconnectedPlayers.contains(nickname);
     }
 
     public int getPlayerCount() {
@@ -232,18 +205,14 @@ public class Controller {
      * ===================================================================== */
 
     private void broadcastPlayerReconnected(String reconnectedNickname) {
-        synchronized (virtualViews) {
-            for (VirtualView vv : virtualViews.values()) {
-                vv.showPlayerReconnected(reconnectedNickname);
-            }
+        for (VirtualView vv : virtualViews.values()) {
+            vv.showPlayerReconnected(reconnectedNickname);
         }
     }
 
     private void broadcastPlayerDisconnected(String disconnectedNickname) {
-        synchronized (virtualViews) {
-            for (VirtualView vv : virtualViews.values()) {
-                vv.showPlayerDisconnected(disconnectedNickname);
-            }
+        for (VirtualView vv : virtualViews.values()) {
+            vv.showPlayerDisconnected(disconnectedNickname);
         }
     }
 

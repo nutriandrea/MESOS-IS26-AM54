@@ -51,6 +51,8 @@ public class SocketClientHandler implements Runnable, ClientConnection {
         this.controller = server.getController();
         this.connected = true;
         this.lastPongTime = System.currentTimeMillis();
+
+        startPingScheduler();
     }
 
     @Override
@@ -105,7 +107,7 @@ public class SocketClientHandler implements Runnable, ClientConnection {
             long timeSinceLastPong = System.currentTimeMillis() - lastPongTime;
             if (timeSinceLastPong > PING_TIMEOUT_MS) {
                 System.out.println("[Server TCP] Ping timeout per " + playerNickname + " (" + timeSinceLastPong + "ms)");
-                controller.markDisconnected(playerNickname);
+
                 disconnect();
                 return;
             }

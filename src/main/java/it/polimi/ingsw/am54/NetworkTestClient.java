@@ -16,10 +16,10 @@ public class NetworkTestClient {
             System.out.println("[CLIENT] Connesso! Invio richiesta di ingresso...");
 
             // 2. Crea e invia la richiesta JoinGameRequest
-            JoinGameRequest request = new JoinGameRequest("MarioRossi");
-            connection.sendRequest(request);
+            String nickname =  "Mario Rossi";
+            connection.joinGame(nickname);
 
-            System.out.println("[CLIENT] Richiesta inviata per l'utente: " + request.getNickname());
+            System.out.println("[CLIENT] Richiesta inviata per l'utente: " + nickname);
 
             // Teniamo il client acceso un attimo per vedere la risposta del server nei log
             Thread.sleep(2000);

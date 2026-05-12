@@ -42,6 +42,8 @@ public class ClientModel {
     private Runnable onModelUpdatedCallback;
     private Timer debounceTimer;
 
+    private String lastSystemMessage;
+
     public void setOnModelUpdatedCallback(Runnable callback) {
         this.onModelUpdatedCallback = callback;
     }
@@ -160,6 +162,8 @@ public class ClientModel {
             turnOrderTrack.add(nickname);
         }
         disconnectedPlayers.remove(nickname);
+
+        this.lastSystemMessage = "👋 NUOVO GIOCATORE: " + nickname.toUpperCase() + " è entrato nella lobby!";
         notifyUI();
     }
 
@@ -176,6 +180,8 @@ public class ClientModel {
      */
     public synchronized void updatePlayerDisconnected(String nickname) {
         disconnectedPlayers.add(nickname);
+        // AGGIUNTA: Messaggio di sistema per le cadute
+        this.lastSystemMessage = "⚠️ ATTENZIONE: " + nickname.toUpperCase() + " si è disconnesso!";
         notifyUI();
     }
 
@@ -191,6 +197,8 @@ public class ClientModel {
      */
     public synchronized void updatePlayerReconnected(String nickname) {
         disconnectedPlayers.remove(nickname);
+        // AGGIUNTA: Messaggio di sistema per il rientro
+        this.lastSystemMessage = "🟢 BENTORNATO: " + nickname.toUpperCase() + " è tornato in partita!";
         notifyUI();
     }
 
@@ -203,6 +211,7 @@ public class ClientModel {
     public synchronized Set<String> getDisconnectedPlayers() {
         return new HashSet<>(disconnectedPlayers);
     }
+
 
     /** Aggiornato quando cambia il giocatore di turno */
     public synchronized void updateTurn(String nickname) {
@@ -365,6 +374,8 @@ public class ClientModel {
         this.lastErrorMessage = null;
     }
 
+    public synchronized void clearSystemMessage() { this.lastSystemMessage = null; }
+
     /* =====================================================================
      * CARICAMENTO STATO COMPLETO (per riconnessione)
      * ===================================================================== */
@@ -382,6 +393,7 @@ public class ClientModel {
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(ClientModel.class.getName());
 
     // --- GETTER ---
+    public synchronized String getLastSystemMessage() { return lastSystemMessage; }
     public synchronized String getCurrentState() { return currentState; }
     public synchronized Map<String, TotemColors> getPlayerColors() { return playerColors; }
     public synchronized List<String> getWinners() { return winners; }

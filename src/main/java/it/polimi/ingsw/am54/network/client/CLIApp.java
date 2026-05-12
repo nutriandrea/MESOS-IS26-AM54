@@ -47,10 +47,32 @@ public class CLIApp {
 
     // Metodo "Cuore" della CLI: decide cosa stampare in base alla fase del gioco
     public synchronized void render() {
-        // Se sto già aspettando che l'utente scriva, non ristampo per non "spaccare" la console
-        if (currentInputHandler != null) return;
+        // SCENARIO 1: L'utente sta digitando qualcosa.
+        // NON puliamo lo schermo per non rompergli l'input.
+        if (currentInputHandler != null) {
+            if (model.getLastSystemMessage() != null) {
+                System.out.println("\n--- 🔔 NOTIFICA DI SISTEMA ---");
+                System.out.println(model.getLastSystemMessage());
+                System.out.println("------------------------------\n");
+                model.clearSystemMessage();
+            }
+            if (model.getLastErrorMessage() != null) {
+                System.out.println("\n❌ [ERRORE DAL SERVER]: " + model.getLastErrorMessage());
+                model.clearError();
+            }
+            return; // Ci fermiamo qui.
+        }
 
-        clearConsole(); // (Vedi metodo helper in fondo)
+        // SCENARIO 2: Nessun input in corso. Facciamo un refresh totale.
+        clearConsole();
+
+        // Se c'è una notifica di sistema, la mettiamo in cima al nuovo schermo
+        if (model.getLastSystemMessage() != null) {
+            System.out.println("--- 🔔 NOTIFICA DI SISTEMA ---");
+            System.out.println(model.getLastSystemMessage());
+            System.out.println("------------------------------\n");
+            model.clearSystemMessage();
+        }
 
         String state = model.getCurrentState();
 
@@ -68,9 +90,11 @@ public class CLIApp {
             System.out.println("Stato sconosciuto: " + state);
         }
 
-        // Stampa eventuali messaggi di errore
+
+        // Stampiamo l'errore ALLA FINE di tutto, dopo i menu e le opzioni!
+        // Così comparirà in basso, esattamente dove stai per digitare.
         if (model.getLastErrorMessage() != null) {
-            System.out.println("\n❌ [ERRORE DAL SERVER]: " + model.getLastErrorMessage());
+            System.out.println("\n❌ [ERRORE]: " + model.getLastErrorMessage());
             model.clearError();
         }
     }
@@ -307,7 +331,12 @@ public class CLIApp {
         for (String p : model.getPlayers()) {
             Integer food = model.getPlayerFood().get(p);
             Integer aura = model.getPlayerAura().get(p);
-            System.out.println("🔹 " + p.toUpperCase() + " | 🍖 Cibo: " + (food != null ? food : 0) + " | ✨ Aura: " + (aura != null ? aura : 0));
+
+            // Prepariamo la scritta offline da incollare di fianco al nome
+            String status = model.isPlayerDisconnected(p) ? " [🔴 OFFLINE]" : "";
+
+            // Stampiamo tutto su una singola riga!
+            System.out.println("🔹 " + p.toUpperCase() + status + " | 🍖 Cibo: " + (food != null ? food : 0) + " | ✨ Aura: " + (aura != null ? aura : 0));
 
             List<String> tribe = model.getPlayerTribe().get(p);
             List<String> bldgs = model.getPlayerBuildings().get(p);

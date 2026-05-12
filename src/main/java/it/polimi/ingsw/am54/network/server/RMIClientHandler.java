@@ -42,6 +42,8 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         this.clientStub = clientStub;
         this.controller = server.getController();
         this.lastPongTime = System.currentTimeMillis();
+
+        startPingScheduler();
     }
 
     @Override
@@ -83,12 +85,11 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
             long timeSinceLastPong = System.currentTimeMillis() - lastPongTime;
             if (timeSinceLastPong > PING_TIMEOUT_MS) {
                 System.out.println("[Server RMI] Ping timeout per " + playerNickname + " (" + timeSinceLastPong + "ms)");
-                controller.markDisconnected(playerNickname);
+
                 disconnect();
                 return;
             }
 
-            //TODO: vedere se funziona correttamente
             sendPing();
 
         }, PING_INTERVAL_MS, PING_INTERVAL_MS, TimeUnit.MILLISECONDS);

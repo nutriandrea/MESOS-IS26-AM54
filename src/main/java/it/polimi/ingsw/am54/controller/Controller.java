@@ -196,11 +196,18 @@ public class Controller {
      * ===================================================================== */
 
     public void markDisconnected(String nickname) {
+        boolean wasAlreadyDisconnected;
         synchronized (disconnectedPlayers) {
-            disconnectedPlayers.add(nickname);
+            // add() restituisce true se l'elemento NON era già presente.
+            // Se c'era già, significa che abbiamo già avvisato tutti.
+            wasAlreadyDisconnected = !disconnectedPlayers.add(nickname);
         }
-        LOGGER.warning("Giocatore " + nickname + " marcato come disconnesso.");
-        broadcastPlayerDisconnected(nickname);
+
+        // Se è la prima volta che ci accorgiamo che è caduto, avvisiamo tutti!
+        if (!wasAlreadyDisconnected) {
+            LOGGER.warning("Giocatore " + nickname + " marcato come disconnesso.");
+            broadcastPlayerDisconnected(nickname);
+        }
     }
 
     public void removeClient(String nickname) {
@@ -208,14 +215,54 @@ public class Controller {
         synchronized (virtualViews) {
             view = virtualViews.remove(nickname);
         }
-        synchronized (disconnectedPlayers) {
-            disconnectedPlayers.remove(nickname);
-        }
+
         if (view != null) {
             game.removeObserver(view);
         }
-        LOGGER.info("Giocatore " + nickname + " rimosso dal server.");
+        LOGGER.info("Connessione di " + nickname + " rimossa dal server (Socket chiuso).");
+
+        // FIX: Invece di rimuoverlo in silenzio, lo passiamo a markDisconnected
+        // così siamo certi al 100% che la UI di tutti si aggiorni col pallino rosso!
+        markDisconnected(nickname);
     }
+
+   /* private void handlePlayerDrop(String disconnectedNickname) {
+        // Quanti giocatori totali ci sono nel Game?
+        int totalPlayers = game.getPlayers().size();
+        // Quanti sono caduti?
+        int offlinePlayers = disconnectedPlayers.size();
+        // Quanti sono ancora online?
+        int onlinePlayers = totalPlayers - offlinePlayers;
+
+        if (onlinePlayers == 1) {
+            System.out.println("[SERVER] È rimasto 1 solo giocatore! Sospensione partita...");
+
+            // suspendGameAndStartTimer();
+        }
+        else if (onlinePlayers > 1) {
+            System.out.println("[SERVER] Ci sono ancora " + onlinePlayers + " giocatori. Il gioco continua.");
+            forceSkipTurn(disconnectedNickname);
+        }
+        else {
+            System.out.println("[SERVER] Tutti i giocatori sono disconnessi. Stanza ibernata.");
+            // (Opzionale: puoi fermare la partita o distruggere la stanza)
+        }
+    }
+
+    private void forceSkipTurn(String nickname) {
+        // Se tocca proprio al giocatore appena caduto, forziamo il passaggio
+        if (game.getCurrentPlayer() != null && game.getCurrentPlayer().getNickname().equals(nickname)) {
+            System.out.println("[SERVER] [ANTI-DEADLOCK] " + nickname + " era di turno. Passo al prossimo.");
+            try {
+                // Proviamo a finire il turno in modo pulito (il tuo metodo standard)
+                handleEndTurn(nickname);
+            } catch (Exception e) {
+                // Se non può finire in modo pulito (es. non ha ancora pescato),
+                // forziamo il passaggio dal Game! (Assicurati di avere un metodo nextTurn nel model)
+                // game.nextTurn();
+            }
+        }
+    } */
 
     public boolean isDisconnected(String nickname) {
         synchronized (disconnectedPlayers) {

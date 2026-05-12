@@ -1,0 +1,108 @@
+/* --- 1. Titoli e Label --- */
+.titolo-mesos {
+    -fx-font-family: 'Papyrus';
+    -fx-font-size: 130px;
+    -fx-font-weight: bold;
+    -fx-text-fill: linear-gradient(to bottom, #FFD700, #B8860B);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 10, 0.5, 3, 3);
+}
+
+.label-prompt-nickname {
+    -fx-font-family: 'Papyrus';
+    -fx-font-size: 32px;
+    -fx-text-fill: #F5DEB3; /* Colore Crema */
+}
+
+.label-errore {
+    -fx-font-family: 'Papyrus';
+    -fx-font-size: 26px;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgb(255, 0, 0), 5, 1.0, 0, 0);
+}
+
+/* --- 2. Box Nickname e Totem (Uniformati e con bordo crema) --- */
+.box-nickname, .box-totem {
+    -fx-background-color: rgba(50, 50, 50, 0.7);
+    -fx-background-radius: 25px;
+    /* Bordo dello stesso colore della scritta nickname (#F5DEB3) */
+    -fx-border-color: rgba(245, 222, 179, 0.5);
+    -fx-border-width: 2px;
+    -fx-border-radius: 25px;
+    -fx-padding: 30px;
+}
+
+/* --- 3. Stile Input Nickname (Centrato) --- */
+.input-nickname {
+    -fx-font-family: 'Papyrus';
+    -fx-font-size: 22px;
+    -fx-text-fill: #F5DEB3;
+    -fx-alignment: center; /* TESTO CHE PARTE DAL CENTRO */
+    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-background-radius: 10px;
+    -fx-border-color: rgba(245, 222, 179, 0.3);
+    -fx-border-radius: 10px;
+    -fx-padding: 10px;
+}
+
+/* --- 4. Tabella Giocatori --- */
+.tabella-giocatori {
+    -fx-background-color: transparent;
+    -fx-control-inner-background: transparent;
+}
+
+.tabella-giocatori .list-cell {
+    -fx-background-color: rgba(0, 0, 0, 0.6);
+    -fx-text-fill: #F5DEB3;
+    -fx-font-family: 'Papyrus';
+    -fx-font-size: 22px;
+    -fx-alignment: center;
+    -fx-border-color: transparent transparent rgba(218, 165, 32, 0.2) transparent;
+}
+
+/* --- 5. X Rossa (Papyrus e Opaca) --- */
+.button:disabled { -fx-opacity: 1.0; }
+
+.label-x {
+    -fx-text-fill: #FF0000;
+    -fx-font-family: 'Papyrus';
+    -fx-font-size: 70px;
+    -fx-font-weight: bold;
+    -fx-opacity: 1.0;
+    -fx-effect: dropshadow(gaussian, black, 5, 0.8, 0, 0);
+}
+
+.immagine-occupata { -fx-opacity: 0.3; }
+
+
+.totem-selezionato-mio {
+    -fx-effect: dropshadow(gaussian, #FFD700, 30, 0.7, 0, 0);
+    -fx-opacity: 1.0;
+}
+
+/* --- 6. Tasto START e PLAY --- */
+.bottone-play {
+    -fx-font-family: 'Papyrus';
+    -fx-font-size: 50px;
+    -fx-text-fill: #F5DEB3;
+    -fx-background-color: rgba(0, 0, 0, 0.7);
+    -fx-border-color: #DAA520;
+    -fx-border-width: 3px;
+    -fx-border-radius: 15px;
+}
+
+.bottone-login {
+    -fx-font-family: 'Papyrus';
+    -fx-font-size: 110px;
+    -fx-font-weight: bold;
+    -fx-text-fill: linear-gradient(to bottom, #FFD700, #B8860B);
+    -fx-background-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 15, 0.5, 4, 4);
+}
+
+.bottone-login:hover {
+    -fx-text-fill: #FFF8DC;
+    -fx-effect: dropshadow(gaussian, #FFD700, 30, 0.6, 0, 0);
+}
+
+.bottone-play .text, .bottone-login .text { -fx-font-family: 'Papyrus'; }

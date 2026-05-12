@@ -4,73 +4,62 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.image.*?>
 
-<StackPane fx:id="mainContainer" minWidth="888.0" minHeight="600.0" prefWidth="1000.0" prefHeight="600.0" style="-fx-background-color: black;"
+<StackPane fx:id="mainContainer" prefWidth="1000.0" prefHeight="600.0" style="-fx-background-color: black;"
            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="it.polimi.ingsw.am54.gui.LobbyController">
+           fx:controller="it.polimi.ingsw.am54.gui.LobbyController"
+           stylesheets="@../css/lobby.css">
 
     <children>
         <ImageView preserveRatio="false" fitWidth="${mainContainer.width}" fitHeight="${mainContainer.height}">
             <image><Image url="@../images/sfondo_lobby.jpg" /></image>
         </ImageView>
 
-        <VBox fx:id="nicknameContainer" alignment="TOP_CENTER" spacing="25.0">
+        <VBox fx:id="nicknameContainer" alignment="CENTER" spacing="30.0">
             <children>
-                <Region minHeight="40.0" prefHeight="60.0" maxHeight="60.0" />
-
-                <Label text="BENVENUTO"
-                       style="-fx-font-family: 'Alice in Wonderland'; -fx-font-size: 100; -fx-text-fill: white; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);" />
-
-                <TextField fx:id="nicknameField" onAction="#onJoinClicked" promptText="Scrivi il tuo nome e premi Invio..." maxWidth="350.0"
-                           style="-fx-font-size: 20; -fx-alignment: center; -fx-background-radius: 15; -fx-background-color: rgba(255, 255, 255, 0.9);" />
-
-                <Label fx:id="errorLabel" textFill="white" style="-fx-font-weight: bold; -fx-font-size: 16; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 5, 0, 0, 0);" />
-
-                <Region VBox.vgrow="ALWAYS" />
+                <Label text="BENVENUTO" styleClass="titolo-mesos" />
+                <VBox alignment="CENTER" spacing="20.0" maxWidth="500.0" styleClass="box-nickname">
+                    <children>
+                        <Label text="Inserisci il tuo nickname:" styleClass="label-prompt-nickname" />
+                        <TextField fx:id="nicknameField" onAction="#onJoinClicked"
+                                   promptText="Scrivi qui..." maxWidth="350.0"
+                                   styleClass="input-nickname" />
+                        <Label fx:id="errorLabel" styleClass="label-errore" />
+                    </children>
+                </VBox>
             </children>
         </VBox>
 
-        <VBox fx:id="lobbyContainer" alignment="TOP_CENTER" spacing="0" visible="false" managed="false">
+        <VBox fx:id="lobbyContainer" alignment="TOP_CENTER" spacing="10" visible="false" managed="false">
+            <padding><Insets top="40" bottom="40" /></padding>
             <children>
-                <Region minHeight="80.0" prefHeight="160.0" maxHeight="160.0" VBox.vgrow="ALWAYS" />
+                <Label fx:id="statusLabel" text="In attesa dei giocatori..." style="-fx-font-family: 'Papyrus'; -fx-font-size: 25; -fx-text-fill: #F5DEB3;" />
+                <ListView fx:id="playersListView" prefHeight="220.0" maxWidth="500.0" styleClass="tabella-giocatori" />
 
-                <Label fx:id="statusLabel" text="In attesa dei giocatori..."
-                       style="-fx-font-size: 24; -fx-text-fill: white; -fx-font-weight: bold; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);">
-                    <VBox.margin><Insets bottom="35.0" /></VBox.margin>
-                </Label>
+                <Region VBox.vgrow="ALWAYS" />
 
-                <ListView fx:id="playersListView" minHeight="180.0" prefHeight="310.0" maxHeight="310.0" prefWidth="600.0" maxWidth="600.0"
-                          style="-fx-background-color: rgba(255, 255, 255, 0.8); -fx-background-radius: 10;" />
-
-                <Region minHeight="40.0" prefHeight="110.0" maxHeight="110.0" VBox.vgrow="ALWAYS" />
-
-                <HBox fx:id="colorSelectionBox" alignment="CENTER" spacing="60.0" maxWidth="600.0"
-                      style="-fx-background-color: rgba(255, 255, 255, 0.23); -fx-background-radius: 20; -fx-padding: 15;">
+                <HBox fx:id="colorSelectionBox" alignment="CENTER" spacing="40.0" styleClass="box-totem" maxWidth="750">
                     <children>
-                        <Button onAction="#onColorYellow" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;">
-                            <graphic><ImageView fitWidth="75.0" preserveRatio="true"><image><Image url="@../images/totem_yellow_3d_160x270.png" /></image></ImageView></graphic>
+                        <Button fx:id="btnYellow" onAction="#onColorYellow" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit" style="-fx-background-color: transparent; -fx-cursor: hand;">
+                            <graphic><StackPane><ImageView fx:id="imgYellow" fitWidth="60.0" preserveRatio="true"><image><Image url="@../images/totem_yellow_3d_160x270.png" /></image></ImageView><Label fx:id="xYellow" text="X" styleClass="label-x" visible="false" /></StackPane></graphic>
                         </Button>
-                        <Button onAction="#onColorRed" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;">
-                            <graphic><ImageView fitWidth="75.0" preserveRatio="true"><image><Image url="@../images/totem_red_3d_160x270.png" /></image></ImageView></graphic>
+                        <Button fx:id="btnRed" onAction="#onColorRed" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit" style="-fx-background-color: transparent; -fx-cursor: hand;">
+                            <graphic><StackPane><ImageView fx:id="imgRed" fitWidth="60.0" preserveRatio="true"><image><Image url="@../images/totem_red_3d_160x270.png" /></image></ImageView><Label fx:id="xRed" text="X" styleClass="label-x" visible="false" /></StackPane></graphic>
                         </Button>
-                        <Button onAction="#onColorBlack" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;">
-                            <graphic><ImageView fitWidth="75.0" preserveRatio="true"><image><Image url="@../images/totem_black_3d_160x270.png" /></image></ImageView></graphic>
+                        <Button fx:id="btnBlack" onAction="#onColorBlack" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit" style="-fx-background-color: transparent; -fx-cursor: hand;">
+                            <graphic><StackPane><ImageView fx:id="imgBlack" fitWidth="60.0" preserveRatio="true"><image><Image url="@../images/totem_black_3d_160x270.png" /></image></ImageView><Label fx:id="xBlack" text="X" styleClass="label-x" visible="false" /></StackPane></graphic>
                         </Button>
-                        <Button onAction="#onColorBlue" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;">
-                            <graphic><ImageView fitWidth="75.0" preserveRatio="true"><image><Image url="@../images/totem_blue_3d_160x270.png" /></image></ImageView></graphic>
+                        <Button fx:id="btnBlue" onAction="#onColorBlue" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit" style="-fx-background-color: transparent; -fx-cursor: hand;">
+                            <graphic><StackPane><ImageView fx:id="imgBlue" fitWidth="60.0" preserveRatio="true"><image><Image url="@../images/totem_blue_3d_160x270.png" /></image></ImageView><Label fx:id="xBlue" text="X" styleClass="label-x" visible="false" /></StackPane></graphic>
                         </Button>
-                        <Button onAction="#onColorWhite" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 0;">
-                            <graphic><ImageView fitWidth="75.0" preserveRatio="true"><image><Image url="@../images/totem_white_3d_160x270.png" /></image></ImageView></graphic>
+                        <Button fx:id="btnWhite" onAction="#onColorWhite" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit" style="-fx-background-color: transparent; -fx-cursor: hand;">
+                            <graphic><StackPane><ImageView fx:id="imgWhite" fitWidth="60.0" preserveRatio="true"><image><Image url="@../images/totem_white_3d_160x270.png" /></image></ImageView><Label fx:id="xWhite" text="X" styleClass="label-x" visible="false" /></StackPane></graphic>
                         </Button>
                     </children>
                 </HBox>
 
-                <Region minHeight="5.0" prefHeight="50.0" maxHeight="50.0" VBox.vgrow="ALWAYS" />
-
+                <Region minHeight="30" />
                 <Button fx:id="startGameButton" onAction="#onStartGameClicked" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit"
-                        text="START" visible="false" managed="false"
-                        style="-fx-font-family: 'Alice in Wonderland'; -fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 80; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 15, 0, 0, 0);" />
-
-                <Region minHeight="100.0" prefHeight="120.0" maxHeight="120.0" VBox.vgrow="ALWAYS" />
+                        text="START" visible="false" managed="false" styleClass="bottone-play" />
             </children>
         </VBox>
     </children>

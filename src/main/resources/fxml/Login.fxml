@@ -6,32 +6,19 @@
 
 <StackPane fx:id="mainContainer" prefWidth="1000.0" prefHeight="600.0" style="-fx-background-color: black;"
            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="it.polimi.ingsw.am54.gui.LoginController">
+           fx:controller="it.polimi.ingsw.am54.gui.LoginController"
+           stylesheets="@../css/lobby.css">
 
     <children>
-        <ImageView preserveRatio="false"
-                   fitWidth="${mainContainer.width}"
-                   fitHeight="${mainContainer.height}">
-            <image>
-                <Image url="@../images/sfondo_login.jpg" />
-            </image>
+        <ImageView preserveRatio="false" fitWidth="${mainContainer.width}" fitHeight="${mainContainer.height}">
+            <image><Image url="@../images/sfondo_login.jpg" /></image>
         </ImageView>
 
         <VBox alignment="BOTTOM_CENTER" pickOnBounds="false">
-            <padding>
-                <Insets bottom="60.0" />
-            </padding>
+            <padding><Insets bottom="60.0" /></padding>
             <children>
-                <Button onAction="#onPlayClicked"
-                        onMouseEntered="#onHoverEnter"
-                        onMouseExited="#onHoverExit"
-                        text="PLAY"
-                        style="-fx-font-family: 'Alice in Wonderland';
-                               -fx-background-color: transparent;
-                               -fx-text-fill: white;
-                               -fx-font-size: 105;
-                               -fx-cursor: hand;
-                               -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 15, 0, 0, 0);" />
+                <Button onAction="#onPlayClicked" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit"
+                        text="PLAY" styleClass="bottone-login" />
             </children>
         </VBox>
     </children>

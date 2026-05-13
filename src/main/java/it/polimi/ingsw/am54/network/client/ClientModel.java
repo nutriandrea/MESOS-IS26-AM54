@@ -327,6 +327,7 @@ public class ClientModel {
         // 1. Aggiorna lo stato testuale
         this.currentState = msg.getStateName();
         this.currentEra = msg.getCurrentEra();
+        this.currentRound = msg.getCurrentRound();
 
         // 2. Sincronizza giocatori, colori e statistiche
         msg.getPlayersStats().forEach((nick, stats) -> {
@@ -413,4 +414,5 @@ public class ClientModel {
     public synchronized Map<String, Integer> getPlayerAura() { return playerAura; }
     public synchronized Map<String, List<String>> getPlayerTribe() { return playerTribe; }
     public synchronized Map<String, List<String>> getPlayerBuildings() { return playerBuildings; }
+    public synchronized int getRoundCount() { return currentRound; }
 }

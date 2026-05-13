@@ -273,11 +273,11 @@ public class CLIApp {
                 break;
             case "FARMER":
                 visual.append("FARMER ");
-                if (val1 > 0) visual.append("🌾-").append(val1);
+                if (val1 >= 0) visual.append("🌾-").append(val1);
                 break;
             case "INVENTOR":
                 visual.append("INVENTOR ");
-                if (val1 > 0) visual.append("⚙️ Liv.").append(val1);
+                if (val1 >= 0) visual.append("⚙️ Liv.").append(val1);
                 break;
             case "ARTIST":
                 visual.append("ARTIST 🎨");
@@ -308,8 +308,7 @@ public class CLIApp {
 
     private void stampaTabellone() {
         System.out.println("\n=========================== TABELLONE ===========================");
-        System.out.println("Era: " + model.getCurrentEra());
-
+        System.out.println("ERA: " + model.getCurrentEra() + "  |  ROUND: " + model.getRoundCount());
         System.out.println("\n▲ --- FILA SUPERIORE --- ▲");
         System.out.println("Eventi:     " + formattaRiga(model.getEventUpperRow()));
         System.out.println("Personaggi: " + formattaRiga(model.getCharacterUpperRow()));

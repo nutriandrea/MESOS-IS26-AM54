@@ -52,7 +52,7 @@ public interface ClientConnection {
                              List<String> buildUp, List<String> buildLow);
     void notifyTurnChanged(String nickname);
     void notifyStateChanged( String stateName,
-                            int currentEra,
+                            int currentEra, int currentRound,
                             Map<String, StateChangedUpdate.PlayerSnapshot> playersStats,
                             List<String> turnOrderTrack,
                             Map<Integer, String> offeringTrack,

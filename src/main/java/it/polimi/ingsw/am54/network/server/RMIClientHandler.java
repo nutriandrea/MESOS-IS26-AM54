@@ -142,13 +142,13 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
 
     @Override
-    public void notifyStateChanged(String stateName, int currentEra,
+    public void notifyStateChanged(String stateName, int currentEra, int currentRound,
                                    Map<String, StateChangedUpdate.PlayerSnapshot> playersStats,
                                    List<String> turnOrderTrack, Map<Integer, String> offeringTrack,
                                    List<String> charUpper, List<String> charLower,
                                    List<String> eventUpper, List<String> eventLower,
                                    List<String> buildUpper, List<String> buildLower) {
-        try { clientStub.onStateChanged(stateName, currentEra, playersStats, turnOrderTrack, offeringTrack,
+        try { clientStub.onStateChanged(stateName, currentEra, currentRound, playersStats, turnOrderTrack, offeringTrack,
                 charUpper, charLower, eventUpper, eventLower, buildUpper, buildLower); }
         catch (RemoteException e) { disconnect(); }
     }

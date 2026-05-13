@@ -54,11 +54,6 @@ public class BuildingCard extends Card implements IPurchasable {
     }
 
     @Override
-    public boolean canBePurchased(Player player) {
-        return (player.getFoodTokens()-player.getMyBuildingDiscount()>=this.cost);
-    }
-
-    @Override
     public void pick(Player player, Game game) throws Exception {
         int finalCost = this.cost - player.getMyBuildingDiscount();
         finalCost = Math.max(0, finalCost);
@@ -77,6 +72,21 @@ public class BuildingCard extends Card implements IPurchasable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public boolean canBePurchased(Player player) {
+        // Calcoliamo il costo effettivo considerando lo sconto del giocatore
+        int finalCost = this.cost - player.getMyBuildingDiscount();
+        finalCost = Math.max(0, finalCost);
+        // Verifichiamo se il cibo corrente è sufficiente
+        return player.getFood() >= finalCost;
+    }
+
+    @Override
+    public void reveal(Board board, String row) {
+        // Questo metodo sa esattamente come rimettere l'edificio al suo posto!
+        board.addBuildingCard(this, row);
     }
 
 }

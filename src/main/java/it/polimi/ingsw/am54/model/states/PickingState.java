@@ -43,6 +43,18 @@ public class PickingState extends GameState {
             throw new Exception("Carta non trovata o non disponibile a quell'indice.");
         }
 
+        // --- CONTROLLO POLIMORFICO E ROLLBACK ---
+        // Usiamo canBePurchased() che per i Personaggi è sempre true
+        // e per i Building controlla il cibo - sconti
+        if (!card.canBePurchased(player)) {
+            // Se non può essere acquistata, rimettiamo la carta sulla board (Rollback)
+            // reveal() metterà la carta nella fila giusta grazie al polimorfismo
+            card.reveal(game.getBoard(), row);
+
+            // Lanciamo l'eccezione PRIMA di scalare il pick
+            throw new Exception("Non hai abbastanza cibo (🍖) per prendere questa carta!");
+        }
+
         // Se la carta esiste e può essere presa, scaliamo il pick dalla tessera
         if (isUpper) tile.useUpperPick();
         else tile.useLowerPick();
@@ -132,7 +144,11 @@ public class PickingState extends GameState {
 
         // Transizione di Fase o Turno
         if (game.isPickingComplete()) {
-            game.setState(new EventState());
+            if (game.isTribeDeckEmpty() && game.getCurrentEra() == 3) {
+                game.setState(new EndGameState());
+            } else {
+                game.setState(new EventState());
+            }
         } else {
             // Aggiorniamo il currentPlayer con il prossimo "picker" da sinistra a destra
             game.setCurrentPlayer(game.getCurrentPicker());

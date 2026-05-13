@@ -18,7 +18,7 @@
             <padding><Insets bottom="60.0" /></padding>
             <children>
                 <Button onAction="#onPlayClicked" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit"
-                        text="PLAY" styleClass="bottone-login" />
+                        text="PLAY" styleClass="bottone-login" translateY="-20" />
             </children>
         </VBox>
     </children>

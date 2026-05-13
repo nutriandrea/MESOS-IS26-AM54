@@ -257,7 +257,7 @@ public class VirtualView implements IGameObserver {
 
         // Spedisci il super-pacchetto!
         connection.notifyStateChanged(
-                newState.getClass().getSimpleName(), game.getCurrentEra(),
+                newState.getClass().getSimpleName(), game.getCurrentEra(), game.getRoundCount(),
                 stats, turnOrder, offering,
                 charUp, charLow, eventUp, eventLow, buildUp, buildLow
         );
@@ -316,7 +316,7 @@ public class VirtualView implements IGameObserver {
         // Manda il pacchetto solo a QUESTA connessione
         connection.notifyStateChanged(
                 game.getCurrentState().getClass().getSimpleName(),
-                game.getCurrentEra(),
+                game.getCurrentEra(), game.getRoundCount(),
                 stats, turnOrder, offering,
                 charUp, charLow, eventUp, eventLow, buildUp, buildLow
         );

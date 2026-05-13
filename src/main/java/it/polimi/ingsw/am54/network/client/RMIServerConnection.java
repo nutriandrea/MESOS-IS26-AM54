@@ -117,13 +117,13 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     }
 
     @Override
-    public void onStateChanged(String stateName, int era, Map<String, StateChangedUpdate.PlayerSnapshot> players,
+    public void onStateChanged(String stateName, int era, int currentRound, Map<String, StateChangedUpdate.PlayerSnapshot> players,
                                List<String> turnOrder, Map<Integer, String> offering,
                                List<String> charUp, List<String> charLow,
                                List<String> eventUp, List<String> eventLow,
                                List<String> buildUp, List<String> buildLow) throws RemoteException {
         // usiamo il DTO localmente per semplicità
-        StateChangedUpdate localSnapshot = new StateChangedUpdate(stateName, era, players, turnOrder, offering, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
+        StateChangedUpdate localSnapshot = new StateChangedUpdate(stateName, era, currentRound, players, turnOrder, offering, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
         clientModel.updateState(localSnapshot);
     }
 

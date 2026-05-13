@@ -1,8 +1,5 @@
 package it.polimi.ingsw.am54.model;
 
-/**
- * 
- */
 public class Card {
 
 
@@ -36,4 +33,11 @@ public class Card {
         throw new UnsupportedOperationException("Cannot pick this card type");
     }
 
+    public boolean canBePurchased(Player player) {
+        return true;
+    }
+
+    public void reveal(Board board, String row) {
+        throw new UnsupportedOperationException("Cannot reveal this generic card type");
+    }
 }

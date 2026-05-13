@@ -89,7 +89,7 @@ public class SocketClientHandler implements Runnable, ClientConnection {
             controller.handleChooseTotemColor(this.playerNickname, req.getColor().name());
         } else if (request instanceof PlaceTotemRequest req) {
             controller.handlePlaceTotem(this.playerNickname, req.getOfferPosition());
-} else if (request instanceof PickCardRequest req) {
+        } else if (request instanceof PickCardRequest req) {
             controller.handlePickCard(this.playerNickname, req.getRow(), req.getCardIndex());
         } else if (request instanceof PongResponse pong) {
             lastPongTime = System.currentTimeMillis();
@@ -171,8 +171,8 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     @Override
-    public void notifyStateChanged(String stateName, int currentEra, Map<String, StateChangedUpdate.PlayerSnapshot> playersStats, List<String> turnOrderTrack, Map<Integer, String> offeringTrack, List<String> charUpper, List<String> charLower, List<String> eventUpper, List<String> eventLower, List<String> buildUpper, List<String> buildLower) {
-        writeToStream(new StateChangedUpdate(stateName, currentEra, playersStats, turnOrderTrack, offeringTrack, charUpper, charLower, eventUpper, eventLower, buildUpper, buildLower));
+    public void notifyStateChanged(String stateName, int currentEra, int currentRound, Map<String, StateChangedUpdate.PlayerSnapshot> playersStats, List<String> turnOrderTrack, Map<Integer, String> offeringTrack, List<String> charUpper, List<String> charLower, List<String> eventUpper, List<String> eventLower, List<String> buildUpper, List<String> buildLower) {
+        writeToStream(new StateChangedUpdate(stateName, currentEra, currentRound, playersStats, turnOrderTrack, offeringTrack, charUpper, charLower, eventUpper, eventLower, buildUpper, buildLower));
     }
 
     @Override

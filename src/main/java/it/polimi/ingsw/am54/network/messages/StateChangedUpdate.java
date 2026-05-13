@@ -28,6 +28,7 @@ public class StateChangedUpdate implements Update {
     }
 
     private final int currentEra;
+    private final int currentRound;
     private final String stateName;
     private final Map<String, PlayerSnapshot> playersStats;
     private final List<String> turnOrderTrack;
@@ -36,6 +37,7 @@ public class StateChangedUpdate implements Update {
 
     public StateChangedUpdate(String stateName,
                               int currentEra,
+                              int currentRound,
                               Map<String, PlayerSnapshot> playersStats,
                               List<String> turnOrderTrack,
                               Map<Integer, String> offeringTrack,
@@ -53,6 +55,7 @@ public class StateChangedUpdate implements Update {
         this.buildUpper = buildUpper;
         this.buildLower = buildLower;
         this.currentEra = currentEra;
+        this.currentRound = currentRound;
     }
 
     public String getStateName() {
@@ -97,5 +100,9 @@ public class StateChangedUpdate implements Update {
 
     public int getCurrentEra() {
         return currentEra;
+    }
+
+    public int getCurrentRound() {
+        return currentRound;
     }
 }

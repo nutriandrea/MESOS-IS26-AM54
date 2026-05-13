@@ -45,29 +45,25 @@ public class EventState extends GameState {
         }
 
         // 8. Controllo Condizione Fine Partita (Regola: Il mazzo Tribù è esaurito)
-        if (game.isTribeDeckEmpty() && game.getCurrentEra() == 3) {
-            game.setState(new EndGameState());
-        } else {
-            // Se c'è ancora gioco, passiamo il testimone al piazzamento Totem!
-            game.advanceRound();
-            // A. Resetta la flag dei totem per tutti i giocatori
-            for(it.polimi.ingsw.am54.model.Player p : game.getPlayers()) {
-                p.setHasPlacedTotem(false);
-            }
+        game.advanceRound();
 
-            // B. Il nuovo primo giocatore è quello seduto nel primo slot dell'Ordine di Turno
-            for (it.polimi.ingsw.am54.model.TurnOrderSlot slot : game.getBoard().getTurnOrderTile()) {
-                if (slot.getOccupiedBy() != null) {
-                    game.setCurrentPlayer(slot.getOccupiedBy());
-                    break; // Trovato il primo, ci fermiamo
-                }
-            }
-            for (it.polimi.ingsw.am54.model.OfferingTile tile : game.getBoard().getOfferingTrack()) {
-                tile.freeSlot(); // Libera l'occupante
-                tile.resetPicks();
-            }
-
-            game.setState(new StartTurnState());
+        // A. Resetta la flag dei totem per tutti i giocatori
+        for(it.polimi.ingsw.am54.model.Player p : game.getPlayers()) {
+            p.setHasPlacedTotem(false);
         }
+
+        // B. Il nuovo primo giocatore è quello seduto nel primo slot dell'Ordine di Turno
+        for (it.polimi.ingsw.am54.model.TurnOrderSlot slot : game.getBoard().getTurnOrderTile()) {
+            if (slot.getOccupiedBy() != null) {
+                game.setCurrentPlayer(slot.getOccupiedBy());
+                break; // Trovato il primo, ci fermiamo
+            }
+        }
+        for (it.polimi.ingsw.am54.model.OfferingTile tile : game.getBoard().getOfferingTrack()) {
+            tile.freeSlot(); // Libera l'occupante
+            tile.resetPicks();
+        }
+
+        game.setState(new StartTurnState());
     }
 }

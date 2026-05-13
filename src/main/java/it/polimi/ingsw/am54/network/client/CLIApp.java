@@ -1,6 +1,7 @@
 package it.polimi.ingsw.am54.network.client;
 
 import it.polimi.ingsw.am54.model.TotemColors;
+import it.polimi.ingsw.am54.network.messages.LeaderboardEntry;
 import java.util.Scanner;
 import java.util.List;
 import java.util.function.Consumer;
@@ -354,7 +355,71 @@ public class CLIApp {
 
     private void renderEndGame() {
         System.out.println("\n!!! PARTITA TERMINATA !!!");
+
+        // Show winners
         System.out.println("Vincitori: " + model.getWinners());
+
+        // Show final scores
+        if (model.getLastMatchScores() != null && !model.getLastMatchScores().isEmpty()) {
+            System.out.println("\n--- PUNTEGGI FINALI ---");
+            model.getLastMatchScores().forEach((nick, score) ->
+                System.out.println("  " + nick + ": " + score + " punti")
+            );
+        }
+
+        // Show leaderboard
+        stampaClassifica();
+
+        // Offer possibility to request leaderboard for different player counts
+        stampaPromptLeaderboard();
+    }
+
+    private void stampaClassifica() {
+        List<LeaderboardEntry> entries = model.getLeaderboardEntries();
+        if (entries == null || entries.isEmpty()) {
+            System.out.println("\n(Nessuna classifica disponibile)");
+            return;
+        }
+
+        System.out.println("\n--- CLASSIFICA (partite da " + model.getLeaderboardNumPlayers() + " giocatori) ---");
+        System.out.println("Pos | Nickname          | Punti | Data");
+        System.out.println("----+-------------------+-------+---------------------------");
+        for (LeaderboardEntry e : entries) {
+            String highlight = (e.getNickname().equalsIgnoreCase(myNickname)) ? " <<<" : "";
+            System.out.printf(" %2d | %-17s | %5d | %s%s%n",
+                e.getPosition(), e.getNickname(), e.getScore(),
+                e.getMatchDate() != null ? e.getMatchDate().substring(0, 10) : "",
+                highlight);
+        }
+
+        int pos = model.getLeaderboardPosition();
+        if (pos > 0) {
+            System.out.println("\nLa tua posizione in classifica: #" + pos);
+        }
+        System.out.println("==========================================================");
+    }
+
+    private void stampaPromptLeaderboard() {
+        System.out.println("\nScrivi 'CLASSIFICA N' per vedere la classifica delle partite da N giocatori.");
+        System.out.println("Scrivi 'ESCI' per uscire.");
+
+        currentInputHandler = (input) -> {
+            if (input.equalsIgnoreCase("ESCI")) {
+                currentInputHandler = null;
+                System.out.println("Arrivederci!");
+                System.exit(0);
+            } else if (input.toUpperCase().startsWith("CLASSIFICA ")) {
+                try {
+                    int np = Integer.parseInt(input.substring(11).trim());
+                    server.requestLeaderboard(np);
+                    currentInputHandler = null;
+                } catch (NumberFormatException e) {
+                    System.out.println("Formato non valido. Usa: CLASSIFICA 4");
+                }
+            } else {
+                System.out.println("Comando non riconosciuto. Scrivi CLASSIFICA N o ESCI.");
+            }
+        };
     }
 
     public static void clearConsole() {

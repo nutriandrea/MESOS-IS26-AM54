@@ -9,15 +9,15 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Manages the PostgreSQL database connection and all database operations
+ * Manages the MySQL database connection and all database operations
  * for persisting match results and querying the leaderboard.
  *
  * The connection is configured via a {@code db.properties} file
- * (see {@link DatabaseConfig}) — requires a running PostgreSQL instance.
+ * (see {@link DatabaseConfig}) — requires a running MySQL instance.
  *
  * Table schema:
  *   match_results (
- *       id          SERIAL       PRIMARY KEY,
+ *       id          INT AUTO_INCREMENT PRIMARY KEY,
  *       nickname    VARCHAR(50)  NOT NULL,
  *       score       INTEGER      NOT NULL,
  *       match_date  TIMESTAMP    NOT NULL DEFAULT NOW(),
@@ -45,7 +45,7 @@ public class DatabaseManager {
 
             stmt.execute(
                 "CREATE TABLE IF NOT EXISTS match_results (" +
-                "    id          SERIAL       PRIMARY KEY," +
+                "    id          INT AUTO_INCREMENT PRIMARY KEY," +
                 "    nickname    VARCHAR(50)  NOT NULL," +
                 "    score       INTEGER      NOT NULL," +
                 "    match_date  TIMESTAMP    NOT NULL DEFAULT NOW()," +
@@ -53,7 +53,7 @@ public class DatabaseManager {
                 ")"
             );
             this.available = true;
-            LOGGER.info("Database PostgreSQL inizializzato: " + config.getJdbcUrl());
+            LOGGER.info("Database MySQL inizializzato: " + config.getJdbcUrl());
         } catch (SQLException e) {
             LOGGER.warning("Database unavailable – leaderboard features will be disabled: " + e.getMessage());
             this.available = false;

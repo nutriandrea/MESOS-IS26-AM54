@@ -10,18 +10,18 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
- * Configuration for the PostgreSQL database.
+ * Configuration for the MySQL database (Google Cloud SQL compatibile).
  * Reads connection parameters from a {@code db.properties} file
  * located in the server's working directory.
  *
- * If the file is missing, sensible defaults are used (localhost:5432/am54).
+ * If the file is missing, sensible defaults are used (localhost:3306/am54).
  *
  * Example db.properties:
  * <pre>
  * db.host=localhost
- * db.port=5432
+ * db.port=3306
  * db.name=am54
- * db.user=postgres
+ * db.user=root
  * db.password=
  * </pre>
  */
@@ -37,16 +37,16 @@ public class DatabaseConfig {
     public DatabaseConfig() {
         Properties props = loadProperties();
         this.host     = props.getProperty("db.host", "localhost");
-        this.port     = Integer.parseInt(props.getProperty("db.port", "5432"));
+        this.port     = Integer.parseInt(props.getProperty("db.port", "3306"));
         this.dbName   = props.getProperty("db.name", "am54");
-        this.user     = props.getProperty("db.user", "postgres");
+        this.user     = props.getProperty("db.user", "root");
         this.password = props.getProperty("db.password", "");
 
-        LOGGER.info("PostgreSQL config: " + host + ":" + port + "/" + dbName + " (user: " + user + ")");
+        LOGGER.info("MySQL config: " + host + ":" + port + "/" + dbName + " (user: " + user + ")");
     }
 
     public String getJdbcUrl() {
-        return "jdbc:postgresql://" + host + ":" + port + "/" + dbName;
+        return "jdbc:mysql://" + host + ":" + port + "/" + dbName;
     }
 
     public String getUser()      { return user; }
@@ -84,7 +84,7 @@ public class DatabaseConfig {
         }
 
         // 3) Defaults
-        LOGGER.info("No db.properties found – using default PostgreSQL config (localhost:5432/am54)");
+        LOGGER.info("No db.properties found – using default MySQL config (localhost:3306/am54)");
         return props;
     }
 }

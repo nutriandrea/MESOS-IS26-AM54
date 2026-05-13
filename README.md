@@ -38,7 +38,7 @@ This is a multiplayer board game where 2-5 players compete to collect the most p
 | CLI                    | ✅ Implemented |
 | Multiple games support | 🔄 To implement |
 | ML Bots                | 🔄 To implement |
-| Leaderboard (PostgreSQL) | ✅ Implemented |
+| Leaderboard (MySQL)      | ✅ Implemented |
 | Disconnection handling | ✅ Implemented |
 
 ---
@@ -272,7 +272,7 @@ src/
 
 ## Leaderboard (Classifica)
 
-Alla fine di ogni partita, il server salva su un database **PostgreSQL** i risultati di tutti i giocatori:
+Alla fine di ogni partita, il server salva su un database **MySQL** i risultati di tutti i giocatori:
 - nickname, punteggio finale, data, numero di giocatori
 
 Subito dopo il calcolo dei vincitori, ogni client riceve un `LeaderboardUpdate` contenente:
@@ -284,25 +284,22 @@ Subito dopo il calcolo dei vincitori, ogni client riceve un `LeaderboardUpdate` 
 - **CLI**: la classifica viene stampata subito dopo i vincitori. Si può richiedere manualmente digitando `CLASSIFICA N` (es. `CLASSIFICA 4` per vedere la classifica delle partite da 4 giocatori).
 - **GUI**: la classifica appare in un pannello laterale (riquadro blu "CLASSIFICA") dopo la fine della partita.
 
-### Setup PostgreSQL
+### Setup MySQL (Google Cloud SQL)
 
-Prima di avviare il server, assicurati di avere **PostgreSQL** installato e in esecuzione.
+Il server è configurato per connettersi a un'istanza **MySQL su Google Cloud SQL**.
 
-1. **Crea il database** (se non esiste già):
-   ```sql
-   CREATE DATABASE am54;
-   ```
+1. Assicurati che l'istanza Cloud SQL abbia **IP pubblico abilitato** e l'indirizzo del tuo server sia negli **authorized networks**.
 
-2. **Crea il file `db.properties`** nella directory di lavoro del server (oppure modifica quello in `src/main/resources/db.properties` e copialo):
+2. Crea il file `db.properties` nella **directory di lavoro del server** (oppure copia quello in `src/main/resources/db.properties`):
    ```properties
-   db.host=localhost
-   db.port=5432
-   db.name=am54
-   db.user=postgres
-   db.password=la_tua_password
+   db.host=34.16.103.190
+   db.port=3306
+   db.name=mesos-leaderboard
+   db.user=mesos-leaderboard
+   db.password=CarbiCane1312
    ```
 
-   > Se il file `db.properties` non viene trovato, il server usa i valori predefiniti: `localhost:5432/am54` con utente `postgres` e password vuota.
+   > Se il file `db.properties` non viene trovato, il server usa i valori predefiniti: `localhost:3306/am54`.
 
 3. **Avvia il server** normalmente. La tabella `match_results` viene creata automaticamente al primo avvio.
 
@@ -310,7 +307,7 @@ Prima di avviare il server, assicurati di avere **PostgreSQL** installato e in e
 
 ```sql
 CREATE TABLE IF NOT EXISTS match_results (
-    id          SERIAL       PRIMARY KEY,
+    id          INT AUTO_INCREMENT PRIMARY KEY,
     nickname    VARCHAR(50)  NOT NULL,
     score       INTEGER      NOT NULL,
     match_date  TIMESTAMP    NOT NULL DEFAULT NOW(),

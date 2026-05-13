@@ -31,5 +31,8 @@
 # VS Code
 .vscode/
 
+# Database credentials
+db.properties
+
 # Mac OS
 .DS_Store

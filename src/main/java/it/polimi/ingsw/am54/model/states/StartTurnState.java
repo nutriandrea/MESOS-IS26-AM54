@@ -43,7 +43,9 @@ public class StartTurnState extends GameState {
                 .ifPresent(slot -> slot.freeSlot());
 
         // 5. GESTIONE DEL FLUSSO: Controlliamo se la fase è finita
-        if (game.getBoard().allTotemsPlaced(game.getPlayersNumber())) {
+        // Usa getActivePlayerCount() che considera il numero di giocatori
+        // attivi (escludendo eventuali disconnessi).
+        if (game.getBoard().allTotemsPlaced(game.getActivePlayerCount())) {
 
             // Tutti hanno piazzato, si passa alla fase di pesca
             game.setState(new PickingState());
@@ -56,5 +58,34 @@ public class StartTurnState extends GameState {
             // C'è ancora qualcuno che deve piazzare, passiamo al prossimo in base all'ordine
             game.nextPlayer();
         }
+    }
+
+    /**
+     * Salta il turno del giocatore disconnesso durante la fase di piazzamento totem.
+     * Marca hasPlacedTotem=true e libera lo slot nell'ordine di turno,
+     * in modo che nextPlayer() non lo consideri piu'.
+     * La transizione alla fase di pesca viene gestita dal Controller.
+     */
+    @Override
+    public void skipTurn(Game game, String nickname) throws Exception {
+        Player player = game.getPlayerByNickname(nickname);
+
+        if (!game.getCurrentPlayer().equals(player)) {
+            throw new Exception("Non e' il turno di " + nickname);
+        }
+        if (player.hasPlacedTotem()) {
+            throw new Exception(nickname + " ha gia' piazzato il totem");
+        }
+
+        // Marca come completato (nextPlayer() saltera' questo giocatore)
+        player.setHasPlacedTotem(true);
+        // Libera lo slot (nextPlayer() non lo trovera' nell'ordine di turno)
+        game.getBoard().getTurnOrderTile().stream()
+                .filter(slot -> player.equals(slot.getOccupiedBy()))
+                .findFirst()
+                .ifPresent(slot -> slot.freeSlot());
+
+        // Avanza al prossimo giocatore ancora in attesa di piazzare
+        game.nextPlayer();
     }
 }

@@ -196,6 +196,16 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     @Override
+    public void notifyGameSuspended() {
+        writeToStream(new GameSuspendedUpdate());
+    }
+
+    @Override
+    public void notifyGameResumed() {
+        writeToStream(new GameResumedUpdate());
+    }
+
+    @Override
     public void sendPing() {
         writeToStream(new PingRequest(System.currentTimeMillis()));
     }

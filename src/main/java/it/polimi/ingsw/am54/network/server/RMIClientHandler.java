@@ -86,6 +86,7 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
             if (timeSinceLastPong > PING_TIMEOUT_MS) {
                 System.out.println("[Server RMI] Ping timeout per " + playerNickname + " (" + timeSinceLastPong + "ms)");
 
+                controller.markDisconnected(playerNickname);
                 disconnect();
                 return;
             }
@@ -174,6 +175,18 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     @Override
     public void notifyPlayerReconnected(String nickname) {
         try { clientStub.onPlayerReconnected(nickname); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyGameSuspended() {
+        try { clientStub.onGameSuspended(); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyGameResumed() {
+        try { clientStub.onGameResumed(); }
         catch (RemoteException e) { disconnect(); }
     }
 

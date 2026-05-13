@@ -9,6 +9,11 @@ import it.polimi.ingsw.am54.network.server.Server;
 import it.polimi.ingsw.am54.network.server.VirtualView;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -34,12 +39,24 @@ public class Controller {
     private Server server;
 
     /** Mappa nickname -> VirtualView. Ogni VirtualView e' observer del Game */
-    private final Map<String, VirtualView> virtualViews = new HashMap<>();
+    private final Map<String, VirtualView> virtualViews = new ConcurrentHashMap<>();
 
     /** Set di nickname dei giocatori temporaneamente disconnessi */
-    private final Set<String> disconnectedPlayers = new HashSet<>();
+    private final Set<String> disconnectedPlayers = ConcurrentHashMap.newKeySet();
 
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
+
+    /** Flag: true quando un solo giocatore e' attivo e il gioco e' sospeso */
+    private volatile boolean suspended = false;
+
+    /** Timeout dopo cui il giocatore rimasto attivo vince (in secondi) */
+    private static final long SOLO_TIMEOUT_SECONDS = 120;
+
+    /** Scheduler per il timeout di sospensione */
+    private final ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
+
+    /** Riferimento al task di timeout attivo (per cancellarlo in caso di ripresa) */
+    private ScheduledFuture<?> timeoutFuture;
 
     public Controller(Game game) {
         this.game = game;
@@ -77,77 +94,62 @@ public class Controller {
      * ===================================================================== */
 
     public void handleJoinGame(String nickname, ClientConnection connection) {
-        synchronized (disconnectedPlayers) {
-            if (disconnectedPlayers.contains(nickname)) {
+        synchronized (game.getPlayers()) {
+            if (disconnectedPlayers.contains(nickname) || virtualViews.containsKey(nickname)) {
                 handleReconnect(nickname, connection);
                 return;
             }
-        }
 
-        synchronized (virtualViews) {
-            if (virtualViews.containsKey(nickname)) {
-                handleReconnect(nickname, connection);
-                return;
-            }
-        }
-
-        VirtualView playerView = new VirtualView(connection, nickname);
-
-        synchronized (virtualViews) {
+            VirtualView playerView = new VirtualView(connection, nickname);
             virtualViews.put(nickname, playerView);
-        }
-        game.addObserver(playerView);
-        executeCommand(nickname, () -> {
-            try {
-                // --- AGGIUNTA FONDAMENTALE PER SINCRONIZZARE IL NUOVO CLIENT ---
-                // Facciamo un "riassunto" al nuovo arrivato dicendogli chi c'è già
-                for (Player p : game.getPlayers()) {
-                    playerView.onPlayerJoined(game, p);
-                    if (p.getTotemColors() != null) {
-                        playerView.onTotemColorChosen(game, p, p.getTotemColors());
-                    }
-                }
-                // ---------------------------------------------------------------
+            game.addObserver(playerView);
 
-                game.joinGame(nickname);
-                connection.startHeartbeat();
-            } catch (Exception e) {
-                synchronized (virtualViews) {
-                    virtualViews.remove(nickname);
+            for (Player p : game.getPlayers()) {
+                playerView.onPlayerJoined(game, p);
+                if (p.getTotemColors() != null) {
+                    playerView.onTotemColorChosen(game, p, p.getTotemColors());
                 }
-                game.removeObserver(playerView);
-                throw e;
             }
-        });
+
+            try {
+                game.joinGame(nickname);
+            } catch (Exception e) {
+                virtualViews.remove(nickname);
+                game.removeObserver(playerView);
+                return;
+            }
+        }
+
+        connection.startHeartbeat();
     }
 
     public void handleReconnect(String nickname, ClientConnection connection) {
-        synchronized (disconnectedPlayers) {
+        synchronized (game.getPlayers()) {
             disconnectedPlayers.remove(nickname);
-        }
 
-        VirtualView newView; // Salviamo un riferimento alla nuova vista
-        synchronized (virtualViews) {
             VirtualView oldView = virtualViews.get(nickname);
             if (oldView != null) {
                 game.removeObserver(oldView);
             }
-            newView = new VirtualView(connection, nickname);
+            VirtualView newView = new VirtualView(connection, nickname);
             virtualViews.put(nickname, newView);
+            game.addObserver(newView);
+            LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
+
+            newView.sendFullStateOnReconnect(game);
+
+            if (game.getCurrentPlayer() != null) {
+                newView.onTurnChanged(game, game.getCurrentPlayer());
+            }
         }
-        game.addObserver(newView);
+
         connection.startHeartbeat();
-        LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
-
-        // 1. Invio lo snapshot SOLO al giocatore che è appena rientrato
-        newView.sendFullStateOnReconnect(game);
-
-        if (game.getCurrentPlayer() != null) {
-            newView.onTurnChanged(game,  game.getCurrentPlayer());
-        }
-
-        // 2. Avviso TUTTI gli altri che lui è tornato
         broadcastPlayerReconnected(nickname);
+
+        // Se il gioco era sospeso e ora ci sono almeno 2 giocatori attivi, riprendi
+        if (suspended && activePlayerCount() >= 2) {
+            resumeGame();
+        }
     }
 
     /* =====================================================================
@@ -196,78 +198,28 @@ public class Controller {
      * ===================================================================== */
 
     public void markDisconnected(String nickname) {
-        boolean wasAlreadyDisconnected;
-        synchronized (disconnectedPlayers) {
-            // add() restituisce true se l'elemento NON era già presente.
-            // Se c'era già, significa che abbiamo già avvisato tutti.
-            wasAlreadyDisconnected = !disconnectedPlayers.add(nickname);
-        }
-
-        // Se è la prima volta che ci accorgiamo che è caduto, avvisiamo tutti!
-        if (!wasAlreadyDisconnected) {
-            LOGGER.warning("Giocatore " + nickname + " marcato come disconnesso.");
-            broadcastPlayerDisconnected(nickname);
-        }
+        disconnectedPlayers.add(nickname);
+        LOGGER.warning("Giocatore " + nickname + " marcato come disconnesso.");
+        broadcastPlayerDisconnected(nickname);
+        autoHandleDisconnection(nickname);
     }
 
     public void removeClient(String nickname) {
-        VirtualView view;
-        synchronized (virtualViews) {
-            view = virtualViews.remove(nickname);
-        }
-
+        VirtualView view = virtualViews.remove(nickname);
+        // Il giocatore resta in disconnectedPlayers per permettere la riconnessione.
+        // Se non e' gia' presente (es. connessione chiusa senza ping timeout), lo aggiungiamo.
+        disconnectedPlayers.add(nickname);
         if (view != null) {
-            game.removeObserver(view);
-        }
-        LOGGER.info("Connessione di " + nickname + " rimossa dal server (Socket chiuso).");
-
-        // FIX: Invece di rimuoverlo in silenzio, lo passiamo a markDisconnected
-        // così siamo certi al 100% che la UI di tutti si aggiorni col pallino rosso!
-        markDisconnected(nickname);
-    }
-
-   /* private void handlePlayerDrop(String disconnectedNickname) {
-        // Quanti giocatori totali ci sono nel Game?
-        int totalPlayers = game.getPlayers().size();
-        // Quanti sono caduti?
-        int offlinePlayers = disconnectedPlayers.size();
-        // Quanti sono ancora online?
-        int onlinePlayers = totalPlayers - offlinePlayers;
-
-        if (onlinePlayers == 1) {
-            System.out.println("[SERVER] È rimasto 1 solo giocatore! Sospensione partita...");
-
-            // suspendGameAndStartTimer();
-        }
-        else if (onlinePlayers > 1) {
-            System.out.println("[SERVER] Ci sono ancora " + onlinePlayers + " giocatori. Il gioco continua.");
-            forceSkipTurn(disconnectedNickname);
-        }
-        else {
-            System.out.println("[SERVER] Tutti i giocatori sono disconnessi. Stanza ibernata.");
-            // (Opzionale: puoi fermare la partita o distruggere la stanza)
-        }
-    }
-
-    private void forceSkipTurn(String nickname) {
-        // Se tocca proprio al giocatore appena caduto, forziamo il passaggio
-        if (game.getCurrentPlayer() != null && game.getCurrentPlayer().getNickname().equals(nickname)) {
-            System.out.println("[SERVER] [ANTI-DEADLOCK] " + nickname + " era di turno. Passo al prossimo.");
-            try {
-                // Proviamo a finire il turno in modo pulito (il tuo metodo standard)
-                handleEndTurn(nickname);
-            } catch (Exception e) {
-                // Se non può finire in modo pulito (es. non ha ancora pescato),
-                // forziamo il passaggio dal Game! (Assicurati di avere un metodo nextTurn nel model)
-                // game.nextTurn();
+            synchronized (game.getPlayers()) {
+                game.removeObserver(view);
             }
         }
-    } */
+        LOGGER.info("Giocatore " + nickname + " rimosso dal server.");
+        autoHandleDisconnection(nickname);
+    }
 
     public boolean isDisconnected(String nickname) {
-        synchronized (disconnectedPlayers) {
-            return disconnectedPlayers.contains(nickname);
-        }
+        return disconnectedPlayers.contains(nickname);
     }
 
     public int getPlayerCount() {
@@ -279,22 +231,161 @@ public class Controller {
      * ===================================================================== */
 
     private void broadcastPlayerReconnected(String reconnectedNickname) {
-        synchronized (virtualViews) {
-            for (VirtualView vv : virtualViews.values()) {
-                vv.showPlayerReconnected(reconnectedNickname);
-            }
+        for (VirtualView vv : virtualViews.values()) {
+            vv.showPlayerReconnected(reconnectedNickname);
         }
     }
 
     private void broadcastPlayerDisconnected(String disconnectedNickname) {
-        synchronized (virtualViews) {
-            for (VirtualView vv : virtualViews.values()) {
-                vv.showPlayerDisconnected(disconnectedNickname);
-            }
+        for (VirtualView vv : virtualViews.values()) {
+            vv.showPlayerDisconnected(disconnectedNickname);
         }
     }
 
+    /* =====================================================================
+     * GESTIONE SOSPENSIONE GIOCO
+     * ===================================================================== */
+
+    /**
+     * Restituisce il numero di giocatori attualmente connessi (non disconnessi).
+     */
+    private int activePlayerCount() {
+        return game.getPlayersNumber() - disconnectedPlayers.size();
+    }
+
+    /**
+     * Invia a tutti i giocatori connessi la notifica di sospensione del gioco.
+     */
+    private void broadcastGameSuspended() {
+        for (VirtualView vv : virtualViews.values()) {
+            vv.showGameSuspended();
+        }
+    }
+
+    /**
+     * Invia a tutti i giocatori connessi la notifica di ripresa del gioco.
+     */
+    private void broadcastGameResumed() {
+        for (VirtualView vv : virtualViews.values()) {
+            vv.showGameResumed();
+        }
+    }
+
+    /**
+     * Salta automaticamente il turno del giocatore disconnesso se e' il suo turno,
+     * poi verifica se sospendere il gioco (1 solo giocatore attivo).
+     * Chiamato sia da markDisconnected() che da removeClient().
+     *
+     * LOGICA:
+     * 1. Imposta sul Model il numero di giocatori attivi (esclusi i disconnessi)
+     * 2. Se il disconnesso era il giocatore di turno, chiama skipTurn() dello stato corrente
+     * 3. Se dopo lo skip siamo ancora in StartTurnState e tutti gli attivi hanno piazzato,
+     *    forza la transizione a PickingState (perche' skipTurn non piazza totem)
+     * 4. Se siamo passati a PickingState, imposta il primo picker
+     * 5. Controlla se sospendere il gioco
+     */
+    private void autoHandleDisconnection(String nickname) {
+        synchronized (game.getPlayers()) {
+            if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.SetUpGameState) return;
+            if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.EndGameState) return;
+
+            // Informa il Model di quanti giocatori sono ancora attivi
+            game.setActivePlayerCount(activePlayerCount());
+
+            try {
+                Player p = game.getPlayerByNickname(nickname);
+                if (game.getCurrentPlayer() != null && game.getCurrentPlayer().equals(p)) {
+                    game.getCurrentState().skipTurn(game, nickname);
+
+                    // skipTurn in StartTurnState libera lo slot ma non piazza totem.
+                    // Se tutti gli attivi hanno completato, dobbiamo forzare la transizione.
+                    if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.StartTurnState) {
+                        if (game.getBoard().allTotemsPlaced(activePlayerCount())) {
+                            game.setState(new it.polimi.ingsw.am54.model.states.PickingState());
+                            Player first = game.getBoard().getFirstPlayerFromOfferingTrack();
+                            if (first != null) game.setCurrentPlayer(first);
+                        }
+                    }
+
+                    checkAndResolveAutomaticPhases();
+                }
+            } catch (Exception e) {
+                LOGGER.warning("Skip turn fallito per " + nickname + ": " + e.getMessage());
+            }
+
+            checkSuspension();
+        }
+    }
+
+    /**
+     * Se il numero di giocatori attivi e' sceso a 1, sospende il gioco.
+     */
+    private void checkSuspension() {
+        if (suspended) return;
+        if (activePlayerCount() <= 1) {
+            suspendGame();
+        }
+    }
+
+    /**
+     * Sospende il gioco perche' e' rimasto un solo giocatore attivo.
+     * Avvia un timeout: se nessun altro si riconnette, il giocatore superstite vince.
+     */
+    private void suspendGame() {
+        if (suspended) return;
+        suspended = true;
+        LOGGER.warning("Solo 1 giocatore attivo: gioco sospeso per " + SOLO_TIMEOUT_SECONDS + " secondi.");
+        broadcastGameSuspended();
+
+        timeoutFuture = timeoutScheduler.schedule(() -> {
+            synchronized (game.getPlayers()) {
+                if (!suspended) return;
+                Player winner = findSoloActivePlayer();
+                if (winner != null) {
+                    LOGGER.info("Timeout sospensione scaduto: " + winner.getNickname() + " vince la partita!");
+                    game.notifyEndGame(Collections.singletonList(winner));
+                }
+                suspended = false;
+            }
+        }, SOLO_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Riprende il gioco dopo che un secondo giocatore si e' riconnesso.
+     */
+    private void resumeGame() {
+        if (!suspended) return;
+        suspended = false;
+        if (timeoutFuture != null) {
+            timeoutFuture.cancel(false);
+        }
+        LOGGER.info("Gioco ripreso: almeno 2 giocatori attivi.");
+        broadcastGameResumed();
+    }
+
+    /**
+     * Trova il giocatore attualmente attivo (non disconnesso).
+     * Usato dal timeout di sospensione per decretare il vincitore.
+     */
+    private Player findSoloActivePlayer() {
+        return game.getPlayers().stream()
+                .filter(p -> !disconnectedPlayers.contains(p.getNickname()))
+                .findFirst()
+                .orElse(null);
+    }
+
     private void executeCommand(String nickname, GameAction action) {
+        if (suspended) {
+            VirtualView view = virtualViews.get(nickname);
+            if (view != null) {
+                view.showError("Gioco sospeso: in attesa di riconnessioni...");
+            }
+            return;
+        }
+        // Informa il Model del numero di giocatori attivi per ogni azione di gioco.
+        // Necessario per isPickingComplete() e allTotemsPlaced() quando ci sono
+        // giocatori disconnessi che non partecipano al round corrente.
+        game.setActivePlayerCount(activePlayerCount());
         try {
             action.execute();
         } catch (Exception e) {

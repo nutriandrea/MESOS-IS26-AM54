@@ -34,5 +34,8 @@ public interface RMIClientInterface extends Remote {
     void onPlayerDisconnected(String nickname) throws RemoteException;
     void onPlayerReconnected(String nickname) throws RemoteException;
 
+    void onGameSuspended() throws RemoteException;
+    void onGameResumed() throws RemoteException;
+
     void ping() throws RemoteException; // Per l'heartbeat
 }

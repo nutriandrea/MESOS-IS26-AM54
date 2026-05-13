@@ -158,5 +158,11 @@ public class ServerHandler implements Runnable {
         else if (message instanceof EventUpdate msg) {
             clientModel.updateEventSnapshot(msg);
         }
+        else if (message instanceof GameSuspendedUpdate) {
+            clientModel.updateGameSuspended();
+        }
+        else if (message instanceof GameResumedUpdate) {
+            clientModel.updateGameResumed();
+        }
     }
 }

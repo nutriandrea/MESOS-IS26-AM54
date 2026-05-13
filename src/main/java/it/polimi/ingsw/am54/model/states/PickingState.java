@@ -120,6 +120,24 @@ public class PickingState extends GameState {
         return true;
     }
 
+    /**
+     * Salta il turno del giocatore disconnesso durante la fase di pesca.
+     * Termina automaticamente il turno (senza controllare carte obbligatorie)
+     * e avanza al prossimo picker o alla fase eventi.
+     */
+    @Override
+    public void skipTurn(Game game, String nickname) throws Exception {
+        Player player = game.getPlayerByNickname(nickname);
+        Player currentPicker = game.getCurrentPicker();
+
+        if (currentPicker == null || !currentPicker.equals(player)) {
+            throw new Exception("Non e' il turno di " + nickname);
+        }
+
+        // Termina il turno saltando il controllo sulle carte obbligatorie
+        executeEndTurnLogic(game, player);
+    }
+
     private void executeEndTurnLogic(Game game, Player player) {
         // Assegnazione turno e gestione bonus Cibo
         TurnOrderSlot slot = game.assignPickerToTurnOrder(player);

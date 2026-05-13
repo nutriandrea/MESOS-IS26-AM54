@@ -25,6 +25,8 @@ public class Game implements IGame{
 
     private GameState currentState;
 
+    private int activePlayerCount = 0;
+
     private List<IGameObserver> observers;
 
     // I campi offeringTiles, turnOrderSlots, upperRow, lowerRow sono gestiti da Board
@@ -361,6 +363,21 @@ public class Game implements IGame{
         notifyTurnChanged(player);
     }
 
+    /**
+     * Imposta il numero di giocatori attivi per il round corrente.
+     * Usato dal Controller per informare il Model di quanti giocatori
+     * stanno effettivamente partecipando (escludendo i disconnessi).
+     */
+    public void setActivePlayerCount(int count) { this.activePlayerCount = count; }
+
+    /**
+     * Restituisce il numero di giocatori attivi per il round corrente.
+     * Se non impostato (0), usa il numero totale di giocatori.
+     */
+    public int getActivePlayerCount() {
+        return (activePlayerCount > 0) ? activePlayerCount : players.size();
+    }
+
     public Player getCurrentPicker() {
         List<OfferingTile> tiles = board.getOfferingTrack();
         
@@ -393,14 +410,13 @@ public class Game implements IGame{
     }
 
     public boolean isPickingComplete() {
+        int needed = (activePlayerCount > 0) ? activePlayerCount : players.size();
+        int filled = 0;
         for (TurnOrderSlot slot : board.getTurnOrderTile()) {
-            if (slot.getOccupiedBy() == null) {
-                return false;
-            }
+            if (slot.getOccupiedBy() != null) filled++;
         }
-        return true;
+        return filled >= needed;
     }
-
 
     public boolean isTribeDeckEmpty() {
         return deckTribu.isEmpty();

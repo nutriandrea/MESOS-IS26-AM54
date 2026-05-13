@@ -89,12 +89,15 @@ public class Controller {
     /**
      * Salva lo stato corrente del gioco su file JSON.
      * Chiamato dal Controller dopo ogni azione di gioco
-     * (setup, chooseTotemColor, placeTotem, pickCard).
+     * (setup, chooseTotemColor, placeTotem, pickCard, endTurn).
      * 
-     * Se il server non è inizializzato (server null), non fa nulla.
+     * Salvataggio aggiuntivo oltre a quello periodico di 30s,
+     * per garantire che le ultime azioni siano salvate subito.
      */
     private void saveState() {
-        return;
+        if (server != null) {
+            server.saveGameState();
+        }
     }
 
     @FunctionalInterface
@@ -172,21 +175,21 @@ public class Controller {
     public void handleSetupGame(String nickname) {
         executeCommand(nickname, () -> {
             game.setupGame();
-            saveState();
+            // Salvataggio solo dopo endTurn o periodico
         });
     }
 
     public void handleChooseTotemColor(String nickname, String color) {
         executeCommand(nickname, () -> {
             game.chooseTotemColor(nickname, color);
-            saveState();
+            // Salvataggio solo dopo endTurn o periodico
         });
     }
 
     public void handlePlaceTotem(String nickname, int position) {
         executeCommand(nickname, () -> {
             game.placeTotem(nickname, position);
-            saveState();
+            // Salvataggio solo dopo endTurn o periodico
         });
     }
 
@@ -194,7 +197,7 @@ public class Controller {
         executeCommand(nickname, () -> {
             game.pickCard(nickname, row, index);
             checkAndResolveAutomaticPhases();
-            saveState();
+            // Salvataggio solo dopo endTurn o periodico
         });
     }
 

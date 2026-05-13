@@ -38,7 +38,7 @@ This is a multiplayer board game where 2-5 players compete to collect the most p
 | CLI                    | ✅ Implemented |
 | Multiple games support | 🔄 To implement |
 | ML Bots                | 🔄 To implement |
-| Leaderboard (H2 DB)     | ✅ Implemented |
+| Leaderboard (PostgreSQL) | ✅ Implemented |
 | Disconnection handling | ✅ Implemented |
 
 ---
@@ -272,7 +272,7 @@ src/
 
 ## Leaderboard (Classifica)
 
-Alla fine di ogni partita, il server salva su un database **H2 embedded** i risultati di tutti i giocatori:
+Alla fine di ogni partita, il server salva su un database **PostgreSQL** i risultati di tutti i giocatori:
 - nickname, punteggio finale, data, numero di giocatori
 
 Subito dopo il calcolo dei vincitori, ogni client riceve un `LeaderboardUpdate` contenente:
@@ -284,19 +284,33 @@ Subito dopo il calcolo dei vincitori, ogni client riceve un `LeaderboardUpdate` 
 - **CLI**: la classifica viene stampata subito dopo i vincitori. Si può richiedere manualmente digitando `CLASSIFICA N` (es. `CLASSIFICA 4` per vedere la classifica delle partite da 4 giocatori).
 - **GUI**: la classifica appare in un pannello laterale (riquadro blu "CLASSIFICA") dopo la fine della partita.
 
-### Database
+### Setup PostgreSQL
 
-Il database è **H2 in embedded mode**:
-- File `am54.mv.db` creato automaticamente nella directory di lavoro del server
-- Nessuna installazione esterna richiesta
-- I dati persistono tra riavvii del server
-- Per usare un nome file diverso: `-Ddb.file=myfile`
+Prima di avviare il server, assicurati di avere **PostgreSQL** installato e in esecuzione.
+
+1. **Crea il database** (se non esiste già):
+   ```sql
+   CREATE DATABASE am54;
+   ```
+
+2. **Crea il file `db.properties`** nella directory di lavoro del server (oppure modifica quello in `src/main/resources/db.properties` e copialo):
+   ```properties
+   db.host=localhost
+   db.port=5432
+   db.name=am54
+   db.user=postgres
+   db.password=la_tua_password
+   ```
+
+   > Se il file `db.properties` non viene trovato, il server usa i valori predefiniti: `localhost:5432/am54` con utente `postgres` e password vuota.
+
+3. **Avvia il server** normalmente. La tabella `match_results` viene creata automaticamente al primo avvio.
 
 ### Schema
 
 ```sql
 CREATE TABLE IF NOT EXISTS match_results (
-    id          INT AUTO_INCREMENT PRIMARY KEY,
+    id          SERIAL       PRIMARY KEY,
     nickname    VARCHAR(50)  NOT NULL,
     score       INTEGER      NOT NULL,
     match_date  TIMESTAMP    NOT NULL DEFAULT NOW(),

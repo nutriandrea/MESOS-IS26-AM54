@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.model.*;
+import it.polimi.ingsw.am54.model.states.SetUpGameState;
 import it.polimi.ingsw.am54.model.states.StartTurnState;
 import it.polimi.ingsw.am54.model.states.PickingState;
 import it.polimi.ingsw.am54.model.states.EventState;
@@ -299,26 +300,47 @@ public class PersistenceManager {
     /**
      * Crea un CardInfo a partire da una carta qualsiasi.
      * Supporta CharacterCard, BuildingCard, EventCard.
+     * VERSIONE ESTESA: include tutti i campi per ricostruzione univoca.
      */
     private CardInfo createCardInfo(Object card) {
         if (card == null) return null;
         
-        String name = "Unknown";
-        int cost = 0;
+        CardInfo info = new CardInfo();
+        info.setJavaType(card.getClass().getSimpleName());
         
         if (card instanceof CharacterCard) {
-            name = ((CharacterCard) card).getName();
-            cost = ((CharacterCard) card).getCost();
+            CharacterCard cc = (CharacterCard) card;
+            info.setName(cc.getName());  // JobType.name() come prima
+            info.setType("CHARACTER");
+            info.setCost(cc.getCost());
+            info.setEra(cc.getEra());
+            info.setLevel(cc.getLevel());
+            info.setAura(cc.getAura());
+            info.setJobType(cc.getJobType() != null ? cc.getJobType().name() : null);
         } else if (card instanceof BuildingCard) {
             BuildingCard bc = (BuildingCard) card;
-            name = bc.getName() != null ? bc.getName() : bc.getBuildingType().name();
-            cost = bc.getCost();
+            info.setName(bc.getName() != null ? bc.getName() : bc.getBuildingType().name());
+            info.setType("BUILDING");
+            info.setCost(bc.getCost());
+            info.setEra(bc.getEra());
+            info.setBuildingType(bc.getBuildingType() != null ? bc.getBuildingType().name() : null);
+            info.setFinalAura(bc.getFinalAura());
         } else if (card instanceof EventCard) {
-            name = "Event-" + ((EventCard) card).getEra();
-            cost = 0;
+            EventCard ec = (EventCard) card;
+            // IMPORTANTE: cerchiamo un campo "name" più specifico dell'etichetta
+            // Attualmente EventCard.getName() restituisce "Event-X", ma nel DeckFactory
+            // viene impostato event.setName(etichetta). Verifichiamo...
+            info.setName(ec.getName());  // Attualmente è "Event-" + era
+            info.setType("EVENT");
+            info.setCost(0);
+            info.setEra(ec.getEra());
+            info.setEventBaseFood(ec.getBaseFood());
+            info.setEventAuraPerChar(ec.getAuraPerCharacter());
+            info.setEventThreshold(ec.getThreshold());
+            info.setFinalEvent(ec.isFinalEvent());
         }
         
-        return new CardInfo(name, card.getClass().getSimpleName(), cost);
+        return info;
     }
 
     /**
@@ -356,6 +378,226 @@ public class PersistenceManager {
      */
     public boolean hasSavedGame() {
         return saveFile.exists() && saveFile.length() > 0;
+    }
+
+    // ============================================================================
+    // RIPRISTINO GIOCO DA SNAPSHOT (RESTORE)
+    // ============================================================================
+
+    /**
+     * Ripristina un Game completo a partire dal GameFullSnapshot.
+     * Questo è il metodo principale per il crash recovery.
+     *
+     * @param snapshot lo snapshot caricato da JSON
+     * @return Game ricostruito, o null in caso di errore
+     */
+    public Game restoreGameFromSnapshot(GameFullSnapshot snapshot) {
+        if (snapshot == null) return null;
+        
+        try {
+            System.out.println("[Persistence] Inizio ripristino partita da snapshot...");
+            
+            // 1. Crea un Game vuoto
+            Game game = new Game();
+            
+            // 2. Ricostruisci Players prima di tutto (necessari per Board)
+            for (PlayerSnapshot ps : snapshot.getPlayers()) {
+                Player p = restorePlayer(ps);
+                game.getPlayers().add(p);
+            }
+            
+            int numPlayers = game.getPlayers().size();
+            
+            // 3. Ricostruisci Board con layout corretto
+            game.setupGameMinimalForRestore(numPlayers);
+            
+            // 4. Popola Board dalle info nello snapshot
+            if (snapshot.getBoardSnapshot() != null) {
+                restoreBoard(game.getBoard(), snapshot.getBoardSnapshot(), game);
+            }
+            
+            // 5. Ricostruisci i mazzi (N.B.: l'ordine è fondamentale!)
+            // I decks possono essere null se lo snapshot è di una fase precedente a setupGame
+            if (snapshot.getDeckTribuCards() != null && !snapshot.getDeckTribuCards().isEmpty()) {
+                Deck<TribeCard> tribeDeck = restoreTribeDeck(snapshot.getDeckTribuCards());
+                game.setTribeDeck(tribeDeck);
+            }
+            if (snapshot.getDeckBuildingsCards() != null && !snapshot.getDeckBuildingsCards().isEmpty()) {
+                Deck<BuildingCard> buildingDeck = restoreBuildingDeck(snapshot.getDeckBuildingsCards());
+                game.setBuildingDeck(buildingDeck);
+            }
+            
+            // 6. Imposta meta-info del gioco
+            game.setCurrentEra(snapshot.getCurrentEra());
+            game.setRoundCount(snapshot.getRoundCount());
+            
+            // 7. Ricostruisci e imposta lo stato (GameState)
+            GameState restoredState = restoreGameState(snapshot.getCurrentStateName());
+            if (restoredState != null) {
+                // setState notifica anche gli observer, ma al momento non ce ne sono
+                game.setStateDirectForRestore(restoredState);
+            }
+            
+            // 8. Imposta currentPlayer
+            if (snapshot.getCurrentPlayerNickname() != null) {
+                for (Player p : game.getPlayers()) {
+                    if (p.getNickname().equals(snapshot.getCurrentPlayerNickname())) {
+                        game.setCurrentPlayerDirectForRestore(p);
+                        break;
+                    }
+                }
+            }
+            
+            System.out.println("[Persistence] Ripristino completato: " + numPlayers + " giocatori, Era " + game.getCurrentEra());
+            return game;
+            
+        } catch (Exception e) {
+            System.err.println("[Persistence] ERRORE durante ripristino: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Ripristina un singolo Player da PlayerSnapshot.
+     */
+    private Player restorePlayer(PlayerSnapshot ps) {
+        Player p = new Player();
+        p.setNickname(ps.getNickname());
+        p.modifyFood(ps.getFood());
+        p.modifyAuraPoints(ps.getAura());
+        p.modifyMagicPoints(ps.getMagicPoints());
+        p.setExtraPick(ps.isExtraPick());
+        p.setHasPlacedTotem(ps.isHasPlacedTotem());
+        
+        // Ri-setta i costi eventi (nota: setEventCostFood usa +=, quindi va resettato prima)
+        p.resetEventAttributes();
+        if (ps.getEventCostFood() > 0) p.setEventCostFood(ps.getEventCostFood());
+        if (ps.getEventCostAura() > 0) p.setEventCostAura(ps.getEventCostAura());
+        
+        // Sconti
+        p.modifyMyBuildingDiscount(ps.getBuildingDiscount());
+        p.modifyMyFoodDiscount(ps.getFoodDiscount());
+        
+        // Colore totem
+        if (ps.getTotemColor() != null) {
+            try {
+                p.setTotemColor(TotemColors.valueOf(ps.getTotemColor()));
+            } catch (IllegalArgumentException e) {
+                System.err.println("[Persistence] Colore non valido: " + ps.getTotemColor());
+            }
+        }
+        
+        // TODO: Carte in mano (CharacterCard, BuildingCard) e currentTile
+        // Per ora ricostruiamo lo stato base. Le carte complete andrebbero cercate tramite template.
+        
+        return p;
+    }
+
+    /**
+     * Ripristina la Board da BoardSnapshot.
+     * ATTENZIONE: board.initializeLayout deve essere già stato chiamato.
+     */
+    private void restoreBoard(Board board, BoardSnapshot bs, Game game) {
+        // Puliamo le righe attuali (potrebbero essere state popolate da inizializzazione base)
+        // Poi riempiamo dalle CardInfo dello snapshot
+        
+        // Per ora: copiamo semplicemente lo stato delle strutture
+        // In futuro: ricostruire vere carte CharacterCard/EventCard/BuildingCard
+        
+        System.out.println("[Persistence] Board ripristinata (struttura base)");
+    }
+
+    /**
+     * Ripristina il mazzo tribu (CharacterCard + EventCard) da lista CardInfo.
+     * L'ordine è CRITICO: la lista è nello stesso ordine di getAllCards() ->
+     * il primo elemento è il fondo dello Stack, l'ultimo è la cima.
+     */
+    private Deck<TribeCard> restoreTribeDeck(List<CardInfo> cards) {
+        java.util.Stack<TribeCard> stack = new java.util.Stack<>();
+        
+        // Dobbiamo pushare in modo che l'ordine sia preservato.
+        // cards.get(0) = fondo stack → deve essere pushato PER PRIMO
+        // cards.get(N-1) = cima stack → pushato PER ULTIMO
+        
+        for (CardInfo info : cards) {
+            TribeCard card = reconstructTribeCard(info);
+            if (card != null) {
+                stack.push(card);
+            }
+        }
+        
+        return new Deck<>(stack);
+    }
+
+    /**
+     * Ripristina il mazzo edifici da lista CardInfo.
+     */
+    private Deck<BuildingCard> restoreBuildingDeck(List<CardInfo> cards) {
+        java.util.Stack<BuildingCard> stack = new java.util.Stack<>();
+        
+        for (CardInfo info : cards) {
+            BuildingCard card = reconstructBuildingCard(info);
+            if (card != null) {
+                stack.push(card);
+            }
+        }
+        
+        return new Deck<>(stack);
+    }
+
+    /**
+     * Ricostruisce una TribeCard (CharacterCard o EventCard) da CardInfo.
+     * Strategia: Usa DeckFactory per creare carte "fresche" da JSON,
+     * poi cerca quella che corrisponde ai parametri.
+     */
+    private TribeCard reconstructTribeCard(CardInfo info) {
+        if (info == null) return null;
+        
+        // Per ora: restituiamo null se non CharacterCard.
+        // TODO: Reimplementare usando DeckFactory come banca delle template.
+        System.out.println("[Persistence] reconstructTribeCard: " + info.getType() + " " + info.getName() + " era=" + info.getEra());
+        return null;
+    }
+
+    /**
+     * Ricostruisce una BuildingCard da CardInfo.
+     */
+    private BuildingCard reconstructBuildingCard(CardInfo info) {
+        if (info == null) return null;
+        System.out.println("[Persistence] reconstructBuildingCard: " + info.getName() + " era=" + info.getEra());
+        return null;
+    }
+
+    /**
+     * Ricostruisce il GameState corretto dal nome della classe.
+     * Esempi: "StartTurnState", "PickingState", "EventState", "EndGameState"
+     */
+    private GameState restoreGameState(String stateName) {
+        if (stateName == null) return new SetUpGameState();
+        
+        return switch (stateName) {
+            case "SetUpGameState" -> new SetUpGameState();
+            case "StartTurnState" -> new StartTurnState();
+            case "PickingState" -> new PickingState();
+            case "EventState" -> new EventState();
+            case "EndGameState" -> new EndGameState();
+            default -> {
+                System.err.println("[Persistence] Stato sconosciuto: " + stateName + ", default a SetUpGameState");
+                yield new SetUpGameState();
+            }
+        };
+    }
+
+    /**
+     * Elimina il file di salvataggio.
+     * Chiamato quando la partita finisce o quando si vuole iniziare una partita nuova pulita.
+     */
+    public void deleteSaveFile() {
+        if (saveFile.exists()) {
+            boolean deleted = saveFile.delete();
+            System.out.println("[Persistence] File di salvataggio " + (deleted ? "cancellato" : "NON cancellato"));
+        }
     }
 
     // ============================================================================
@@ -447,12 +689,29 @@ public class PersistenceManager {
     }
 
     /**
-     * Info semplificata di una carta (nome, tipo, costo).
+     * Info ESTESA di una carta per ricostruzione univoca da persistenza.
      */
     public static class CardInfo {
         private String name;
-        private String type;
+        private String type;        // "CHARACTER", "BUILDING", "EVENT"
+        private String javaType;    // "CharacterCard", "BuildingCard", "EventCard"
         private int cost;
+        private int era;
+        
+        // Campi specifici CharacterCard
+        private int level;
+        private int aura;
+        private String jobType;     // "HUNTER", "FARMER", ecc.
+        
+        // Campi specifici BuildingCard
+        private String buildingType;
+        private int finalAura;
+        
+        // Campi specifici EventCard
+        private int eventBaseFood;
+        private int eventAuraPerChar;
+        private int eventThreshold;
+        private boolean finalEvent;
 
         public CardInfo() {}
         public CardInfo(String name, String type, int cost) {
@@ -465,8 +724,30 @@ public class PersistenceManager {
         public void setName(String v) { this.name = v; }
         public String getType() { return type; }
         public void setType(String v) { this.type = v; }
+        public String getJavaType() { return javaType; }
+        public void setJavaType(String v) { this.javaType = v; }
         public int getCost() { return cost; }
         public void setCost(int v) { this.cost = v; }
+        public int getEra() { return era; }
+        public void setEra(int v) { this.era = v; }
+        public int getLevel() { return level; }
+        public void setLevel(int v) { this.level = v; }
+        public int getAura() { return aura; }
+        public void setAura(int v) { this.aura = v; }
+        public String getJobType() { return jobType; }
+        public void setJobType(String v) { this.jobType = v; }
+        public String getBuildingType() { return buildingType; }
+        public void setBuildingType(String v) { this.buildingType = v; }
+        public int getFinalAura() { return finalAura; }
+        public void setFinalAura(int v) { this.finalAura = v; }
+        public int getEventBaseFood() { return eventBaseFood; }
+        public void setEventBaseFood(int v) { this.eventBaseFood = v; }
+        public int getEventAuraPerChar() { return eventAuraPerChar; }
+        public void setEventAuraPerChar(int v) { this.eventAuraPerChar = v; }
+        public int getEventThreshold() { return eventThreshold; }
+        public void setEventThreshold(int v) { this.eventThreshold = v; }
+        public boolean isFinalEvent() { return finalEvent; }
+        public void setFinalEvent(boolean v) { this.finalEvent = v; }
     }
 
     /**

@@ -490,4 +490,56 @@ public class Game implements IGame{
             obs.onEndGame(this, winners);
         }
     }
+
+    // =========================================================================
+    // METODI PER PERSISTENZA / RESTORE (non notificano gli observer)
+    // =========================================================================
+
+    /**
+     * Imposta lo stato direttamente SENZA notificare gli observer.
+     * Usato da PersistenceManager durante il ripristino da crash.
+     *
+     * @param newState il nuovo stato
+     */
+    public void setStateDirectForRestore(GameState newState) {
+        this.currentState = newState;
+        // NON chiamiamo notifyStateChanged() - i client si sincronizzeranno alla riconnessione
+    }
+
+    /**
+     * Imposta il giocatore corrente direttamente SENZA notificare.
+     * Usato durante il restore.
+     */
+    public void setCurrentPlayerDirectForRestore(Player player) {
+        this.currentPlayer = player;
+        // NON chiamiamo notifyTurnChanged()
+    }
+
+    /**
+     * Setup MINIMALE del gioco per il ripristino da persistenza.
+     * NON crea nuovi mazzi, NON distribuisce cibo, NON imposta ordine casuale.
+     * Crea solo: Board + inizializza struttura (offeringTrack, turnOrderSlots).
+     *
+     * @param numPlayers numero di giocatori
+     */
+    public void setupGameMinimalForRestore(int numPlayers) {
+        // Crea solo la Board con la struttura base (liste vuote)
+        this.board = new Board();
+        this.board.initializeLayout(numPlayers);  // Questo crea solo offeringTrack e turnOrderTile vuoti
+        
+        // NON chiamiamo:
+        // - deckTribu/deckBuildings (verranno ripristinati da PersistenceManager)
+        // - fillInitialTribeRows/fillInitialBuildingRow
+        // - setupInitialTurnOrder (verrà ricostruito)
+        // - distributeInitialFood
+        // - setCurrentPlayer + setState (verranno impostati da restore)
+    }
+
+    /**
+     * Imposta direttamente il riferimento alla Board.
+     * Usato dal restore se dobbiamo ricostruire la Board da zero.
+     */
+    public void setBoard(Board board) {
+        this.board = board;
+    }
 }

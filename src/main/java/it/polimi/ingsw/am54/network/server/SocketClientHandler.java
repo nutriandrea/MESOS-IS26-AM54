@@ -1,12 +1,15 @@
 package it.polimi.ingsw.am54.network.server;
 
 import it.polimi.ingsw.am54.controller.Controller;
+import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.messages.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -27,7 +30,7 @@ import java.util.concurrent.*;
  *   2. Chiama disconnect() -> chiude il socket e pulisce
  * ============================================================================
  */
-public class SocketClientHandler implements Runnable, ClientHandler, ClientConnection {
+public class SocketClientHandler implements Runnable, ClientConnection {
 
     private static final long PING_INTERVAL_MS = 5000;
     private static final long PING_TIMEOUT_MS = 15000;
@@ -48,6 +51,8 @@ public class SocketClientHandler implements Runnable, ClientHandler, ClientConne
         this.controller = server.getController();
         this.connected = true;
         this.lastPongTime = System.currentTimeMillis();
+
+        startPingScheduler();
     }
 
     @Override
@@ -90,6 +95,8 @@ public class SocketClientHandler implements Runnable, ClientHandler, ClientConne
             lastPongTime = System.currentTimeMillis();
         } else if (request instanceof EndTurnRequest) {
             controller.handleEndTurn(this.playerNickname);
+        } else if (request instanceof GetLeaderboardRequest req) {
+            controller.handleGetLeaderboard(this.playerNickname, req.getNumPlayers());
         }
     }
 
@@ -102,17 +109,19 @@ public class SocketClientHandler implements Runnable, ClientHandler, ClientConne
             long timeSinceLastPong = System.currentTimeMillis() - lastPongTime;
             if (timeSinceLastPong > PING_TIMEOUT_MS) {
                 System.out.println("[Server TCP] Ping timeout per " + playerNickname + " (" + timeSinceLastPong + "ms)");
-                controller.markDisconnected(playerNickname);
+
                 disconnect();
                 return;
             }
 
-            sendUpdate(new PingRequest(System.currentTimeMillis()));
+            writeToStream(new PingRequest(System.currentTimeMillis()));
         }, PING_INTERVAL_MS, PING_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
-    @Override
-    public synchronized void sendUpdate(Update update) {
+    /**
+     * Helper privato per scrivere sul flusso di rete in modo sicuro.
+     */
+    private synchronized void writeToStream(Update update) {
         if (!connected) return;
         try {
             out.writeObject(update);
@@ -123,20 +132,101 @@ public class SocketClientHandler implements Runnable, ClientHandler, ClientConne
         }
     }
 
+    /* =====================================================================
+     * IMPLEMENTAZIONE ClientConnection
+     * Il Socket "impacchetta" i parametri ricevuti in un DTO.
+     * ===================================================================== */
+
     @Override
-    public void sendError(String errorMessage) {
-        sendUpdate(new ErrorMessageUpdate(errorMessage));
+    public void notifyPlayerJoined(String nickname) {
+        writeToStream(new PlayerJoinedUpdate(nickname));
+    }
+
+    @Override
+    public void notifyTotemColor(String nickname, TotemColors color) {
+        writeToStream(new TotemColorUpdate(nickname, color));
+    }
+
+    @Override
+    public void notifyTotemPlaced(String nickname, int position) {
+        writeToStream(new TotemPlacedUpdate(nickname, position));
+    }
+
+    @Override
+    public void notifyCardPicked(String nickname, String row, int index, int food, Map<Integer, String> offering) {
+        writeToStream(new CardPickedUpdate(nickname, row, index, food, offering));
+    }
+
+    @Override
+    public void notifyTotemReturned(String nickname, int position, int food, int aura) {
+        writeToStream(new TotemReturnedUpdate(nickname, position, food, aura));
+    }
+
+    @Override
+    public void notifyEventResolved(Map<String, EventUpdate.PlayerSnapshot> stats, List<String> charUp, List<String> charLow, List<String> eventUp, List<String> eventLow, List<String> buildUp, List<String> buildLow) {
+        writeToStream(new EventUpdate(stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow));
+    }
+
+    @Override
+    public void notifyTurnChanged(String nickname) {
+        writeToStream(new TurnChangedUpdate(nickname));
+    }
+
+    @Override
+    public void notifyStateChanged(String stateName, int currentEra, Map<String, StateChangedUpdate.PlayerSnapshot> playersStats, List<String> turnOrderTrack, Map<Integer, String> offeringTrack, List<String> charUpper, List<String> charLower, List<String> eventUpper, List<String> eventLower, List<String> buildUpper, List<String> buildLower) {
+        writeToStream(new StateChangedUpdate(stateName, currentEra, playersStats, turnOrderTrack, offeringTrack, charUpper, charLower, eventUpper, eventLower, buildUpper, buildLower));
+    }
+
+    @Override
+    public void notifyEndGame(List<String> winnerNames) {
+        writeToStream(new EndGameUpdate(winnerNames));
+    }
+
+    @Override
+    public void notifyEndGame(List<String> winnerNames, Map<String, Integer> allScores, int numPlayers) {
+        writeToStream(new EndGameUpdate(winnerNames, allScores, numPlayers));
+    }
+
+    @Override
+    public void notifyLeaderboard(int playerPosition, List<LeaderboardEntry> entries, int numPlayers) {
+        writeToStream(new LeaderboardUpdate(playerPosition, entries, numPlayers));
+    }
+
+    @Override
+    public void notifyError(String message) {
+        writeToStream(new ErrorMessageUpdate(message));
+    }
+
+    @Override
+    public void notifyPlayerDisconnected(String nickname) {
+        writeToStream(new PlayerDisconnectedUpdate(nickname));
+    }
+
+    @Override
+    public void notifyPlayerReconnected(String nickname) {
+        writeToStream(new PlayerReconnectedUpdate(nickname));
+    }
+
+    @Override
+    public void notifyGameSuspended() {
+        writeToStream(new GameSuspendedUpdate());
+    }
+
+    @Override
+    public void notifyGameResumed() {
+        writeToStream(new GameResumedUpdate());
+    }
+
+    @Override
+    public void sendPing() {
+        writeToStream(new PingRequest(System.currentTimeMillis()));
     }
 
     @Override
     public void disconnect() {
         if (!connected) return;
         connected = false;
-
-        if (pingScheduler != null) {
-            pingScheduler.shutdownNow();
-        }
-
+        if (pingScheduler != null) pingScheduler.shutdownNow();
         try {
             if (socket != null && !socket.isClosed()) socket.close();
         } catch (IOException ignored) {}
@@ -145,4 +235,5 @@ public class SocketClientHandler implements Runnable, ClientHandler, ClientConne
             controller.removeClient(playerNickname);
         }
     }
+
 }

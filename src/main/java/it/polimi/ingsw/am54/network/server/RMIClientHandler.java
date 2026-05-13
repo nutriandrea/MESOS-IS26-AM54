@@ -1,12 +1,16 @@
 package it.polimi.ingsw.am54.network.server;
 
 import it.polimi.ingsw.am54.controller.Controller;
+import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.messages.*;
 import it.polimi.ingsw.am54.network.rmi.RMIClientHandlerInterface;
 import it.polimi.ingsw.am54.network.rmi.RMIClientInterface;
 
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -21,7 +25,7 @@ import java.util.concurrent.*;
  * - Gestisce heartbeat (ping/pong)
  * ============================================================================
  */
-public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHandlerInterface, ClientConnection, ClientHandler {
+public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHandlerInterface, ClientConnection {
 
     private static final long PING_INTERVAL_MS = 5000;
     private static final long PING_TIMEOUT_MS = 15000;
@@ -38,26 +42,42 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         this.clientStub = clientStub;
         this.controller = server.getController();
         this.lastPongTime = System.currentTimeMillis();
+
+        startPingScheduler();
     }
 
     @Override
-    public void handleRequest(Request request) throws RemoteException {
-        if (request instanceof JoinGameRequest req) {
-            this.playerNickname = req.getNickname();
-            controller.handleJoinGame(this.playerNickname, this);
-        } else if (request instanceof SetupGameRequest) {
-            controller.handleSetupGame(this.playerNickname);
-        } else if (request instanceof ChooseTotemRequest req) {
-            controller.handleChooseTotemColor(this.playerNickname, req.getColor().name());
-        } else if (request instanceof PlaceTotemRequest req) {
-            controller.handlePlaceTotem(this.playerNickname, req.getOfferPosition());
-} else if (request instanceof PickCardRequest req) {
-            controller.handlePickCard(this.playerNickname, req.getRow(), req.getCardIndex());
-        } else if (request instanceof PongResponse pong) {
-            lastPongTime = System.currentTimeMillis();
-        } else if (request instanceof EndTurnRequest) {
-            controller.handleEndTurn(this.playerNickname);
-        }
+    public void joinGameRequest(String nickname) throws RemoteException {
+        this.playerNickname = nickname;
+        controller.handleJoinGame(this.playerNickname, this);
+    }
+    @Override
+    public void getLeaderboardRequest(int numPlayers) throws RemoteException {
+        controller.handleGetLeaderboard(this.playerNickname, numPlayers);
+    }
+    @Override
+    public void setupGameRequest() throws RemoteException {
+        controller.handleSetupGame(this.playerNickname);
+    }
+    @Override
+    public void chooseTotemColorRequest(String color) throws RemoteException {
+        controller.handleChooseTotemColor(this.playerNickname, color);
+    }
+    @Override
+    public void placeTotemRequest(int offerPosition) throws RemoteException {
+        controller.handlePlaceTotem(this.playerNickname, offerPosition);
+    }
+    @Override
+    public void pickCardRequest(String row, int cardIndex) throws RemoteException {
+        controller.handlePickCard(this.playerNickname, row, cardIndex);
+    }
+    @Override
+    public void endTurnRequest() throws RemoteException {
+        controller.handleEndTurn(this.playerNickname);
+    }
+    @Override
+    public void pong() throws RemoteException {
+        lastPongTime = System.currentTimeMillis();
     }
 
     public void startPingScheduler() {
@@ -69,41 +89,146 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
             long timeSinceLastPong = System.currentTimeMillis() - lastPongTime;
             if (timeSinceLastPong > PING_TIMEOUT_MS) {
                 System.out.println("[Server RMI] Ping timeout per " + playerNickname + " (" + timeSinceLastPong + "ms)");
+
                 controller.markDisconnected(playerNickname);
                 disconnect();
                 return;
             }
 
-            sendUpdate(new PingRequest(System.currentTimeMillis()));
+            sendPing();
+
         }, PING_INTERVAL_MS, PING_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public void sendUpdate(Update update) {
-        if (!connected) return;
-        try {
-            clientStub.receiveUpdate(update);
-        } catch (RemoteException e) {
-            disconnect();
-        }
+    public void notifyPlayerJoined(String nickname) {
+        try { clientStub.onPlayerJoined(nickname); }
+        catch (RemoteException e) { disconnect(); }
     }
 
     @Override
-    public void sendError(String errorMessage) {
-        sendUpdate(new ErrorMessageUpdate(errorMessage));
+    public void notifyTotemColor(String nickname, TotemColors color) {
+        try { clientStub.onTotemColorChosen(nickname, color); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyTotemPlaced(String nickname, int position) {
+        try { clientStub.onTotemPlaced(nickname, position); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyCardPicked(String nickname, String row, int index, int food,
+                                 Map<Integer, String> offering) {
+        try { clientStub.onCardPicked(nickname, row, index, food, offering); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyTotemReturned(String nickname, int position, int food, int aura) {
+        try { clientStub.onTotemReturned(nickname,food, aura); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyEventResolved(Map<String, EventUpdate.PlayerSnapshot> stats,
+                                    List<String> charUp, List<String> charLow,
+                                    List<String> eventUp, List<String> eventLow,
+                                    List<String> buildUp, List<String> buildLow) {
+        try { clientStub.onEventResolved(stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyTurnChanged(String nickname) {
+        try { clientStub.onTurnChanged(nickname); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyStateChanged(String stateName, int currentEra,
+                                   Map<String, StateChangedUpdate.PlayerSnapshot> playersStats,
+                                   List<String> turnOrderTrack, Map<Integer, String> offeringTrack,
+                                   List<String> charUpper, List<String> charLower,
+                                   List<String> eventUpper, List<String> eventLower,
+                                   List<String> buildUpper, List<String> buildLower) {
+        try { clientStub.onStateChanged(stateName, currentEra, playersStats, turnOrderTrack, offeringTrack,
+                charUpper, charLower, eventUpper, eventLower, buildUpper, buildLower); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyEndGame(List<String> winnerNames) {
+        try { clientStub.onEndGame(winnerNames); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyEndGame(List<String> winnerNames, Map<String, Integer> allScores, int numPlayers) {
+        try { clientStub.onEndGame(winnerNames, allScores, numPlayers); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyLeaderboard(int playerPosition, List<LeaderboardEntry> entries, int numPlayers) {
+        try { clientStub.onLeaderboard(playerPosition, entries, numPlayers); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyError(String message) {
+        try { clientStub.onErrorMessage(message); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyPlayerDisconnected(String nickname) {
+        try { clientStub.onPlayerDisconnected(nickname); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyPlayerReconnected(String nickname) {
+        try { clientStub.onPlayerReconnected(nickname); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyGameSuspended() {
+        try { clientStub.onGameSuspended(); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void notifyGameResumed() {
+        try { clientStub.onGameResumed(); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void sendPing() {
+        try { clientStub.ping(); }
+        catch (RemoteException e) { disconnect(); }
     }
 
     @Override
     public void disconnect() {
         if (!connected) return;
-        this.connected = false;
-
-        if (pingScheduler != null) {
-            pingScheduler.shutdownNow();
-        }
-
+        connected = false;
+        if (pingScheduler != null) pingScheduler.shutdownNow();
         if (playerNickname != null) {
             controller.removeClient(playerNickname);
         }
+
+        // --- FIX MEMORY LEAK ---
+        try {
+            // "Scollega" questo handler dalla rete RMI -> sennò non venivano mai effettivamente chiuse
+            UnicastRemoteObject.unexportObject(this, true);
+            // true = forza la disconnessione anche se ci sono chiamate in corso.
+        } catch (NoSuchObjectException e) {
+            // Già de-esportato, possiamo ignorarlo
+        }
     }
+
 }

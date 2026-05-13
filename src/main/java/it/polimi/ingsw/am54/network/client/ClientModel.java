@@ -1,8 +1,7 @@
 package it.polimi.ingsw.am54.network.client;
 
 import it.polimi.ingsw.am54.model.TotemColors;
-import it.polimi.ingsw.am54.network.messages.EventUpdate;
-import it.polimi.ingsw.am54.network.messages.StateChangedUpdate;
+import it.polimi.ingsw.am54.network.messages.*;
 import java.util.*;
 
 /**
@@ -110,6 +109,22 @@ public class ClientModel {
     // --- 4. EXTRA ---
     /** Lista dei vincitori (popolata alla fine della partita) */
     private List<String> winners = new ArrayList<>();
+
+    /** Mappa nickname -> punteggio finale dell'ultima partita */
+    private Map<String, Integer> lastMatchScores = Map.of();
+
+    /** Numero di giocatori dell'ultima partita */
+    private int lastMatchNumPlayers = 0;
+
+    //--- 5. CLASSIFICA (LEADERBOARD) ---
+    /** Posizione del giocatore nella classifica per il numero di giocatori specificato */
+    private int leaderboardPosition = -1;
+
+    /** Lista completa delle entry della classifica */
+    private List<LeaderboardEntry> leaderboardEntries = List.of();
+
+    /** Numero di giocatori per cui e' stata richiesta la classifica */
+    private int leaderboardNumPlayers = 0;
 
     /** Ultimo messaggio di errore ricevuto */
     private String lastErrorMessage;
@@ -329,6 +344,26 @@ public class ClientModel {
         notifyUI();
     }
 
+    /**
+     * Memorizza i punteggi finali di tutti i giocatori per l'ultima partita.
+     * Chiamato dal ServerHandler dopo EndGameUpdate quando il server include i punteggi.
+     */
+    public synchronized void setLastMatchScores(Map<String, Integer> scores, int numPlayers) {
+        this.lastMatchScores = scores;
+        this.lastMatchNumPlayers = numPlayers;
+    }
+
+    /**
+     * Aggiornato quando si riceve un LeaderboardUpdate dal server.
+     * Contiene la posizione del giocatore e la classifica completa.
+     */
+    public synchronized void updateLeaderboard(int playerPosition, List<LeaderboardEntry> entries, int numPlayers) {
+        this.leaderboardPosition = playerPosition;
+        this.leaderboardEntries = entries;
+        this.leaderboardNumPlayers = numPlayers;
+        notifyUI();
+    }
+
     /** Aggiornato quando si riceve un messaggio di errore */
     public synchronized void updateError(String message) {
         this.lastErrorMessage = message;
@@ -369,6 +404,11 @@ public class ClientModel {
     public synchronized String getCurrentState() { return currentState; }
     public synchronized Map<String, TotemColors> getPlayerColors() { return playerColors; }
     public synchronized List<String> getWinners() { return winners; }
+    public synchronized Map<String, Integer> getLastMatchScores() { return lastMatchScores; }
+    public synchronized int getLastMatchNumPlayers() { return lastMatchNumPlayers; }
+    public synchronized int getLeaderboardPosition() { return leaderboardPosition; }
+    public synchronized List<LeaderboardEntry> getLeaderboardEntries() { return leaderboardEntries; }
+    public synchronized int getLeaderboardNumPlayers() { return leaderboardNumPlayers; }
     public synchronized String getLastErrorMessage() { return lastErrorMessage; }
     public synchronized Map<Integer, String> getOfferingTrack() { return offeringTrack; }
     public synchronized List<String> getTurnOrderTrack() { return turnOrderTrack; }

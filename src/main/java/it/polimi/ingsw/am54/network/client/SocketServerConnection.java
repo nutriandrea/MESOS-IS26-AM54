@@ -32,6 +32,11 @@ public class SocketServerConnection implements ServerConnection {
     }
 
     @Override
+    public void requestLeaderboard(int numPlayers) {
+        sendObject(new GetLeaderboardRequest(numPlayers));
+    }
+
+    @Override
     public void disconnect() {
         connected = false;
         // Fermiamo prima il thread in ascolto in modo pulito

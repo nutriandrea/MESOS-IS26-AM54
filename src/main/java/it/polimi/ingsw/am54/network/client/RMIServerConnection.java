@@ -1,36 +1,14 @@
 package it.polimi.ingsw.am54.network.client;
 
+import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.messages.*;
 import it.polimi.ingsw.am54.network.rmi.*;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.List;
+import java.util.Map;
 
-/**
- * ============================================================================
- * RMIServerConnection — Connessione RMI lato client
- * ============================================================================
- *
- * RUOLO:
- * Implementa ServerConnection usando RMI invece di Socket TCP.
- * Estende UnicastRemoteObject e implementa RMIClientInterface per ricevere
- * callback dal server.
- *
- * FLUSSO:
- * 1. Il client crea un RMIServerConnection con il server RMI remoto
- * 2. Si registra sul server tramite server.connect(this)
- * 3. Il server restituisce uno stub (RMIClientHandlerInterface)
- * 4. Il client usa lo stub per inviare Request
- * 5. Il server usa la callback receiveUpdate() per inviare Update
- *
- * GESTIONE PING:
- * Quando il server invia un PingRequest tramite receiveUpdate(), il client:
- * 1. Riconosce che e' un PingRequest (non un Update normale)
- * 2. Crea un PongResponse con lo stesso timestamp
- * 3. Lo invia al server tramite serverStub.handleRequest(pong)
- *
- * Questo e' completamente trasparente per il client.
- * ============================================================================
- */
+
 public class RMIServerConnection extends UnicastRemoteObject implements ServerConnection, RMIClientInterface {
 
     /** Stub RMI del server: usato per inviare Request e rispondere ai ping */
@@ -39,108 +17,182 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     /** Modello locale del client: viene aggiornato con gli update ricevuti */
     private ClientModel clientModel;
 
-    /**
-     * Costruttore: si connette al server RMI e si registra.
-     *
-     * @param server il server RMI remoto (ottenuto tramite lookup)
-     * @param clientModel il modello locale da aggiornare con gli update
-     */
+    /* =====================================================================
+     * COSTRUTTORE
+     * ===================================================================== */
+
     public RMIServerConnection(RMIGameServer server, ClientModel clientModel) throws RemoteException {
         this.clientModel = clientModel;
         // Ci registriamo sul server e otteniamo il nostro handler personale
         this.serverStub = server.connect(this);
     }
 
-    /**
-     * Invia una Request al server via RMI.
-     * Se la chiamata fallisce (RemoteException), disconnette il client.
-     */
+    /* =====================================================================
+     * AZIONI IN USCITA (Dal Client al Server) - Implementa ServerConnection
+     * Il giocatore interagisce con la GUI, il VirtualServer chiama questi
+     * metodi, e li inoltriamo al server tramite RMI.
+     * ===================================================================== */
+
     @Override
-    public void sendRequest(Request request) {
+    public void joinGame(String nickname) {
+        try { serverStub.joinGameRequest(nickname); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void setupGame() {
+        try { serverStub.setupGameRequest(); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void chooseTotem(TotemColors color) {
+        try { serverStub.chooseTotemColorRequest(color.name()); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void placeTotem(int position) {
+        try { serverStub.placeTotemRequest(position); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void pickCard(String row, int index) {
+        try { serverStub.pickCardRequest(row, index); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void requestLeaderboard(int numPlayers) {
+        try { serverStub.getLeaderboardRequest(numPlayers); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void endTurn() {
+        try { serverStub.endTurnRequest(); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    /* =====================================================================
+     * EVENTI IN INGRESSO (Dal Server al Client) - Implementa RMIClientInterface
+     * Il Server chiama direttamente questi metodi, niente istanceof
+     * ===================================================================== */
+
+    @Override
+    public void onPlayerJoined(String nickname) throws RemoteException {
+        clientModel.updatePlayerJoined(nickname);
+    }
+
+    @Override
+    public void onTotemColorChosen(String nickname, TotemColors color) throws RemoteException {
+        clientModel.updateTotemColor(nickname, color);
+    }
+
+    @Override
+    public void onTotemPlaced(String nickname, int position) throws RemoteException {
+        clientModel.updateTotemPlacement(nickname, position);
+    }
+
+    @Override
+    public void onTotemReturned(String nickname, int food, int aura) throws RemoteException {
+        // Presupponendo che tu abbia o aggiunga questo metodo nel ClientModel
+        clientModel.updateTotemReturned(nickname, food, aura);
+    }
+
+    @Override
+    public void onCardPicked(String nickname, String row, int cardIndex,
+                             int newFood, Map<Integer, String> offering) throws RemoteException {
+        clientModel.updateCardPicked(nickname, row, cardIndex, newFood, offering);
+    }
+
+    @Override
+    public void onTurnChanged(String nickname) throws RemoteException {
+        clientModel.updateTurn(nickname);
+    }
+
+    @Override
+    public void onEventResolved(Map<String, EventUpdate.PlayerSnapshot> stats,
+                                List<String> charUp, List<String> charLow,
+                                List<String> eventUp, List<String> eventLow,
+                                List<String> buildUp, List<String> buildLow) throws RemoteException {
+        // Ricostruiamo il DTO localmente solo per comodità
+        EventUpdate localSnapshot = new EventUpdate(stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
+        clientModel.updateEventSnapshot(localSnapshot);
+    }
+
+    @Override
+    public void onStateChanged(String stateName, int era, Map<String, StateChangedUpdate.PlayerSnapshot> players,
+                               List<String> turnOrder, Map<Integer, String> offering,
+                               List<String> charUp, List<String> charLow,
+                               List<String> eventUp, List<String> eventLow,
+                               List<String> buildUp, List<String> buildLow) throws RemoteException {
+        // usiamo il DTO localmente per semplicità
+        StateChangedUpdate localSnapshot = new StateChangedUpdate(stateName, era, players, turnOrder, offering, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
+        clientModel.updateState(localSnapshot);
+    }
+
+    @Override
+    public void onEndGame(List<String> winnerNames) throws RemoteException {
+        clientModel.updateEndGame(winnerNames);
+    }
+
+    @Override
+    public void onEndGame(List<String> winnerNames, Map<String, Integer> allScores, int numPlayers) throws RemoteException {
+        clientModel.updateEndGame(winnerNames);
+        clientModel.setLastMatchScores(allScores, numPlayers);
+    }
+
+    @Override
+    public void onLeaderboard(int playerPosition, List<LeaderboardEntry> entries, int numPlayers) throws RemoteException {
+        clientModel.updateLeaderboard(playerPosition, entries, numPlayers);
+    }
+
+    @Override
+    public void onErrorMessage(String message) throws RemoteException {
+        clientModel.updateError(message);
+    }
+
+    @Override
+    public void onPlayerDisconnected(String nickname) throws RemoteException {
+        clientModel.updatePlayerDisconnected(nickname);
+    }
+
+    @Override
+    public void onPlayerReconnected(String nickname) throws RemoteException {
+        clientModel.updatePlayerReconnected(nickname);
+    }
+
+    /* =====================================================================
+     * HEARTBEAT (Gestione del Ping/Pong)
+     * ===================================================================== */
+
+    @Override
+    public void onGameSuspended() throws RemoteException {
+        clientModel.updateGameSuspended();
+    }
+
+    @Override
+    public void onGameResumed() throws RemoteException {
+        clientModel.updateGameResumed();
+    }
+
+    @Override
+    public void ping() throws RemoteException {
         try {
-            serverStub.handleRequest(request);
+            // Risposta immediata al server per confermare che siamo vivi
+            serverStub.pong();
         } catch (RemoteException e) {
+            // Se non riusciamo a rispondere, il server e' giù
             disconnect();
         }
     }
 
-    /**
-     * Callback RMI: chiamata dal server per inviare un Update al client.
-     *
-     * SMISTAMENTO:
-     * - Se e' un PingRequest -> rispondi con PongResponse (automatico)
-     * - Altrimenti -> aggiorna il ClientModel
-     *
-     * Questo metodo e' l'equivalente RMI del loop di lettura del ServerHandler.
-     * Invece di leggere da uno stream, il server chiama questo metodo via RMI.
-     */
-    @Override
-    public void receiveUpdate(Update update) throws RemoteException {
-        // I PingRequest richiedono una risposta immediata
-        if (update instanceof PingRequest ping) {
-            handlePing(ping);
-            return;
-        }
+    /* =====================================================================
+     * DISCONNESSIONE
+     * ===================================================================== */
 
-        // StateChangedUpdate può contenere stato completo per riconnessione
-        if (update instanceof StateChangedUpdate stateUpdate) {
-            clientModel.updateState(stateUpdate);
-            return;
-        }
-
-        // Tutti gli altri update vengono passati al ClientModel
-        if (update instanceof PlayerJoinedUpdate msg) {
-            clientModel.updatePlayerJoined(msg.getNickname());
-        }
-        else if (update instanceof PlayerDisconnectedUpdate msg) {
-            clientModel.updatePlayerDisconnected(msg.getNickname());
-        }
-        else if (update instanceof PlayerReconnectedUpdate msg) {
-            clientModel.updatePlayerReconnected(msg.getNickname());
-        }
-        else if (update instanceof TotemPlacedUpdate msg) {
-            clientModel.updateTotemPlacement(msg.getNickname(), msg.getOfferPosition());
-        }
-        else if (update instanceof CardPickedUpdate msg) {
-            clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex(), msg.getNewFoodBalance());
-        }
-        else if (update instanceof TurnChangedUpdate msg) {
-            clientModel.updateTurn(msg.getNickname());
-        }
-        else if (update instanceof StateChangedUpdate msg) {
-            clientModel.updateState(msg);
-        }
-        else if (update instanceof TotemColorUpdate msg) {
-            clientModel.updateTotemColor(msg.getNickname(), msg.getColor());
-        }
-        else if (update instanceof EndGameUpdate msg) {
-            clientModel.updateEndGame(msg.getWinners());
-        }
-        else if (update instanceof ErrorMessageUpdate msg) {
-            clientModel.updateError(msg.getMessage());
-        }
-        else if (update instanceof EventUpdate msg) {
-            clientModel.updateEventSnapshot(msg);
-        }
-    }
-
-    /**
-     * Risponde automaticamente a un PingRequest del server.
-     * Invia un PongResponse con lo stesso timestamp tramite RMI.
-     */
-    private void handlePing(PingRequest ping) throws RemoteException {
-        try {
-            PongResponse pong = new PongResponse(ping.getTimestamp());
-            serverStub.handleRequest(pong);
-        } catch (RemoteException e) {
-            throw e;
-        }
-    }
-
-    /**
-     * Chiude la connessione RMI.
-     * Chiama disconnect() sullo stub del server.
-     */
     @Override
     public void disconnect() {
         try {

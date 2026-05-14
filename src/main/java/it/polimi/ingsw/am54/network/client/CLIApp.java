@@ -411,7 +411,7 @@ public class CLIApp {
             } else if (input.toUpperCase().startsWith("CLASSIFICA ")) {
                 try {
                     int np = Integer.parseInt(input.substring(11).trim());
-                    server.requestLeaderboard(np);
+                    /*server.requestLeaderboard(np);*/
                     currentInputHandler = null;
                 } catch (NumberFormatException e) {
                     System.out.println("Formato non valido. Usa: CLASSIFICA 4");

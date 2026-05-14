@@ -1,213 +1,274 @@
 package it.polimi.ingsw.am54.gui;
 
 import it.polimi.ingsw.am54.model.TotemColors;
+import it.polimi.ingsw.am54.network.client.Client;
 import it.polimi.ingsw.am54.network.client.ClientModel;
-import it.polimi.ingsw.am54.network.client.SocketServerConnection;
-import it.polimi.ingsw.am54.network.client.VirtualServer;
-import javafx.animation.PauseTransition;
-import javafx.animation.ScaleTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.Button;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.VBox;
-import javafx.util.Duration;
+import javafx.scene.input.MouseEvent;
+import javafx.event.ActionEvent;
+import javafx.scene.layout.StackPane;
+import javafx.scene.image.Image;
 
-import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 public class LobbyController {
 
-    @FXML private VBox nicknameContainer, lobbyContainer;
-    @FXML private TextField nicknameField;
-    @FXML private Label errorLabel, statusLabel;
-    @FXML private ListView<String> playersListView;
-    @FXML private Button startGameButton;
+    @FXML private ImageView totemRed;
+    @FXML private ImageView totemYellow;
+    @FXML private ImageView totemBlue;
+    @FXML private ImageView totemBlack;
+    @FXML private ImageView totemWhite;
 
-    @FXML private Button btnYellow, btnRed, btnBlack, btnBlue, btnWhite;
-    @FXML private ImageView imgYellow, imgRed, imgBlack, imgBlue, imgWhite;
-    @FXML private Label xYellow, xRed, xBlack, xBlue, xWhite;
+    @FXML private Label nameRed;
+    @FXML private Label nameYellow;
+    @FXML private Label nameBlue;
+    @FXML private Label nameBlack;
+    @FXML private Label nameWhite;
 
-    private VirtualServer virtualServer;
-    private ClientModel model;
-    private String myNickname;
+    @FXML private Label subtitleLabel;
+    @FXML private Button startButton;
+
+    @FXML private StackPane rulesOverlay;
+    @FXML private ImageView leftPageImage;
+    @FXML private ImageView rightPageImage;
+    @FXML private Button prevPageButton;
+    @FXML private Button nextPageButton;
+    @FXML private Label pageLabel;
+
+    private Map<String, ImageView> totemMap;
+    private Map<String, Label> labelMap;
+
+    private int currentLeftPageIndex = 0;
+    private final int TOTAL_PAGES = 8;
+    private List<Image> rulePages = new ArrayList<>();
 
     @FXML
-    public void onJoinClicked() {
-        String name = nicknameField.getText().trim();
+    public void initialize() {
+        totemMap = new HashMap<>();
+        totemMap.put("red", totemRed);
+        totemMap.put("yellow", totemYellow);
+        totemMap.put("blue", totemBlue);
+        totemMap.put("black", totemBlack);
+        totemMap.put("white", totemWhite);
 
-        if (name.isEmpty()) {
-            Platform.runLater(() -> errorLabel.setText("Inserisci un nome!"));
+        labelMap = new HashMap<>();
+        labelMap.put("red", nameRed);
+        labelMap.put("yellow", nameYellow);
+        labelMap.put("blue", nameBlue);
+        labelMap.put("black", nameBlack);
+        labelMap.put("white", nameWhite);
+
+        loadImage(totemRed, "/images/totem_red_3d_160x270.png");
+        loadImage(totemYellow, "/images/totem_yellow_3d_160x270.png");
+        loadImage(totemBlue, "/images/totem_blue_3d_160x270.png");
+        loadImage(totemBlack, "/images/totem_black_3d_160x270.png");
+        loadImage(totemWhite, "/images/totem_white_3d_160x270.png");
+
+        Client.getInstance().getModel().setOnModelUpdatedCallback(() -> {
+            Platform.runLater(this::updateLobbyUI);
+        });
+
+        for (int i = 1; i <= TOTAL_PAGES; i++) {
+            String path = "/images/rules/page_" + i + ".jpg";
+            try {
+                rulePages.add(new javafx.scene.image.Image(getClass().getResourceAsStream(path)));
+            } catch (Exception e) {
+                System.err.println("Immagine regola non trovata: " + path);
+            }
+        }
+
+        updateLobbyUI();
+    }
+
+    private void loadImage(ImageView imageView, String string) {
+        try {
+            URL url = getClass().getResource(string);
+            if (url != null) {
+                imageView.setImage(new Image(url.toExternalForm()));
+            } else {
+                System.err.println("Impossibile trovare l'immagine: " + string);
+            }
+        } catch (Exception e) {
+            System.err.println("Errore nel caricamento di " + string + ": " + e.getMessage());
+        }
+    }
+
+    private void updateLobbyUI() {
+        ClientModel model = Client.getInstance().getModel();
+        String myNickname = Client.getInstance().getNickname();
+
+        for (String colorKey : labelMap.keySet()) {
+            labelMap.get(colorKey).setText("");
+        }
+
+        for (ImageView imageView : totemMap.values()) {
+            imageView.getStyleClass().removeAll(
+                    "totem-selected-red",
+                    "totem-selected-yellow",
+                    "totem-selected-blue",
+                    "totem-selected-black",
+                    "totem-selected-white"
+            );
+            imageView.setOpacity(1.0);
+
+            imageView.setDisable(false);
+        }
+
+        // Ora la mappa utilizza TotemColors come valore
+        Map<String, TotemColors> playerColors = model.getPlayerColors();
+        List<String> players = model.getPlayers();
+
+        boolean hasChosenTotem = playerColors != null && playerColors.containsKey(myNickname);
+        boolean isHost = players != null && !players.isEmpty() && players.get(0).equals(myNickname);
+        int playerCount = players != null ? players.size() : 0;
+
+        if (!hasChosenTotem) {
+            subtitleLabel.setText("SCEGLI IL TUO TOTEM!");
+            startButton.setVisible(false);
+            startButton.setManaged(false);
+        } else {
+            if (isHost) {
+                if (playerCount > 1) {
+                    subtitleLabel.setText("Premi Start quando vuoi iniziare la partita!");
+                    startButton.setVisible(true);
+                    startButton.setManaged(true);
+                } else {
+                    subtitleLabel.setText("In attesa di altri giocatori...");
+                    startButton.setVisible(false);
+                    startButton.setManaged(false);
+                }
+            } else {
+                subtitleLabel.setText("In attesa che l'host avvii la partita...");
+                startButton.setVisible(false);
+                startButton.setManaged(false);
+            }
+        }
+
+        if (playerColors == null) return;
+
+        for (Map.Entry<String, TotemColors> entry : playerColors.entrySet()) {
+            String player = entry.getKey();
+            // Convertiamo l'enum in stringa minuscola per usarla con le nostre labelMap e totemMap
+            String color = entry.getValue().name().toLowerCase();
+
+            if (labelMap.containsKey(color) && totemMap.containsKey(color)) {
+                Label label = labelMap.get(color);
+                ImageView totem = totemMap.get(color);
+
+                label.setText(player.toUpperCase());
+
+                if (player.equals(myNickname)) {
+                    totem.getStyleClass().add("totem-selected-" + color);
+                } else {
+                    totem.setOpacity(0.7);
+
+                    totem.setDisable(true);
+                }
+            }
+        }
+    }
+
+    @FXML
+    private void handleTotemSelection(MouseEvent event) {
+        ImageView clicked = (ImageView) event.getSource();
+
+        // Estraiamo il colore come stringa maiuscola dall'ID (es: "totemRed" -> "RED")
+        String colorString = clicked.getId().replace("totem", "").toUpperCase();
+
+        TotemColors chosenColor;
+        try {
+            chosenColor = TotemColors.valueOf(colorString);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Colore del totem non riconosciuto: " + colorString);
             return;
         }
 
+        ClientModel model = Client.getInstance().getModel();
+        String myNickname = Client.getInstance().getNickname();
+        Map<String, TotemColors> playerColors = model.getPlayerColors();
+
+        // Controlliamo se qualcuno (diverso da noi) ha già scelto questo specifico Enum
+        if (playerColors != null) {
+            for (Map.Entry<String, TotemColors> entry : playerColors.entrySet()) {
+                if (entry.getValue() == chosenColor && !entry.getKey().equals(myNickname)) {
+                    System.out.println("Colore occupato da: " + entry.getKey());
+                    return;
+                }
+            }
+        }
+
         try {
-            this.myNickname = name;
-
-            // 1. Disabilitiamo il campo per evitare che l'utente spammi "Invio"
-            nicknameField.setDisable(true);
-
-            // 2. Creiamo una nuova connessione pulita
-            this.model = new ClientModel();
-            SocketServerConnection connection = new SocketServerConnection("localhost", 12345, model);
-            this.virtualServer = new VirtualServer(connection, name);
-            this.model.setOnModelUpdatedCallback(this::updateUI);
-
-            Platform.runLater(() -> errorLabel.setText(""));
-            virtualServer.joinGame();
-
-            // 3. TRUCCO DEFINITIVO: Il Timeout
-            // Avviamo un timer di 1 secondo. Se il server ci rifiuta silenziosamente,
-            // il timer scadrà, noi saremo ancora qui e forzeremo la scritta di errore!
-            PauseTransition timeout = new PauseTransition(Duration.seconds(1.0));
-            timeout.setOnFinished(e -> {
-                // Se dopo 1 secondo il container del nickname è ancora visibile
-                if (nicknameContainer.isVisible()) {
-                    nicknameField.setDisable(false); // Sblocchiamo la casella di testo
-                    errorLabel.setText("Nickname già in uso! Scegline un altro.");
-                    nicknameField.selectAll(); // Evidenzia il testo per cancellarlo subito
-                }
-            });
-            timeout.play();
-
-        } catch (IOException e) {
-            Platform.runLater(() -> {
-                nicknameField.setDisable(false);
-                errorLabel.setText("Connessione fallita!");
-            });
+            Client.getInstance().getConnection().chooseTotem(chosenColor);
+        } catch (Exception e) {
+            System.err.println("Errore invio totem: " + e.getMessage());
         }
     }
 
-    private void updateUI() {
-        Platform.runLater(() -> {
-            // Se il server è stato bravo e ci ha inviato un errore esplicito
-            String serverError = model.getLastErrorMessage();
-            if (serverError != null && !serverError.isEmpty()) {
-                if (nicknameContainer.isVisible()) {
-                    nicknameField.setDisable(false);
-                    errorLabel.setText("Nickname già in uso! Scegline un altro.");
-                    nicknameField.selectAll();
-                    model.clearError();
-                }
-                return;
-            }
+    @FXML
+    private void handleStartGame(ActionEvent event) {
+        try {
 
-            // Controlliamo se siamo stati accettati dal server
-            boolean isAccepted = false;
-            if (model.getPlayers() != null) {
-                for (String p : model.getPlayers()) {
-                    if (p.equalsIgnoreCase(myNickname)) {
-                        isAccepted = true;
-                        break;
-                    }
-                }
-            }
-
-            if (isAccepted && nicknameContainer.isVisible()) {
-                // SUCCESSO: Siamo in lista!
-                nicknameField.setDisable(false);
-                nicknameContainer.setVisible(false);
-                nicknameContainer.setManaged(false);
-                lobbyContainer.setVisible(true);
-                lobbyContainer.setManaged(true);
-                errorLabel.setText("");
-            }
-
-            // Aggiornamento Lista Giocatori
-            playersListView.getItems().clear();
-            Map<String, TotemColors> chosenColors = model.getPlayerColors();
-            for (String p : model.getPlayers()) {
-                String c = chosenColors.containsKey(p) ? " - " + chosenColors.get(p) : " - Scelta...";
-                playersListView.getItems().add(p.toUpperCase() + c);
-            }
-
-            // Aggiornamento Totem
-            resetTotemUI();
-            for (Map.Entry<String, TotemColors> entry : chosenColors.entrySet()) {
-                if (entry.getKey().equalsIgnoreCase(myNickname)) {
-                    highlightMyTotem(entry.getValue());
-                } else {
-                    showXOnOtherTotem(entry.getValue());
-                }
-            }
-
-            // Tasto START
-            if (!model.getPlayers().isEmpty() && model.getPlayers().get(0).equalsIgnoreCase(myNickname)) {
-                if (chosenColors.size() == model.getPlayers().size() && model.getPlayers().size() >= 2) {
-                    startGameButton.setVisible(true); startGameButton.setManaged(true);
-                } else {
-                    startGameButton.setVisible(false); startGameButton.setManaged(false);
-                }
-            }
-        });
-    }
-
-    // --- METODI HELPER (Invariati) ---
-    private void resetTotemUI() {
-        Button[] btns = {btnYellow, btnRed, btnBlack, btnBlue, btnWhite};
-        ImageView[] imgs = {imgYellow, imgRed, imgBlack, imgBlue, imgWhite};
-        Label[] xs = {xYellow, xRed, xBlack, xBlue, xWhite};
-        for (int i = 0; i < 5; i++) {
-            btns[i].setDisable(false);
-            imgs[i].getStyleClass().removeAll("immagine-occupata", "totem-selezionato-mio");
-            xs[i].setVisible(false);
+            Client.getInstance().getConnection().setupGame();
+            subtitleLabel.setText("Avvio partita in corso...");
+        } catch (Exception e) {
+            System.err.println("Errore durante l'avvio della partita: " + e.getMessage());
         }
     }
 
-    private void highlightMyTotem(TotemColors color) {
-        ImageView targetImg = getImageViewByColor(color);
-        if (targetImg != null) targetImg.getStyleClass().add("totem-selezionato-mio");
+    @FXML
+    private void handleOpenRules() {
+        rulesOverlay.setVisible(true);
+        rulesOverlay.setManaged(true);
+        updateRulesUI();
     }
 
-    private void showXOnOtherTotem(TotemColors color) {
-        Button targetBtn = getButtonByColor(color);
-        ImageView targetImg = getImageViewByColor(color);
-        Label targetX = getLabelXByColor(color);
-        if (targetBtn != null) targetBtn.setDisable(true);
-        if (targetImg != null) targetImg.getStyleClass().add("immagine-occupata");
-        if (targetX != null) targetX.setVisible(true);
+    @FXML
+    private void handleCloseRules() {
+        rulesOverlay.setVisible(false);
+        rulesOverlay.setManaged(false);
     }
 
-    private Button getButtonByColor(TotemColors color) {
-        return switch (color) {
-            case YELLOW -> btnYellow; case RED -> btnRed; case BLACK -> btnBlack;
-            case BLUE -> btnBlue; case WHITE -> btnWhite;
-        };
-    }
-
-    private ImageView getImageViewByColor(TotemColors color) {
-        return switch (color) {
-            case YELLOW -> imgYellow; case RED -> imgRed; case BLACK -> imgBlack;
-            case BLUE -> imgBlue; case WHITE -> imgWhite;
-        };
-    }
-
-    private Label getLabelXByColor(TotemColors color) {
-        return switch (color) {
-            case YELLOW -> xYellow; case RED -> xRed; case BLACK -> xBlack;
-            case BLUE -> xBlue; case WHITE -> xWhite;
-        };
-    }
-
-    @FXML public void onHoverEnter(javafx.scene.input.MouseEvent event) {
-        Node node = (Node) event.getSource();
-        if (!node.isDisable()) {
-            ScaleTransition st = new ScaleTransition(Duration.millis(150), node);
-            st.setToX(1.15); st.setToY(1.15); st.play();
+    @FXML
+    private void handleNextPage() {
+        if (currentLeftPageIndex + 2 < TOTAL_PAGES) {
+            currentLeftPageIndex += 2;
+            updateRulesUI();
         }
     }
 
-    @FXML public void onHoverExit(javafx.scene.input.MouseEvent event) {
-        Node node = (Node) event.getSource();
-        ScaleTransition st = new ScaleTransition(Duration.millis(150), node);
-        st.setToX(1.0); st.setToY(1.0); st.play();
+    @FXML
+    private void handlePrevPage() {
+        if (currentLeftPageIndex - 2 >= 0) {
+            currentLeftPageIndex -= 2;
+            updateRulesUI();
+        }
     }
 
-    @FXML public void onColorRed() { virtualServer.chooseTotem(TotemColors.RED); }
-    @FXML public void onColorYellow() { virtualServer.chooseTotem(TotemColors.YELLOW); }
-    @FXML public void onColorBlack() { virtualServer.chooseTotem(TotemColors.BLACK); }
-    @FXML public void onColorWhite() { virtualServer.chooseTotem(TotemColors.WHITE); }
-    @FXML public void onColorBlue() { virtualServer.chooseTotem(TotemColors.BLUE); }
-    @FXML public void onStartGameClicked() { virtualServer.setupGame(); }
+    private void updateRulesUI() {
+        if (rulePages.isEmpty()) return;
+
+        if (currentLeftPageIndex < rulePages.size()) {
+            leftPageImage.setImage(rulePages.get(currentLeftPageIndex));
+        }
+
+        if (currentLeftPageIndex + 1 < rulePages.size()) {
+            rightPageImage.setImage(rulePages.get(currentLeftPageIndex + 1));
+        }
+
+        prevPageButton.setDisable(currentLeftPageIndex == 0);
+        nextPageButton.setDisable(currentLeftPageIndex + 2 >= TOTAL_PAGES);
+
+        int displayLeft = currentLeftPageIndex + 1;
+        int displayRight = Math.min(currentLeftPageIndex + 2, TOTAL_PAGES);
+        pageLabel.setText(displayLeft + " - " + displayRight + " / " + TOTAL_PAGES);
+    }
 }

@@ -1,115 +1,201 @@
-/* --- 1. Titoli e Label --- */
-.titolo-mesos {
-    -fx-font-family: 'Herculanum';
-    -fx-font-size: 130px;
-    -fx-font-weight: bold;
-    -fx-text-fill: linear-gradient(to bottom, #FFD700, #B8860B);
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 10, 0.5, 3, 3);
+/* --- LOBBY SCREEN --- */
+
+.lobby-background {
+    -fx-background-image: url("../images/sfondo_lobby.jpg");
+    -fx-background-size: 100% 100%;
+    -fx-background-position: center;
+    -fx-background-repeat: no-repeat;
 }
 
-.label-prompt-nickname {
-    -fx-font-family: 'Herculanum';
-    -fx-font-size: 32px;
-    -fx-text-fill: #F5DEB3; /* Colore Crema */
+.lobby-title {
+    -fx-text-fill: white;
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 60px;
+    -fx-text-alignment: center;
+    -fx-effect: dropshadow(three-pass-box, black, 10, 0.5, 0, 0);
 }
 
-.label-errore {
-    -fx-font-family: 'Herculanum';
-    -fx-font-size: 26px;
-    -fx-text-fill: #FFFFFF;
-    -fx-font-weight: bold;
-    -fx-effect: dropshadow(gaussian, rgb(255, 0, 0), 5, 1.0, 0, 0);
+.lobby-subtitle {
+    -fx-text-fill: white;
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 40px;
+    -fx-effect: dropshadow(three-pass-box, black, 8, 0.5, 0, 0);
 }
 
-/* --- 2. Box Nickname e Totem (Uniformati e con bordo crema) --- */
-.box-nickname, .box-totem {
-    -fx-background-color: rgba(50, 50, 50, 0.7);
-    -fx-background-radius: 25px;
-    /* Bordo dello stesso colore della scritta nickname (#F5DEB3) */
-    -fx-border-color: rgba(245, 222, 179, 0.5);
-    -fx-border-width: 2px;
-    -fx-border-radius: 25px;
-    -fx-padding: 30px;
+/* --- TOTEM E SELEZIONE --- */
+
+.totem-button {
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 15, 0, 0, 0);
+    -fx-transition-duration: 0.2s;
 }
 
-/* --- 3. Stile Input Nickname (Centrato) --- */
-.input-nickname {
-    -fx-font-family: 'Herculanum';
-    -fx-font-size: 22px;
-    -fx-text-fill: #F5DEB3;
-    -fx-alignment: center; /* TESTO CHE PARTE DAL CENTRO */
-    -fx-background-color: rgba(0, 0, 0, 0.5);
-    -fx-background-radius: 10px;
-    -fx-border-color: rgba(245, 222, 179, 0.3);
-    -fx-border-radius: 10px;
-    -fx-padding: 10px;
+.totem-button:hover {
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
 }
 
-/* --- 4. Tabella Giocatori --- */
-.tabella-giocatori {
-    -fx-background-color: transparent;
-    -fx-control-inner-background: transparent;
+.mirrored {
+    -fx-scale-x: -1;
 }
 
-.tabella-giocatori .list-cell {
-    -fx-background-color: rgba(0, 0, 0, 0.6);
-    -fx-text-fill: #F5DEB3;
-    -fx-font-family: 'Papyrus';
-    -fx-font-size: 22px;
+.mirrored:hover {
+    -fx-scale-x: -1.1;
+    -fx-scale-y: 1.1;
+}
+
+/* Bagliori Hover Totem */
+#totemRed:hover { -fx-effect: dropshadow(gaussian, #ff3333, 30, 0.6, 0, 0); }
+#totemYellow:hover { -fx-effect: dropshadow(gaussian, #ffd700, 30, 0.6, 0, 0); }
+#totemBlue:hover { -fx-effect: dropshadow(gaussian, #00bfff, 30, 0.6, 0, 0); }
+#totemBlack:hover { -fx-effect: dropshadow(gaussian, #000000, 30, 0.6, 0, 0); }
+#totemWhite:hover { -fx-effect: dropshadow(gaussian, #ffffff, 30, 0.7, 0, 0); }
+
+/* Nomi sopra i Totem */
+.totem-name-label {
+    -fx-text-fill: white;
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 35px;
     -fx-alignment: center;
-    -fx-border-color: transparent transparent rgba(218, 165, 32, 0.2) transparent;
+    -fx-text-alignment: center;
 }
 
-/* --- 5. X Rossa (Papyrus e Opaca) --- */
-.button:disabled { -fx-opacity: 1.0; }
+#nameRed { -fx-effect: dropshadow(gaussian, #ff3333, 15, 0.6, 0, 0); }
+#nameYellow { -fx-effect: dropshadow(gaussian, #ffd700, 15, 0.6, 0, 0); }
+#nameBlue { -fx-effect: dropshadow(gaussian, #00bfff, 15, 0.6, 0, 0); }
+#nameBlack { -fx-effect: dropshadow(gaussian, #000000, 15, 0.6, 0, 0); }
+#nameWhite { -fx-effect: dropshadow(gaussian, rgba(255, 255, 255, 0.75), 15, 0.7, 0, 0); }
 
-.label-x {
-    -fx-text-fill: #FF0000;
-    -fx-font-family: 'Herculanum';
-    -fx-font-size: 70px;
+/* Totem Selezionati */
+.totem-selected-red { -fx-effect: dropshadow(gaussian, #ff3333, 15, 0.7, 0, 0); }
+.totem-selected-yellow { -fx-effect: dropshadow(gaussian, #ffd700, 15, 0.7, 0, 0); }
+.totem-selected-blue { -fx-effect: dropshadow(gaussian, #00bfff, 15, 0.7, 0, 0); }
+.totem-selected-black { -fx-effect: dropshadow(gaussian, #000000, 15, 0.7, 0, 0); }
+.totem-selected-white { -fx-effect: dropshadow(gaussian, #ffffff, 15, 0.7, 0, 0); }
+
+/* --- START BUTTON --- */
+
+.start-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 40px;
+    -fx-border-color: white;
+    -fx-border-width: 2px;
+    -fx-border-radius: 10px;
+    -fx-padding: 10px 60px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 10, 0, 0, 5);
+    -fx-transition-duration: 0.2s;
+}
+
+.start-button:hover {
+    -fx-background-color: rgba(255, 215, 0, 0.05);
+    -fx-text-fill: #ffd700;
+    -fx-border-color: #ffd700;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.4), 15, 0.3, 0, 0);
+}
+
+/* --- PULSANTE INFO --- */
+.info-label {
+    -fx-text-fill: white;
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 22px;
+    -fx-effect: dropshadow(gaussian, black, 5, 0.5, 0, 0);
+}
+
+.info-button {
+    -fx-background-color: rgba(0,0,0,0.5);
+    -fx-text-fill: gold;
+    -fx-font-family: "Arial";
+    -fx-font-size: 24px;
     -fx-font-weight: bold;
-    -fx-opacity: 1.0;
-    -fx-effect: dropshadow(gaussian, black, 5, 0.8, 0, 0);
+    -fx-background-radius: 50%;
+    -fx-border-color: gold;
+    -fx-border-radius: 50%;
+    -fx-border-width: 2px;
+    -fx-min-width: 40px;
+    -fx-min-height: 40px;
+    -fx-cursor: hand;
+    -fx-alignment: center;
 }
 
-.immagine-occupata { -fx-opacity: 0.3; }
-
-
-.totem-selezionato-mio {
-    -fx-effect: dropshadow(gaussian, #FFD700, 30, 0.7, 0, 0);
-    -fx-opacity: 1.0;
+.info-button:hover {
+    -fx-background-color: rgba(255, 215, 0, 0.2);
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
 }
 
-/* --- 6. Tasto START e PLAY --- */
-.bottone-play {
-    -fx-font-family: 'Herculanum';
-    -fx-font-size: 50px;
-    -fx-text-fill: #F5DEB3;
-    -fx-background-color: rgba(0, 0, 0, 0.7);
-    -fx-border-color: #DAA520;
+/* --- OVERLAY REGOLE --- */
+.rules-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.85); /* Oscura tutta la lobby dietro */
+}
+
+.rules-book-container {
+    -fx-background-color: rgba(30, 20, 10, 0.95);
+    -fx-border-color: gold;
     -fx-border-width: 3px;
     -fx-border-radius: 15px;
-    -fx-cursor: hand;
+    -fx-background-radius: 15px;
+    -fx-padding: 5px 10px 5px 10px;
 }
 
-.bottone-login {
-    -fx-font-family: 'Herculanum';
-    -fx-font-size: 110px;
-    -fx-font-weight: bold;
-    -fx-text-fill: linear-gradient(to bottom, #FFD700, #B8860B);
+/* --- TASTO CHIUDI (X) --- */
+.close-button {
     -fx-background-color: transparent;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 15, 0.5, 4, 4);
+    -fx-text-fill: #ff4444;
+    -fx-font-family: "Arial";
+    -fx-font-weight: bold;
+    -fx-font-size: 26px;
+
+    -fx-min-width: 45px;
+    -fx-max-width: 45px;
+    -fx-min-height: 45px;
+    -fx-max-height: 45px;
+
+    -fx-padding: 0;
+    -fx-alignment: center;
+    -fx-background-radius: 50%;
+
+    -fx-cursor: hand;
+    -fx-translate-x: -15px;
+    -fx-transition-duration: 0.2s;
 }
 
-.bottone-login:hover {
-    -fx-text-fill: #FFF8DC;
-    -fx-effect: dropshadow(gaussian, #FFD700, 30, 0.6, 0, 0);
+.close-button:hover {
+    -fx-text-fill: white;
+    -fx-background-color: #ff4444;
+    -fx-background-radius: 50%;
 }
 
-.play-button:armed {
-    -fx-scale-x: 0.95;
-    -fx-scale-y: 0.95;
-    -fx-background-color: #bc8a5f;
+/* --- NAVIGAZIONE (Frecce e Numero Pagina) --- */
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 35px;
+    -fx-border-color: gold;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+    -fx-padding: 5px 30px 10px 30px;
+    -fx-cursor: hand;
+    -fx-alignment: center;
 }
 
-.bottone-play .text, .bottone-login .text { -fx-font-family: 'Herculanum'; }
+.nav-button:hover {
+    -fx-background-color: rgba(255, 215, 0, 0.2);
+}
+
+.nav-button:disabled {
+    -fx-text-fill: gray;
+    -fx-border-color: gray;
+    -fx-cursor: default;
+}
+
+.page-label {
+    -fx-text-fill: white;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 26px;
+}

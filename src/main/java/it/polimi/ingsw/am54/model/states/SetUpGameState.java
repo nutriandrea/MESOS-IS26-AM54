@@ -11,7 +11,7 @@ public class SetUpGameState extends GameState {
     @Override
     public void joinGame(Game game, String nickname) throws Exception {
         if (game.getPlayers().size() >= 5) {
-            throw new Exception("Impossibile unirsi: la stanza è piena (max 5 giocatori).");
+            throw new Exception("Impossibile unirsi: la stanza è piena.");
         }
 
         for (Player p : game.getPlayers()) {

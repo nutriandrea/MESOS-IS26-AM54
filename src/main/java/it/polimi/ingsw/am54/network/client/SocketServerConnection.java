@@ -65,10 +65,10 @@ public class SocketServerConnection implements ServerConnection {
         sendObject(new EndTurnRequest());
     }
 
-    @Override
+    /*@Override
     public void requestLeaderboard(int numPlayers) {
         sendObject(new GetLeaderboardRequest(numPlayers));
-    }
+    }*/
 
     @Override
     public void disconnect() {

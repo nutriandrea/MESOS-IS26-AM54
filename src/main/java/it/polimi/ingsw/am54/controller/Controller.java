@@ -95,15 +95,26 @@ public class Controller {
 
     public void handleJoinGame(String nickname, ClientConnection connection) {
         synchronized (game.getPlayers()) {
-            if (disconnectedPlayers.contains(nickname) || virtualViews.containsKey(nickname)) {
+            // CASO 1: Il giocatore era caduto/disconnesso e sta tornando
+            if (disconnectedPlayers.contains(nickname)) {
                 handleReconnect(nickname, connection);
                 return;
             }
 
+            // CASO 2: Qualcuno sta provando a entrare con un nome GIA' ATTIVO nel server
+            if (virtualViews.containsKey(nickname)) {
+                // Creiamo una view temporanea SOLO per poter spedire indietro l'errore
+                VirtualView rejectedView = new VirtualView(connection, nickname);
+                rejectedView.showError("Nickname già in uso! Scegline un altro.");
+                return; // Blocchiamo l'entrata e usciamo dal metodo!
+            }
+
+            // CASO 3: Il nome è libero, normale procedura di Join
             VirtualView playerView = new VirtualView(connection, nickname);
             virtualViews.put(nickname, playerView);
             game.addObserver(playerView);
 
+            // Manda al nuovo giocatore lo stato di chi è già nella lobby
             for (Player p : game.getPlayers()) {
                 playerView.onPlayerJoined(game, p);
                 if (p.getTotemColors() != null) {
@@ -112,10 +123,13 @@ public class Controller {
             }
 
             try {
+                // Prova ad aggiungerlo al gioco vero e proprio (che controlla se ci sono troppi giocatori)
                 game.joinGame(nickname);
             } catch (Exception e) {
+                // Se la partita è piena, rimuove la view e manda l'errore
                 virtualViews.remove(nickname);
                 game.removeObserver(playerView);
+                playerView.showError(e.getMessage());
                 return;
             }
         }

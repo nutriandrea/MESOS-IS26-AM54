@@ -1,25 +1,78 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
+
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
+<?import javafx.scene.media.*?>
+<?import javafx.geometry.Insets?>
 
-<StackPane fx:id="mainContainer" prefWidth="1000.0" prefHeight="600.0" style="-fx-background-color: black;"
-           xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="it.polimi.ingsw.am54.gui.LoginController"
-           stylesheets="@../css/lobby.css">
+<StackPane fx:id="rootPane" prefHeight="720.0" prefWidth="1280.0"
+           onMouseClicked="#handleRootClick"
+           stylesheets="@../css/login.css" styleClass="login-background"
+           xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="it.polimi.ingsw.am54.gui.LoginController">
 
-    <children>
-        <ImageView preserveRatio="false" fitWidth="${mainContainer.width}" fitHeight="${mainContainer.height}">
-            <image><Image url="@../images/sfondo_login.jpg" /></image>
-        </ImageView>
+    <GridPane fx:id="uiLayer">
+        <columnConstraints>
+            <ColumnConstraints hgrow="SOMETIMES" percentWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints percentHeight="50.0" vgrow="SOMETIMES" /> <RowConstraints percentHeight="50.0" vgrow="SOMETIMES" /> </rowConstraints>
 
-        <VBox alignment="BOTTOM_CENTER" pickOnBounds="false">
-            <padding><Insets bottom="60.0" /></padding>
-            <children>
-                <Button onAction="#onPlayClicked" onMouseEntered="#onHoverEnter" onMouseExited="#onHoverExit"
-                        text="PLAY" styleClass="bottone-login" translateY="-20" />
-            </children>
+        <VBox fx:id="logoContainer" alignment="BOTTOM_CENTER" GridPane.rowIndex="0">
+            <padding><Insets bottom="100"/></padding>
+            <ImageView fx:id="logoMesos" fitWidth="650.0" preserveRatio="true">
+                <image>
+                    <Image url="@../images/logo_mesos.png" />
+                </image>
+            </ImageView>
         </VBox>
-    </children>
+
+        <VBox fx:id="playStateBox" alignment="TOP_CENTER" GridPane.rowIndex="1">
+            <padding><Insets top="285"/></padding>
+            <Button fx:id="playButton" text="PLAY" onAction="#handlePlayAction" styleClass="play-button" />
+        </VBox>
+    </GridPane>
+
+    <VBox fx:id="nicknameStateBox" alignment="CENTER" spacing="25" visible="false" managed="false"
+          maxWidth="520" maxHeight="300" styleClass="translucent-box">
+
+        <Label text="UNISCITI ALLA TRIBU" styleClass="gold-text" style="-fx-font-size: 36px;" />
+
+        <VBox alignment="CENTER" spacing="10">
+            <Label text="INDIRIZZO IP SERVER" styleClass="gold-text" style="-fx-font-size: 14px;" />
+            <TextField fx:id="serverIpField" text="localhost" styleClass="custom-input" maxWidth="380" />
+        </VBox>
+
+        <HBox alignment="CENTER" spacing="50">
+            <RadioButton fx:id="socketRadio" text="SOCKET" selected="true" styleClass="custom-radio">
+                <toggleGroup><ToggleGroup fx:id="protocolGroup"/></toggleGroup>
+            </RadioButton>
+            <RadioButton fx:id="rmiRadio" text="RMI" toggleGroup="$protocolGroup" styleClass="custom-radio"/>
+        </HBox>
+
+        <VBox alignment="CENTER" spacing="10">
+            <Label text="IL TUO NOME" styleClass="gold-text" style="-fx-font-size: 14px;" />
+            <TextField fx:id="nicknameField" promptText="NICKNAME..." styleClass="custom-input" maxWidth="380"
+                       onAction="#handleNicknameSubmit" />
+        </VBox>
+
+        <Button text="CONFERMA" onAction="#handleNicknameSubmit" styleClass="play-button" style="-fx-font-size: 22px;" />
+        <Label fx:id="errorLabel" styleClass="error-label" text="" wrapText="true" maxWidth="450" alignment="CENTER"/>
+    </VBox>
+
+    <Label fx:id="clickToEnterLabel"
+           text="CLICCA OVUNQUE PER ENTRARE NELLA CAVERNA..."
+           styleClass="cave-prompt"
+           visible="false"
+           managed="false"
+           wrapText="true"
+           maxWidth="800"
+           StackPane.alignment="BOTTOM_CENTER">
+        <StackPane.margin>
+            <Insets bottom="60"/> </StackPane.margin>
+    </Label>
+
+    <MediaView fx:id="mediaView" visible="false" />
+
 </StackPane>

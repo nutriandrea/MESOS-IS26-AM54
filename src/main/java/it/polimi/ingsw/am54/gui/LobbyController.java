@@ -13,6 +13,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.event.ActionEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.image.Image;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -51,6 +55,11 @@ public class LobbyController {
     private final int TOTAL_PAGES = 8;
     private List<Image> rulePages = new ArrayList<>();
 
+    private Timeline dotAnimation;
+    private int dotCount = 0;
+    private String baseWaitingText = "";
+    private final String[] dotStates = {"", ".", "..", "..."};
+
     @FXML
     public void initialize() {
         totemMap = new HashMap<>();
@@ -85,6 +94,12 @@ public class LobbyController {
                 System.err.println("Immagine regola non trovata: " + path);
             }
         }
+
+        dotAnimation = new Timeline(new KeyFrame(Duration.millis(750), e -> {
+            dotCount = (dotCount + 1) % 4; // Cicla tra 0, 1, 2, 3
+            subtitleLabel.setText(baseWaitingText + dotStates[dotCount]);
+        }));
+        dotAnimation.setCycleCount(Animation.INDEFINITE);
 
         updateLobbyUI();
     }
@@ -132,22 +147,22 @@ public class LobbyController {
         int playerCount = players != null ? players.size() : 0;
 
         if (!hasChosenTotem) {
-            subtitleLabel.setText("SCEGLI IL TUO TOTEM!");
+            setSubtitleText("SCEGLI IL TUO TOTEM!", false);
             startButton.setVisible(false);
             startButton.setManaged(false);
         } else {
             if (isHost) {
                 if (playerCount > 1) {
-                    subtitleLabel.setText("Premi Start quando vuoi iniziare la partita!");
+                    setSubtitleText("Premi Start quando vuoi iniziare la partita!", false);
                     startButton.setVisible(true);
                     startButton.setManaged(true);
                 } else {
-                    subtitleLabel.setText("In attesa di altri giocatori...");
+                    setSubtitleText("In attesa di altri giocatori", true);
                     startButton.setVisible(false);
                     startButton.setManaged(false);
                 }
             } else {
-                subtitleLabel.setText("In attesa che l'host avvii la partita...");
+                setSubtitleText("In attesa che l'host avvii la partita", true);
                 startButton.setVisible(false);
                 startButton.setManaged(false);
             }
@@ -218,7 +233,7 @@ public class LobbyController {
         try {
 
             Client.getInstance().getConnection().setupGame();
-            subtitleLabel.setText("Avvio partita in corso...");
+            setSubtitleText("Avvio partita in corso", true);
         } catch (Exception e) {
             System.err.println("Errore durante l'avvio della partita: " + e.getMessage());
         }
@@ -270,5 +285,21 @@ public class LobbyController {
         int displayLeft = currentLeftPageIndex + 1;
         int displayRight = Math.min(currentLeftPageIndex + 2, TOTAL_PAGES);
         pageLabel.setText(displayLeft + " - " + displayRight + " / " + TOTAL_PAGES);
+    }
+
+    private void setSubtitleText(String text, boolean animate) {
+        if (animate) {
+            baseWaitingText = text;
+
+            if (dotAnimation.getStatus() != Animation.Status.RUNNING) {
+                dotCount = 0;
+                dotAnimation.playFromStart();
+            }
+            subtitleLabel.setText(baseWaitingText + dotStates[dotCount]);
+
+        } else {
+            dotAnimation.stop();
+            subtitleLabel.setText(text);
+        }
     }
 }

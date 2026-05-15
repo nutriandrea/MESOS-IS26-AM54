@@ -62,7 +62,7 @@
     </VBox>
 
     <Label fx:id="clickToEnterLabel"
-           text="CLICCA OVUNQUE PER ENTRARE NELLA CAVERNA..."
+           text="CLICCA OVUNQUE PER ENTRARE NELLA CAVERNA!"
            styleClass="cave-prompt"
            visible="false"
            managed="false"

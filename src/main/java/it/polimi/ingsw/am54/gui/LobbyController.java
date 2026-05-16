@@ -12,7 +12,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.event.ActionEvent;
 import javafx.scene.layout.StackPane;
-import javafx.scene.image.Image;
+import javafx.scene.layout.VBox;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -25,6 +25,14 @@ import java.util.Map;
 import java.util.List;
 
 public class LobbyController {
+
+    @FXML private StackPane lobbyRoot;
+
+    @FXML private VBox redBox;
+    @FXML private VBox yellowBox;
+    @FXML private VBox blueBox;
+    @FXML private VBox blackBox;
+    @FXML private VBox whiteBox;
 
     @FXML private ImageView totemRed;
     @FXML private ImageView totemYellow;
@@ -62,6 +70,47 @@ public class LobbyController {
 
     @FXML
     public void initialize() {
+
+        // 1. DIMENSIONI PROPORZIONALI
+        double totemSizeScale = 0.23;
+        totemRed.fitHeightProperty().bind(lobbyRoot.heightProperty().multiply(totemSizeScale));
+        totemYellow.fitHeightProperty().bind(lobbyRoot.heightProperty().multiply(0.21));
+        totemBlue.fitHeightProperty().bind(lobbyRoot.heightProperty().multiply(totemSizeScale));
+        totemBlack.fitHeightProperty().bind(lobbyRoot.heightProperty().multiply(totemSizeScale));
+        totemWhite.fitHeightProperty().bind(lobbyRoot.heightProperty().multiply(totemSizeScale));
+
+
+        List<VBox> allBoxes = List.of(redBox, yellowBox, blueBox, blackBox, whiteBox);
+
+        for (VBox box : allBoxes) {
+            box.setSpacing(30);
+            box.setOnMouseEntered(e -> box.toFront());
+            box.setOnMouseExited(e -> bringMyTotemToFront());
+        }
+        // 2. POSIZIONI PROPORZIONALI CON ALLINEAMENTO ALLA BASE
+        // Formula: (Coord / Risoluzione - 0.5) * Dimensione - (AltezzaElemento / 2)
+
+        // Rosso (476x, 914y)
+        redBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(-0.255));
+        redBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.388).subtract(redBox.heightProperty().divide(2)));
+
+        // Giallo (717x, 810y)
+        yellowBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(-0.127));
+        yellowBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.292).subtract(yellowBox.heightProperty().divide(2)));
+
+        // Blu (1022x, 767y)
+        blueBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(0.037));
+        blueBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.240).subtract(blueBox.heightProperty().divide(2)));
+
+        // Nero (1300x, 871y)
+        blackBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(0.180));
+        blackBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.330).subtract(blackBox.heightProperty().divide(2)));
+
+        // Bianco (1489x, 926y)
+        whiteBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(0.279));
+        whiteBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.385).subtract(whiteBox.heightProperty().divide(2)));
+
+
         totemMap = new HashMap<>();
         totemMap.put("red", totemRed);
         totemMap.put("yellow", totemYellow);
@@ -96,7 +145,7 @@ public class LobbyController {
         }
 
         dotAnimation = new Timeline(new KeyFrame(Duration.millis(750), e -> {
-            dotCount = (dotCount + 1) % 4; // Cicla tra 0, 1, 2, 3
+            dotCount = (dotCount + 1) % 4;
             subtitleLabel.setText(baseWaitingText + dotStates[dotCount]);
         }));
         dotAnimation.setCycleCount(Animation.INDEFINITE);
@@ -134,11 +183,9 @@ public class LobbyController {
                     "totem-selected-white"
             );
             imageView.setOpacity(1.0);
-
             imageView.setDisable(false);
         }
 
-        // Ora la mappa utilizza TotemColors come valore
         Map<String, TotemColors> playerColors = model.getPlayerColors();
         List<String> players = model.getPlayers();
 
@@ -172,7 +219,6 @@ public class LobbyController {
 
         for (Map.Entry<String, TotemColors> entry : playerColors.entrySet()) {
             String player = entry.getKey();
-            // Convertiamo l'enum in stringa minuscola per usarla con le nostre labelMap e totemMap
             String color = entry.getValue().name().toLowerCase();
 
             if (labelMap.containsKey(color) && totemMap.containsKey(color)) {
@@ -185,18 +231,17 @@ public class LobbyController {
                     totem.getStyleClass().add("totem-selected-" + color);
                 } else {
                     totem.setOpacity(0.7);
-
                     totem.setDisable(true);
                 }
             }
         }
+
+        bringMyTotemToFront();
     }
 
     @FXML
     private void handleTotemSelection(MouseEvent event) {
         ImageView clicked = (ImageView) event.getSource();
-
-        // Estraiamo il colore come stringa maiuscola dall'ID (es: "totemRed" -> "RED")
         String colorString = clicked.getId().replace("totem", "").toUpperCase();
 
         TotemColors chosenColor;
@@ -211,7 +256,6 @@ public class LobbyController {
         String myNickname = Client.getInstance().getNickname();
         Map<String, TotemColors> playerColors = model.getPlayerColors();
 
-        // Controlliamo se qualcuno (diverso da noi) ha già scelto questo specifico Enum
         if (playerColors != null) {
             for (Map.Entry<String, TotemColors> entry : playerColors.entrySet()) {
                 if (entry.getValue() == chosenColor && !entry.getKey().equals(myNickname)) {
@@ -231,7 +275,6 @@ public class LobbyController {
     @FXML
     private void handleStartGame(ActionEvent event) {
         try {
-
             Client.getInstance().getConnection().setupGame();
             setSubtitleText("Avvio partita in corso", true);
         } catch (Exception e) {
@@ -241,6 +284,7 @@ public class LobbyController {
 
     @FXML
     private void handleOpenRules() {
+        rulesOverlay.toFront();
         rulesOverlay.setVisible(true);
         rulesOverlay.setManaged(true);
         updateRulesUI();
@@ -290,16 +334,33 @@ public class LobbyController {
     private void setSubtitleText(String text, boolean animate) {
         if (animate) {
             baseWaitingText = text;
-
             if (dotAnimation.getStatus() != Animation.Status.RUNNING) {
                 dotCount = 0;
                 dotAnimation.playFromStart();
             }
             subtitleLabel.setText(baseWaitingText + dotStates[dotCount]);
-
         } else {
             dotAnimation.stop();
             subtitleLabel.setText(text);
+        }
+    }
+
+    private void bringMyTotemToFront() {
+        ClientModel model = Client.getInstance().getModel();
+        String myNickname = Client.getInstance().getNickname();
+
+        if (model != null && model.getPlayerColors() != null && myNickname != null) {
+            TotemColors myColor = model.getPlayerColors().get(myNickname);
+            if (myColor != null) {
+                // Troviamo il colore del nostro totem e portiamo il suo VBox in primo piano
+                switch (myColor.name().toLowerCase()) {
+                    case "red": redBox.toFront(); break;
+                    case "yellow": yellowBox.toFront(); break;
+                    case "blue": blueBox.toFront(); break;
+                    case "black": blackBox.toFront(); break;
+                    case "white": whiteBox.toFront(); break;
+                }
+            }
         }
     }
 }

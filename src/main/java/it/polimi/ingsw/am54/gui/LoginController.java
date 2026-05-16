@@ -7,39 +7,41 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.media.*;
-import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.net.URL;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 public class LoginController {
 
     @FXML private StackPane rootPane;
-    @FXML private GridPane uiLayer; // Assicurati che sia GridPane per matchare l'FXML
-    @FXML private VBox logoContainer;
+
+    @FXML private VBox logoBox;
+    @FXML private ImageView logoMesos;
     @FXML private VBox playStateBox;
     @FXML private VBox nicknameStateBox;
 
     @FXML private TextField serverIpField;
     @FXML private RadioButton socketRadio;
+    @FXML private RadioButton rmiRadio;
+    @FXML private ToggleGroup protocolGroup;
     @FXML private TextField nicknameField;
     @FXML private Label errorLabel;
 
     @FXML private Label clickToEnterLabel;
-    @FXML private MediaView mediaView;
+
+    // NOTA: Abbiamo rimosso la MediaView perché non usiamo più i video!
 
     private boolean waitingForClick = false;
     private boolean isConnecting = false;
 
     @FXML
     public void initialize() {
-        // Nascondiamo la mediaView all'inizio per evitare che intercetti i click
-        mediaView.setVisible(false);
-        mediaView.setManaged(false);
+        logoMesos.fitWidthProperty().bind(rootPane.widthProperty().multiply(0.5));
+        logoBox.translateYProperty().bind(rootPane.heightProperty().multiply(-0.33));
+        playStateBox.translateYProperty().bind(rootPane.heightProperty().multiply(0.33));
 
         Client.getInstance().getModel().setOnModelUpdatedCallback(() -> {
             Platform.runLater(this::checkServerResponse);
@@ -48,13 +50,11 @@ public class LoginController {
 
     @FXML
     private void handlePlayAction() {
-        // Nascondi logo e tasto PLAY
-        logoContainer.setVisible(false);
-        logoContainer.setManaged(false);
+        logoBox.setVisible(false);
+        logoBox.setManaged(false);
         playStateBox.setVisible(false);
         playStateBox.setManaged(false);
 
-        // Mostra la box del nickname
         nicknameStateBox.setVisible(true);
         nicknameStateBox.setManaged(true);
 
@@ -76,16 +76,9 @@ public class LoginController {
         errorLabel.setText("CONNESSIONE...");
 
         try {
-            // Chiudi eventuali vecchie connessioni fallite prima di riprovare
-            if (Client.getInstance().getConnection() != null) {
-                // Se la tua classe connection ha un metodo close()/disconnect(), chiamalo qui
-                // Altrimenti, forziamo semplicemente la sovrascrittura
-            }
-
             ServerConnection connection;
             ClientModel model = Client.getInstance().getModel();
 
-            // Assicurati che l'errore precedente sia pulito
             model.clearError();
 
             if (socketRadio.isSelected()) {
@@ -99,7 +92,6 @@ public class LoginController {
             Client.getInstance().setConnection(connection);
             Client.getInstance().setNickname(nick);
 
-            // Invio la richiesta
             connection.joinGame(nick);
 
         } catch (Exception e) {
@@ -114,39 +106,27 @@ public class LoginController {
         ClientModel model = Client.getInstance().getModel();
         String myNick = Client.getInstance().getNickname();
 
-        // CASO 1: IL SERVER CI HA RIFIUTATO (Es. Nickname già in uso)
         if (model.getLastErrorMessage() != null) {
-            // 1. Mostriamo l'errore
             errorLabel.setText(model.getLastErrorMessage().toUpperCase());
-
-            // 2. Puliamo il modello dall'errore per poter riprovare
             model.clearError();
-
-            // 3. Resettiamo lo stato di connessione nel client (se necessario)
             Client.getInstance().setConnection(null);
             Client.getInstance().setNickname(null);
-
-            // 4. Sblocchiamo l'interfaccia
             isConnecting = false;
-
-            // 5. Evidenziamo il campo nickname per farlo cambiare all'utente
             nicknameField.selectAll();
             nicknameField.requestFocus();
-        }
-        // CASO 2: IL SERVER CI HA ACCETTATO
-        else if (model.getPlayers().contains(myNick)) {
+        } else if (model.getPlayers().contains(myNick)) {
             errorLabel.setText("");
             isConnecting = false;
 
-            // Nascondiamo la box del nickname
             nicknameStateBox.setVisible(false);
             nicknameStateBox.setManaged(false);
 
-            // Facciamo riapparire il logo Mesos
-            logoContainer.setVisible(true);
-            logoContainer.setManaged(true);
+            logoBox.setVisible(true);
+            logoBox.setManaged(true);
 
-            // Mostriamo la scritta finale bianca in basso
+            playStateBox.setVisible(false);
+            playStateBox.setManaged(false);
+
             clickToEnterLabel.setVisible(true);
             clickToEnterLabel.setManaged(true);
 
@@ -159,92 +139,55 @@ public class LoginController {
         if (waitingForClick) {
             waitingForClick = false;
 
-            uiLayer.setVisible(false);
-            uiLayer.setManaged(false);
+            // Nascondiamo l'interfaccia
+            logoBox.setVisible(false);
+            logoBox.setManaged(false);
             clickToEnterLabel.setVisible(false);
             clickToEnterLabel.setManaged(false);
 
-            startTransitionVideo();
+            // Facciamo partire la nuova transizione nativa!
+            startCinematicTransition();
         }
     }
 
-    private void startTransitionVideo() {
-        try {
-            // 1. Cerchiamo il file video
-            URL videoUrl = getClass().getResource("/videos/transizione.mp4");
+    private void startCinematicTransition() {
 
-            // Se il video non esiste, entriamo subito nella lobby per non bloccare il gioco
-            if (videoUrl == null) {
-                System.err.println("File video non trovato in resources/videos/transizione.mp4");
-                loadLobby();
-                return;
+        double screenW = rootPane.getScene().getWidth();
+        double screenH = rootPane.getScene().getHeight();
+
+        double imageW = 2752.0;
+        double imageH = 1536.0;
+
+        double caveX_img = 1441.0;
+        double caveY_img = 985.0;
+
+
+        double coverScale = Math.max(screenW / imageW, screenH / imageH);
+
+        double caveX_screen = caveX_img * coverScale;
+        double caveY_screen = caveY_img * coverScale;
+
+        double centerX = screenW / 2.0;
+        double centerY = screenH / 2.0;
+
+        double dx = caveX_screen - centerX;
+        double dy = caveY_screen - centerY;
+
+        double zoomTarget = 6.0;
+        double panX = -dx * zoomTarget;
+        double panY = -dy * zoomTarget;
+
+        GUIApp.playEntranceAnimation(panX, panY, () -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Lobby.fxml"));
+                Parent lobbyRoot = loader.load();
+
+                GUIApp.changeBackground("lobby-background");
+                GUIApp.changeSceneContent(lobbyRoot);
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-            // 2. Prepariamo il MediaPlayer
-            Media media = new Media(videoUrl.toExternalForm());
-            MediaPlayer mediaPlayer = new MediaPlayer(media);
-
-            // Colleghiamo il player alla MediaView dell'FXML
-            mediaView.setMediaPlayer(mediaPlayer);
-            mediaView.setVisible(true);
-            mediaView.setManaged(true);
-
-            // 3. ALLINEAMENTO PERFETTO: Disattiviamo il rapporto d'aspetto fisso
-            // Questo serve per far sì che il video si "stiri" esattamente come lo sfondo della lobby
-            mediaView.setPreserveRatio(false);
-
-            // Bindiamo le dimensioni del video a tutto lo schermo (rootPane)
-            mediaView.fitWidthProperty().bind(rootPane.widthProperty());
-            mediaView.fitHeightProperty().bind(rootPane.heightProperty());
-
-            // 4. GESTIONE FINE VIDEO (Transizione fluida)
-            mediaPlayer.setOnEndOfMedia(() -> {
-                Platform.runLater(() -> {
-                    // Carichiamo la scena della Lobby (lo sfondo apparirà "sotto" il video)
-                    loadLobby();
-
-                    // Usiamo un thread separato per un brevissimo delay (100ms)
-                    // Questo evita il flash nero tra la fine del video e il rendering della lobby
-                    new Thread(() -> {
-                        try {
-                            Thread.sleep(100);
-                            Platform.runLater(() -> {
-                                // Solo ora nascondiamo e distruggiamo il player
-                                mediaView.setVisible(false);
-                                mediaPlayer.dispose();
-                                System.out.println("Transizione completata con successo.");
-                            });
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                            loadLobby(); // Fallback estremo
-                        }
-                    }).start();
-                });
-            });
-
-            // 5. Partenza!
-            mediaPlayer.play();
-
-        } catch (Exception e) {
-            System.err.println("Errore critico durante l'avvio della transizione: " + e.getMessage());
-            // In caso di errore imprevisto, forziamo l'entrata nella lobby
-            loadLobby();
-        }
-    }
-
-    private void loadLobby() {
-        try {
-            Parent lobbyRoot = FXMLLoader.load(getClass().getResource("/fxml/Lobby.fxml"));
-            Stage stage = (Stage) rootPane.getScene().getWindow();
-
-            // Cambia la radice
-            stage.getScene().setRoot(lobbyRoot);
-
-            // Riconferma il full screen (fondamentale per evitare che torni in finestra)
-            stage.setFullScreen(true);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
     }
 }

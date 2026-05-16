@@ -167,5 +167,4 @@ public class Player {
     public void setCurrentTile(OfferingTile tile) {
         this.currentTile = tile;
     }
-
 }

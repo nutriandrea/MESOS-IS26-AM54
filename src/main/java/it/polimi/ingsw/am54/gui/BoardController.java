@@ -1,146 +1,118 @@
 package it.polimi.ingsw.am54.gui;
 
-import it.polimi.ingsw.am54.network.client.ClientModel;
-import it.polimi.ingsw.am54.network.client.VirtualServer;
-import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-
-import java.util.Map;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.scene.transform.Scale;
+// import it.polimi.ingsw.am54.network.client.ClientModel;
+// import it.polimi.ingsw.am54.model.Card;
 
 public class BoardController {
 
-    @FXML private Label eraLabel;
-    @FXML private Label phaseLabel;
-    @FXML private Label turnLabel;
-    @FXML private Label errorLabel;
+    @FXML private StackPane rootPane;
+    @FXML private AnchorPane gameArea;
 
-    @FXML private HBox upperRowBox;
-    @FXML private HBox lowerRowBox;
-    @FXML private VBox turnOrderBox;
-    @FXML private HBox offeringTrackBox;
-    @FXML private VBox playersStatsBox;
-    @FXML private Button endTurnButton;
+    // Mercato
+    @FXML private HBox upperMarket;
+    @FXML private HBox lowerMarket;
 
-    private VirtualServer virtualServer;
-    private ClientModel model;
-    private String myNickname;
+    // Mazzi coperti
+    @FXML private ImageView tribeDeckView;
+    @FXML private ImageView buildingsDeckView;
 
-    public void setConnectionData(VirtualServer virtualServer, ClientModel model, String nickname) {
-        this.virtualServer = virtualServer;
-        this.model = model;
-        this.myNickname = nickname;
+    // Tracciati (Li lascio pronti per quando avrai le immagini)
+    @FXML private ImageView turnOrderImage;
+    @FXML private VBox totemContainer;
+    @FXML private HBox offeringTrack;
 
-        // Iscriviamo QUESTA schermata agli aggiornamenti di rete
-        this.model.setOnModelUpdatedCallback(this::updateUI);
-        updateUI(); // Disegna subito la schermata iniziale
-    }
-
-    private void updateUI() {
-        Platform.runLater(() -> {
-            boolean myTurn = myNickname.equals(model.getCurrentPlayer());
-            String state = model.getCurrentState();
-
-            // 1. HEADER (Testi informativi)
-            eraLabel.setText("ERA: " + model.getCurrentEra());
-            phaseLabel.setText("Fase: " + state);
-            turnLabel.setText(myTurn ? "E' IL TUO TURNO!" : "Tocca a: " + (model.getCurrentPlayer() != null ? model.getCurrentPlayer() : "Nessuno"));
-
-            if (model.getLastErrorMessage() != null) {
-                errorLabel.setText(model.getLastErrorMessage());
-                model.clearError(); // Lo cancello dopo averlo mostrato
-            } else {
-                errorLabel.setText("");
-            }
-
-            endTurnButton.setDisable(!myTurn || !state.equals("PickingState"));
-
-            // 2. FILE DI CARTE (Le rendo cliccabili se è il mio turno di Pescare)
-            disegnaFilaCarte(upperRowBox, "upper", myTurn && state.equals("PickingState"));
-            disegnaFilaCarte(lowerRowBox, "lower", myTurn && state.equals("PickingState"));
-
-            // 3. ORDINE DI TURNO
-            turnOrderBox.getChildren().clear();
-            for (String slot : model.getTurnOrderTrack()) {
-                turnOrderBox.getChildren().add(new Label(slot));
-            }
-
-            // 4. TRACCIATO OFFERTE (Pulsanti "Piazza" se è il mio turno di Piazzare)
-            offeringTrackBox.getChildren().clear();
-            for (Map.Entry<Integer, String> entry : model.getOfferingTrack().entrySet()) {
-                VBox tileBox = new VBox(5);
-                tileBox.setStyle("-fx-border-color: blue; -fx-padding: 8; -fx-alignment: center;");
-                tileBox.getChildren().add(new Label(entry.getValue()));
-
-                if (myTurn && state.equals("StartTurnState")) {
-                    Button placeBtn = new Button("Piazza Totem qui");
-                    placeBtn.setOnAction(e -> virtualServer.placeTotem(entry.getKey()));
-                    tileBox.getChildren().add(placeBtn);
-                }
-                offeringTrackBox.getChildren().add(tileBox);
-            }
-
-            // 5. STATISTICHE GIOCATORI (Cibo, Aura, Inventario base)
-            playersStatsBox.getChildren().clear();
-            playersStatsBox.getChildren().add(new Label("STATISTICHE" ));
-            for (String p : model.getPlayers()) {
-                int food = model.getPlayerFood().getOrDefault(p, 0);
-                int aura = model.getPlayerAura().getOrDefault(p, 0);
-
-                VBox playerBox = new VBox(2);
-                playerBox.setStyle("-fx-border-color: lightgray; -fx-padding: 5;");
-                playerBox.getChildren().add(new Label("👤 " + p.toUpperCase()));
-                playerBox.getChildren().add(new Label("🍖 Cibo: " + food + " | ✨ Aura: " + aura));
-
-                int numCarte = model.getPlayerTribe().getOrDefault(p, new java.util.ArrayList<>()).size();
-                playerBox.getChildren().add(new Label("🃏 Carte Tribù: " + numCarte));
-
-                playersStatsBox.getChildren().add(playerBox);
-            }
-        });
-    }
-
-    // Metodo helper per creare i bottoni delle carte al volo
-    private void disegnaFilaCarte(HBox rowBox, String riga, boolean canPick) {
-        rowBox.getChildren().clear();
-        int globalIndex = 0; // L'indice esatto che il server si aspetta (0, 1, 2...)
-
-        // 1. Personaggi (e Eventi se implementati nel getCharacterRow)
-        java.util.List<String> chars = riga.equals("upper") ? model.getCharacterUpperRow() : model.getCharacterLowerRow();
-        for (String c : chars) {
-            Button btn = creaBottoneCarta(c, riga, globalIndex++, canPick);
-            rowBox.getChildren().add(btn);
-        }
-
-        // 2. Edifici
-        java.util.List<String> bldgs = riga.equals("upper") ? model.getUpperBuildingRow() : model.getLowerBuildingRow();
-        for (String b : bldgs) {
-            Button btn = creaBottoneCarta(b, riga, globalIndex++, canPick);
-            btn.setStyle("-fx-base: lightblue;"); // Coloriamo di azzurro gli edifici per distinguerli
-            rowBox.getChildren().add(btn);
-        }
-    }
-
-    private Button creaBottoneCarta(String testoDallaRete, String riga, int index, boolean canPick) {
-        Button btn = new Button(testoDallaRete.replace("|", "\n")); // Va a capo ad ogni parametro (es. Nome \n Costo \n Aura)
-        btn.setMinSize(100, 120);
-        btn.setMaxSize(100, 120);
-        btn.setStyle("-fx-font-size: 10px; -fx-text-alignment: center;");
-
-        if (canPick) {
-            btn.setOnAction(e -> virtualServer.pickCard(riga, index));
-        } else {
-            // Se non è il mio turno di pescare, i bottoni non sono cliccabili
-            btn.setDisable(true);
-        }
-        return btn;
-    }
+    private final double NATIVE_WIDTH = 1672.0;
+    private final double NATIVE_HEIGHT = 941.0;
 
     @FXML
-    public void onEndTurnClicked() {
-        virtualServer.endTurn();
+    public void initialize() {
+        setupScaling();
+
+        // Carica la grafica dei mazzi coperti sulla destra
+        loadDecksGraphics();
+
+        // Qui chiameremo un metodo updateMarket() quando il model sarà pronto
+        // per stampare le carte FRONT nelle due file.
+    }
+
+    private void setupScaling() {
+        Scale scale = new Scale(1, 1, 0, 0);
+        gameArea.getTransforms().add(scale);
+        rootPane.widthProperty().addListener((obs, o, n) -> updateScale(scale));
+        rootPane.heightProperty().addListener((obs, o, n) -> updateScale(scale));
+    }
+
+    private void updateScale(Scale scale) {
+        double factor = Math.min(rootPane.getWidth() / NATIVE_WIDTH, rootPane.getHeight() / NATIVE_HEIGHT);
+        scale.setX(factor);
+        scale.setY(factor);
+        gameArea.setTranslateX((rootPane.getWidth() - NATIVE_WIDTH * factor) / 2.0);
+        gameArea.setTranslateY((rootPane.getHeight() - NATIVE_HEIGHT * factor) / 2.0);
+    }
+
+    private void loadDecksGraphics() {
+        // ClientModel model = ClientModel.getInstance();
+        int playerCount = 3; // Mettiamo un default per ora
+
+        // Carica il dorso degli Edifici
+        String buildingsBackPath = "/images/cards/buildings/back/0.jpg";
+        try {
+            buildingsDeckView.setImage(new Image(getClass().getResourceAsStream(buildingsBackPath)));
+        } catch (Exception e) {
+            System.err.println("Dorso Edifici non trovato: " + buildingsBackPath);
+        }
+
+        // Carica il dorso delle Tribù in base ai giocatori
+        String tribeBackPath = "/images/cards/characters/2+_players/back/0.jpg";
+        if (playerCount >= 3) {
+            tribeBackPath = "/images/cards/characters/3+_players/back/0.jpg";
+            // Usa 3+ se vuoi mostrare l'inclusione delle carte 3 giocatori, 
+            // o 2+ se il mazzo ha in cima quelle base.
+        }
+
+        try {
+            tribeDeckView.setImage(new Image(getClass().getResourceAsStream(tribeBackPath)));
+        } catch (Exception e) {
+            System.err.println("Dorso Tribù non trovato: " + tribeBackPath);
+        }
+    }
+
+    // Metodo mock per testare visivamente le carte scoperte nel mercato
+    public void renderMarketMock() {
+        upperMarket.getChildren().clear();
+        lowerMarket.getChildren().clear();
+
+        // Fila Superiore: Giocatori + 4 (es. 3+4 = 7 carte) + Edifici
+        for(int i=0; i<7; i++) {
+            ImageView card = createCardView("/images/cards/characters/2+_players/front/0.jpg");
+            upperMarket.getChildren().add(card);
+        }
+
+        // Fila Inferiore: Giocatori + 1 (es. 3+1 = 4 carte)
+        for(int i=0; i<4; i++) {
+            ImageView card = createCardView("/images/cards/characters/2+_players/front/1.jpg");
+            lowerMarket.getChildren().add(card);
+        }
+    }
+
+    private ImageView createCardView(String imagePath) {
+        ImageView view = new ImageView();
+        try {
+            view.setImage(new Image(getClass().getResourceAsStream(imagePath)));
+        } catch (Exception e) {
+            // Segnaposto
+        }
+        view.setFitHeight(190);
+        view.setPreserveRatio(true);
+        // Effetto hover per far capire che si possono cliccare e scegliere dal mercato
+        view.setOnMouseEntered(e -> view.setTranslateY(-10));
+        view.setOnMouseExited(e -> view.setTranslateY(0));
+        view.setStyle("-fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, black, 5, 0, 0, 5);");
+        return view;
     }
 }

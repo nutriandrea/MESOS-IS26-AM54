@@ -6,33 +6,20 @@
 <?import javafx.scene.media.*?>
 <?import javafx.geometry.Insets?>
 
-<StackPane fx:id="rootPane" prefHeight="720.0" prefWidth="1280.0"
-           onMouseClicked="#handleRootClick"
-           stylesheets="@../css/login.css" styleClass="login-background"
+<StackPane fx:id="rootPane" onMouseClicked="#handleRootClick"
+           stylesheets="@../css/login.css"
            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="it.polimi.ingsw.am54.gui.LoginController">
 
-    <GridPane fx:id="uiLayer">
-        <columnConstraints>
-            <ColumnConstraints hgrow="SOMETIMES" percentWidth="100.0" />
-        </columnConstraints>
-        <rowConstraints>
-            <RowConstraints percentHeight="50.0" vgrow="SOMETIMES" /> <RowConstraints percentHeight="50.0" vgrow="SOMETIMES" /> </rowConstraints>
+    <VBox fx:id="logoBox" alignment="CENTER" pickOnBounds="false">
+        <ImageView fx:id="logoMesos" preserveRatio="true">
+            <image><Image url="@../images/logo_mesos.png" /></image>
+        </ImageView>
+    </VBox>
 
-        <VBox fx:id="logoContainer" alignment="BOTTOM_CENTER" GridPane.rowIndex="0">
-            <padding><Insets bottom="100"/></padding>
-            <ImageView fx:id="logoMesos" fitWidth="650.0" preserveRatio="true">
-                <image>
-                    <Image url="@../images/logo_mesos.png" />
-                </image>
-            </ImageView>
-        </VBox>
-
-        <VBox fx:id="playStateBox" alignment="TOP_CENTER" GridPane.rowIndex="1">
-            <padding><Insets top="285"/></padding>
-            <Button fx:id="playButton" text="PLAY" onAction="#handlePlayAction" styleClass="play-button" />
-        </VBox>
-    </GridPane>
+    <VBox fx:id="playStateBox" alignment="CENTER" pickOnBounds="false">
+        <Button fx:id="playButton" text="PLAY" onAction="#handlePlayAction" styleClass="play-button" />
+    </VBox>
 
     <VBox fx:id="nicknameStateBox" alignment="CENTER" spacing="25" visible="false" managed="false"
           maxWidth="520" maxHeight="300" styleClass="translucent-box">
@@ -70,9 +57,8 @@
            maxWidth="800"
            StackPane.alignment="BOTTOM_CENTER">
         <StackPane.margin>
-            <Insets bottom="60"/> </StackPane.margin>
+            <Insets bottom="60"/>
+        </StackPane.margin>
     </Label>
-
-    <MediaView fx:id="mediaView" visible="false" />
 
 </StackPane>

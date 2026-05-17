@@ -116,6 +116,8 @@ public class ClientModel {
     /** Mappa nickname -> punti aura */
     private final Map<String, Integer> playerAura = new HashMap<>();
 
+    private final Map<String, Integer> playerMagic = new HashMap<>();
+
     /** Mappa nickname -> lista delle carte tribu' (personaggi) possedute */
     private final Map<String, List<String>> playerTribe = new HashMap<>();
 
@@ -323,6 +325,7 @@ public class ClientModel {
         msg.getPlayersStats().forEach((nick, stats) -> {
             playerFood.put(nick, stats.food);
             playerAura.put(nick, stats.aura);
+            playerMagic.put(nick, stats.magicPoints);
             playerTribe.put(nick, new ArrayList<>(stats.tribe));
             playerBuildings.put(nick, new ArrayList<>(stats.buildings));
             // playerMagicPoints.put(nick, stats.magicPoints); // (Se serve per la GUI)
@@ -350,6 +353,7 @@ public class ClientModel {
             playerColors.put(nick, stats.color);
             playerFood.put(nick, stats.food);
             playerAura.put(nick, stats.aura);
+            playerMagic.put(nick, stats.magicPoints);
             playerTribe.put(nick, new ArrayList<>(stats.tribe));
             playerBuildings.put(nick, new ArrayList<>(stats.buildings));
         });
@@ -464,6 +468,7 @@ public class ClientModel {
     public synchronized int getCurrentEra() { return currentEra; }
     public synchronized Map<String, Integer> getPlayerFood() { return playerFood; }
     public synchronized Map<String, Integer> getPlayerAura() { return playerAura; }
+    public synchronized Map<String, Integer> getPlayerMagic() { return playerMagic; }
     public synchronized Map<String, List<String>> getPlayerTribe() { return playerTribe; }
     public synchronized Map<String, List<String>> getPlayerBuildings() { return playerBuildings; }
     public synchronized int getRoundCount() { return currentRound; }

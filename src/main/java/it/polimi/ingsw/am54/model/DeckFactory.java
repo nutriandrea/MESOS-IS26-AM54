@@ -228,27 +228,20 @@ public class DeckFactory {
 
     // crea l'effetto giusto per gli edifici
     private static IEffect<BuildingCard> createBuildingEffect(String phase, String nomeLambda, JsonNode params) {
+        if (nomeLambda == null || nomeLambda.isEmpty() || nomeLambda.equals("null")) return null;
 
-        // Facciamo lo switch direttamente sul nome dell'effetto scritto nel JSON
         return switch (nomeLambda) {
-            // Effetti Event
-            case "EVENT_FOOD_DISCOUNT"   -> new BuildingEventFoodDiscount(params);
-            case "EVENT_BONUS"           -> new BuildingEventBonus(params);
-            case "BONUS_FOOD"            -> new BuildingBonusFood();
-            case "NO_LOSS"               -> new BuildingNoLoss();
-            case "DOUBLE_AURA_SHAMAN"    -> new BuildingDoubleAuraShaman();
+            // 1 classe per + Buildings
+            case "SHAMAN_PASSIVE"      -> new BuildingShamanPassive(params);
+            case "EVENT_COST_MODIFIER" -> new BuildingEventCostModifier(params);
+            case "FLAT_BONUS"          -> new BuildingFlatBonus(params);
+            case "JOB_AURA_BONUS"      -> new BuildingJobAuraBonus(params);
 
-            // Effetti Endgame
-            case "AURA_PER_JOB"            -> new BuildingAuraPerJob(params);
-            case "DOUBLE_CONSTRUCTOR_AURA" -> new BuildingDoubleConstructorAura();
-            case "SIX_DIFFERENT_AURA"      -> new BuildingSixDifferentAura();
-            case "FLAT_AURA_BONUS"         -> new BuildingFlatAuraBonus(params);
-
-            // Effetti Postpick e Postaction
-            case "SIX_OF_TYPE"     -> new BuildingSixOfType();
-            case "DOUBLE_INVENTOR" -> new BuildingDoubleInventor();
-            case "THREE_MAGIC"     -> new BuildingThreeMagic();
-            case "EXTRA_PICK"      -> new BuildingExtraPick();
+            // 1 classe per Building
+            case "BONUS_FOOD"          -> new BuildingTurnOrderBonus();
+            case "SIX_DIFFERENT_AURA"  -> new BuildingSixDifferentAura();
+            case "SIX_OF_TYPE"         -> new BuildingSixOfType();
+            case "DOUBLE_INVENTOR"     -> new BuildingDoubleInventor();
 
             default -> throw new IllegalArgumentException("Effetto edificio non gestito dal JSON: " + nomeLambda);
         };

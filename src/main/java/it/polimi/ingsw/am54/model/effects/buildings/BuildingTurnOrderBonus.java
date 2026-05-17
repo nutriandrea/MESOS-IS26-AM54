@@ -1,7 +1,7 @@
 package it.polimi.ingsw.am54.model.effects.buildings;
 import it.polimi.ingsw.am54.model.*;
 
-public class BuildingBonusFood implements IEffect<BuildingCard> {
+public class BuildingTurnOrderBonus implements IEffect<BuildingCard> {
     @Override
     public void apply(Player p, Game g, BuildingCard card) {
         TurnOrderSlot playerSlot = g.getBoard().getTurnOrderTile().stream()

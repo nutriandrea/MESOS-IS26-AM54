@@ -117,7 +117,21 @@ public class ServerHandler implements Runnable {
     private void handleUpdate(Update message) {
         // StateChangedUpdate può contenere stato completo per riconnessione
         if (message instanceof StateChangedUpdate stateUpdate) {
+            String oldState = clientModel.getCurrentState();
             clientModel.updateState(stateUpdate);
+            String newState = clientModel.getCurrentState();
+
+            if (oldState != null && newState != null) {
+                if (("SetUpGameState".equals(oldState) || "Lobby".equals(oldState)) &&
+                        (!"SetUpGameState".equals(newState) && !"Lobby".equals(newState))) {
+
+                    try {
+                        it.polimi.ingsw.am54.gui.GUIApp.loadBoardScene();
+                    } catch (Exception | NoClassDefFoundError e) {
+                        // Modalità CLI attiva, transizione GUI ignorata
+                    }
+                }
+            }
             return;
         }
 
@@ -142,9 +156,6 @@ public class ServerHandler implements Runnable {
         }
         else if (message instanceof TotemReturnedUpdate msg) {
             clientModel.updateTotemReturned(msg.getNickname(), msg.getNewFoodBalance(), msg.getNewAuraBalance());
-        }
-        else if (message instanceof StateChangedUpdate msg) {
-            clientModel.updateState(msg);
         }
         else if (message instanceof TotemColorUpdate msg) {
             clientModel.updateTotemColor(msg.getNickname(), msg.getColor());

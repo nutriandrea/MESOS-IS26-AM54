@@ -324,19 +324,21 @@ public class VirtualView implements IGameObserver {
 
     private String formatCharacterForClient(CharacterCard c) {
         if (c == null) return null;
-        return c.getName() + "|" + c.getLevel() + "|" + c.getAura();
+        // Esempio formato standard unificato: "8|1|2|HUNTER|0|1" (ID|Era|MinGiocatori|Nome|Livello|Aura)
+        return c.getImageId() + "|" + c.getEra() + "|" + c.getMinPlayers() + "|" + c.getName() + "|" + c.getLevel() + "|" + c.getAura();
     }
 
     private String formatBuildingForClient(BuildingCard b) {
         if (b == null) return null;
         String nomeEdificio = b.getName() != null ? b.getName() : "Edificio Speciale";
-        return "BUILDING|" + b.getCost() + "|" + b.getFinalAura() + "|" + nomeEdificio;
+        // Esempio formato standard unificato: "115|3|0|BUILDING|3|2|NomeEdificio"
+        return b.getImageId() + "|" + b.getEra() + "|0|BUILDING|" + b.getCost() + "|" + b.getFinalAura() + "|" + nomeEdificio;
     }
 
     private String formatEventForClient(EventCard e) {
         if (e == null) return null;
-        // Invia "EVENT|NomeEvento"
-        return "EVENT|" + e.getName();
+        // Esempio formato standard unificato: "84|1|0|EVENT|NomeEvento"
+        return e.getImageId() + "|" + e.getEra() + "|0|EVENT|" + e.getName();
     }
     /**
      * Invia notifica di sospensione SOLO a questo giocatore.

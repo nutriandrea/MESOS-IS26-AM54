@@ -3,10 +3,11 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.Group?>
 <?import javafx.geometry.Insets?>
 
 <StackPane fx:id="rootPane" prefHeight="941.0" prefWidth="1672.0"
-           style="-fx-background-color: #1a1a1a;"
+           styleClass="root-pane"
            stylesheets="@../css/board.css"
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
@@ -18,15 +19,14 @@
         <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
               AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
 
-            <HBox alignment="CENTER" prefHeight="313.0" spacing="20.0">
-                <padding>
-                    <Insets left="20.0" right="20.0" top="20.0" />
-                </padding>
+            <HBox fx:id="actionBanner" alignment="CENTER" prefHeight="45.0" styleClass="action-banner">
+                <Label fx:id="actionInstructionLabel" text="In attesa del caricamento della partita..." styleClass="action-instruction-label" />
+            </HBox>
 
-                <HBox fx:id="upperMarket" alignment="CENTER_LEFT" spacing="15.0" HBox.hgrow="ALWAYS">
-                </HBox>
-
-                <HBox alignment="CENTER_RIGHT" spacing="20.0">
+            <HBox alignment="CENTER" prefHeight="288.0">
+                <padding><Insets left="20.0" right="20.0" top="10.0" /></padding>
+                <HBox fx:id="upperMarket" alignment="CENTER" spacing="15.0" HBox.hgrow="ALWAYS" />
+                <HBox alignment="CENTER_RIGHT" spacing="25.0" minWidth="320.0">
                     <StackPane styleClass="deck-container">
                         <Region styleClass="deck-shadow" />
                         <ImageView fx:id="tribeDeckView" fitHeight="190.0" preserveRatio="true" styleClass="deck-image" />
@@ -38,24 +38,86 @@
                 </HBox>
             </HBox>
 
-            <HBox alignment="CENTER" prefHeight="315.0" spacing="50.0">
-                <StackPane fx:id="turnOrderContainer">
-                    <ImageView fx:id="turnOrderImage" fitHeight="280.0" preserveRatio="true" />
-                    <VBox fx:id="totemContainer" alignment="CENTER" spacing="5.0" />
+            <HBox alignment="CENTER" prefHeight="315.0" spacing="30.0">
+                <StackPane fx:id="turnOrderContainer" styleClass="turn-order-container">
+                    <Group>
+                        <ImageView fx:id="turnOrderImage" fitHeight="290.0" preserveRatio="true" />
+                        <AnchorPane fx:id="totemArea" pickOnBounds="false" prefWidth="180.5" prefHeight="290.0" />
+                    </Group>
                 </StackPane>
-
                 <HBox fx:id="offeringTrack" alignment="CENTER" spacing="15.0" />
             </HBox>
 
-            <HBox alignment="CENTER" prefHeight="313.0">
-                <padding>
-                    <Insets bottom="20.0" left="20.0" right="20.0" />
-                </padding>
-
-                <HBox fx:id="lowerMarket" alignment="CENTER" spacing="15.0" HBox.hgrow="ALWAYS">
-                </HBox>
+            <HBox alignment="CENTER" prefHeight="293.0">
+                <padding><Insets bottom="15.0" left="20.0" right="20.0" /></padding>
+                <HBox fx:id="lowerMarket" alignment="CENTER" spacing="15.0" HBox.hgrow="ALWAYS" />
             </HBox>
 
         </VBox>
     </AnchorPane>
+
+    <StackPane fx:id="turnNotificationOverlay" visible="false" styleClass="turn-notification-overlay">
+        <VBox alignment="CENTER" spacing="15.0" maxWidth="600.0" maxHeight="200.0" styleClass="dashboard-panel, turn-notification-panel">
+            <Label fx:id="turnNotificationTitle" text="CAMBIO TURNO" styleClass="turn-title-mine" />
+        </VBox>
+    </StackPane>
+
+    <StackPane alignment="TOP_RIGHT" pickOnBounds="false">
+        <padding><Insets top="65.0" right="30.0" /></padding>
+        <Button text="👥 AVVERSARI" styleClass="recap-button" onAction="#toggleOpponentsOverlay" />
+    </StackPane>
+
+    <StackPane alignment="BOTTOM_RIGHT" pickOnBounds="false">
+        <padding><Insets bottom="90.0" right="30.0" /></padding>
+        <Button fx:id="recapButton" text="❓ RIEPILOGO" styleClass="recap-button" onAction="#toggleRecapOverlay" />
+    </StackPane>
+
+    <StackPane alignment="BOTTOM_CENTER" pickOnBounds="false">
+        <VBox fx:id="personalDashboard" maxHeight="-Infinity" maxWidth="1200.0" alignment="BOTTOM_CENTER" styleClass="dashboard-panel" onMouseClicked="#toggleDashboard">
+            <HBox alignment="CENTER" prefHeight="40.0">
+                <padding><Insets left="20.0" right="20.0" /></padding>
+                <HBox alignment="CENTER_LEFT" spacing="20.0" HBox.hgrow="ALWAYS">
+                    <Label fx:id="foodLabel" text="🍖 Cibo: 0" styleClass="status-text-resource" />
+                    <Label fx:id="auraLabel" text="✨ Aura: 0" styleClass="status-text-resource" />
+                    <Label fx:id="magicLabel" text="🔮 Magia: 0" styleClass="status-text-resource" />
+                </HBox>
+                <HBox alignment="CENTER" spacing="25.0" HBox.hgrow="ALWAYS">
+                    <Label fx:id="tribeCountLabel" text="👥 Carte Tribù: 0" styleClass="status-text-count" />
+                    <Label fx:id="buildingCountLabel" text="🏛️ Edifici: 0" styleClass="status-text-count" />
+                </HBox>
+                <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                    <Label fx:id="hintLabel" text="▲ CLICCA PER APRIRE LA MANO ▲" styleClass="status-text-hint" alignment="CENTER_RIGHT" prefWidth="260.0" />
+                </HBox>
+            </HBox>
+            <ScrollPane fx:id="handScrollPane" fitToHeight="true" fitToWidth="true" vbarPolicy="NEVER" hbarPolicy="AS_NEEDED" styleClass="dashboard-scroll-pane" prefHeight="0.0">
+                <HBox fx:id="handCardsContainer" alignment="CENTER" spacing="15.0" styleClass="dashboard-cards-area">
+                    <padding><Insets bottom="15.0" left="20.0" right="20.0" top="15.0" /></padding>
+                </HBox>
+            </ScrollPane>
+        </VBox>
+    </StackPane>
+
+    <StackPane fx:id="opponentsOverlay" visible="false" styleClass="recap-overlay">
+        <VBox alignment="CENTER" spacing="20.0" maxWidth="1100.0" maxHeight="800.0" styleClass="opponents-panel">
+            <padding><Insets top="30.0" right="30.0" bottom="30.0" left="30.0" /></padding>
+            <Label text="STATO DEGLI AVVERSARI" styleClass="opponents-title" />
+            <ScrollPane fitToWidth="true" styleClass="dashboard-scroll-pane" VBox.vgrow="ALWAYS">
+                <VBox fx:id="opponentsContainer" spacing="30.0">
+                    <padding><Insets top="10.0" right="10.0" bottom="10.0" left="10.0" /></padding>
+                </VBox>
+            </ScrollPane>
+            <Button text="CHIUDI" styleClass="recap-close-button" onAction="#toggleOpponentsOverlay" />
+        </VBox>
+    </StackPane>
+
+    <StackPane fx:id="recapOverlay" visible="false" styleClass="recap-overlay">
+        <VBox alignment="CENTER" spacing="25.0">
+            <HBox alignment="CENTER" spacing="40.0">
+                <ImageView fx:id="recapFrontImageView" fitHeight="550.0" preserveRatio="true" styleClass="recap-image" />
+                <ImageView fx:id="recapBackImageView" fitHeight="550.0" preserveRatio="true" styleClass="recap-image" />
+            </HBox>
+            <Button text="CHIUDI" styleClass="recap-close-button" onAction="#toggleRecapOverlay" />
+        </VBox>
+    </StackPane>
+
 </StackPane>

@@ -1,6 +1,7 @@
 package it.polimi.ingsw.am54.gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -57,10 +58,8 @@ public class GUIApp extends Application {
     public static void changeBackground(String styleClass) {
         backgroundLayer.getStyleClass().clear();
         backgroundLayer.getStyleClass().add(styleClass);
-        // NON AGGIUNGO NULLA QUI: La tua Lobby rimane inviolata e intatta.
     }
 
-    // Ora riceve panX e panY: i comandi diretti del joystick
     public static void playEntranceAnimation(double panX, double panY, Runnable onPitchBlack) {
         Rectangle blackScreen = new Rectangle();
         blackScreen.setFill(Color.BLACK);
@@ -69,7 +68,6 @@ public class GUIApp extends Application {
         blackScreen.heightProperty().bind(rootWrapper.heightProperty());
         transitionLayer.getChildren().add(blackScreen);
 
-        // Niente più Pivot astratti. Trasliamo brutalmente l'immagine.
         Timeline phase1 = new Timeline(
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(backgroundLayer.scaleXProperty(), 1.0),
@@ -81,7 +79,6 @@ public class GUIApp extends Application {
                 new KeyFrame(Duration.seconds(0.7),
                         new KeyValue(backgroundLayer.scaleXProperty(), 6.0, Interpolator.EASE_IN),
                         new KeyValue(backgroundLayer.scaleYProperty(), 6.0, Interpolator.EASE_IN),
-                        // Ecco la spinta della telecamera!
                         new KeyValue(backgroundLayer.translateXProperty(), panX, Interpolator.EASE_IN),
                         new KeyValue(backgroundLayer.translateYProperty(), panY, Interpolator.EASE_IN)
                 ),
@@ -98,7 +95,6 @@ public class GUIApp extends Application {
                 onPitchBlack.run();
             }
 
-            // RESET TOTALE: Rimettiamo a 0 la traslazione per non distruggere i totem nella Lobby
             backgroundLayer.setTranslateX(0);
             backgroundLayer.setTranslateY(0);
 
@@ -122,6 +118,23 @@ public class GUIApp extends Application {
         });
 
         phase1.play();
+    }
+
+    public static void loadBoardScene() {
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(GUIApp.class.getResource("/fxml/Board.fxml"));
+                Parent boardRoot = loader.load();
+
+                changeBackground("board-background");
+                changeSceneContent(boardRoot);
+
+                System.out.println("[GUI] Board caricata con successo.");
+            } catch (Exception e) {
+                System.err.println("[GUI Errore] Impossibile caricare Board.fxml");
+                e.printStackTrace();
+            }
+        });
     }
 
     public static void main(String[] args) {

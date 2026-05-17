@@ -20,7 +20,6 @@ public class CLIApp {
         this.myNickname = nickname;
         this.scanner = scanner;
 
-        // Quando il server aggiorna i dati, la CLI ristampa tutto in automatico!
         this.model.setOnModelUpdatedCallback(this::render);
 
         startInputListener();
@@ -33,23 +32,18 @@ public class CLIApp {
                     String input = scanner.nextLine();
 
                     if (currentInputHandler != null) {
-                        // 1. È il nostro turno! Passiamo l'input alla logica di gioco.
                         currentInputHandler.accept(input);
                     } else {
-                        // 2. NON è il nostro turno! Ignoriamo l'input e avvisiamo.
                         System.out.println("⏳ Non è il tuo turno! Attendi la tua mossa.");
                     }
                 }
             }
         });
-        inputThread.setDaemon(true); // Permette al programma di chiudersi correttamente
+        inputThread.setDaemon(true);
         inputThread.start();
     }
 
-    // Metodo "Cuore" della CLI: decide cosa stampare in base alla fase del gioco
     public synchronized void render() {
-        // SCENARIO 1: L'utente sta digitando qualcosa.
-        // NON puliamo lo schermo per non rompergli l'input.
         if (currentInputHandler != null) {
             if (model.getLastSystemMessage() != null) {
                 System.out.println("\n--- 🔔 NOTIFICA DI SISTEMA ---");
@@ -61,13 +55,11 @@ public class CLIApp {
                 System.out.println("\n❌ [ERRORE DAL SERVER]: " + model.getLastErrorMessage());
                 model.clearError();
             }
-            return; // Ci fermiamo qui.
+            return;
         }
 
-        // SCENARIO 2: Nessun input in corso. Facciamo un refresh totale.
         clearConsole();
 
-        // Se c'è una notifica di sistema, la mettiamo in cima al nuovo schermo
         if (model.getLastSystemMessage() != null) {
             System.out.println("--- 🔔 NOTIFICA DI SISTEMA ---");
             System.out.println(model.getLastSystemMessage());
@@ -91,30 +83,22 @@ public class CLIApp {
             System.out.println("Stato sconosciuto: " + state);
         }
 
-
-        // Stampiamo l'errore ALLA FINE di tutto, dopo i menu e le opzioni!
-        // Così comparirà in basso, esattamente dove stai per digitare.
         if (model.getLastErrorMessage() != null) {
             System.out.println("\n❌ [ERRORE]: " + model.getLastErrorMessage());
             model.clearError();
         }
     }
 
-    // -------------------------------------------------------------
-    // SCHERMATA SETUP
-    // -------------------------------------------------------------
     private void renderSetup() {
         System.out.println("=== MESOS - BENVENUTO " + myNickname.toUpperCase() + " ===");
         System.out.println("\n--- LOBBY E SETUP ---");
         System.out.println("Giocatori connessi: " + model.getPlayers());
         System.out.println("Colori scelti: " + model.getPlayerColors());
 
-        // Se non ho ancora scelto un colore, lo chiedo
         if (!model.getPlayerColors().containsKey(myNickname)) {
             System.out.println("\nScegli il tuo colore (RED, YELLOW, BLACK, WHITE, BLUE): ");
             askForColor();
         } else {
-            // Se sono il "capo stanza" (es. il primo giocatore), mostro il comando Start
             if (model.getPlayers().indexOf(myNickname) == 0) {
                 System.out.println("\nSei il primo giocatore. Scrivi 'START' per iniziare la partita!");
                 askForStart();
@@ -124,9 +108,6 @@ public class CLIApp {
         }
     }
 
-    // -------------------------------------------------------------
-    // SCHERMATA START TURN (PIAZZAMENTO TOTEM)
-    // -------------------------------------------------------------
     private void renderStartTurn() {
         stampaTabellone();
 
@@ -142,9 +123,6 @@ public class CLIApp {
         }
     }
 
-    // -------------------------------------------------------------
-    // SCHERMATA PICKING
-    // -------------------------------------------------------------
     private void renderPicking() {
         stampaTabellone();
 
@@ -163,16 +141,12 @@ public class CLIApp {
         }
     }
 
-    // -------------------------------------------------------------
-    // METODI CHE CHIEDONO INPUT
-    // -------------------------------------------------------------
-
     private void askForColor() {
         currentInputHandler = (input) -> {
             try {
                 TotemColors color = TotemColors.valueOf(input.toUpperCase());
                 server.chooseTotem(color);
-                currentInputHandler = null; // Chiudiamo l'ascolto.
+                currentInputHandler = null;
             } catch (Exception e) {
                 System.out.println("Colore non valido. Riprova.");
             }
@@ -183,7 +157,7 @@ public class CLIApp {
         currentInputHandler = (input) -> {
             if (input.equalsIgnoreCase("START")) {
                 server.setupGame();
-                currentInputHandler = null; // Chiudiamo l'ascolto.
+                currentInputHandler = null;
             }
         };
     }
@@ -206,7 +180,6 @@ public class CLIApp {
                 String row = input.equals("1") ? "upper" : "lower";
                 System.out.print("Indice della carta (0, 1...): ");
 
-                // Mossa avanzata: Cambiamo l'handler "al volo" per aspettare il secondo input!
                 currentInputHandler = (idxInput) -> {
                     try {
                         int idx = Integer.parseInt(idxInput);
@@ -215,7 +188,7 @@ public class CLIApp {
                     } catch (NumberFormatException e) {
                         System.out.println("Indice non valido. Operazione annullata.");
                         currentInputHandler = null;
-                        render(); // Ridisegna per riniziare la scelta
+                        render();
                     }
                 };
             } else if (input.equals("3")) {
@@ -227,37 +200,30 @@ public class CLIApp {
         };
     }
 
-    // -------------------------------------------------------------
-    // METODI HELPER GRAFICI
-    // -------------------------------------------------------------
     private String renderizzaCarta(String cardData) {
-        // 1. Controllo sicurezza base
-        if (cardData == null || cardData.equals("null")) return "[ VUOTO ]";
+        if (cardData == null || cardData.equals("null") || cardData.isEmpty()) return "[ VUOTO ]";
 
-        // 2. Divisione dei dati inviati dal Server
+        // Adesso tutti i campi sono separati da '|'
         String[] parts = cardData.split("\\|");
 
-        // Se il server ha inviato per sbaglio solo il nome crudo (fallback di emergenza)
-        if (parts.length < 2) return "[ " + cardData + " ]";
+        if (parts.length < 4) return "[ " + cardData + " ]";
 
-        String tipo = parts[0];
+        // L'ID è parts[0], l'Era è parts[1], i MinPlayers sono parts[2] e il tipo/nome è parts[3]
+        String tipo = parts[3];
 
-        // 3. Gestione speciale per gli EVENTI (che hanno solo TIPO e NOME)
         if (tipo.equals("EVENT")) {
-            String nomeEvento = parts.length > 1 ? parts[1] : "Sconosciuto";
+            String nomeEvento = parts.length > 4 ? parts[4] : "Sconosciuto";
             return "[ 📜 " + nomeEvento + " ]";
         }
 
-        // 4. Da qui in poi assumiamo sia Personaggio o Edificio (Servono almeno 3 parametri)
-        if (parts.length < 3) return "[ " + cardData + " ]";
-
-        int val1 = Integer.parseInt(parts[1]); // Livello o Costo
-        int val2 = Integer.parseInt(parts[2]); // Aura
+        // Se è un personaggio, il livello e l'aura sono in parts[4] e parts[5]
+        // Se è un edificio, il costo e l'aura sono in parts[4] e parts[5]
+        int val1 = Integer.parseInt(parts[4]);
+        int val2 = Integer.parseInt(parts[5]);
 
         StringBuilder visual = new StringBuilder();
         visual.append("[ ");
 
-        // 5. Disegno della carta con Emoji
         switch (tipo) {
             case "SHAMAN":
                 visual.append("SHAMAN ");
@@ -284,8 +250,7 @@ public class CLIApp {
                 visual.append("ARTIST 🎨");
                 break;
             case "BUILDING":
-                // L'edificio ha un 4° parametro: il Nome
-                String nome = parts.length > 3 ? parts[3] : "Speciale";
+                String nome = parts.length > 6 ? parts[6] : "Speciale";
                 visual.append("🏛️ ").append(nome)
                         .append(" (Cost:🍖").append(val1)
                         .append(" Aura:✨").append(val2).append(")");
@@ -332,10 +297,7 @@ public class CLIApp {
             Integer food = model.getPlayerFood().get(p);
             Integer aura = model.getPlayerAura().get(p);
 
-            // Prepariamo la scritta offline da incollare di fianco al nome
             String status = model.isPlayerDisconnected(p) ? " [🔴 OFFLINE]" : "";
-
-            // Stampiamo tutto su una singola riga!
             System.out.println("🔹 " + p.toUpperCase() + status + " | 🍖 Cibo: " + (food != null ? food : 0) + " | ✨ Aura: " + (aura != null ? aura : 0));
 
             List<String> tribe = model.getPlayerTribe().get(p);
@@ -355,22 +317,16 @@ public class CLIApp {
 
     private void renderEndGame() {
         System.out.println("\n!!! PARTITA TERMINATA !!!");
-
-        // Show winners
         System.out.println("Vincitori: " + model.getWinners());
 
-        // Show final scores
         if (model.getLastMatchScores() != null && !model.getLastMatchScores().isEmpty()) {
             System.out.println("\n--- PUNTEGGI FINALI ---");
             model.getLastMatchScores().forEach((nick, score) ->
-                System.out.println("  " + nick + ": " + score + " punti")
+                    System.out.println("  " + nick + ": " + score + " punti")
             );
         }
 
-        // Show leaderboard
         stampaClassifica();
-
-        // Offer possibility to request leaderboard for different player counts
         stampaPromptLeaderboard();
     }
 
@@ -387,9 +343,9 @@ public class CLIApp {
         for (LeaderboardEntry e : entries) {
             String highlight = (e.getNickname().equalsIgnoreCase(myNickname)) ? " <<<" : "";
             System.out.printf(" %2d | %-17s | %5d | %s%s%n",
-                e.getPosition(), e.getNickname(), e.getScore(),
-                e.getMatchDate() != null ? e.getMatchDate().substring(0, 10) : "",
-                highlight);
+                    e.getPosition(), e.getNickname(), e.getScore(),
+                    e.getMatchDate() != null ? e.getMatchDate().substring(0, 10) : "",
+                    highlight);
         }
 
         int pos = model.getLeaderboardPosition();
@@ -411,7 +367,6 @@ public class CLIApp {
             } else if (input.toUpperCase().startsWith("CLASSIFICA ")) {
                 try {
                     int np = Integer.parseInt(input.substring(11).trim());
-                    /*server.requestLeaderboard(np);*/
                     currentInputHandler = null;
                 } catch (NumberFormatException e) {
                     System.out.println("Formato non valido. Usa: CLASSIFICA 4");
@@ -423,18 +378,14 @@ public class CLIApp {
     }
 
     public static void clearConsole() {
-        // Stampa tante righe vuote per pulire lo schermo
         for (int i = 0; i < 20; i++) System.out.println();
     }
 
     private void clearInputBuffer() {
         try {
-            // System.in.available() restituisce il numero di byte pronti nel buffer
             while (System.in.available() > 0) {
-                System.in.read(); // Legge e scarta i byte accumulati
+                System.in.read();
             }
-        } catch (java.io.IOException e) {
-            // Se c'è un errore nella lettura del buffer, non facciamo nulla
-        }
+        } catch (java.io.IOException e) {}
     }
 }

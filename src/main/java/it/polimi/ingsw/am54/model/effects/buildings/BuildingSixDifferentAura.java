@@ -1,0 +1,15 @@
+package it.polimi.ingsw.am54.model.effects.buildings;
+import it.polimi.ingsw.am54.model.*;
+import java.util.Arrays;
+
+public class BuildingSixDifferentAura implements IEffect<BuildingCard> {
+    @Override public boolean isEndgameEffect() { return true; }
+    @Override
+    public void apply(Player p, Game g, BuildingCard card) {
+        JobType[] allJobs = { JobType.HUNTER, JobType.CONSTRUCTOR, JobType.SHAMAN, JobType.FARMER, JobType.ARTIST, JobType.INVENTOR };
+        long minCount = Arrays.stream(allJobs)
+                .mapToLong(job -> p.getMyTribe().stream().filter(c -> c.getJobType() == job).count())
+                .min().orElse(0);
+        p.modifyAuraPoints((int) (6 * minCount));
+    }
+}

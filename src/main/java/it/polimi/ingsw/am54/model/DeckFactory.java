@@ -2,13 +2,10 @@ package it.polimi.ingsw.am54.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.polimi.ingsw.am54.model.effects.buildings.EndgamePhaseEffect;
-import it.polimi.ingsw.am54.model.effects.buildings.EventPhaseEffect;
-import it.polimi.ingsw.am54.model.effects.buildings.PostactionPhaseEffect;
-import it.polimi.ingsw.am54.model.effects.buildings.PostpickPhaseEffect;
 import it.polimi.ingsw.am54.model.effects.buildings.*;
-import it.polimi.ingsw.am54.model.effects.characters.CharacterEffect;
-import it.polimi.ingsw.am54.model.effects.events.EventEffect;
+import it.polimi.ingsw.am54.model.effects.characters.*;
+import it.polimi.ingsw.am54.model.effects.events.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -18,6 +15,7 @@ public class DeckFactory {
     private static final ObjectMapper mapper = new ObjectMapper();
 
 
+    // crea il mazzo BUILDINGS
     public static Deck<BuildingCard> createBuildingDeck(String filePath, int numPlayers) {
 
         if (numPlayers < 2 || numPlayers > 5) {
@@ -97,7 +95,7 @@ public class DeckFactory {
         return new Deck<>(finalDeck);
     }
 
-   //crea il mazzo tribu coi personaggi ed eventi
+   //crea il mazzo tribu coi PERSONAGGI ed EVENTI
     public static Deck<TribeCard> createTribeDeck(String charPath, String eventPath, int numPlayers) {
 
         if (numPlayers < 2 || numPlayers > 5) {
@@ -144,7 +142,7 @@ public class DeckFactory {
                     int era = node.get("era").asInt();
 
                     List<IEffect<CharacterCard>> effects = new ArrayList<>();
-                    effects.add(new CharacterEffect(characterType));
+                    effects.add(createCharacterEffect(characterType));
 
                     CharacterCard card = new CharacterCard(level, type, aura, phase, effects, era);
                     if (era == 1) charE1.add(card);
@@ -153,6 +151,9 @@ public class DeckFactory {
                 }
             }
         } catch (Exception e) {
+            System.err.println("\n\n!!! VERO ERRORE CATTURATO !!!");
+            e.printStackTrace(); // Questo forzerà la console a dirti ESATTAMENTE a che riga è esploso
+            System.err.println("!!! FINE ERRORE !!!\n\n");
             throw new IllegalStateException("Errore critico durante la lettura del file dei Personaggi: " + charPath, e);
         }
 
@@ -165,7 +166,7 @@ public class DeckFactory {
                 boolean finalEvent = node.get("finalEvent").asBoolean();
 
                 List<IEffect<EventCard>> effects = new ArrayList<>();
-                effects.add(new EventEffect(etichetta));
+                effects.add(createEventEffect(etichetta));
 
                 EventCard event = new EventCard(
                         era,
@@ -225,19 +226,52 @@ public class DeckFactory {
         return new Deck<>(finalDeck);
     }
 
-    //crea l'effetto giusto in base alla fase
+    // crea l'effetto giusto per gli edifici
     private static IEffect<BuildingCard> createBuildingEffect(String phase, String nomeLambda, JsonNode params) {
-        if (nomeLambda == null) return null;
 
-        //questa factory prende la stringa della fase dal JSON, istanzia la classe corretta passandole
-        //il nome specifico dell'effetto e i suoi parametri,
-        //restituisce infine l'oggetto pronto per essere iniettato nella BuildingCard
-        return switch (phase) {
-            case "EVENT", "STARTTURN" -> new EventPhaseEffect(nomeLambda, params);
-            case "ENDGAME"            -> new EndgamePhaseEffect(nomeLambda, params);
-            case "POSTPICK"           -> new PostpickPhaseEffect(nomeLambda, params);
-            case "POSTACTION"         -> new PostactionPhaseEffect(nomeLambda, params);
-            default -> null;
+        // Facciamo lo switch direttamente sul nome dell'effetto scritto nel JSON
+        return switch (nomeLambda) {
+            // Effetti Event
+            case "EVENT_FOOD_DISCOUNT"   -> new BuildingEventFoodDiscount(params);
+            case "EVENT_BONUS"           -> new BuildingEventBonus(params);
+            case "BONUS_FOOD"            -> new BuildingBonusFood();
+            case "NO_LOSS"               -> new BuildingNoLoss();
+            case "DOUBLE_AURA_SHAMAN"    -> new BuildingDoubleAuraShaman();
+
+            // Effetti Endgame
+            case "AURA_PER_JOB"            -> new BuildingAuraPerJob(params);
+            case "DOUBLE_CONSTRUCTOR_AURA" -> new BuildingDoubleConstructorAura();
+            case "SIX_DIFFERENT_AURA"      -> new BuildingSixDifferentAura();
+            case "FLAT_AURA_BONUS"         -> new BuildingFlatAuraBonus(params);
+
+            // Effetti Postpick e Postaction
+            case "SIX_OF_TYPE"     -> new BuildingSixOfType();
+            case "DOUBLE_INVENTOR" -> new BuildingDoubleInventor();
+            case "THREE_MAGIC"     -> new BuildingThreeMagic();
+            case "EXTRA_PICK"      -> new BuildingExtraPick();
+
+            default -> throw new IllegalArgumentException("Effetto edificio non gestito dal JSON: " + nomeLambda);
+        };
+    }
+
+    private static IEffect<CharacterCard> createCharacterEffect(String effectName) {
+        return switch (effectName) {
+            case "HUNTER" -> new CharacterHunter();
+            case "CONSTRUCTOR" -> new CharacterConstructor();
+            case "SHAMAN" -> new CharacterShaman();
+            case "FARMER" -> new CharacterFarmer();
+            case "ARTIST", "INVENTOR" -> new CharacterPassive();
+            default -> throw new IllegalArgumentException("Effetto personaggio sconosciuto: " + effectName);
+        };
+    }
+
+    private static IEffect<EventCard> createEventEffect(String effectName) {
+        return switch (effectName) {
+            case "HUNTER" -> new EventHunter();
+            case "FARMER" -> new EventFarmer();
+            case "ARTIST" -> new EventArtist();
+            case "SHAMAN" -> new EventShaman();
+            default -> throw new IllegalArgumentException("Effetto evento sconosciuto: " + effectName);
         };
     }
 }

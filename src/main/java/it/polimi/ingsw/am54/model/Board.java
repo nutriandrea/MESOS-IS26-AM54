@@ -286,7 +286,7 @@ public class Board {
                         if (a.shouldResolveLast() != b.shouldResolveLast()) {
                             return a.shouldResolveLast() ? 1 : -1;
                         }
-                        // Seconda priorità: Ordine crescente di Era[cite: 2]
+                        // Seconda priorità: Ordine crescente di Era
                         return Integer.compare(a.getEra(), b.getEra());
                     })
                     .orElse(null);
@@ -339,12 +339,6 @@ public class Board {
     public List<TurnOrderSlot> getTurnOrderTile() { return turnOrderTile;}
     public List<BuildingCard> getBuildingCardsUpperRow() { return buildingCardsUpperRow; }
     public List<BuildingCard> getBuildingCardsLowerRow() { return buildingCardsLowerRow; }
-
-    // Getter per le liste di carte personaggio ed eventi
-    public List<CharacterCard> getCharacterUpperRowList() { return characterUpperRow; }
-    public List<CharacterCard> getCharacterLowerRowList() { return characterLowerRow; }
-    public List<EventCard> getEventUpperRowList() { return eventUpperRow; }
-    public List<EventCard> getEventLowerRowList() { return eventLowerRow; }
 
     // Original getters
     public List<CharacterCard> getCharacterUpperRow() { return characterUpperRow; }

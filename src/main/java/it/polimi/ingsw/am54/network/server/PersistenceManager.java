@@ -233,18 +233,18 @@ public class PersistenceManager {
         BoardSnapshot bs = new BoardSnapshot();
         
         // Carte Personaggio
-        for (CharacterCard card : board.getCharacterUpperRowList()) {
+        for (CharacterCard card : board.getCharacterUpperRow()) {
             bs.addCharacterUpperRow(new CardInfo(card.getName(), "CHARACTER", card.getCost()));
         }
-        for (CharacterCard card : board.getCharacterLowerRowList()) {
+        for (CharacterCard card : board.getCharacterLowerRow()) {
             bs.addCharacterLowerRow(new CardInfo(card.getName(), "CHARACTER", card.getCost()));
         }
         
         // Carte Evento
-        for (EventCard card : board.getEventUpperRowList()) {
+        for (EventCard card : board.getEventUpperRow()) {
             bs.addEventUpperRow(new CardInfo(card.getName(), "EVENT", 0));
         }
-        for (EventCard card : board.getEventLowerRowList()) {
+        for (EventCard card : board.getEventLowerRow()) {
             bs.addEventLowerRow(new CardInfo(card.getName(), "EVENT", 0));
         }
         

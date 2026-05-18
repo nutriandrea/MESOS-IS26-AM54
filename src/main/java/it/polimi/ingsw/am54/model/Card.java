@@ -40,4 +40,5 @@ public class Card {
     public void reveal(Board board, String row) {
         throw new UnsupportedOperationException("Cannot reveal this generic card type");
     }
+
 }

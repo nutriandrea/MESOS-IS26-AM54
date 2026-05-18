@@ -1,5 +1,7 @@
 package it.polimi.ingsw.am54.network.server;
 
+import it.polimi.ingsw.am54.controller.Controller;
+import it.polimi.ingsw.am54.database.DatabaseManager;
 import it.polimi.ingsw.am54.model.*;
 import it.polimi.ingsw.am54.network.messages.*;
 
@@ -66,16 +68,21 @@ public class VirtualView implements IGameObserver {
     /** Nickname del giocatore proprietario di questa connessione */
     private final String nickname;
 
+    /** Controller per accedere al DatabaseManager e salvare i risultati */
+    private final Controller controller;
+
     /**
      * Costruttore: crea la VirtualView quando un giocatore entra in partita.
      * Viene chiamata dal Controller.handleJoinGame() dopo la creazione della connessione.
      *
      * @param connection il canale di rete (Socket o RMI) del giocatore
      * @param nickname il nickname del giocatore
+     * @param controller il controller della partita (per accesso al DB)
      */
-    public VirtualView(ClientConnection connection, String nickname) {
+    public VirtualView(ClientConnection connection, String nickname, Controller controller) {
         this.connection = connection;
         this.nickname = nickname;
+        this.controller = controller;
     }
 
     public String getNickname() {
@@ -272,7 +279,39 @@ public class VirtualView implements IGameObserver {
         List<String> winnerNames = winners.stream()
                 .map(Player::getNickname)
                 .collect(Collectors.toList());
-        connection.notifyEndGame(winnerNames);
+
+        // Costruisci la mappa dei punteggi finali di tutti i giocatori
+        Map<String, Integer> allScores = new HashMap<>();
+        int numPlayers = game.getPlayers().size();
+        for (Player p : game.getPlayers()) {
+            allScores.put(p.getNickname(), p.getAuraPoints());
+        }
+
+        // Salva i risultati su database
+        DatabaseManager db = (controller != null) ? controller.getDatabaseManager() : null;
+        if (db != null && db.isAvailable()) {
+            for (Player p : game.getPlayers()) {
+                db.saveMatchResult(p.getNickname(), p.getAuraPoints(), numPlayers);
+            }
+        }
+
+        // Invia EndGameUpdate con punteggi
+        connection.notifyEndGame(winnerNames, allScores, numPlayers);
+
+        // Dopo aver salvato, invia la classifica aggiornata a questo client
+        if (db != null && db.isAvailable()) {
+            List<LeaderboardEntry> entries = db.getLeaderboard(numPlayers);
+            int playerPosition = -1;
+            for (LeaderboardEntry entry : entries) {
+                if (entry.getNickname().equalsIgnoreCase(nickname)) {
+                    playerPosition = entry.getPosition();
+                    break;
+                }
+            }
+            connection.sendLeaderboardUpdate(
+                    new LeaderboardUpdate(playerPosition, entries, numPlayers)
+            );
+        }
     }
 
     //PER LA RECONNECT

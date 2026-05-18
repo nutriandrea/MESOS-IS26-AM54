@@ -35,3 +35,8 @@
 .DS_Store
 .env
 .sisyphus/
+
+# Environment
+
+.env
+>>>>>>> eeefaf2 (Integrazione database MySQL esterno (Aiven) per classifica)

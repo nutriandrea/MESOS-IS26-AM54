@@ -72,7 +72,6 @@ public class BoardController {
     private Timeline dotsTimeline;
     private String currentDots = "";
     private boolean isShowingError = false;
-    private boolean isGameOver = false;
 
     // FIX SOVRAPPOSIZIONE: Memorizza il nome del player per ritardare la notifica visiva del turno
     private String pendingNotifyPlayer = null;
@@ -98,7 +97,7 @@ public class BoardController {
 
         ClientModel model = Client.getInstance().getModel();
         if (model != null) {
-            model.setOnModelUpdatedCallback(this::refreshBoard);
+            model.setOnModelUpdatedCallback(this::onModelUpdate);
 
             model.setOnEventResolvedCallback(reports -> {
                 javafx.application.Platform.runLater(() -> {
@@ -235,20 +234,31 @@ public class BoardController {
         });
     }
 
+    private void onModelUpdate() {
+        ClientModel model = Client.getInstance().getModel();
+        if (model == null) return;
+
+        // Se abbiamo sia winners (partita finita) che i dati leaderboard, carica la scena
+        if (model.getWinners() != null && !model.getWinners().isEmpty() &&
+            model.getLeaderboardEntries() != null && !model.getLeaderboardEntries().isEmpty()) {
+            Platform.runLater(GUIApp::loadLeaderboardScene);
+            return;
+        }
+
+        // Se ci sono winners ma non ancora leaderboard, aspettiamo il prossimo update
+        if (model.getWinners() != null && !model.getWinners().isEmpty()) {
+            return;
+        }
+
+        refreshBoard();
+    }
+
     public void refreshBoard() {
         Platform.runLater(() -> {
             ClientModel model = Client.getInstance().getModel();
             if (model == null) return;
 
             String state = model.getCurrentState();
-            boolean hasWinners = model.getWinners() != null && !model.getWinners().isEmpty();
-            boolean isEndState = state != null && (state.equalsIgnoreCase("ENDGAMESTATE") || state.equalsIgnoreCase("ENDGAME"));
-
-            if (!isGameOver && (isEndState || hasWinners)) {
-                isGameOver = true;
-                GUIApp.loadLeaderboardScene();
-                return;
-            }
 
             marketManager.updateMarkets(model);
             marketManager.updateDecksGraphics(model);

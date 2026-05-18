@@ -61,4 +61,21 @@
         </StackPane.margin>
     </Label>
 
+    <VBox fx:id="leaderboardBox" alignment="TOP_CENTER" spacing="4"
+          visible="true" managed="true"
+          maxWidth="360" maxHeight="520"
+          styleClass="leaderboard-panel"
+          StackPane.alignment="CENTER_RIGHT">
+        <StackPane.margin>
+            <Insets right="25"/>
+        </StackPane.margin>
+        <Label text="CLASSIFICA" styleClass="leaderboard-title" />
+        <Separator styleClass="leaderboard-separator" />
+        <ScrollPane fx:id="leaderboardScroll" fitToWidth="true"
+                     styleClass="leaderboard-scroll" vbarPolicy="ALWAYS">
+            <VBox fx:id="leaderboardContent" alignment="TOP_CENTER" spacing="1" />
+        </ScrollPane>
+        <Label fx:id="leaderboardFooter" text="Caricamento..." styleClass="leaderboard-footer" />
+    </VBox>
+
 </StackPane>

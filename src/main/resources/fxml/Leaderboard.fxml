@@ -45,8 +45,11 @@
             <ImageView fx:id="totem1" fitHeight="120" preserveRatio="true" />
         </VBox>
 
-        <VBox alignment="TOP_CENTER" layoutX="360" layoutY="550" prefWidth="1200" spacing="10" pickOnBounds="false">
-            <Label text="Classifica generale:" textFill="WHITE" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+        <Label fx:id="playerPositionLabel" text="" textFill="GOLD" layoutX="360" layoutY="590"
+               prefWidth="1200" alignment="CENTER" style="-fx-font-size: 20px; -fx-font-weight: bold;" visible="false" />
+
+        <VBox alignment="TOP_CENTER" layoutX="360" layoutY="620" prefWidth="1200" spacing="10">
+            <Label text="Classifica storica:" textFill="WHITE" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
 
             <VBox fx:id="rankingTable" spacing="5" style="-fx-background-color: rgba(0,0,0,0.6); -fx-background-radius: 15; -fx-padding: 20;">
                 <HBox alignment="CENTER_LEFT" spacing="20" style="-fx-border-color: transparent transparent white transparent; -fx-padding: 0 0 10 0;">

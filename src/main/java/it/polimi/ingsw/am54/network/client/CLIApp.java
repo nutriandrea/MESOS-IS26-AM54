@@ -44,6 +44,15 @@ public class CLIApp {
     }
 
     public synchronized void render() {
+        // Se siamo in EndGameState e la classifica è appena arrivata (ma non abbiamo ancora impostato il prompt)
+        String state = model.getCurrentState();
+        if ("EndGameState".equals(state) && currentInputHandler == null
+            && model.getLeaderboardEntries() != null && !model.getLeaderboardEntries().isEmpty()) {
+            stampaClassifica();
+            stampaPromptLeaderboard();
+            return;
+        }
+
         if (currentInputHandler != null) {
             if (model.getLastSystemMessage() != null) {
                 System.out.println("\n--- 🔔 NOTIFICA DI SISTEMA ---");
@@ -60,14 +69,14 @@ public class CLIApp {
 
         clearConsole();
 
+        clearConsole();
+
         if (model.getLastSystemMessage() != null) {
             System.out.println("--- 🔔 NOTIFICA DI SISTEMA ---");
             System.out.println(model.getLastSystemMessage());
             System.out.println("------------------------------\n");
             model.clearSystemMessage();
         }
-
-        String state = model.getCurrentState();
 
         if (state.equals("Lobby") || state.equals("SetUpGameState")) {
             renderSetup();
@@ -326,8 +335,15 @@ public class CLIApp {
             );
         }
 
+        // Mostra la classifica solo se i dati sono già arrivati dal server
         stampaClassifica();
-        stampaPromptLeaderboard();
+
+        // Se la classifica non è ancora arrivata, verrà mostrata al prossimo update
+        if (model.getLeaderboardEntries() == null || model.getLeaderboardEntries().isEmpty()) {
+            System.out.println("\nCaricamento classifica in corso...");
+        } else {
+            stampaPromptLeaderboard();
+        }
     }
 
     private void stampaClassifica() {
@@ -368,6 +384,8 @@ public class CLIApp {
                 try {
                     int np = Integer.parseInt(input.substring(11).trim());
                     currentInputHandler = null;
+                    System.out.println("Richiedo classifica per partite da " + np + " giocatori...");
+                    Client.getInstance().getConnection().requestLeaderboard(np);
                 } catch (NumberFormatException e) {
                     System.out.println("Formato non valido. Usa: CLASSIFICA 4");
                 }

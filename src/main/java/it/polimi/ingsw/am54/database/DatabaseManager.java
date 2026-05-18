@@ -9,11 +9,10 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Manages the H2 embedded database connection and all database operations
+ * Manages the MySQL database connection and all database operations
  * for persisting match results and querying the leaderboard.
  *
- * The database file is created automatically in the working directory
- * on first use — no external setup required.
+ * Requires an external MySQL server (default: localhost:3306/am54).
  *
  * Table schema:
  *   match_results (
@@ -53,7 +52,7 @@ public class DatabaseManager {
                 ")"
             );
             this.available = true;
-            LOGGER.info("Database inizializzato: " + config.getJdbcUrl() + " (file: " + config.getFile() + ".mv.db)");
+            LOGGER.info("Database inizializzato: " + config.getJdbcUrl());
         } catch (SQLException e) {
             LOGGER.warning("Database unavailable – leaderboard features will be disabled: " + e.getMessage());
             this.available = false;

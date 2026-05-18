@@ -87,3 +87,106 @@
     -fx-font-size: 16px;
     -fx-effect: dropshadow(three-pass-box, black, 5, 0, 0, 0);
 }
+
+/* --- LEADERBOARD PANEL (login screen) --- */
+
+.leaderboard-panel {
+    -fx-background-color: rgba(0, 0, 0, 0.80);
+    -fx-background-radius: 12;
+    -fx-border-color: #d4af37;
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+    -fx-padding: 12 10 8 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 15, 0, 0, 0);
+}
+
+.leaderboard-title {
+    -fx-text-fill: #d4af37;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+
+.leaderboard-separator {
+    -fx-background-color: #d4af37;
+    -fx-opacity: 0.6;
+    -fx-pref-height: 1;
+    -fx-max-width: 320;
+}
+
+.leaderboard-footer {
+    -fx-text-fill: #8b7355;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 11px;
+    -fx-alignment: center;
+    -fx-padding: 4 0 0 0;
+}
+
+.leaderboard-scroll {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+    -fx-padding: 4 0 0 0;
+}
+.leaderboard-scroll .viewport {
+    -fx-background-color: transparent;
+}
+.leaderboard-scroll .scroll-bar:vertical {
+    -fx-background-color: rgba(212, 175, 55, 0.15);
+    -fx-background-radius: 4;
+    -fx-pref-width: 8;
+}
+.leaderboard-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #d4af37;
+    -fx-background-radius: 4;
+}
+.leaderboard-scroll .scroll-bar:vertical .increment-button,
+.leaderboard-scroll .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-pref-height: 0;
+}
+
+.leaderboard-group-title {
+    -fx-text-fill: #f0e68c;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 0 2 0;
+    -fx-alignment: center;
+}
+
+.leaderboard-entry-row {
+    -fx-text-fill: #e0d5b0;
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 11px;
+    -fx-padding: 1 4 1 4;
+}
+.leaderboard-entry-row:hover {
+    -fx-background-color: rgba(212, 175, 55, 0.15);
+}
+
+.leaderboard-entry-header {
+    -fx-text-fill: #d4af37;
+    -fx-font-family: "Monospaced";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 1 4 1 4;
+    -fx-border-color: transparent transparent rgba(212, 175, 55, 0.4) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.leaderboard-loading {
+    -fx-text-fill: #8b7355;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 14px;
+    -fx-alignment: center;
+    -fx-padding: 20 0 20 0;
+}
+
+.leaderboard-empty {
+    -fx-text-fill: #8b7355;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 13px;
+    -fx-alignment: center;
+    -fx-padding: 10 0 10 0;
+}

@@ -1,5 +1,6 @@
 package it.polimi.ingsw.am54.controller;
 
+import it.polimi.ingsw.am54.database.DatabaseManager;
 import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.Player;
 import it.polimi.ingsw.am54.model.TotemColors;
@@ -46,6 +47,9 @@ public class Controller {
 
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
+    /** Database per salvare i risultati delle partite */
+    private DatabaseManager databaseManager;
+
     /** Flag: true quando un solo giocatore e' attivo e il gioco e' sospeso */
     private volatile boolean suspended = false;
 
@@ -71,6 +75,14 @@ public class Controller {
      */
     public void setServer(Server server) {
         this.server = server;
+    }
+
+    public void setDatabaseManager(DatabaseManager databaseManager) {
+        this.databaseManager = databaseManager;
+    }
+
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
     }
 
     /**
@@ -104,13 +116,13 @@ public class Controller {
             // CASO 2: Qualcuno sta provando a entrare con un nome GIA' ATTIVO nel server
             if (virtualViews.containsKey(nickname)) {
                 // Creiamo una view temporanea SOLO per poter spedire indietro l'errore
-                VirtualView rejectedView = new VirtualView(connection, nickname);
+                VirtualView rejectedView = new VirtualView(connection, nickname, this);
                 rejectedView.showError("Nickname già in uso! Scegline un altro.");
                 return; // Blocchiamo l'entrata e usciamo dal metodo!
             }
 
             // CASO 3: Il nome è libero, normale procedura di Join
-            VirtualView playerView = new VirtualView(connection, nickname);
+            VirtualView playerView = new VirtualView(connection, nickname, this);
             virtualViews.put(nickname, playerView);
             game.addObserver(playerView);
 
@@ -145,7 +157,7 @@ public class Controller {
             if (oldView != null) {
                 game.removeObserver(oldView);
             }
-            VirtualView newView = new VirtualView(connection, nickname);
+            VirtualView newView = new VirtualView(connection, nickname, this);
             virtualViews.put(nickname, newView);
             game.addObserver(newView);
             LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
@@ -408,6 +420,26 @@ public class Controller {
                 view.showError(e.getMessage());
             }
         }
+    }
+
+    /**
+     * Gestisce una richiesta di classifica da parte di un client.
+     * Consulta il database e invia un LeaderboardUpdate al richiedente.
+     */
+    public void handleGetLeaderboard(int numPlayers, String nickname, ClientConnection connection) {
+        if (databaseManager == null || !databaseManager.isAvailable()) {
+            connection.sendLeaderboardUpdate(new LeaderboardUpdate(-1, List.of(), numPlayers));
+            return;
+        }
+        List<LeaderboardEntry> entries = databaseManager.getLeaderboard(numPlayers);
+        int playerPosition = -1;
+        for (LeaderboardEntry entry : entries) {
+            if (entry.getNickname().equalsIgnoreCase(nickname)) {
+                playerPosition = entry.getPosition();
+                break;
+            }
+        }
+        connection.sendLeaderboardUpdate(new LeaderboardUpdate(playerPosition, entries, numPlayers));
     }
 
     private void checkAndResolveAutomaticPhases() throws Exception {

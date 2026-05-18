@@ -71,6 +71,12 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     public void endTurnRequest() throws RemoteException {
         controller.handleEndTurn(this.playerNickname);
     }
+
+    @Override
+    public void getLeaderboardRequest(int numPlayers) throws RemoteException {
+        controller.handleGetLeaderboard(numPlayers, this.playerNickname, this);
+    }
+
     @Override
     public void pong() throws RemoteException {
         lastPongTime = System.currentTimeMillis();
@@ -155,9 +161,20 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
 
     @Override
-    public void notifyEndGame(List<String> winnerNames) {
-        try { clientStub.onEndGame(winnerNames); }
+    public void notifyEndGame(List<String> winnerNames, Map<String, Integer> allScores, int numPlayers) {
+        try { clientStub.onEndGame(winnerNames, allScores, numPlayers); }
         catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
+    public void sendLeaderboardUpdate(LeaderboardUpdate update) {
+        try {
+            clientStub.onLeaderboardUpdate(
+                    update.getPlayerPosition(),
+                    update.getEntries(),
+                    update.getNumPlayers()
+            );
+        } catch (RemoteException e) { disconnect(); }
     }
 
     @Override

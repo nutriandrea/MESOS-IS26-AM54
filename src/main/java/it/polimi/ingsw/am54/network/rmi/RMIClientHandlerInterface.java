@@ -13,6 +13,7 @@ public interface RMIClientHandlerInterface extends Remote {
     void placeTotemRequest(int offerPosition) throws RemoteException;
     void pickCardRequest(String row, int cardIndex) throws RemoteException;
     void endTurnRequest() throws RemoteException;
+    void getLeaderboardRequest(int numPlayers) throws RemoteException;
 
     void pong() throws RemoteException;
 

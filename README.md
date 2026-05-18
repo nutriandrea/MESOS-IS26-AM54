@@ -38,7 +38,7 @@ This is a multiplayer board game where 2-5 players compete to collect the most p
 | CLI                    | ✅ Implemented |
 | Multiple games support | 🔄 To implement |
 | ML Bots                | 🔄 To implement |
-| Leaderboard (H2 DB)     | ✅ Implemented |
+| Leaderboard (MySQL DB)   | ✅ Implemented |
 | Disconnection handling | ✅ Implemented |
 
 ---
@@ -111,7 +111,7 @@ Tutte le azioni di gioco (`pickCard`, `endTurn`, ecc.) passano da `executeComman
 | **Maven** | Build and dependency management |
 | **JavaFX** | GUI framework |
 | **Jackson** | JSON parsing for card setup |
-| **H2 Database** | Embedded SQL database for leaderboard persistence |
+| **MySQL** | External database for leaderboard persistence (via JDBC) |
 | **JUnit 5** | Unit testing |
 | **IntelliJ IDEA** | Development IDE |
 
@@ -147,13 +147,26 @@ Porta default: `12345`. Per usare altra porta:
 ./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server" -Dexec.args="8080"
 ```
 
-Il database per la classifica (**H2 embedded**) si avvia automaticamente.
-Il file `am54.mv.db` viene creato nella directory di lavoro. Nessuna configurazione necessaria.
+Il database per la classifica è **MySQL** (richiede un server MySQL esterno raggiungibile sulla porta TCP).
 
-Per usare un nome file personalizzato:
-```bash
-./mvnw compile exec:java -Dexec.mainClass="..." -Ddb.file=codex_naturalis
+Il server MySQL deve essere avviato separatamente e deve avere un database chiamato `am54`:
+```sql
+CREATE DATABASE am54;
 ```
+
+Configurazione overridabile via system properties o via `.env` file (vedi `.env.example`):
+| Proprietà | Default | Descrizione |
+|-----------|---------|-------------|
+| `db.host` | `localhost` | Host del server MySQL |
+| `db.port` | `3306` | Porta TCP del server MySQL |
+| `db.name` | `am54` | Nome del database |
+| `db.user` | `root` | Utente MySQL |
+| `db.password` | *(vuota)* | Password MySQL |
+| `db.sslMode` | `PREFERRED` | Modalità SSL: `DISABLED`, `PREFERRED`, `REQUIRED` |
+| `db.params` | *(vuota)* | Parametri JDBC extra (es. `allowPublicKeyRetrieval=true`) |
+
+Il server carica automaticamente il file `.env` dalla directory di lavoro (se presente).
+Le system property passate via `-D` hanno la precedenza su `.env`.
 
 ### Run Client
 
@@ -201,7 +214,7 @@ src/
 │       ├── controller/
 │       │   └── Controller.java
 │       ├── database/
-│       │   ├── DatabaseConfig.java     ← H2 configuration
+│       │   ├── DatabaseConfig.java     ← MySQL configuration
 │       │   └── DatabaseManager.java    ← JDBC persistence layer
 │       ├── model/
 │       │   ├── Game.java
@@ -264,7 +277,7 @@ src/
 4. End Game
    └── Calculate scores
    └── Declare winner(s)
-   └── Save results to H2 database (leaderboard)
+    └── Save results to MySQL database (leaderboard)
    └── Send LeaderboardUpdate to all clients
 ```
 
@@ -272,7 +285,7 @@ src/
 
 ## Leaderboard (Classifica)
 
-Alla fine di ogni partita, il server salva su un database **H2 embedded** i risultati di tutti i giocatori:
+Alla fine di ogni partita, il server salva su un database **MySQL** i risultati di tutti i giocatori:
 - nickname, punteggio finale, data, numero di giocatori
 
 Subito dopo il calcolo dei vincitori, ogni client riceve un `LeaderboardUpdate` contenente:
@@ -286,11 +299,11 @@ Subito dopo il calcolo dei vincitori, ogni client riceve un `LeaderboardUpdate` 
 
 ### Database
 
-Il database è **H2 in embedded mode**:
-- File `am54.mv.db` creato automaticamente nella directory di lavoro del server
-- Nessuna installazione esterna richiesta
-- I dati persistono tra riavvii del server
-- Per usare un nome file diverso: `-Ddb.file=myfile`
+Il database è **MySQL** (richiede server esterno):
+- Connessione JDBC: `jdbc:mysql://host:port/dbName`
+- Il server crea automaticamente la tabella `match_results` al primo avvio
+- Il database `am54` deve esistere prima di avviare il server
+- Configurabile via system properties: `-Ddb.host`, `-Ddb.port`, `-Ddb.name`, `-Ddb.user`, `-Ddb.password`
 
 ### Schema
 

@@ -41,4 +41,13 @@ public class Card {
         throw new UnsupportedOperationException("Cannot reveal this generic card type");
     }
 
+    private String imageId = "0";
+
+    public String getImageId() {
+        return imageId;
+    }
+
+    public void setImageId(String imageId) {
+        this.imageId = imageId;
+    }
 }

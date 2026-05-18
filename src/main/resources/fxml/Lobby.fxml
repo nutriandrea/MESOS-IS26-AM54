@@ -5,90 +5,63 @@
 <?import javafx.scene.image.*?>
 <?import javafx.geometry.Insets?>
 
-<AnchorPane fx:id="lobbyRoot" prefHeight="720.0" prefWidth="1280.0"
-            stylesheets="@../css/lobby.css" styleClass="lobby-background"
-            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="it.polimi.ingsw.am54.gui.LobbyController">
+<StackPane fx:id="lobbyRoot" stylesheets="@../css/lobby.css"
+           xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="it.polimi.ingsw.am54.gui.LobbyController">
 
-    <VBox alignment="TOP_CENTER" spacing="10" pickOnBounds="false"
-          AnchorPane.topAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+    <VBox alignment="TOP_CENTER" spacing="10" pickOnBounds="false">
         <padding><Insets top="50"/></padding>
-
-        <Label text="BENVENUTO NELLA CAVERNA" styleClass="lobby-title" mouseTransparent="true"/>
+        <HBox alignment="CENTER" pickOnBounds="false">
+            <Region prefWidth="300" mouseTransparent="true" />
+            <Label text="BENVENUTO NELLA CAVERNA" styleClass="lobby-title" mouseTransparent="true"/>
+            <HBox alignment="CENTER_LEFT" spacing="15" prefWidth="300" pickOnBounds="false">
+                <padding><Insets left="30"/></padding>
+                <Label text="Regole del gioco" styleClass="info-label" mouseTransparent="true"/>
+                <Button fx:id="infoButton" text="i" styleClass="info-button" onAction="#handleOpenRules"/>
+            </HBox>
+        </HBox>
         <Label fx:id="subtitleLabel" text="SCEGLI IL TUO TOTEM!" styleClass="lobby-subtitle" mouseTransparent="true"/>
-
-        <Button fx:id="startButton" text="START" styleClass="start-button"
-                visible="false" managed="false" onAction="#handleStartGame">
-            <VBox.margin>
-                <Insets top="30.0" />
-            </VBox.margin>
+        <Button fx:id="startButton" text="START" styleClass="start-button" visible="false" managed="false" onAction="#handleStartGame">
+            <VBox.margin><Insets top="30.0" /></VBox.margin>
         </Button>
     </VBox>
 
-    <AnchorPane fx:id="totemLayer" pickOnBounds="false"
-                AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0"
-                AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+    <VBox fx:id="redBox" alignment="CENTER" pickOnBounds="false" maxWidth="200" maxHeight="250">
+        <Label fx:id="nameRed" styleClass="totem-name-label" />
+        <ImageView fx:id="totemRed" preserveRatio="true" styleClass="totem-button" onMouseClicked="#handleTotemSelection" />
+    </VBox>
 
-        <VBox alignment="BOTTOM_CENTER" spacing="15" prefWidth="250.0"
-              AnchorPane.bottomAnchor="100.0" AnchorPane.leftAnchor="244.0">
-            <Label fx:id="nameRed" styleClass="totem-name-label" />
-            <ImageView fx:id="totemRed" fitHeight="200.0" preserveRatio="true"
-                       styleClass="totem-button" onMouseClicked="#handleTotemSelection" />
-        </VBox>
+    <VBox fx:id="yellowBox" alignment="CENTER" pickOnBounds="false" maxWidth="200" maxHeight="250">
+        <Label fx:id="nameYellow" styleClass="totem-name-label" />
+        <ImageView fx:id="totemYellow" preserveRatio="true" styleClass="totem-button" onMouseClicked="#handleTotemSelection" />
+    </VBox>
 
-        <VBox alignment="BOTTOM_CENTER" spacing="15" prefWidth="250.0"
-              AnchorPane.bottomAnchor="205.0" AnchorPane.leftAnchor="434.0">
-            <Label fx:id="nameYellow" styleClass="totem-name-label" />
-            <ImageView fx:id="totemYellow" fitHeight="200.0" preserveRatio="true"
-                       styleClass="totem-button" onMouseClicked="#handleTotemSelection" />
-        </VBox>
+    <VBox fx:id="blueBox" alignment="CENTER" pickOnBounds="false" maxWidth="200" maxHeight="250">
+        <Label fx:id="nameBlue" styleClass="totem-name-label" />
+        <ImageView fx:id="totemBlue" preserveRatio="true" styleClass="totem-button, mirrored" onMouseClicked="#handleTotemSelection" />
+    </VBox>
 
-        <VBox alignment="BOTTOM_CENTER" spacing="15" prefWidth="250.0"
-              AnchorPane.bottomAnchor="250.0" AnchorPane.rightAnchor="574.0">
-            <Label fx:id="nameBlue" styleClass="totem-name-label" />
-            <ImageView fx:id="totemBlue" fitHeight="200.0" preserveRatio="true"
-                       styleClass="totem-button, mirrored" onMouseClicked="#handleTotemSelection" />
-        </VBox>
+    <VBox fx:id="blackBox" alignment="CENTER" pickOnBounds="false" maxWidth="200" maxHeight="250">
+        <Label fx:id="nameBlack" styleClass="totem-name-label" />
+        <ImageView fx:id="totemBlack" preserveRatio="true" styleClass="totem-button, mirrored" onMouseClicked="#handleTotemSelection" />
+    </VBox>
 
-        <VBox alignment="BOTTOM_CENTER" spacing="15" prefWidth="250.0"
-              AnchorPane.bottomAnchor="170.0" AnchorPane.rightAnchor="364.0">
-            <Label fx:id="nameBlack" styleClass="totem-name-label" />
-            <ImageView fx:id="totemBlack" fitHeight="200.0" preserveRatio="true"
-                       styleClass="totem-button, mirrored" onMouseClicked="#handleTotemSelection" />
-        </VBox>
+    <VBox fx:id="whiteBox" alignment="CENTER" pickOnBounds="false" maxWidth="200" maxHeight="250">
+        <Label fx:id="nameWhite" styleClass="totem-name-label" />
+        <ImageView fx:id="totemWhite" preserveRatio="true" styleClass="totem-button, mirrored" onMouseClicked="#handleTotemSelection" />
+    </VBox>
 
-        <VBox alignment="BOTTOM_CENTER" spacing="15" prefWidth="250.0"
-              AnchorPane.bottomAnchor="115.0" AnchorPane.rightAnchor="209.0">
-            <Label fx:id="nameWhite" styleClass="totem-name-label" />
-            <ImageView fx:id="totemWhite" fitHeight="200.0" preserveRatio="true"
-                       styleClass="totem-button, mirrored" onMouseClicked="#handleTotemSelection" />
-        </VBox>
-    </AnchorPane>
-
-    <HBox alignment="CENTER_RIGHT" spacing="15" AnchorPane.topAnchor="20.0" AnchorPane.rightAnchor="25.0">
-        <Label text="Regole del gioco" styleClass="info-label" mouseTransparent="true"/>
-        <Button text="i" styleClass="info-button" onAction="#handleOpenRules"/>
-    </HBox>
-
-    <StackPane fx:id="rulesOverlay" visible="false" managed="false" styleClass="rules-overlay"
-               AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0"
-               AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
-
-        <VBox alignment="CENTER" spacing="2" styleClass="rules-book-container" maxHeight="800" maxWidth="1426">
-
+    <StackPane fx:id="rulesOverlay" visible="false" managed="false" styleClass="rules-overlay" pickOnBounds="false">
+        <VBox alignment="CENTER" spacing="2" styleClass="rules-book-container" maxHeight="715" maxWidth="1275">
             <HBox alignment="CENTER_RIGHT">
                 <Button text="X" styleClass="close-button" onAction="#handleCloseRules"/>
             </HBox>
-
             <HBox alignment="CENTER" spacing="15">
-                <ImageView fx:id="leftPageImage" fitWidth="700" fitHeight="728" preserveRatio="true"/>
-                <ImageView fx:id="rightPageImage" fitWidth="700" fitHeight="728" preserveRatio="true"/>
+                <ImageView fx:id="leftPageImage" fitWidth="620" fitHeight="645" preserveRatio="true"/>
+                <ImageView fx:id="rightPageImage" fitWidth="620" fitHeight="645" preserveRatio="true"/>
             </HBox>
-
             <HBox alignment="CENTER" spacing="60">
-                <VBox.margin>
-                    <Insets top="2.0" bottom="2.0"/>
-                </VBox.margin>
+                <VBox.margin><Insets top="2.0" bottom="2.0"/></VBox.margin>
                 <Button fx:id="prevPageButton" text="&lt;" styleClass="nav-button" onAction="#handlePrevPage"/>
                 <Label fx:id="pageLabel" text="1-2 / 8" styleClass="page-label"/>
                 <Button fx:id="nextPageButton" text="&gt;" styleClass="nav-button" onAction="#handleNextPage"/>
@@ -96,4 +69,4 @@
         </VBox>
     </StackPane>
 
-</AnchorPane>
+</StackPane>

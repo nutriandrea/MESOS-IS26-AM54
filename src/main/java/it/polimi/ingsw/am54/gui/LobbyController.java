@@ -12,7 +12,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.event.ActionEvent;
 import javafx.scene.layout.StackPane;
-import javafx.scene.image.Image;
+import javafx.scene.layout.VBox;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -25,6 +25,14 @@ import java.util.Map;
 import java.util.List;
 
 public class LobbyController {
+
+    @FXML private StackPane lobbyRoot;
+
+    @FXML private VBox redBox;
+    @FXML private VBox yellowBox;
+    @FXML private VBox blueBox;
+    @FXML private VBox blackBox;
+    @FXML private VBox whiteBox;
 
     @FXML private ImageView totemRed;
     @FXML private ImageView totemYellow;
@@ -62,6 +70,36 @@ public class LobbyController {
 
     @FXML
     public void initialize() {
+        double totemSizeScale = 0.23;
+        totemRed.fitHeightProperty().bind(lobbyRoot.heightProperty().multiply(totemSizeScale));
+        totemYellow.fitHeightProperty().bind(lobbyRoot.heightProperty().multiply(0.21));
+        totemBlue.fitHeightProperty().bind(lobbyRoot.heightProperty().multiply(totemSizeScale));
+        totemBlack.fitHeightProperty().bind(lobbyRoot.heightProperty().multiply(totemSizeScale));
+        totemWhite.fitHeightProperty().bind(lobbyRoot.heightProperty().multiply(totemSizeScale));
+
+        List<VBox> allBoxes = List.of(redBox, yellowBox, blueBox, blackBox, whiteBox);
+
+        for (VBox box : allBoxes) {
+            box.setSpacing(30);
+            box.setOnMouseEntered(e -> box.toFront());
+            box.setOnMouseExited(e -> bringMyTotemToFront());
+        }
+
+        redBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(-0.255));
+        redBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.388).subtract(redBox.heightProperty().divide(2)));
+
+        yellowBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(-0.127));
+        yellowBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.292).subtract(yellowBox.heightProperty().divide(2)));
+
+        blueBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(0.037));
+        blueBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.240).subtract(blueBox.heightProperty().divide(2)));
+
+        blackBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(0.180));
+        blackBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.330).subtract(blackBox.heightProperty().divide(2)));
+
+        whiteBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(0.279));
+        whiteBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.385).subtract(whiteBox.heightProperty().divide(2)));
+
         totemMap = new HashMap<>();
         totemMap.put("red", totemRed);
         totemMap.put("yellow", totemYellow);
@@ -88,15 +126,11 @@ public class LobbyController {
 
         for (int i = 1; i <= TOTAL_PAGES; i++) {
             String path = "/images/rules/page_" + i + ".jpg";
-            try {
-                rulePages.add(new javafx.scene.image.Image(getClass().getResourceAsStream(path)));
-            } catch (Exception e) {
-                System.err.println("Immagine regola non trovata: " + path);
-            }
+            try { rulePages.add(new javafx.scene.image.Image(getClass().getResourceAsStream(path))); } catch (Exception e) {}
         }
 
         dotAnimation = new Timeline(new KeyFrame(Duration.millis(750), e -> {
-            dotCount = (dotCount + 1) % 4; // Cicla tra 0, 1, 2, 3
+            dotCount = (dotCount + 1) % 4;
             subtitleLabel.setText(baseWaitingText + dotStates[dotCount]);
         }));
         dotAnimation.setCycleCount(Animation.INDEFINITE);
@@ -107,14 +141,8 @@ public class LobbyController {
     private void loadImage(ImageView imageView, String string) {
         try {
             URL url = getClass().getResource(string);
-            if (url != null) {
-                imageView.setImage(new Image(url.toExternalForm()));
-            } else {
-                System.err.println("Impossibile trovare l'immagine: " + string);
-            }
-        } catch (Exception e) {
-            System.err.println("Errore nel caricamento di " + string + ": " + e.getMessage());
-        }
+            if (url != null) imageView.setImage(new Image(url.toExternalForm()));
+        } catch (Exception e) {}
     }
 
     private void updateLobbyUI() {
@@ -126,19 +154,11 @@ public class LobbyController {
         }
 
         for (ImageView imageView : totemMap.values()) {
-            imageView.getStyleClass().removeAll(
-                    "totem-selected-red",
-                    "totem-selected-yellow",
-                    "totem-selected-blue",
-                    "totem-selected-black",
-                    "totem-selected-white"
-            );
+            imageView.getStyleClass().removeAll("totem-selected-red", "totem-selected-yellow", "totem-selected-blue", "totem-selected-black", "totem-selected-white");
             imageView.setOpacity(1.0);
-
             imageView.setDisable(false);
         }
 
-        // Ora la mappa utilizza TotemColors come valore
         Map<String, TotemColors> playerColors = model.getPlayerColors();
         List<String> players = model.getPlayers();
 
@@ -146,23 +166,35 @@ public class LobbyController {
         boolean isHost = players != null && !players.isEmpty() && players.get(0).equals(myNickname);
         int playerCount = players != null ? players.size() : 0;
 
+        // LA CORREZIONE DEL BUG: Verifica che TUTTI i player loggati abbiano inserito un colore
+        boolean everyoneHasChosen = playerColors != null && players != null && playerColors.size() == players.size();
+
         if (!hasChosenTotem) {
             setSubtitleText("SCEGLI IL TUO TOTEM!", false);
             startButton.setVisible(false);
             startButton.setManaged(false);
         } else {
             if (isHost) {
-                if (playerCount > 1) {
+                // IL PULSANTE APPARE SOLO SE CI SONO ALMENO 2 STRUTTURE E TUTTI HANNO SCELTO
+                if (playerCount > 1 && everyoneHasChosen) {
                     setSubtitleText("Premi Start quando vuoi iniziare la partita!", false);
                     startButton.setVisible(true);
                     startButton.setManaged(true);
+                } else if (playerCount > 1) {
+                    setSubtitleText("In attesa che gli altri scelgano il totem", true);
+                    startButton.setVisible(false);
+                    startButton.setManaged(false);
                 } else {
                     setSubtitleText("In attesa di altri giocatori", true);
                     startButton.setVisible(false);
                     startButton.setManaged(false);
                 }
             } else {
-                setSubtitleText("In attesa che l'host avvii la partita", true);
+                if (everyoneHasChosen) {
+                    setSubtitleText("In attesa che l'host avvii la partita", true);
+                } else {
+                    setSubtitleText("In attesa che tutti scelgano il totem", true);
+                }
                 startButton.setVisible(false);
                 startButton.setManaged(false);
             }
@@ -172,112 +204,68 @@ public class LobbyController {
 
         for (Map.Entry<String, TotemColors> entry : playerColors.entrySet()) {
             String player = entry.getKey();
-            // Convertiamo l'enum in stringa minuscola per usarla con le nostre labelMap e totemMap
             String color = entry.getValue().name().toLowerCase();
 
             if (labelMap.containsKey(color) && totemMap.containsKey(color)) {
                 Label label = labelMap.get(color);
                 ImageView totem = totemMap.get(color);
-
                 label.setText(player.toUpperCase());
 
                 if (player.equals(myNickname)) {
                     totem.getStyleClass().add("totem-selected-" + color);
                 } else {
                     totem.setOpacity(0.7);
-
                     totem.setDisable(true);
                 }
             }
         }
+        bringMyTotemToFront();
     }
 
     @FXML
     private void handleTotemSelection(MouseEvent event) {
         ImageView clicked = (ImageView) event.getSource();
-
-        // Estraiamo il colore come stringa maiuscola dall'ID (es: "totemRed" -> "RED")
         String colorString = clicked.getId().replace("totem", "").toUpperCase();
-
         TotemColors chosenColor;
-        try {
-            chosenColor = TotemColors.valueOf(colorString);
-        } catch (IllegalArgumentException e) {
-            System.err.println("Colore del totem non riconosciuto: " + colorString);
-            return;
-        }
+        try { chosenColor = TotemColors.valueOf(colorString); } catch (IllegalArgumentException e) { return; }
 
         ClientModel model = Client.getInstance().getModel();
         String myNickname = Client.getInstance().getNickname();
         Map<String, TotemColors> playerColors = model.getPlayerColors();
 
-        // Controlliamo se qualcuno (diverso da noi) ha già scelto questo specifico Enum
         if (playerColors != null) {
             for (Map.Entry<String, TotemColors> entry : playerColors.entrySet()) {
-                if (entry.getValue() == chosenColor && !entry.getKey().equals(myNickname)) {
-                    System.out.println("Colore occupato da: " + entry.getKey());
-                    return;
-                }
+                if (entry.getValue() == chosenColor && !entry.getKey().equals(myNickname)) return;
             }
         }
-
-        try {
-            Client.getInstance().getConnection().chooseTotem(chosenColor);
-        } catch (Exception e) {
-            System.err.println("Errore invio totem: " + e.getMessage());
-        }
+        try { Client.getInstance().getConnection().chooseTotem(chosenColor); } catch (Exception e) {}
     }
 
     @FXML
     private void handleStartGame(ActionEvent event) {
         try {
-
             Client.getInstance().getConnection().setupGame();
             setSubtitleText("Avvio partita in corso", true);
-        } catch (Exception e) {
-            System.err.println("Errore durante l'avvio della partita: " + e.getMessage());
-        }
+        } catch (Exception e) {}
     }
 
-    @FXML
-    private void handleOpenRules() {
-        rulesOverlay.setVisible(true);
-        rulesOverlay.setManaged(true);
-        updateRulesUI();
-    }
-
-    @FXML
-    private void handleCloseRules() {
-        rulesOverlay.setVisible(false);
-        rulesOverlay.setManaged(false);
-    }
+    @FXML private void handleOpenRules() { rulesOverlay.toFront(); rulesOverlay.setVisible(true); rulesOverlay.setManaged(true); updateRulesUI(); }
+    @FXML private void handleCloseRules() { rulesOverlay.setVisible(false); rulesOverlay.setManaged(false); }
 
     @FXML
     private void handleNextPage() {
-        if (currentLeftPageIndex + 2 < TOTAL_PAGES) {
-            currentLeftPageIndex += 2;
-            updateRulesUI();
-        }
+        if (currentLeftPageIndex + 2 < TOTAL_PAGES) { currentLeftPageIndex += 2; updateRulesUI(); }
     }
 
     @FXML
     private void handlePrevPage() {
-        if (currentLeftPageIndex - 2 >= 0) {
-            currentLeftPageIndex -= 2;
-            updateRulesUI();
-        }
+        if (currentLeftPageIndex - 2 >= 0) { currentLeftPageIndex -= 2; updateRulesUI(); }
     }
 
     private void updateRulesUI() {
         if (rulePages.isEmpty()) return;
-
-        if (currentLeftPageIndex < rulePages.size()) {
-            leftPageImage.setImage(rulePages.get(currentLeftPageIndex));
-        }
-
-        if (currentLeftPageIndex + 1 < rulePages.size()) {
-            rightPageImage.setImage(rulePages.get(currentLeftPageIndex + 1));
-        }
+        if (currentLeftPageIndex < rulePages.size()) leftPageImage.setImage(rulePages.get(currentLeftPageIndex));
+        if (currentLeftPageIndex + 1 < rulePages.size()) rightPageImage.setImage(rulePages.get(currentLeftPageIndex + 1));
 
         prevPageButton.setDisable(currentLeftPageIndex == 0);
         nextPageButton.setDisable(currentLeftPageIndex + 2 >= TOTAL_PAGES);
@@ -290,16 +278,28 @@ public class LobbyController {
     private void setSubtitleText(String text, boolean animate) {
         if (animate) {
             baseWaitingText = text;
-
-            if (dotAnimation.getStatus() != Animation.Status.RUNNING) {
-                dotCount = 0;
-                dotAnimation.playFromStart();
-            }
+            if (dotAnimation.getStatus() != Animation.Status.RUNNING) { dotCount = 0; dotAnimation.playFromStart(); }
             subtitleLabel.setText(baseWaitingText + dotStates[dotCount]);
-
         } else {
             dotAnimation.stop();
             subtitleLabel.setText(text);
+        }
+    }
+
+    private void bringMyTotemToFront() {
+        ClientModel model = Client.getInstance().getModel();
+        String myNickname = Client.getInstance().getNickname();
+        if (model != null && model.getPlayerColors() != null && myNickname != null) {
+            TotemColors myColor = model.getPlayerColors().get(myNickname);
+            if (myColor != null) {
+                switch (myColor.name().toLowerCase()) {
+                    case "red": redBox.toFront(); break;
+                    case "yellow": yellowBox.toFront(); break;
+                    case "blue": blueBox.toFront(); break;
+                    case "black": blackBox.toFront(); break;
+                    case "white": whiteBox.toFront(); break;
+                }
+            }
         }
     }
 }

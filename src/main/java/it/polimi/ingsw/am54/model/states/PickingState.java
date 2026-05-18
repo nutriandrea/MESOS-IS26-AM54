@@ -87,7 +87,8 @@ public class PickingState extends GameState {
         card.pick(player, game);
 
         int finalFood = player.getFood();
-        game.notifyCardPicked(player, row, cardIndex, finalFood);
+        int finalMagic = player.getMagicPoints();
+        game.notifyCardPicked(player, row, cardIndex, finalFood, finalMagic);
 
         // ==========================================
         // 4. AUTO-FINE TURNO

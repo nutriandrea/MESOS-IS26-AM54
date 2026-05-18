@@ -65,6 +65,10 @@ public class DeckFactory {
 
                 card.setName(nomeLambda);
 
+                if (node.has("imageId")) {
+                    card.setImageId(node.get("imageId").asText());
+                }
+
                 if (era == 1) e1.add(card);
                 else if (era == 2) e2.add(card);
                 else if (era == 3) e3.add(card);
@@ -145,6 +149,10 @@ public class DeckFactory {
                     effects.add(createCharacterEffect(characterType));
 
                     CharacterCard card = new CharacterCard(level, type, aura, phase, effects, era);
+                    card.setMinPlayers(minPlayers);
+                    if (node.has("imageId")) {
+                        card.setImageId(node.get("imageId").asText());
+                    }
                     if (era == 1) charE1.add(card);
                     else if (era == 2) charE2.add(card);
                     else charE3.add(card);
@@ -182,6 +190,10 @@ public class DeckFactory {
                 );
 
                 event.setName(etichetta);
+
+                if (node.has("imageId")) {
+                    event.setImageId(node.get("imageId").asText());
+                }
 
                 if (finalEvent) {
                     finalEvents.add(event);

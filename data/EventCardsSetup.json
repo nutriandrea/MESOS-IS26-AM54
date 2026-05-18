@@ -4,39 +4,45 @@
     "etichettaSottoclasse": "HUNTER",
     "era": 1,
     "baseFood": 1,
-    "auraPerCharacter": 1
+    "auraPerCharacter": 1,
+    "imageId": 84
   },
   {
     "finalEvent": false,
     "etichettaSottoclasse": "HUNTER",
     "era": 2,
     "baseFood": 1,
-    "auraPerCharacter": 2
+    "auraPerCharacter": 2,
+    "imageId": 88
   },
   {
     "finalEvent": false,
     "etichettaSottoclasse": "HUNTER",
     "era": 3,
     "baseFood": 1,
-    "auraPerCharacter": 3
+    "auraPerCharacter": 3,
+    "imageId": 92
   },
   {
     "finalEvent": false,
     "etichettaSottoclasse": "FARMER",
     "era": 1,
-    "auraPerCharacter": 1
+    "auraPerCharacter": 1,
+    "imageId": 85
   },
   {
     "finalEvent": false,
     "etichettaSottoclasse": "FARMER",
     "era": 2,
-    "auraPerCharacter": 2
+    "auraPerCharacter": 2,
+    "imageId": 89
   },
   {
     "finalEvent": true,
     "etichettaSottoclasse": "FARMER",
     "era": 3,
-    "auraPerCharacter": 3
+    "auraPerCharacter": 3,
+    "imageId": 94
   },
   {
     "finalEvent": false,
@@ -44,7 +50,8 @@
     "era": 1,
     "threshold": 0,
     "bonusMultiplier": 1,
-    "penalty": 2
+    "penalty": 2,
+    "imageId": 87
   },
   {
     "finalEvent": false,
@@ -52,7 +59,8 @@
     "era": 2,
     "threshold": 2,
     "bonusMultiplier": 2,
-    "penalty": 2
+    "penalty": 2,
+    "imageId": 91
   },
   {
     "finalEvent": false,
@@ -60,27 +68,31 @@
     "era": 3,
     "threshold": 3,
     "bonusMultiplier": 3,
-    "penalty": 2
+    "penalty": 2,
+    "imageId": 93
   },
   {
     "finalEvent": false,
     "etichettaSottoclasse": "SHAMAN",
     "era": 1,
     "bonus": 5,
-    "malus": 3
+    "malus": 3,
+    "imageId": 86
   },
   {
     "finalEvent": false,
     "etichettaSottoclasse": "SHAMAN",
     "era": 2,
     "bonus": 10,
-    "malus": 5
+    "malus": 5,
+    "imageId": 90
   },
   {
     "finalEvent": true,
     "etichettaSottoclasse": "SHAMAN",
     "era": 3,
     "bonus": 15,
-    "malus": 7
+    "malus": 7,
+    "imageId": 95
   }
 ]

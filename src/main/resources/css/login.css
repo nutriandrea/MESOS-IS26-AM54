@@ -3,7 +3,8 @@
 .login-background {
     -fx-background-image: url("../images/sfondo_login.jpg");
     -fx-background-size: cover;
-    -fx-background-position: center;
+    -fx-background-position: center center;
+
 }
 
 .gold-text {

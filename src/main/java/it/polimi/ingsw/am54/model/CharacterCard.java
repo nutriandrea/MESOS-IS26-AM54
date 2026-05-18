@@ -10,7 +10,15 @@ public class CharacterCard extends TribeCard implements IDrawable {
     private int aura;
     private Phases phase;
     private List<IEffect<CharacterCard>> effects;
+    private int minPlayers;
 
+    public int getMinPlayers() {
+        return minPlayers;
+    }
+
+    public void setMinPlayers(int minPlayers) {
+        this.minPlayers = minPlayers;
+    }
     public int getAura() {
         return aura;
     }

@@ -97,8 +97,8 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
 
     @Override
     public void onCardPicked(String nickname, String row, int cardIndex,
-                             int newFood, Map<Integer, String> offering) throws RemoteException {
-        clientModel.updateCardPicked(nickname, row, cardIndex, newFood, offering);
+                             int newFood, int newMagic, Map<Integer, String> offering) throws RemoteException {
+        clientModel.updateCardPicked(nickname, row, cardIndex, newFood, newMagic, offering);
     }
 
     @Override
@@ -107,12 +107,12 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     }
 
     @Override
-    public void onEventResolved(Map<String, EventUpdate.PlayerSnapshot> stats,
+    public void onEventResolved(String name, Map<String, EventUpdate.PlayerSnapshot> stats,
                                 List<String> charUp, List<String> charLow,
                                 List<String> eventUp, List<String> eventLow,
                                 List<String> buildUp, List<String> buildLow) throws RemoteException {
         // Ricostruiamo il DTO localmente solo per comodità
-        EventUpdate localSnapshot = new EventUpdate(stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
+        EventUpdate localSnapshot = new EventUpdate(name,stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
         clientModel.updateEventSnapshot(localSnapshot);
     }
 

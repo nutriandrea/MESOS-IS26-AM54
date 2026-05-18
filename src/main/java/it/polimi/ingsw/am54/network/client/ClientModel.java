@@ -43,6 +43,17 @@ public class ClientModel {
 
     private String lastSystemMessage;
 
+    private final java.util.List<EventReport> pendingEventReports = new java.util.ArrayList<>();
+    private java.util.function.Consumer<java.util.List<EventReport>> onEventResolvedCallback;
+
+    public void setOnEventResolvedCallback(java.util.function.Consumer<java.util.List<EventReport>> callback) {
+        this.onEventResolvedCallback = callback;
+    }
+
+    public synchronized void clearPendingEvents() {
+        this.pendingEventReports.clear();
+    }
+
     public void setOnModelUpdatedCallback(Runnable callback) {
         this.onModelUpdatedCallback = callback;
     }
@@ -115,6 +126,8 @@ public class ClientModel {
 
     /** Mappa nickname -> punti aura */
     private final Map<String, Integer> playerAura = new HashMap<>();
+
+    private final Map<String, Integer> playerMagic = new HashMap<>();
 
     /** Mappa nickname -> lista delle carte tribu' (personaggi) possedute */
     private final Map<String, List<String>> playerTribe = new HashMap<>();
@@ -267,39 +280,40 @@ public class ClientModel {
      * @param index indice della carta nella riga
      * @param newFoodBalance nuovo bilancio cibo del giocatore
      */
-    public synchronized void updateCardPicked(String nickname, String row, int index, int newFoodBalance, java.util.Map<Integer, String> updatedOffering) {
+
+    public synchronized void updateCardPicked(String nickname, String row, int index, int newFoodBalance, int newMagicBalance, java.util.Map<Integer, String> updatedOffering) {
         boolean isUpper = row.equalsIgnoreCase("upper");
-        if(isUpper){
-            if(index < characterUpperRow.size()) {
-                // Carta personaggio dalla fila superiore
+        if (isUpper) {
+            if (index < characterUpperRow.size()) {
                 String temp = characterUpperRow.get(index);
                 characterUpperRow.remove(index);
-                playerTribe.get(nickname).add(temp);
+                playerTribe.computeIfAbsent(nickname, k -> new java.util.ArrayList<>()).add(temp);
             } else {
-                // Carta edificio dalla fila superiore
                 int buildingIndex = index - characterUpperRow.size();
-                String temp = upperBuildingRow.get(buildingIndex);
-                upperBuildingRow.remove(buildingIndex);
-                playerFood.put(nickname, newFoodBalance);
-                playerBuildings.get(nickname).add(temp);
+                if (buildingIndex < upperBuildingRow.size()) {
+                    String temp = upperBuildingRow.get(buildingIndex);
+                    upperBuildingRow.remove(buildingIndex);
+                    playerBuildings.computeIfAbsent(nickname, k -> new java.util.ArrayList<>()).add(temp);
+                }
             }
         } else {
-            if(index < characterLowerRow.size()) {
-                // Carta personaggio dalla fila inferiore
+            if (index < characterLowerRow.size()) {
                 String temp = characterLowerRow.get(index);
                 characterLowerRow.remove(index);
-                playerTribe.get(nickname).add(temp);
+                playerTribe.computeIfAbsent(nickname, k -> new java.util.ArrayList<>()).add(temp);
             } else {
-                // Carta edificio dalla fila inferiore
                 int buildingIndex = index - characterLowerRow.size();
-                String temp = lowerBuildingRow.get(buildingIndex);
-                lowerBuildingRow.remove(buildingIndex);
-                playerFood.put(nickname, newFoodBalance);
-                playerBuildings.get(nickname).add(temp);
+                if (buildingIndex < lowerBuildingRow.size()) {
+                    String temp = lowerBuildingRow.get(buildingIndex);
+                    lowerBuildingRow.remove(buildingIndex);
+                    playerBuildings.computeIfAbsent(nickname, k -> new java.util.ArrayList<>()).add(temp);
+                }
             }
         }
 
         playerFood.put(nickname, newFoodBalance);
+        playerMagic.put(nickname, newMagicBalance); // Aggiornamento istantaneo del contatore Magia!
+
         this.offeringTrack.clear();
         this.offeringTrack.putAll(updatedOffering);
         notifyUI();
@@ -319,16 +333,38 @@ public class ClientModel {
     }
 
     public synchronized void updateEventSnapshot(EventUpdate msg) {
-        // Aggiorna Risorse di TUTTI i Giocatori simultaneamente
+        EventReport report = new EventReport();
+        report.eventName = msg.getEventName() != null ? msg.getEventName() : "Risoluzione Eventi";
+
+        // Aggiorna Risorse di TUTTI i Giocatori simultaneamente (LA TUA LOGICA INTATTA)
         msg.getPlayersStats().forEach((nick, stats) -> {
+
+            // <-- CATTURA DATI PRIMA DELLA SOVRASCRITTURA -->
+            PlayerDelta pd = new PlayerDelta();
+            pd.nickname = nick;
+            pd.oldFood = playerFood.getOrDefault(nick, 0);
+            pd.oldAura = playerAura.getOrDefault(nick, 0);
+            pd.oldMagic = playerMagic.getOrDefault(nick, 0);
+            pd.diffFood = stats.food - pd.oldFood;
+            pd.diffAura = stats.aura - pd.oldAura;
+            pd.diffMagic = stats.magicPoints - pd.oldMagic;
+            report.playerDeltas.add(pd);
+            // <--------------------------------------------->
+
             playerFood.put(nick, stats.food);
             playerAura.put(nick, stats.aura);
-            playerTribe.put(nick, new ArrayList<>(stats.tribe));
-            playerBuildings.put(nick, new ArrayList<>(stats.buildings));
-            // playerMagicPoints.put(nick, stats.magicPoints); // (Se serve per la GUI)
+            playerMagic.put(nick, stats.magicPoints);
+            playerTribe.put(nick, new java.util.ArrayList<>(stats.tribe));
+            playerBuildings.put(nick, new java.util.ArrayList<>(stats.buildings));
         });
 
-        // Pialla e Ricostruisci la Board in un colpo solo
+        // Memorizza l'evento e notifica la GUI
+        pendingEventReports.add(report);
+        if (onEventResolvedCallback != null) {
+            onEventResolvedCallback.accept(new java.util.ArrayList<>(pendingEventReports));
+        }
+
+        // Pialla e Ricostruisci la Board in un colpo solo (LA TUA LOGICA INTATTA)
         characterUpperRow.clear(); characterUpperRow.addAll(msg.getCharUpper());
         characterLowerRow.clear(); characterLowerRow.addAll(msg.getCharLower());
         eventUpperRow.clear();     eventUpperRow.addAll(msg.getEventUpper());
@@ -350,6 +386,7 @@ public class ClientModel {
             playerColors.put(nick, stats.color);
             playerFood.put(nick, stats.food);
             playerAura.put(nick, stats.aura);
+            playerMagic.put(nick, stats.magicPoints);
             playerTribe.put(nick, new ArrayList<>(stats.tribe));
             playerBuildings.put(nick, new ArrayList<>(stats.buildings));
         });
@@ -464,6 +501,7 @@ public class ClientModel {
     public synchronized int getCurrentEra() { return currentEra; }
     public synchronized Map<String, Integer> getPlayerFood() { return playerFood; }
     public synchronized Map<String, Integer> getPlayerAura() { return playerAura; }
+    public synchronized Map<String, Integer> getPlayerMagic() { return playerMagic; }
     public synchronized Map<String, List<String>> getPlayerTribe() { return playerTribe; }
     public synchronized Map<String, List<String>> getPlayerBuildings() { return playerBuildings; }
     public synchronized int getRoundCount() { return currentRound; }

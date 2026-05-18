@@ -24,13 +24,15 @@ public class EventUpdate implements Update {
         }
     }
 
+    private final String eventName;
     private final Map<String, PlayerSnapshot> playersStats;
     private final List<String> charUpper, charLower, eventUpper, eventLower, buildUpper, buildLower;
 
-    public EventUpdate(Map<String, PlayerSnapshot> playersStats,
+    public EventUpdate(String eventName, Map<String, PlayerSnapshot> playersStats,
                        List<String> charUpper, List<String> charLower,
                        List<String> eventUpper, List<String> eventLower,
                        List<String> buildUpper, List<String> buildLower) {
+        this.eventName = eventName;
         this.playersStats = playersStats;
         this.charUpper = charUpper;
         this.charLower = charLower;
@@ -40,6 +42,7 @@ public class EventUpdate implements Update {
         this.buildLower = buildLower;
     }
 
+    public String getEventName() { return eventName; }
     public Map<String, PlayerSnapshot> getPlayersStats() { return playersStats; }
     public List<String> getCharUpper() { return charUpper; }
     public List<String> getCharLower() { return charLower; }

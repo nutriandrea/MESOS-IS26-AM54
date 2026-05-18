@@ -16,11 +16,11 @@ public interface RMIClientInterface extends Remote {
     void onTotemColorChosen(String nickname, TotemColors color) throws RemoteException;
     void onTotemPlaced(String nickname, int position) throws RemoteException;
     void onTotemReturned(String nickname, int food, int aura) throws RemoteException;
-    void onEventResolved(Map<String, EventUpdate.PlayerSnapshot> stats,
+    void onEventResolved(String name, Map<String, EventUpdate.PlayerSnapshot> stats,
                          List<String> charUp, List<String> charLow, List<String> eventUp, List<String> eventLow,
                          List<String> buildUp, List<String> buildLow)  throws RemoteException;
     void onCardPicked(String nickname, String row, int cardIndex,
-                      int newFood, Map<Integer, String> offering)
+                      int newFood, int newMagic, Map<Integer, String> offering)
             throws RemoteException;
     void onTurnChanged(String nickname) throws RemoteException;
     void onStateChanged(String stateName, int era, int currentRound, Map<String, StateChangedUpdate.PlayerSnapshot> players,

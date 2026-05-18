@@ -1,0 +1,323 @@
+.root-pane {
+    -fx-background-color: #1a1a1a;
+}
+
+.board-background {
+    -fx-background-image: url("../images/sfondo_board.jpg");
+    -fx-background-size: cover;
+    -fx-background-position: center center;
+}
+
+/* --- ELEMENTI DEI MAZZI --- */
+.deck-container {
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 10, 0, 0, 5);
+}
+
+.deck-shadow {
+    -fx-background-color: #2b1f1a;
+    -fx-background-radius: 8;
+    -fx-max-width: 135;
+    -fx-max-height: 190;
+    -fx-translate-x: 4;
+    -fx-translate-y: 4;
+}
+
+.deck-image {
+    -fx-background-radius: 8;
+    -fx-smooth: true;
+}
+
+/* --- CARTE DEL MERCATO SCOPERTE --- */
+.market-card {
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.6), 6, 0, 0, 4);
+}
+
+/* --- TRACCIATI CENTRALI --- */
+.turn-order-container {
+    -fx-effect: dropshadow(three-pass-box, black, 10, 0, 0, 5);
+}
+
+.offering-tile-img {
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.7), 8, 0, 0, 4);
+}
+
+/* --- PULSANTE E OVERLAY RECAP --- */
+.recap-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.85);
+}
+
+.recap-button {
+    -fx-background-color: #d2b48c;
+    -fx-text-fill: #3e2723;
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20 10 20;
+    -fx-background-radius: 20;
+    -fx-border-color: #5d4037;
+    -fx-border-width: 2;
+    -fx-border-radius: 20;
+    -fx-border-insets: 3;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.6), 10, 0, 0, 5);
+}
+
+.recap-button:hover {
+    -fx-background-color: #e0c9a6;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.recap-image {
+    -fx-effect: dropshadow(three-pass-box, black, 20, 0, 0, 10);
+    -fx-background-radius: 15;
+}
+
+.recap-close-button {
+    -fx-background-color: #ff4444;
+    -fx-text-fill: white;
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 16px;
+    -fx-padding: 10 30 10 30;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.recap-close-button:hover {
+    -fx-background-color: #ff4444;
+    -fx-effect: dropshadow(three-pass-box, rgb(255, 68, 68), 20, 0, 0, 0);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+/* --- PERSONAL DASHBOARD SUL FONDO --- */
+.dashboard-panel {
+    -fx-background-color: rgba(25, 20, 15, 0.89);
+    -fx-background-radius: 20 20 0 0;
+    -fx-border-radius: 20 20 0 0;
+    -fx-border-color: #d4af37;
+    -fx-border-width: 2 2 0 2;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.7), 15, 0, 0, -5);
+}
+
+.status-text-resource {
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #fffdf0;
+}
+
+.status-text-count {
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 15px;
+    -fx-text-fill: #bda06d;
+}
+
+.status-text-hint {
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 12px;
+    -fx-text-fill: #8f8f8f;
+    -fx-font-style: italic;
+}
+
+.dashboard-cards-area {
+    -fx-background-color: rgba(10, 8, 5, 0.6);
+}
+
+.hand-card {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 8, 0, 2, 4);
+    -fx-transition: 0.2s;
+}
+.hand-card:hover {
+    -fx-scale-x: 1.08;
+    -fx-scale-y: 1.08;
+}
+
+/* --- SCROLLPANE ANTI-TAGLIO --- */
+/* Rimuove sfondi e bordi da contenitore e viewport */
+.dashboard-scroll-pane,
+.dashboard-scroll-pane .viewport,
+.dashboard-scroll-pane .scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+/* Rende la barra sottile e scura */
+.dashboard-scroll-pane .scroll-bar:horizontal {
+    -fx-background-color: rgba(35, 30, 25, 0.5);
+    -fx-pref-height: 8px;
+}
+
+/* Maniglia dorata arrotondata */
+.dashboard-scroll-pane .scroll-bar:horizontal .thumb {
+    -fx-background-color: #d4af37;
+    -fx-background-radius: 4px;
+}
+
+/* Nasconde le freccette laterali */
+.dashboard-scroll-pane .scroll-bar .increment-button,
+.dashboard-scroll-pane .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* --- OVERLAY DETTAGLI AVVERSARI --- */
+.opponents-panel {
+    -fx-background-color: rgba(25, 20, 15, 0.80);
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: #d4af37;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 20, 0, 0, 0);
+    -fx-border-insets: 3;
+}
+
+.opponents-title {
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 26px;
+    -fx-text-fill: #d4af37;
+    -fx-font-weight: bold;
+}
+
+.opponent-box {
+    -fx-background-color: rgba(10, 8, 5, 0.7);
+    -fx-padding: 20;
+    -fx-border-color: #d4af37;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.opponent-name-label {
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 20px;
+    -fx-text-fill: #fffdf0;
+    -fx-font-weight: bold;
+}
+
+.opponent-scroll-pane {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.opponent-no-cards {
+    -fx-font-family: "Herculanum";
+    -fx-text-fill: #888888;
+    -fx-font-style: italic;
+}
+
+/* --- BANNER DINAMICO DI TURNO (BIANCO E PULITO IN ALTO) --- */
+.action-banner {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 15 0 0 0;
+    -fx-alignment: center;
+}
+
+.action-instruction-label {
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 32px;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
+}
+
+/* --- OVERLAY FLASH CAMBIO TURNO --- */
+.turn-notification-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.75);
+}
+
+.turn-notification-panel {
+    -fx-padding: 30;
+    -fx-border-width: 2;
+    -fx-cursor: default;
+
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+}
+
+.turn-title-mine {
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 28px;
+    -fx-text-fill: #d4af37;
+    -fx-font-weight: bold;
+}
+
+.turn-title-other {
+    -fx-font-family: "Herculanum";
+    -fx-font-size: 28px;
+    -fx-text-fill: #bda06d;
+    -fx-font-weight: bold;
+}
+
+/* --- EFFETTI CORRELATI --- */
+.totem-face {
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.9), 6, 0, 2, 2);
+}
+
+/* --- STILI OVERLAY RIEPILOGO EVENTI --- */
+
+.event-player-row {
+    -fx-background-color: rgba(255, 255, 255, 0.07);
+    -fx-padding: 12px 20px 12px 20px;
+    -fx-background-radius: 10px;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 10px;
+}
+
+.round-count-label {
+    -fx-font-family: "Herculanum"; /* FIX FONT */
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffd700;
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-padding: 8px 18px 8px 18px;
+    -fx-background-radius: 20px;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 20px;
+}
+
+.event-summary-title {
+    -fx-font-family: "Herculanum"; /* FIX FONT */
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffd700;
+    -fx-padding: 0 0 10px 0;
+}
+
+.event-player-name {
+    -fx-font-family: "Herculanum"; /* FIX FONT */
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 16px;
+}
+
+.event-player-activation {
+    -fx-font-family: "Herculanum"; /* FIX FONT */
+    -fx-text-fill: #cccccc;
+    -fx-font-size: 14px;
+}
+
+.event-delta-neutral {
+    -fx-font-family: "Herculanum"; /* FIX FONT */
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 14px;
+}
+
+.event-delta-positive {
+    -fx-font-family: "Herculanum"; /* FIX FONT */
+    -fx-font-weight: bold;
+    -fx-text-fill: #51cf66;
+    -fx-font-size: 14px;
+}
+
+.event-delta-negative {
+    -fx-font-family: "Herculanum"; /* FIX FONT */
+    -fx-font-weight: bold;
+    -fx-text-fill: #ff6b6b;
+    -fx-font-size: 14px;
+}

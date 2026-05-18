@@ -1,55 +1,106 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.Group?>
 <?import javafx.geometry.Insets?>
+<?import java.lang.String?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="it.polimi.ingsw.am54.gui.BoardController" prefWidth="1000" prefHeight="800">
-    <padding><Insets top="15" right="15" bottom="15" left="15"/></padding>
+<StackPane fx:id="rootPane" styleClass="root-pane" stylesheets="@../css/board.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="it.polimi.ingsw.am54.gui.BoardController">
+    <Region fx:id="backgroundLayer" styleClass="board-background" />
 
-    <top>
-        <VBox alignment="CENTER" spacing="5">
-            <Label fx:id="eraLabel" text="ERA: 1" style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
-            <Label fx:id="phaseLabel" text="Stato: Inizializzazione..." style="-fx-font-size: 16px;"/>
-            <Label fx:id="turnLabel" text="Tocca a: ..." style="-fx-font-size: 18px; -fx-text-fill: #0066cc; -fx-font-weight: bold;"/>
-            <Label fx:id="errorLabel" textFill="RED" style="-fx-font-weight: bold;"/>
-        </VBox>
-    </top>
+    <VBox alignment="CENTER" spacing="10.0">
+        <BorderPane fx:id="actionBanner" minHeight="60.0" styleClass="action-banner">
+            <left>
+                <HBox alignment="CENTER_LEFT" prefWidth="250.0" pickOnBounds="false">
+                    <padding><Insets left="40.0" /></padding>
+                    <Label fx:id="roundCountLabel" text="ROUND: 1" styleClass="round-count-label" />
+                </HBox>
+            </left>
 
-    <center>
-        <VBox spacing="20" alignment="CENTER">
+            <center>
+                <Label fx:id="actionInstructionLabel" wrapText="true" textAlignment="CENTER" alignment="CENTER" BorderPane.alignment="CENTER" text="In attesa del caricamento..." styleClass="action-instruction-label">
+                    <padding><Insets left="15.0" right="15.0" top="5.0" bottom="5.0"/></padding>
+                </Label>
+            </center>
 
-            <VBox spacing="5" style="-fx-border-color: #555555; -fx-border-width: 2; -fx-padding: 10;">
-                <Label text="FILA SUPERIORE" style="-fx-font-weight: bold;"/>
-                <HBox fx:id="upperRowBox" spacing="10" alignment="CENTER"/>
-            </VBox>
+            <right>
+                <HBox alignment="CENTER_RIGHT" prefWidth="250.0" pickOnBounds="false">
+                    <padding><Insets right="40.0" /></padding>
+                    <Button text="👥 AVVERSARI" styleClass="recap-button" onAction="#toggleOpponentsOverlay" />
+                </HBox>
+            </right>
+        </BorderPane>
 
-            <HBox spacing="30" alignment="CENTER">
-                <VBox spacing="5" style="-fx-border-color: #28a745; -fx-border-width: 2; -fx-padding: 10; -fx-background-color: #e6ffe6;">
-                    <Label text="Ordine di Turno" style="-fx-font-weight: bold;"/>
-                    <VBox fx:id="turnOrderBox" spacing="5"/>
-                </VBox>
-
-                <VBox spacing="5" style="-fx-border-color: #ffc107; -fx-border-width: 2; -fx-padding: 10; -fx-background-color: #fff8e1;">
-                    <Label text="Tessere Offerta" style="-fx-font-weight: bold;"/>
-                    <HBox fx:id="offeringTrackBox" spacing="10"/>
-                </VBox>
+        <HBox alignment="CENTER" spacing="40.0" VBox.vgrow="ALWAYS">
+            <padding><Insets left="40.0" right="40.0" top="10.0" /></padding>
+            <HBox fx:id="upperMarket" alignment="CENTER" spacing="15.0" />
+            <HBox alignment="CENTER" spacing="25.0">
+                <StackPane styleClass="deck-container"><Region styleClass="deck-shadow" /><ImageView fx:id="tribeDeckView" preserveRatio="true" styleClass="deck-image" /></StackPane>
+                <StackPane styleClass="deck-container"><Region styleClass="deck-shadow" /><ImageView fx:id="buildingsDeckView" preserveRatio="true" styleClass="deck-image" /></StackPane>
             </HBox>
+        </HBox>
 
-            <VBox spacing="5" style="-fx-border-color: #555555; -fx-border-width: 2; -fx-padding: 10;">
-                <Label text="FILA INFERIORE" style="-fx-font-weight: bold;"/>
-                <HBox fx:id="lowerRowBox" spacing="10" alignment="CENTER"/>
-            </VBox>
+        <HBox fx:id="middleRow" alignment="CENTER" spacing="30.0" VBox.vgrow="ALWAYS">
+            <StackPane fx:id="turnOrderContainer" styleClass="turn-order-container">
+                <Group><ImageView fx:id="turnOrderImage" preserveRatio="true" /><AnchorPane fx:id="totemArea" pickOnBounds="false" /></Group>
+            </StackPane>
+            <HBox fx:id="offeringTrack" alignment="CENTER" spacing="15.0" />
+        </HBox>
 
-            <Button fx:id="endTurnButton" text="TERMINA TURNO" onAction="#onEndTurnClicked"
-                    style="-fx-font-size: 16px; -fx-background-color: #dc3545; -fx-text-fill: white;" disable="true"/>
+        <HBox alignment="CENTER" VBox.vgrow="ALWAYS">
+            <padding><Insets bottom="70.0" left="40.0" right="40.0" /></padding>
+            <HBox fx:id="lowerMarket" alignment="CENTER" spacing="15.0" />
+        </HBox>
+    </VBox>
+
+    <StackPane alignment="BOTTOM_LEFT" pickOnBounds="false">
+        <padding><Insets bottom="100.0" left="70.0" /></padding>
+        <Button fx:id="endTurnButton" text="🛑 FINE TURNO" visible="false" styleClass="recap-close-button" onAction="#handleEndTurn" />
+    </StackPane>
+
+    <StackPane alignment="BOTTOM_RIGHT" pickOnBounds="false">
+        <padding><Insets bottom="100.0" right="70.0" /></padding>
+        <Button fx:id="recapButton" text="❓ RIEPILOGO" styleClass="recap-button" onAction="#toggleRecapOverlay" />
+    </StackPane>
+
+    <StackPane alignment="BOTTOM_CENTER" pickOnBounds="false">
+        <VBox fx:id="personalDashboard" maxHeight="-Infinity" maxWidth="1200.0" alignment="BOTTOM_CENTER" styleClass="dashboard-panel" onMouseClicked="#toggleDashboard">
+            <HBox alignment="CENTER" prefHeight="40.0">
+                <padding><Insets left="20.0" right="20.0" /></padding>
+                <HBox alignment="CENTER_LEFT" spacing="20.0" HBox.hgrow="ALWAYS">
+                    <Label fx:id="foodLabel" text="🍖 Cibo: 0" styleClass="status-text-resource" />
+                    <Label fx:id="auraLabel" text="✨ Aura: 0" styleClass="status-text-resource" />
+                    <Label fx:id="magicLabel" text="🔮 Magia: 0" styleClass="status-text-resource" />
+                </HBox>
+                <HBox alignment="CENTER" spacing="25.0" HBox.hgrow="ALWAYS">
+                    <Label fx:id="tribeCountLabel" text="👥 Carte Tribù: 0" styleClass="status-text-count" />
+                    <Label fx:id="buildingCountLabel" text="🏛️ Edifici: 0" styleClass="status-text-count" />
+                </HBox>
+                <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS"><Label fx:id="hintLabel" text="▲ CLICCA PER APRIRE LA MANO ▲" styleClass="status-text-hint" alignment="CENTER_RIGHT" prefWidth="260.0" /></HBox>
+            </HBox>
+            <ScrollPane fx:id="handScrollPane" fitToHeight="true" fitToWidth="true" vbarPolicy="NEVER" hbarPolicy="AS_NEEDED" styleClass="dashboard-scroll-pane" prefHeight="0.0">
+                <HBox fx:id="handCardsContainer" alignment="CENTER" spacing="15.0" styleClass="dashboard-cards-area">
+                    <padding><Insets bottom="15.0" left="20.0" right="20.0" top="15.0" /></padding>
+                </HBox>
+            </ScrollPane>
         </VBox>
-    </center>
+    </StackPane>
 
-    <right>
-        <VBox fx:id="playersStatsBox" spacing="15" style="-fx-border-color: #333333; -fx-border-width: 1; -fx-padding: 15;" prefWidth="250">
-            <Label text="👥 GIOCATORI" style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
+    <StackPane fx:id="eventSummaryOverlay" visible="false" styleClass="recap-overlay">
+        <VBox alignment="CENTER" spacing="20.0" maxWidth="1300.0" maxHeight="800.0" styleClass="opponents-panel">
+            <padding><Insets top="30.0" right="30.0" bottom="30.0" left="30.0" /></padding>
+            <Label text="RISOLUZIONE EVENTI" styleClass="opponents-title" />
+            <ScrollPane fitToWidth="true" styleClass="dashboard-scroll-pane" VBox.vgrow="ALWAYS">
+                <VBox fx:id="eventSummaryContainer" spacing="20.0">
+                    <padding><Insets top="10.0" right="10.0" bottom="10.0" left="10.0" /></padding>
+                </VBox>
+            </ScrollPane>
+            <Button text="CHIUDI E CONTINUA" styleClass="recap-button" onAction="#closeEventSummary" />
         </VBox>
-    </right>
+    </StackPane>
 
-</BorderPane>
+    <StackPane fx:id="turnNotificationOverlay" visible="false" styleClass="turn-notification-overlay"><VBox alignment="CENTER" spacing="15.0" maxWidth="600.0" maxHeight="200.0"><styleClass><String fx:value="dashboard-panel" /><String fx:value="turn-notification-panel" /></styleClass><Label fx:id="turnNotificationTitle" text="" styleClass="turn-title-mine" /></VBox></StackPane>
+    <StackPane fx:id="opponentsOverlay" visible="false" styleClass="recap-overlay"><VBox alignment="CENTER" spacing="20.0" maxWidth="1100.0" maxHeight="800.0" styleClass="opponents-panel"><padding><Insets top="30.0" right="30.0" bottom="30.0" left="30.0" /></padding><Label text="STATO DEGLI AVVERSARI" styleClass="opponents-title" /><ScrollPane fitToWidth="true" styleClass="dashboard-scroll-pane" VBox.vgrow="ALWAYS"><VBox fx:id="opponentsContainer" spacing="30.0"><padding><Insets top="10.0" right="10.0" bottom="10.0" left="10.0" /></padding></VBox></ScrollPane><Button text="CHIUDI" styleClass="recap-close-button" onAction="#toggleOpponentsOverlay" /></VBox></StackPane>
+    <StackPane fx:id="recapOverlay" visible="false" styleClass="recap-overlay"><VBox alignment="CENTER" spacing="25.0"><HBox alignment="CENTER" spacing="40.0"><ImageView fx:id="recapFrontImageView" fitHeight="550.0" preserveRatio="true" styleClass="recap-image" /><ImageView fx:id="recapBackImageView" fitHeight="550.0" preserveRatio="true" styleClass="recap-image" /></HBox><Button text="CHIUDI" styleClass="recap-close-button" onAction="#toggleRecapOverlay" /></VBox></StackPane>
+</StackPane>

@@ -1,146 +1,388 @@
 package it.polimi.ingsw.am54.gui;
 
+import it.polimi.ingsw.am54.gui.managers.DashboardManager;
+import it.polimi.ingsw.am54.gui.managers.MarketManager;
+import it.polimi.ingsw.am54.gui.managers.TotemManager;
+import it.polimi.ingsw.am54.network.client.Client;
 import it.polimi.ingsw.am54.network.client.ClientModel;
-import it.polimi.ingsw.am54.network.client.VirtualServer;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.util.Duration;
 import java.util.Map;
 
 public class BoardController {
 
-    @FXML private Label eraLabel;
-    @FXML private Label phaseLabel;
-    @FXML private Label turnLabel;
-    @FXML private Label errorLabel;
+    @FXML private StackPane rootPane;
 
-    @FXML private HBox upperRowBox;
-    @FXML private HBox lowerRowBox;
-    @FXML private VBox turnOrderBox;
-    @FXML private HBox offeringTrackBox;
-    @FXML private VBox playersStatsBox;
+    @FXML private HBox upperMarket;
+    @FXML private HBox lowerMarket;
+    @FXML private HBox middleRow;
+
+    @FXML private ImageView tribeDeckView;
+    @FXML private ImageView buildingsDeckView;
+
+    @FXML private ImageView turnOrderImage;
+    @FXML private AnchorPane totemArea;
+    @FXML private HBox offeringTrack;
+
+    @FXML private StackPane recapOverlay;
+    @FXML private ImageView recapFrontImageView;
+    @FXML private ImageView recapBackImageView;
+
+    @FXML private VBox personalDashboard;
+    @FXML private ScrollPane handScrollPane;
+    @FXML private HBox handCardsContainer;
+    @FXML private Label foodLabel;
+    @FXML private Label auraLabel;
+    @FXML private Label magicLabel;
+    @FXML private Label tribeCountLabel;
+    @FXML private Label buildingCountLabel;
+    @FXML private Label hintLabel;
+
+    @FXML private StackPane opponentsOverlay;
+    @FXML private VBox opponentsContainer;
+
+    @FXML private Label actionInstructionLabel;
+    @FXML private StackPane turnNotificationOverlay;
+    @FXML private Label turnNotificationTitle;
+
     @FXML private Button endTurnButton;
 
-    private VirtualServer virtualServer;
-    private ClientModel model;
-    private String myNickname;
+    @FXML private StackPane eventSummaryOverlay;
+    @FXML private VBox eventSummaryContainer;
 
-    public void setConnectionData(VirtualServer virtualServer, ClientModel model, String nickname) {
-        this.virtualServer = virtualServer;
-        this.model = model;
-        this.myNickname = nickname;
+    @FXML private Label roundCountLabel;
 
-        // Iscriviamo QUESTA schermata agli aggiornamenti di rete
-        this.model.setOnModelUpdatedCallback(this::updateUI);
-        updateUI(); // Disegna subito la schermata iniziale
+    private boolean isDashboardOpen = false;
+    private final double DASHBOARD_OPEN_HEIGHT = 210.0;
+
+    private String lastKnownPlayer = null;
+    private Timeline dotsTimeline;
+    private String currentDots = "";
+    private boolean isShowingError = false;
+    private boolean isGameOver = false;
+
+    // FIX SOVRAPPOSIZIONE: Memorizza il nome del player per ritardare la notifica visiva del turno
+    private String pendingNotifyPlayer = null;
+
+    // --- MANAGERS ---
+    private MarketManager marketManager;
+    private DashboardManager dashboardManager;
+    private TotemManager totemManager;
+    private it.polimi.ingsw.am54.gui.managers.EventSummaryManager eventSummaryManager;
+
+    @FXML
+    public void initialize() {
+        marketManager = new MarketManager(upperMarket, lowerMarket, tribeDeckView, buildingsDeckView);
+        dashboardManager = new DashboardManager(handCardsContainer, opponentsContainer, foodLabel, auraLabel, magicLabel, tribeCountLabel, buildingCountLabel);
+        totemManager = new TotemManager(turnOrderImage, totemArea, offeringTrack);
+        eventSummaryManager = new it.polimi.ingsw.am54.gui.managers.EventSummaryManager(eventSummaryContainer);
+
+        rootPane.widthProperty().addListener((obs, oldV, newV) -> updateDynamicLayout());
+        rootPane.heightProperty().addListener((obs, oldV, newV) -> updateDynamicLayout());
+
+        loadRecapImages();
+        setupDotsAnimation();
+
+        ClientModel model = Client.getInstance().getModel();
+        if (model != null) {
+            model.setOnModelUpdatedCallback(this::refreshBoard);
+
+            model.setOnEventResolvedCallback(reports -> {
+                javafx.application.Platform.runLater(() -> {
+                    eventSummaryManager.buildEventSummary(reports, model.getPlayerColors());
+                    if (eventSummaryOverlay != null) {
+                        eventSummaryOverlay.setVisible(true);
+                    }
+                });
+            });
+
+            refreshBoard();
+        }
+
+        Platform.runLater(this::updateDynamicLayout);
     }
 
-    private void updateUI() {
-        Platform.runLater(() -> {
-            boolean myTurn = myNickname.equals(model.getCurrentPlayer());
-            String state = model.getCurrentState();
-
-            // 1. HEADER (Testi informativi)
-            eraLabel.setText("ERA: " + model.getCurrentEra());
-            phaseLabel.setText("Fase: " + state);
-            turnLabel.setText(myTurn ? "E' IL TUO TURNO!" : "Tocca a: " + (model.getCurrentPlayer() != null ? model.getCurrentPlayer() : "Nessuno"));
-
-            if (model.getLastErrorMessage() != null) {
-                errorLabel.setText(model.getLastErrorMessage());
-                model.clearError(); // Lo cancello dopo averlo mostrato
+    private void setupDotsAnimation() {
+        dotsTimeline = new Timeline(new KeyFrame(Duration.seconds(0.5), e -> {
+            if (currentDots.length() >= 3) {
+                currentDots = "";
             } else {
-                errorLabel.setText("");
+                currentDots += ".";
             }
-
-            endTurnButton.setDisable(!myTurn || !state.equals("PickingState"));
-
-            // 2. FILE DI CARTE (Le rendo cliccabili se è il mio turno di Pescare)
-            disegnaFilaCarte(upperRowBox, "upper", myTurn && state.equals("PickingState"));
-            disegnaFilaCarte(lowerRowBox, "lower", myTurn && state.equals("PickingState"));
-
-            // 3. ORDINE DI TURNO
-            turnOrderBox.getChildren().clear();
-            for (String slot : model.getTurnOrderTrack()) {
-                turnOrderBox.getChildren().add(new Label(slot));
+            ClientModel model = Client.getInstance().getModel();
+            if (model != null) {
+                updateActionBanner(model);
             }
-
-            // 4. TRACCIATO OFFERTE (Pulsanti "Piazza" se è il mio turno di Piazzare)
-            offeringTrackBox.getChildren().clear();
-            for (Map.Entry<Integer, String> entry : model.getOfferingTrack().entrySet()) {
-                VBox tileBox = new VBox(5);
-                tileBox.setStyle("-fx-border-color: blue; -fx-padding: 8; -fx-alignment: center;");
-                tileBox.getChildren().add(new Label(entry.getValue()));
-
-                if (myTurn && state.equals("StartTurnState")) {
-                    Button placeBtn = new Button("Piazza Totem qui");
-                    placeBtn.setOnAction(e -> virtualServer.placeTotem(entry.getKey()));
-                    tileBox.getChildren().add(placeBtn);
-                }
-                offeringTrackBox.getChildren().add(tileBox);
-            }
-
-            // 5. STATISTICHE GIOCATORI (Cibo, Aura, Inventario base)
-            playersStatsBox.getChildren().clear();
-            playersStatsBox.getChildren().add(new Label("STATISTICHE" ));
-            for (String p : model.getPlayers()) {
-                int food = model.getPlayerFood().getOrDefault(p, 0);
-                int aura = model.getPlayerAura().getOrDefault(p, 0);
-
-                VBox playerBox = new VBox(2);
-                playerBox.setStyle("-fx-border-color: lightgray; -fx-padding: 5;");
-                playerBox.getChildren().add(new Label("👤 " + p.toUpperCase()));
-                playerBox.getChildren().add(new Label("🍖 Cibo: " + food + " | ✨ Aura: " + aura));
-
-                int numCarte = model.getPlayerTribe().getOrDefault(p, new java.util.ArrayList<>()).size();
-                playerBox.getChildren().add(new Label("🃏 Carte Tribù: " + numCarte));
-
-                playersStatsBox.getChildren().add(playerBox);
-            }
-        });
+        }));
+        dotsTimeline.setCycleCount(Timeline.INDEFINITE);
+        dotsTimeline.play();
     }
 
-    // Metodo helper per creare i bottoni delle carte al volo
-    private void disegnaFilaCarte(HBox rowBox, String riga, boolean canPick) {
-        rowBox.getChildren().clear();
-        int globalIndex = 0; // L'indice esatto che il server si aspetta (0, 1, 2...)
+    private void updateDynamicLayout() {
+        double w = rootPane.getWidth();
+        double h = rootPane.getHeight();
+        if (w <= 0 || h <= 0) return;
 
-        // 1. Personaggi (e Eventi se implementati nel getCharacterRow)
-        java.util.List<String> chars = riga.equals("upper") ? model.getCharacterUpperRow() : model.getCharacterLowerRow();
-        for (String c : chars) {
-            Button btn = creaBottoneCarta(c, riga, globalIndex++, canPick);
-            rowBox.getChildren().add(btn);
+        double targetCardHeight = h * 0.22;
+        double targetMiddleHeight = h * 0.30;
+
+        int totalUpperItems = marketManager.getUpperItemsCount() + 2;
+        double upperSpacing = 80.0 + 40.0 + 25.0;
+        if (totalUpperItems > 3) upperSpacing += (totalUpperItems - 3) * 15.0;
+        double maxUpperCardWidth = (w - upperSpacing) / totalUpperItems;
+
+        int lowerCardsCount = marketManager.getLowerItemsCount();
+        double lowerSpacing = 80.0;
+        if (lowerCardsCount > 1) lowerSpacing += (lowerCardsCount - 1) * 15.0;
+        double maxLowerCardWidth = lowerCardsCount > 0 ? (w - lowerSpacing) / lowerCardsCount : w;
+
+        double maxCardWidth = Math.min(maxUpperCardWidth, maxLowerCardWidth);
+        double maxCardHeightFromWidth = maxCardWidth / (135.0 / 190.0);
+
+        double finalCardHeight = Math.min(targetCardHeight, maxCardHeightFromWidth);
+
+        marketManager.setCardsHeight(finalCardHeight);
+
+        double maxMiddleWidth = (w - 200) / 8.0;
+        double maxMiddleHeightFromWidth = maxMiddleWidth / 0.622;
+        double finalMiddleHeight = Math.min(targetMiddleHeight, maxMiddleHeightFromWidth);
+
+        if (turnOrderImage != null) turnOrderImage.setFitHeight(finalMiddleHeight);
+        if (totemArea != null) {
+            totemArea.setPrefHeight(finalMiddleHeight);
+            totemArea.setPrefWidth(180.5 * (finalMiddleHeight / 290.0));
         }
 
-        // 2. Edifici
-        java.util.List<String> bldgs = riga.equals("upper") ? model.getUpperBuildingRow() : model.getLowerBuildingRow();
-        for (String b : bldgs) {
-            Button btn = creaBottoneCarta(b, riga, globalIndex++, canPick);
-            btn.setStyle("-fx-base: lightblue;"); // Coloriamo di azzurro gli edifici per distinguerli
-            rowBox.getChildren().add(btn);
+        ClientModel model = Client.getInstance().getModel();
+        if (model != null) {
+            totemManager.updateOfferingTrack(model, finalMiddleHeight);
         }
-    }
 
-    private Button creaBottoneCarta(String testoDallaRete, String riga, int index, boolean canPick) {
-        Button btn = new Button(testoDallaRete.replace("|", "\n")); // Va a capo ad ogni parametro (es. Nome \n Costo \n Aura)
-        btn.setMinSize(100, 120);
-        btn.setMaxSize(100, 120);
-        btn.setStyle("-fx-font-size: 10px; -fx-text-alignment: center;");
-
-        if (canPick) {
-            btn.setOnAction(e -> virtualServer.pickCard(riga, index));
-        } else {
-            // Se non è il mio turno di pescare, i bottoni non sono cliccabili
-            btn.setDisable(true);
-        }
-        return btn;
+        totemManager.refreshTotemsPosition();
     }
 
     @FXML
-    public void onEndTurnClicked() {
-        virtualServer.endTurn();
+    private void toggleDashboard() {
+        isDashboardOpen = !isDashboardOpen;
+        double targetHeight = isDashboardOpen ? DASHBOARD_OPEN_HEIGHT : 0.0;
+        String hintText = isDashboardOpen ? "▼ CLICCA PER NASCONDERE LA MANO ▼" : "▲ CLICCA PER APRIRE LA MANO ▲";
+        hintLabel.setText(hintText);
+
+        Timeline animation = new Timeline(
+                new KeyFrame(Duration.seconds(0.3), new KeyValue(handScrollPane.prefHeightProperty(), targetHeight))
+        );
+        animation.play();
+    }
+
+    @FXML
+    private void toggleOpponentsOverlay() {
+        opponentsOverlay.setVisible(!opponentsOverlay.isVisible());
+    }
+
+    private void loadRecapImages() {
+        try {
+            recapFrontImageView.setImage(new Image(getClass().getResourceAsStream("/images/recap/recap_front.jpg")));
+            recapBackImageView.setImage(new Image(getClass().getResourceAsStream("/images/recap/recap_back.jpg")));
+        } catch (Exception e) {
+            System.err.println("[GUI] Immagini Riepilogo non trovate.");
+        }
+    }
+
+    @FXML
+    private void toggleRecapOverlay() {
+        recapOverlay.setVisible(!recapOverlay.isVisible());
+    }
+
+    @FXML
+    private void handleEndTurn() {
+        if (Client.getInstance().getConnection() != null) {
+            try {
+                Client.getInstance().getConnection().endTurn();
+            } catch (Exception e) {
+                showTemporaryError("Hai ancora pick disponibili!");
+            }
+        }
+    }
+
+    public void showTemporaryError(String errorMessage) {
+        Platform.runLater(() -> {
+            isShowingError = true;
+            actionInstructionLabel.setText(errorMessage);
+            actionInstructionLabel.setStyle("-fx-text-fill: #ff4444; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 5, 0, 0, 2);");
+
+            PauseTransition pause = new PauseTransition(Duration.seconds(3));
+            pause.setOnFinished(e -> {
+                actionInstructionLabel.setStyle("");
+                isShowingError = false;
+                ClientModel model = Client.getInstance().getModel();
+                if (model != null) {
+                    updateActionBanner(model);
+                }
+            });
+            pause.play();
+        });
+    }
+
+    public void refreshBoard() {
+        Platform.runLater(() -> {
+            ClientModel model = Client.getInstance().getModel();
+            if (model == null) return;
+
+            String state = model.getCurrentState();
+            boolean hasWinners = model.getWinners() != null && !model.getWinners().isEmpty();
+            boolean isEndState = state != null && (state.equalsIgnoreCase("ENDGAMESTATE") || state.equalsIgnoreCase("ENDGAME"));
+
+            if (!isGameOver && (isEndState || hasWinners)) {
+                isGameOver = true;
+                GUIApp.loadLeaderboardScene();
+                return;
+            }
+
+            marketManager.updateMarkets(model);
+            marketManager.updateDecksGraphics(model);
+
+            totemManager.updateTurnOrderTrack(model);
+            double h = turnOrderImage != null ? turnOrderImage.getFitHeight() : 290.0;
+            totemManager.updateOfferingTrack(model, h);
+
+            dashboardManager.updatePersonalDashboard(model);
+            dashboardManager.updateOpponentsView(model);
+
+            handleTurnChangeNotification(model);
+            updateActionBanner(model);
+
+            if (roundCountLabel != null) {
+                roundCountLabel.setText("ROUND: " + model.getRoundCount());
+            }
+
+            if (model.getLastErrorMessage() != null && !model.getLastErrorMessage().isEmpty()) {
+                showTemporaryError(model.getLastErrorMessage());
+                model.clearError();
+            }
+
+            updateDynamicLayout();
+        });
+    }
+
+    private void handleTurnChangeNotification(ClientModel model) {
+        String activePlayer = model.getCurrentPlayer();
+        String myName = Client.getInstance().getNickname();
+
+        if (activePlayer == null || activePlayer.isEmpty()) return;
+
+        if (!activePlayer.equals(lastKnownPlayer)) {
+            // FIX SOVRAPPOSIZIONE: Se l'overlay eventi è aperto, congeliamo la notifica in coda e usciamo
+            if (eventSummaryOverlay != null && eventSummaryOverlay.isVisible()) {
+                pendingNotifyPlayer = activePlayer;
+                return;
+            }
+            showTurnNotification(activePlayer, myName);
+        }
+    }
+
+    // Estratta la visualizzazione grafica pura della notifica turno per invocarla al momento giusto
+    private void showTurnNotification(String activePlayer, String myName) {
+        lastKnownPlayer = activePlayer;
+        pendingNotifyPlayer = null; // Svuotiamo la coda del congelamento
+
+        turnNotificationTitle.getStyleClass().removeAll("turn-title-mine", "turn-title-other");
+
+        if (activePlayer.equals(myName)) {
+            turnNotificationTitle.setText("🔮 È IL TUO TURNO! 🔮");
+            turnNotificationTitle.getStyleClass().add("turn-title-mine");
+        } else {
+            turnNotificationTitle.setText("👥 È IL TURNO DI " + activePlayer.toUpperCase() + " 👥");
+            turnNotificationTitle.getStyleClass().add("turn-title-other");
+        }
+
+        turnNotificationOverlay.setVisible(true);
+
+        PauseTransition hideDelay = new PauseTransition(Duration.seconds(2.0));
+        hideDelay.setOnFinished(e -> turnNotificationOverlay.setVisible(false));
+        hideDelay.play();
+    }
+
+    private void updateActionBanner(ClientModel model) {
+        if (isShowingError) return;
+
+        String activePlayer = model.getCurrentPlayer();
+        String myName = Client.getInstance().getNickname();
+        String state = model.getCurrentState();
+
+        if (activePlayer == null || state == null) return;
+
+        boolean isMyTurn = activePlayer.equals(myName);
+        boolean isPicking = state.equalsIgnoreCase("PICKINGSTATE") || state.equalsIgnoreCase("PICKING");
+
+        if (isMyTurn && isPicking) {
+            endTurnButton.setVisible(true);
+        } else {
+            endTurnButton.setVisible(false);
+        }
+
+        if (!isMyTurn) {
+            actionInstructionLabel.setText("In attesa della mossa di " + activePlayer.toUpperCase() + currentDots);
+            return;
+        }
+
+        switch (state.toUpperCase()) {
+            case "STARTTURNSTATE":
+            case "STARTTURN":
+            case "BIDDINGSTATE":
+                actionInstructionLabel.setText("Scegli dove piazzare il tuo totem!");
+                break;
+
+            case "PICKINGSTATE":
+            case "PICKING":
+                int myPosition = -1;
+                for (Map.Entry<Integer, String> entry : model.getOfferingTrack().entrySet()) {
+                    if (entry.getValue() != null && entry.getValue().contains(myName)) {
+                        myPosition = entry.getKey();
+                        break;
+                    }
+                }
+                if (myPosition >= 2) {
+                    actionInstructionLabel.setText("Scegli che carte prendere!");
+                } else {
+                    actionInstructionLabel.setText("Scegli che carta prendere!");
+                }
+                break;
+
+            case "SETUPGAMESTATE":
+            case "SETUP":
+                actionInstructionLabel.setText("Fase di setup: prepara la tua tribù di partenza.");
+                break;
+
+            default:
+                actionInstructionLabel.setText("Tocca a te! Fai la tua mossa.");
+                break;
+        }
+    }
+
+    @FXML
+    private void closeEventSummary() {
+        if (eventSummaryOverlay != null) {
+            eventSummaryOverlay.setVisible(false);
+        }
+        if (Client.getInstance().getModel() != null) {
+            Client.getInstance().getModel().clearPendingEvents();
+        }
+
+        // FIX SOVRAPPOSIZIONE: Se durante l'overlay è arrivata una notifica turno, la mostriamo ORA
+        if (pendingNotifyPlayer != null) {
+            String myName = Client.getInstance().getNickname();
+            showTurnNotification(pendingNotifyPlayer, myName);
+        }
     }
 }

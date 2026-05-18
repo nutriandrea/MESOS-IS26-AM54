@@ -151,8 +151,8 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     @Override
-    public void notifyCardPicked(String nickname, String row, int index, int food, Map<Integer, String> offering) {
-        writeToStream(new CardPickedUpdate(nickname, row, index, food, offering));
+    public void notifyCardPicked(String nickname, String row, int index, int food, int magic, Map<Integer, String> offering) {
+        writeToStream(new CardPickedUpdate(nickname, row, index, food, magic, offering));
     }
 
     @Override

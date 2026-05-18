@@ -115,9 +115,9 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
 
     @Override
-    public void notifyCardPicked(String nickname, String row, int index, int food,
+    public void notifyCardPicked(String nickname, String row, int index, int food, int magic,
                                  Map<Integer, String> offering) {
-        try { clientStub.onCardPicked(nickname, row, index, food, offering); }
+        try { clientStub.onCardPicked(nickname, row, index, food, magic, offering); }
         catch (RemoteException e) { disconnect(); }
     }
 

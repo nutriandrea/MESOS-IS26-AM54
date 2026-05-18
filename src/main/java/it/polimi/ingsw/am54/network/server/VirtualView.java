@@ -156,7 +156,7 @@ public class VirtualView implements IGameObserver {
     }
 
     @Override
-    public void onCardPicked(Game game, Player player, String row, int cardIndex, int newFoodBalance) {
+    public void onCardPicked(Game game, Player player, String row, int cardIndex, int newFoodBalance, int newMagicBalance) {
         // Tutti vedono la carta pescata. Il client:
         //   - Rimuove la carta dalla riga corretta (upper/lower)
         //   - Aggiunge la carta alla tribu' del giocatore
@@ -164,7 +164,7 @@ public class VirtualView implements IGameObserver {
         //   - Rimette il giocatore nel turnOrderTrack
         Map<Integer, String> currentOffering = generateOfferingSnapshot(game.getBoard());
 
-        connection.notifyCardPicked(player.getNickname(), row, cardIndex, newFoodBalance, currentOffering);
+        connection.notifyCardPicked(player.getNickname(), row, cardIndex, newFoodBalance, newMagicBalance, currentOffering);
    }
 
     @Override

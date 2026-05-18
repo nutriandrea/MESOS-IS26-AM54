@@ -97,8 +97,8 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
 
     @Override
     public void onCardPicked(String nickname, String row, int cardIndex,
-                             int newFood, Map<Integer, String> offering) throws RemoteException {
-        clientModel.updateCardPicked(nickname, row, cardIndex, newFood, offering);
+                             int newFood, int newMagic, Map<Integer, String> offering) throws RemoteException {
+        clientModel.updateCardPicked(nickname, row, cardIndex, newFood, newMagic, offering);
     }
 
     @Override

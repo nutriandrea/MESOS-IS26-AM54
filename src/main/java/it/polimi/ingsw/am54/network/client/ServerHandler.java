@@ -149,7 +149,7 @@ public class ServerHandler implements Runnable {
             clientModel.updateTotemPlacement(msg.getNickname(), msg.getOfferPosition());
         }
         else if (message instanceof CardPickedUpdate msg) {
-            clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex(), msg.getNewFoodBalance(), msg.getUpdatedOfferingTrack());
+            clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex(), msg.getNewFoodBalance(), msg.getNewMagicBalance(), msg.getUpdatedOfferingTrack());
         }
         else if (message instanceof TurnChangedUpdate msg) {
             clientModel.updateTurn(msg.getNickname());

@@ -290,8 +290,8 @@ public class Game implements IGame{
         for (IGameObserver obs : observers) obs.onTotemPlaced(this, player, offerPosition);
     }
 
-    public void notifyCardPicked(Player player, String row, int cardIndex, int newFoodBalance) {
-        for (IGameObserver obs : observers) obs.onCardPicked(this, player, row, cardIndex, newFoodBalance);
+    public void notifyCardPicked(Player player, String row, int cardIndex, int newFoodBalance, int newMagicBalance) {
+        for (IGameObserver obs : observers) obs.onCardPicked(this, player, row, cardIndex, newFoodBalance, newMagicBalance);
     }
 
     private void notifyTurnChanged(Player player) {

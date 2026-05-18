@@ -269,39 +269,40 @@ public class ClientModel {
      * @param index indice della carta nella riga
      * @param newFoodBalance nuovo bilancio cibo del giocatore
      */
-    public synchronized void updateCardPicked(String nickname, String row, int index, int newFoodBalance, java.util.Map<Integer, String> updatedOffering) {
+
+    public synchronized void updateCardPicked(String nickname, String row, int index, int newFoodBalance, int newMagicBalance, java.util.Map<Integer, String> updatedOffering) {
         boolean isUpper = row.equalsIgnoreCase("upper");
-        if(isUpper){
-            if(index < characterUpperRow.size()) {
-                // Carta personaggio dalla fila superiore
+        if (isUpper) {
+            if (index < characterUpperRow.size()) {
                 String temp = characterUpperRow.get(index);
                 characterUpperRow.remove(index);
-                playerTribe.get(nickname).add(temp);
+                playerTribe.computeIfAbsent(nickname, k -> new java.util.ArrayList<>()).add(temp);
             } else {
-                // Carta edificio dalla fila superiore
                 int buildingIndex = index - characterUpperRow.size();
-                String temp = upperBuildingRow.get(buildingIndex);
-                upperBuildingRow.remove(buildingIndex);
-                playerFood.put(nickname, newFoodBalance);
-                playerBuildings.get(nickname).add(temp);
+                if (buildingIndex < upperBuildingRow.size()) {
+                    String temp = upperBuildingRow.get(buildingIndex);
+                    upperBuildingRow.remove(buildingIndex);
+                    playerBuildings.computeIfAbsent(nickname, k -> new java.util.ArrayList<>()).add(temp);
+                }
             }
         } else {
-            if(index < characterLowerRow.size()) {
-                // Carta personaggio dalla fila inferiore
+            if (index < characterLowerRow.size()) {
                 String temp = characterLowerRow.get(index);
                 characterLowerRow.remove(index);
-                playerTribe.get(nickname).add(temp);
+                playerTribe.computeIfAbsent(nickname, k -> new java.util.ArrayList<>()).add(temp);
             } else {
-                // Carta edificio dalla fila inferiore
                 int buildingIndex = index - characterLowerRow.size();
-                String temp = lowerBuildingRow.get(buildingIndex);
-                lowerBuildingRow.remove(buildingIndex);
-                playerFood.put(nickname, newFoodBalance);
-                playerBuildings.get(nickname).add(temp);
+                if (buildingIndex < lowerBuildingRow.size()) {
+                    String temp = lowerBuildingRow.get(buildingIndex);
+                    lowerBuildingRow.remove(buildingIndex);
+                    playerBuildings.computeIfAbsent(nickname, k -> new java.util.ArrayList<>()).add(temp);
+                }
             }
         }
 
         playerFood.put(nickname, newFoodBalance);
+        playerMagic.put(nickname, newMagicBalance); // Aggiornamento istantaneo del contatore Magia!
+
         this.offeringTrack.clear();
         this.offeringTrack.putAll(updatedOffering);
         notifyUI();

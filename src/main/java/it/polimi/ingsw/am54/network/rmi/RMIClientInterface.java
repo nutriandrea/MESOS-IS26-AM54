@@ -20,7 +20,7 @@ public interface RMIClientInterface extends Remote {
                          List<String> charUp, List<String> charLow, List<String> eventUp, List<String> eventLow,
                          List<String> buildUp, List<String> buildLow)  throws RemoteException;
     void onCardPicked(String nickname, String row, int cardIndex,
-                      int newFood, Map<Integer, String> offering)
+                      int newFood, int newMagic, Map<Integer, String> offering)
             throws RemoteException;
     void onTurnChanged(String nickname) throws RemoteException;
     void onStateChanged(String stateName, int era, int currentRound, Map<String, StateChangedUpdate.PlayerSnapshot> players,

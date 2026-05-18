@@ -25,8 +25,9 @@ public class EventFarmer implements IEffect<EventCard> {
                     .filter(c -> c.getJobType() == JobType.FARMER)
                     .count() * 3;
 
-            // 2. Sommiamo lo sconto dei Farmer con eventuali sconti degli Edifici
-            int scontoTotale = scontoContadini + pl.getEventCostFood();
+            //2. Usiamo Math.abs per trasformare il -1 dell'edificio in un +1 da sommare!
+            int scontoEdifici = Math.abs(pl.getEventCostFood());
+            int scontoTotale = scontoContadini + scontoEdifici;
 
             // 3. Il costo base è 1 cibo per OGNI carta nella tribù (inclusi i Farmer stessi)
             int costoBase = pl.getMyTribe().size();

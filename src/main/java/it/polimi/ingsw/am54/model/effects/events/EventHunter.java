@@ -11,8 +11,9 @@ public class EventHunter implements IEffect<EventCard> {
                     .filter(c -> c.getJobType() == JobType.HUNTER).count();
 
             int buildingAura = pl.getEventCostAura();
+            int buildingFood = pl.getEventCostFood();
 
-            pl.modifyFood((int) cacciatori * ec.getBaseFood());
+            pl.modifyFood((int) cacciatori * ec.getBaseFood() + buildingFood);
             pl.modifyAuraPoints((int) cacciatori * ec.getAuraPerCharacter() + buildingAura);
             pl.resetEventAttributes();
         });

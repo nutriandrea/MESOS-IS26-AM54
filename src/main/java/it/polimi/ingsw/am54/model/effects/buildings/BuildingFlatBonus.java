@@ -2,7 +2,8 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import com.fasterxml.jackson.databind.JsonNode;
 import it.polimi.ingsw.am54.model.*;
 
-// FlatAura, ThreeMagic e ExtraPick
+// Raggruppa la carta che dona 25 Punti Prestigio a fine partita, quella che dona 3 icone Magia (stella)
+// per lo Sciamano, e la carta che permette un "Extra Pick" (prendere una carta dalla fila superiore)
 public class BuildingFlatBonus implements IEffect<BuildingCard> {
     private final int auraBonus;
     private final int magicBonus;

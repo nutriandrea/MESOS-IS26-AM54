@@ -22,11 +22,30 @@ public class PickingState extends GameState {
             throw new Exception("Riga non valida (usa 'upper' o 'lower').");
         }
 
-        // Controllo se ha pick disponibili
-        if (isUpper && tile.getRemainingUpperPicks() <= 0) throw new Exception("Non hai più pick disponibili per la fila upper.");
-        if (isLower && tile.getRemainingLowerPicks() <= 0) throw new Exception("Non hai più pick disponibili per la fila lower.");
+        // ==========================================
+        // 1. CONTROLLO DISPONIBILITA' PICK & EXTRA PICK
+        // ==========================================
+        boolean usingExtraPick = false;
 
-        // Prelievo virtuale della carta per sicurezza
+        if (isUpper) {
+            // Se la tessera è vuota, controlliamo il bonus
+            if (tile.getRemainingUpperPicks() <= 0) {
+                if (player.hasExtraPick()) {
+                    usingExtraPick = true; // Segniamo che stiamo per usare il bonus
+                } else {
+                    throw new Exception("Non hai più pick disponibili per la fila upper.");
+                }
+            }
+        } else {
+            // L'Extra Pick vale SOLO per la upper row. Sulla lower non ci salva.
+            if (tile.getRemainingLowerPicks() <= 0) {
+                throw new Exception("Non hai più pick disponibili per la fila lower.");
+            }
+        }
+
+        // ==========================================
+        // 2. PRELIEVO E CONTROLLO CARTA
+        // ==========================================
         int charRowSize = game.getBoard().getCharacterRowSize(row);
         Card card = null;
 
@@ -44,33 +63,37 @@ public class PickingState extends GameState {
         }
 
         // --- CONTROLLO POLIMORFICO E ROLLBACK ---
-        // Usiamo canBePurchased() che per i Personaggi è sempre true
-        // e per i Building controlla il cibo - sconti
         if (!card.canBePurchased(player)) {
-            // Se non può essere acquistata, rimettiamo la carta sulla board (Rollback)
-            // reveal() metterà la carta nella fila giusta grazie al polimorfismo
+            // Se non può essere acquistata, rimettiamo la carta sulla board
             card.reveal(game.getBoard(), row);
-
-            // Lanciamo l'eccezione PRIMA di scalare il pick
-            throw new Exception("Non hai abbastanza cibo (🍖) per prendere questa carta!");
+            throw new Exception("Non hai abbastanza cibo (\uD83C\uDF56) per prendere questa carta!");
         }
 
-        // Se la carta esiste e può essere presa, scaliamo il pick dalla tessera
-        if (isUpper) tile.useUpperPick();
-        else tile.useLowerPick();
+        // ==========================================
+        // 3. CONSUMO EFFETTIVO DEL PICK
+        // ==========================================
+        // Lo facciamo solo ORA, perché siamo certi che la carta verrà acquistata!
+        if (isUpper) {
+            if (usingExtraPick) {
+                player.setExtraPick(false); // Consumiamo il bonus
+            } else {
+                tile.useUpperPick(); // Consumiamo la tessera
+            }
+        } else {
+            tile.useLowerPick();
+        }
 
-        // Esecuzione logica di acquisto/pesca (se non ha cibo per l'edificio, qui lancerà eccezione.
-        // In un design perfetto dovremmo rimettere la carta sulla board, ma per ora ci affidiamo ai check del Client)
+        // Esecuzione logica di acquisto
         card.pick(player, game);
 
         int finalFood = player.getFood();
         game.notifyCardPicked(player, row, cardIndex, finalFood);
 
         // ==========================================
-        // AUTO-FINE TURNO
+        // 4. AUTO-FINE TURNO
         // ==========================================
-        // Se non ci sono più mosse possibili (né pick, né carte fisiche da prendere), chiudiamo il turno in automatico
-        if (shouldAutoEndTurn(game, tile)) {
+        // MODIFICATO: Passiamo il player per controllare l'Extra Pick
+        if (shouldAutoEndTurn(game, player)) {
             executeEndTurnLogic(game, player);
         }
     }
@@ -85,6 +108,11 @@ public class PickingState extends GameState {
         }
 
         OfferingTile tile = player.getCurrentTile();
+
+        // MODIFICATO: Pulizia del bonus se il giocatore passa volontariamente
+        if (player.hasExtraPick()) {
+            player.setExtraPick(false);
+        }
 
         // CONTROLLO REGOLE: Pescata Obbligatoria dei Personaggi
         if (hasMandatoryCharactersLeft(game, tile)) {
@@ -105,7 +133,13 @@ public class PickingState extends GameState {
         return mandatoryUpper || mandatoryLower;
     }
 
-    private boolean shouldAutoEndTurn(Game game, OfferingTile tile) {
+    // MODIFICATO: Prende (Game, Player) invece di (Game, OfferingTile)
+    private boolean shouldAutoEndTurn(Game game, Player player) {
+        // REGOLA AUREA: Se ho l'Extra Pick, il turno NON deve chiudersi in automatico!
+        if (player.hasExtraPick()) return false;
+
+        OfferingTile tile = player.getCurrentTile();
+
         // Se ho esaurito tutte le azioni sulla tessera
         if (!tile.hasPicksLeft()) return true;
 
@@ -132,6 +166,11 @@ public class PickingState extends GameState {
 
         if (currentPicker == null || !currentPicker.equals(player)) {
             throw new Exception("Non e' il turno di " + nickname);
+        }
+
+        // MODIFICATO: Pulizia del bonus in caso di disconnessione
+        if (player.hasExtraPick()) {
+            player.setExtraPick(false);
         }
 
         // Termina il turno saltando il controllo sulle carte obbligatorie

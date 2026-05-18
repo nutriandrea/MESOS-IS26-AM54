@@ -78,6 +78,8 @@ public class Game implements IGame{
     // FASE DI SETUP (Rifattorizzata)
     // ==========================================
 
+    public void setBoard(Board board) { this.board = board; } // per i test
+
     public void setupGame() throws Exception {
         this.currentEra = 1;
         this.roundCount = 1; // Corretto: il gioco inizia dal Round 1, non da 0

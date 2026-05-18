@@ -2,6 +2,7 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import it.polimi.ingsw.am54.model.*;
 import java.util.List;
 
+// Gestisce i 3 Cibo ottenuti formando coppie di Inventori uguali
 public class BuildingDoubleInventor implements IEffect<BuildingCard> {
     @Override
     public void apply(Player p, Game g, BuildingCard card) {

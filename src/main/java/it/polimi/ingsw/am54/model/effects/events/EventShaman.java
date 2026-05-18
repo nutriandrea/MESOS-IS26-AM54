@@ -21,7 +21,9 @@ public class EventShaman implements IEffect<EventCard> {
                 if (isDouble)
                     pl.modifyAuraPoints(2 * ec.getBonus());
                 else pl.modifyAuraPoints(ec.getBonus());
-            } else if (pl.getMagicPoints() == min) {
+            }
+            // se c'è un pareggio tra tutti i giocatori, tutti prima guadagnano PP e poi perdono PP
+            if (pl.getMagicPoints() == min) {
                 if (!isZero) pl.modifyAuraPoints(-ec.getMalus());
             }
             pl.resetEventAttributes();

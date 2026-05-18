@@ -2,6 +2,7 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import it.polimi.ingsw.am54.model.*;
 import java.util.List;
 
+// Gestisce il bonus in cibo ottenuto al completamento di un set di 6 personaggi
 public class BuildingSixOfType implements IEffect<BuildingCard> {
     @Override
     public void apply(Player p, Game g, BuildingCard card) {
@@ -17,6 +18,6 @@ public class BuildingSixOfType implements IEffect<BuildingCard> {
         for (JobType j : allJobs) {
             if (tribe.stream().filter(c -> c.getJobType() == j).count() < currentCount) return; // Rompe se un lavoro è in difetto
         }
-        p.modifyFood(1); // Se arriva qui, il set è completo
+        p.modifyFood(5);
     }
 }

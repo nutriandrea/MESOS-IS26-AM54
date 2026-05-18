@@ -2,7 +2,8 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import com.fasterxml.jackson.databind.JsonNode;
 import it.polimi.ingsw.am54.model.*;
 
-// NoLoss e DoubleAura
+// Gestisce l'immunità alla perdita di punti (No Loss) e il raddoppio dei punti (Double Aura)
+// durante l'Evento Rituale Sciamanico
 public class BuildingShamanPassive implements IEffect<BuildingCard> {
     private final boolean noLoss;
     private final boolean doubleAura;

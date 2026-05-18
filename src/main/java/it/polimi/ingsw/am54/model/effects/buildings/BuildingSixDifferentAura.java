@@ -2,6 +2,7 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import it.polimi.ingsw.am54.model.*;
 import java.util.Arrays;
 
+// Gestisce i 6 Punti Prestigio a fine partita per ogni set di 6 personaggi diversi
 public class BuildingSixDifferentAura implements IEffect<BuildingCard> {
     @Override public boolean isEndgameEffect() { return true; }
     @Override

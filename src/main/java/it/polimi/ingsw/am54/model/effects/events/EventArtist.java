@@ -10,6 +10,9 @@ public class EventArtist implements IEffect<EventCard> {
             long painters = pl.getMyTribe().stream()
                     .filter(c -> c.getJobType() == JobType.ARTIST).count();
 
+            int buildingFood = pl.getEventCostFood();
+            if (buildingFood > 0) pl.modifyFood(buildingFood);
+
             pl.modifyAuraPoints(painters <= ec.getThreshold()
                     ? -ec.getPenalty()
                     : (int) painters * ec.getBonusMultiplier());

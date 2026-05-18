@@ -1,6 +1,7 @@
 package it.polimi.ingsw.am54.model.effects.buildings;
 import it.polimi.ingsw.am54.model.*;
 
+// Gestisce il cibo addizionale ottenuto piazzando il Totem sugli spazi bonus del tracciato
 public class BuildingTurnOrderBonus implements IEffect<BuildingCard> {
     @Override
     public void apply(Player p, Game g, BuildingCard card) {

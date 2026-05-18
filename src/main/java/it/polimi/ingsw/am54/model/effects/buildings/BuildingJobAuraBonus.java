@@ -2,7 +2,8 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import com.fasterxml.jackson.databind.JsonNode;
 import it.polimi.ingsw.am54.model.*;
 
-// AuraPerJob e DoubleConstructor
+// Gestisce le 6 carte di Era 3 che danno punti prestigio a fine partita in base al tipo di personaggio
+// (es. Contadino x4, Cacciatore x3), più la carta di Era 2 che raddoppia i punti base dei Costruttori
 public class BuildingJobAuraBonus implements IEffect<BuildingCard> {
     private final JobType jobType;
     private final int multiplier;

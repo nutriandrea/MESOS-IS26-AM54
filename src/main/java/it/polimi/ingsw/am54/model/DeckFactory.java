@@ -252,8 +252,7 @@ public class DeckFactory {
             case "HUNTER" -> new CharacterHunter();
             case "CONSTRUCTOR" -> new CharacterConstructor();
             case "SHAMAN" -> new CharacterShaman();
-            case "FARMER" -> new CharacterFarmer();
-            case "ARTIST", "INVENTOR" -> new CharacterPassive();
+            case "ARTIST", "INVENTOR", "FARMER" -> new CharacterPassive();
             default -> throw new IllegalArgumentException("Effetto personaggio sconosciuto: " + effectName);
         };
     }

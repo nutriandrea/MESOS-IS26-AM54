@@ -138,11 +138,12 @@ public class LeaderboardController {
     private void setupPodiumPlace(VBox podiumBox, ImageView totemView, Label nameLabel, PlayerStats p) {
         podiumBox.setVisible(true);
 
-        // Ridimensionamento testo intelligente se il nome è troppo lungo
+        // Ridimensionamento testo intelligente se il nome è troppo lungo, basato su %
         String dispName = p.name.toUpperCase();
         nameLabel.setText(dispName);
         if (dispName.length() > 10) {
-            nameLabel.setStyle(nameLabel.getStyle() + " -fx-font-size: " + (36 - (dispName.length() - 10)) + "px;");
+            // Riduciamo la grandezza relativa invece di forzarla in px assoluti
+            nameLabel.setStyle(nameLabel.getStyle() + " -fx-font-size: 0.8em;");
         }
 
         if (p.color != null) {

@@ -323,8 +323,7 @@ public class BoardController {
         if (activePlayer == null || state == null) return;
 
         boolean isMyTurn = activePlayer.equals(myName);
-        boolean isPicking = state.equalsIgnoreCase("PICKINGSTATE") || state.equalsIgnoreCase("PICKING");
-
+        boolean isPicking = state.equalsIgnoreCase("PICKINGSTATE") || state.equalsIgnoreCase("PICKING") || state.equalsIgnoreCase("EXTRAPICKINGSTATE") || state.equalsIgnoreCase("EXTRAPICKING");
         if (isMyTurn && isPicking) {
             endTurnButton.setVisible(true);
         } else {
@@ -362,6 +361,11 @@ public class BoardController {
             case "SETUPGAMESTATE":
             case "SETUP":
                 actionInstructionLabel.setText("Fase di setup: prepara la tua tribù di partenza.");
+                break;
+
+            case "EXTRAPICKINGSTATE":
+            case "EXTRAPICKING":
+                actionInstructionLabel.setText("PICK EXTRA: Scegli una carta da qualsiasi fila o termina il turno!");
                 break;
 
             default:

@@ -55,6 +55,7 @@ public class LobbyController {
     @FXML private Button prevPageButton;
     @FXML private Button nextPageButton;
     @FXML private Label pageLabel;
+    @FXML private Label lobbyTitle;
 
     private Map<String, ImageView> totemMap;
     private Map<String, Label> labelMap;
@@ -99,6 +100,24 @@ public class LobbyController {
 
         whiteBox.translateXProperty().bind(lobbyRoot.widthProperty().multiply(0.279));
         whiteBox.translateYProperty().bind(lobbyRoot.heightProperty().multiply(0.385).subtract(whiteBox.heightProperty().divide(2)));
+
+        // Listener per il ridimensionamento dinamico e responsivo del titolo (Previene il taglio del testo)
+        lobbyRoot.widthProperty().addListener((obs, oldVal, newVal) -> {
+            double currentWidth = newVal.doubleValue();
+            double baseFontSize = 44.0; // Dimensione ottimale a 1920x1080
+
+            // Proporziona il font in base alla larghezza corrente della finestra
+            double targetSize = baseFontSize * (currentWidth / 1920.0);
+
+            // Evita che il testo diventi microscopicamente illeggibile su schermi minuscoli
+            if (targetSize < 18) {
+                targetSize = 18;
+            }
+
+            if (lobbyTitle != null) {
+                lobbyTitle.setStyle("-fx-font-size: " + targetSize + "px;");
+            }
+        });
 
         totemMap = new HashMap<>();
         totemMap.put("red", totemRed);

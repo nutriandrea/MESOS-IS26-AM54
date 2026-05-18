@@ -13,7 +13,7 @@ public class EventArtist implements IEffect<EventCard> {
             int buildingFood = pl.getEventCostFood();
             if (buildingFood > 0) pl.modifyFood(buildingFood);
 
-            pl.modifyAuraPoints(painters <= ec.getThreshold()
+            pl.modifyAuraPoints(painters < ec.getThreshold()
                     ? -ec.getPenalty()
                     : (int) painters * ec.getBonusMultiplier());
 

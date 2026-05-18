@@ -11,15 +11,16 @@
 
     <VBox alignment="TOP_CENTER" spacing="10" pickOnBounds="false">
         <padding><Insets top="50"/></padding>
-        <HBox alignment="CENTER" pickOnBounds="false">
-            <Region prefWidth="300" mouseTransparent="true" />
-            <Label text="BENVENUTO NELLA CAVERNA" styleClass="lobby-title" mouseTransparent="true"/>
-            <HBox alignment="CENTER_LEFT" spacing="15" prefWidth="300" pickOnBounds="false">
-                <padding><Insets left="30"/></padding>
+        <StackPane pickOnBounds="false">
+            <padding><Insets left="60" right="60"/></padding>
+
+            <Label fx:id="lobbyTitle" text="BENVENUTO NELLA CAVERNA" styleClass="lobby-title" mouseTransparent="true" StackPane.alignment="CENTER"/>
+
+            <HBox alignment="CENTER_RIGHT" spacing="15" pickOnBounds="false" StackPane.alignment="CENTER_RIGHT">
                 <Label text="Regole del gioco" styleClass="info-label" mouseTransparent="true"/>
                 <Button fx:id="infoButton" text="i" styleClass="info-button" onAction="#handleOpenRules"/>
             </HBox>
-        </HBox>
+        </StackPane>
         <Label fx:id="subtitleLabel" text="SCEGLI IL TUO TOTEM!" styleClass="lobby-subtitle" mouseTransparent="true"/>
         <Button fx:id="startButton" text="START" styleClass="start-button" visible="false" managed="false" onAction="#handleStartGame">
             <VBox.margin><Insets top="30.0" /></VBox.margin>

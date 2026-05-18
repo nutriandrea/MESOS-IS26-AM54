@@ -39,9 +39,11 @@ public class LoginController {
 
     @FXML
     public void initialize() {
-        logoMesos.fitWidthProperty().bind(rootPane.widthProperty().multiply(0.5));
-        logoBox.translateYProperty().bind(rootPane.heightProperty().multiply(-0.33));
-        playStateBox.translateYProperty().bind(rootPane.heightProperty().multiply(0.33));
+        Platform.runLater(() -> {
+            logoMesos.fitWidthProperty().bind(rootPane.widthProperty().multiply(0.5));
+            logoBox.translateYProperty().bind(rootPane.heightProperty().multiply(-0.33));
+            playStateBox.translateYProperty().bind(rootPane.heightProperty().multiply(0.33));
+        });
 
         Client.getInstance().getModel().setOnModelUpdatedCallback(() -> {
             Platform.runLater(this::checkServerResponse);

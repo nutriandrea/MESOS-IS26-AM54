@@ -1,6 +1,8 @@
 package it.polimi.ingsw.am54.network.server;
 
 import it.polimi.ingsw.am54.controller.Controller;
+import it.polimi.ingsw.am54.database.DatabaseConfig;
+import it.polimi.ingsw.am54.database.DatabaseManager;
 import it.polimi.ingsw.am54.model.Game;
 
 import java.io.IOException;
@@ -28,6 +30,9 @@ public class Server {
     /** Un solo controller per la partita */
     private final Controller controller;
 
+    /** Database per la leaderboard */
+    private final DatabaseManager databaseManager;
+
     /** Flag per controllare se il server e' in esecuzione */
     private boolean isRunning;
 
@@ -39,12 +44,17 @@ public class Server {
         this.game = new Game();
         this.controller = new Controller(game);
         this.controller.setServer(this);
+        this.databaseManager = new DatabaseManager(new DatabaseConfig());
         this.isRunning = true;
         System.out.println("Server creato con una nuova partita.");
     }
 
     public Controller getController() {
         return controller;
+    }
+
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
     }
 
     /**
@@ -54,6 +64,8 @@ public class Server {
      * @param rmiPort porta per le connessioni RMI
      */
     public void start(int tcpPort, int rmiPort) {
+        databaseManager.init();
+        controller.setDatabaseManager(databaseManager);
         startRMI(rmiPort);
         startTCP(tcpPort);
     }

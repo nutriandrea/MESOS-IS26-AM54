@@ -86,7 +86,7 @@ public class BoardController {
 
         ClientModel model = Client.getInstance().getModel();
         if (model != null) {
-            model.setOnModelUpdatedCallback(this::refreshBoard);
+            model.setOnModelUpdatedCallback(this::onModelUpdate);
             refreshBoard();
         }
 
@@ -212,6 +212,25 @@ public class BoardController {
             });
             pause.play();
         });
+    }
+
+    private void onModelUpdate() {
+        ClientModel model = Client.getInstance().getModel();
+        if (model == null) return;
+
+        // Se abbiamo sia winners (partita finita) che i dati leaderboard, carica la scena
+        if (model.getWinners() != null && !model.getWinners().isEmpty() &&
+            model.getLeaderboardEntries() != null && !model.getLeaderboardEntries().isEmpty()) {
+            Platform.runLater(GUIApp::loadLeaderboardScene);
+            return;
+        }
+
+        // Se ci sono winners ma non ancora leaderboard, aspettiamo il prossimo update
+        if (model.getWinners() != null && !model.getWinners().isEmpty()) {
+            return;
+        }
+
+        refreshBoard();
     }
 
     public void refreshBoard() {

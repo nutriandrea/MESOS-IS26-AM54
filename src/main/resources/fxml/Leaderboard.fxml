@@ -46,21 +46,13 @@
         </VBox>
 
 
+        <Label fx:id="playerPositionLabel" text="" textFill="GOLD" layoutX="360" layoutY="590"
+               prefWidth="1200" alignment="CENTER" style="-fx-font-size: 20px; -fx-font-weight: bold;" visible="false" />
+
         <VBox alignment="TOP_CENTER" layoutX="360" layoutY="620" prefWidth="1200" spacing="10">
-            <Label text="Classifica generale:" textFill="WHITE" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+            <Label text="Classifica storica:" textFill="WHITE" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
 
             <VBox fx:id="rankingTable" spacing="5" style="-fx-background-color: rgba(0,0,0,0.6); -fx-background-radius: 15; -fx-padding: 20;">
-                <HBox alignment="CENTER_LEFT" spacing="20" style="-fx-border-color: transparent transparent white transparent; -fx-padding: 0 0 10 0;">
-                    <Label text="POS" prefWidth="60" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="TOTEM" prefWidth="80" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="NICKNAME" prefWidth="300" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="✨ AURA" prefWidth="120" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="🍖 CIBO" prefWidth="120" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="🔮 MAGIA" prefWidth="120" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="👥 TRIBÙ" prefWidth="120" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="🏛️ EDIFICI" prefWidth="120" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                </HBox>
-
             </VBox>
         </VBox>
 

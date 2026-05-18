@@ -16,6 +16,9 @@ public interface ServerConnection {
     void pickCard(String row, int index);
     void endTurn();
 
+    // Richiede la classifica per partite con un dato numero di giocatori
+    void requestLeaderboard(int numPlayers);
+
     // Chiude la connessione col server
     void disconnect();
 }

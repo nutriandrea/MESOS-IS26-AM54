@@ -1,6 +1,7 @@
 package it.polimi.ingsw.am54.network.server;
 
 import it.polimi.ingsw.am54.network.messages.EventUpdate;
+import it.polimi.ingsw.am54.network.messages.LeaderboardUpdate;
 import it.polimi.ingsw.am54.network.messages.StateChangedUpdate;
 import it.polimi.ingsw.am54.network.messages.Update;
 import it.polimi.ingsw.am54.model.TotemColors;
@@ -51,6 +52,8 @@ public interface ClientConnection {
                              List<String> eventUp, List<String> eventLow,
                              List<String> buildUp, List<String> buildLow);
     void notifyTurnChanged(String nickname);
+    void notifyEndGame(List<String> winnerNames, Map<String, Integer> allScores, int numPlayers);
+    void sendLeaderboardUpdate(LeaderboardUpdate update);
     void notifyStateChanged( String stateName,
                             int currentEra, int currentRound,
                             Map<String, StateChangedUpdate.PlayerSnapshot> playersStats,
@@ -59,7 +62,6 @@ public interface ClientConnection {
                             List<String> charUpper, List<String> charLower,
                             List<String> eventUpper, List<String> eventLower,
                             List<String> buildUpper, List<String> buildLower);
-    void notifyEndGame(List<String> winnerNames);
     void notifyError(String message);
     void sendPing();
 

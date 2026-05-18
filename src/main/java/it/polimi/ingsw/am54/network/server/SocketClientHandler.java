@@ -95,6 +95,8 @@ public class SocketClientHandler implements Runnable, ClientConnection {
             lastPongTime = System.currentTimeMillis();
         } else if (request instanceof EndTurnRequest) {
             controller.handleEndTurn(this.playerNickname);
+        } else if (request instanceof GetLeaderboardRequest req) {
+            controller.handleGetLeaderboard(req.getNumPlayers(), this.playerNickname, this);
         }
     }
 
@@ -176,8 +178,13 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     @Override
-    public void notifyEndGame(List<String> winnerNames) {
-        writeToStream(new EndGameUpdate(winnerNames));
+    public void notifyEndGame(List<String> winnerNames, Map<String, Integer> allScores, int numPlayers) {
+        writeToStream(new EndGameUpdate(winnerNames, allScores, numPlayers));
+    }
+
+    @Override
+    public void sendLeaderboardUpdate(LeaderboardUpdate update) {
+        writeToStream(update);
     }
 
     @Override

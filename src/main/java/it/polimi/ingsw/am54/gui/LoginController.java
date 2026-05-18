@@ -1,6 +1,9 @@
 package it.polimi.ingsw.am54.gui;
 
+import it.polimi.ingsw.am54.database.DatabaseConfig;
+import it.polimi.ingsw.am54.database.DatabaseManager;
 import it.polimi.ingsw.am54.network.client.*;
+import it.polimi.ingsw.am54.network.messages.LeaderboardEntry;
 import it.polimi.ingsw.am54.network.rmi.RMIGameServer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -13,6 +16,9 @@ import javafx.scene.layout.*;
 import java.io.IOException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public class LoginController {
 
@@ -32,6 +38,12 @@ public class LoginController {
 
     @FXML private Label clickToEnterLabel;
 
+    // --- Leaderboard (login screen) ---
+    @FXML private VBox leaderboardBox;
+    @FXML private ScrollPane leaderboardScroll;
+    @FXML private VBox leaderboardContent;
+    @FXML private Label leaderboardFooter;
+
     // NOTA: Abbiamo rimosso la MediaView perché non usiamo più i video!
 
     private boolean waitingForClick = false;
@@ -46,6 +58,94 @@ public class LoginController {
         Client.getInstance().getModel().setOnModelUpdatedCallback(() -> {
             Platform.runLater(this::checkServerResponse);
         });
+
+        // Carica la classifica dal database in background
+        loadLeaderboardInBackground();
+    }
+
+    /**
+     * Carica la classifica dal database MySQL in un thread separato.
+     */
+    private void loadLeaderboardInBackground() {
+        leaderboardFooter.setText("Caricamento classifica...");
+        new Thread(() -> {
+            try {
+                DatabaseConfig config = new DatabaseConfig();
+                DatabaseManager db = new DatabaseManager(config);
+                db.init();
+
+                List<LeaderboardEntry> allEntries = new ArrayList<>();
+                for (int np = 2; np <= 5; np++) {
+                    allEntries.addAll(db.getLeaderboard(np));
+                }
+
+                if (allEntries.isEmpty()) {
+                    Platform.runLater(() -> {
+                        leaderboardContent.getChildren().clear();
+                        leaderboardContent.getChildren().add(
+                            new Label("(Nessuna partita registrata)")
+                        );
+                        leaderboardFooter.setText("Nessun dato disponibile");
+                    });
+                    return;
+                }
+
+                // Ordina per num_players ASC, score DESC
+                allEntries.sort(Comparator
+                    .comparingInt(LeaderboardEntry::getNumPlayers)
+                    .thenComparingInt((LeaderboardEntry e) -> -e.getScore()));
+
+                int total = allEntries.size();
+                Platform.runLater(() -> buildLeaderboardUI(allEntries, total));
+
+            } catch (Exception e) {
+                System.err.println("[Login] Leaderboard DB error: " + e.getMessage());
+                Platform.runLater(() -> {
+                    leaderboardContent.getChildren().clear();
+                    Label fallback = new Label("Connettiti al server\nper la classifica");
+                    fallback.getStyleClass().add("leaderboard-empty");
+                    leaderboardContent.getChildren().add(fallback);
+                    leaderboardFooter.setText("Database non raggiungibile");
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * Costruisce l'interfaccia della classifica con lo stile del gioco.
+     */
+    private void buildLeaderboardUI(List<LeaderboardEntry> entries, int total) {
+        leaderboardContent.getChildren().clear();
+
+        for (int np = 2; np <= 5; np++) {
+            List<LeaderboardEntry> group = new ArrayList<>();
+            for (LeaderboardEntry e : entries) {
+                if (e.getNumPlayers() == np) group.add(e);
+            }
+            if (group.isEmpty()) continue;
+
+            // Titolo del gruppo
+            Label groupTitle = new Label("— " + np + " giocatori —");
+            groupTitle.getStyleClass().add("leaderboard-group-title");
+            leaderboardContent.getChildren().add(groupTitle);
+
+            // Intestazione tabella
+            Label header = new Label(String.format("%-4s %-16s %s", "Pos", "Nickname", "Punti"));
+            header.getStyleClass().add("leaderboard-entry-header");
+            leaderboardContent.getChildren().add(header);
+
+            // Righe della classifica
+            for (LeaderboardEntry e : group) {
+                String nick = e.getNickname();
+                if (nick.length() > 16) nick = nick.substring(0, 14) + "..";
+                Label row = new Label(String.format(" %-3d %-16s %3d",
+                    e.getPosition(), nick, e.getScore()));
+                row.getStyleClass().add("leaderboard-entry-row");
+                leaderboardContent.getChildren().add(row);
+            }
+        }
+
+        leaderboardFooter.setText("Dati storici (" + total + " record)");
     }
 
     @FXML

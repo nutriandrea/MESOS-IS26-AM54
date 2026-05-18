@@ -137,6 +137,35 @@ public class GUIApp extends Application {
         });
     }
 
+    public static void loadLeaderboardScene() {
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(GUIApp.class.getResource("/fxml/Leaderboard.fxml"));
+                Parent root = loader.load();
+                changeBackground("board-background"); // Usa un background scuro base
+                changeSceneContent(root);
+                System.out.println("[GUI] Classifica Finale caricata con successo.");
+            } catch (Exception e) {
+                System.err.println("[GUI Errore] Impossibile caricare Leaderboard.fxml");
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public static void loadLoginScene() {
+        Platform.runLater(() -> {
+            try {
+                // Ricrea tutto l'environment pulito per il login
+                FXMLLoader loader = new FXMLLoader(GUIApp.class.getResource("/fxml/Login.fxml"));
+                Parent loginRoot = loader.load();
+                changeBackground("login-background");
+                changeSceneContent(loginRoot);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
     public static void main(String[] args) {
         launch(args);
     }

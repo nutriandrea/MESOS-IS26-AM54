@@ -536,27 +536,49 @@ public class BoardController {
     private void updateMarkets(ClientModel model) {
         upperMarket.getChildren().clear();
         lowerMarket.getChildren().clear();
-        int currentIndex = 0;
+        int charUpperSize = model.getCharacterUpperRow().size();
+        int eventUpperSize = model.getEventUpperRow().size();
 
-        for (String cardStr : model.getCharacterUpperRow()) {
-            upperMarket.getChildren().add(createCardView(cardStr, "character", "upper", currentIndex++));
-        }
+        // 1. EVENTI (A sinistra)
+        int eventUpperIndex = charUpperSize; // L'indice di rete inizia DOPO i characters
         for (String cardStr : model.getEventUpperRow()) {
-            upperMarket.getChildren().add(createCardView(cardStr, "event", "upper", currentIndex++));
-        }
-        for (String cardStr : model.getUpperBuildingRow()) {
-            upperMarket.getChildren().add(createCardView(cardStr, "building", "upper", currentIndex++));
+            upperMarket.getChildren().add(createCardView(cardStr, "event", "upper", eventUpperIndex++));
         }
 
-        currentIndex = 0;
-        for (String cardStr : model.getCharacterLowerRow()) {
-            lowerMarket.getChildren().add(createCardView(cardStr, "character", "lower", currentIndex++));
+        // 2. CHARACTERS (Al centro)
+        int charUpperIndex = 0; // L'indice di rete inizia sempre da 0
+        for (String cardStr : model.getCharacterUpperRow()) {
+            upperMarket.getChildren().add(createCardView(cardStr, "character", "upper", charUpperIndex++));
         }
+
+        // 3. BUILDINGS (A destra)
+        int buildUpperIndex = charUpperSize + eventUpperSize; // L'indice inizia dopo Char e Eventi
+        for (String cardStr : model.getUpperBuildingRow()) {
+            upperMarket.getChildren().add(createCardView(cardStr, "building", "upper", buildUpperIndex++));
+        }
+
+        // ==============================================================
+        // FILA INFERIORE
+        // ==============================================================
+        int charLowerSize = model.getCharacterLowerRow().size();
+        int eventLowerSize = model.getEventLowerRow().size();
+
+        // 1. EVENTI (A sinistra)
+        int eventLowerIndex = charLowerSize;
         for (String cardStr : model.getEventLowerRow()) {
-            lowerMarket.getChildren().add(createCardView(cardStr, "event", "lower", currentIndex++));
+            lowerMarket.getChildren().add(createCardView(cardStr, "event", "lower", eventLowerIndex++));
         }
+
+        // 2. CHARACTERS (Al centro)
+        int charLowerIndex = 0;
+        for (String cardStr : model.getCharacterLowerRow()) {
+            lowerMarket.getChildren().add(createCardView(cardStr, "character", "lower", charLowerIndex++));
+        }
+
+        // 3. BUILDINGS (A destra)
+        int buildLowerIndex = charLowerSize + eventLowerSize;
         for (String cardStr : model.getLowerBuildingRow()) {
-            lowerMarket.getChildren().add(createCardView(cardStr, "building", "lower", currentIndex++));
+            lowerMarket.getChildren().add(createCardView(cardStr, "building", "lower", buildLowerIndex++));
         }
     }
 

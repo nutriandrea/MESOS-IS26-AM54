@@ -58,6 +58,11 @@ public class BoardController {
 
     @FXML private Button endTurnButton;
 
+    @FXML private StackPane eventSummaryOverlay;
+    @FXML private VBox eventSummaryContainer;
+
+    @FXML private Label roundCountLabel;
+
     private boolean isDashboardOpen = false;
     private final double DASHBOARD_OPEN_HEIGHT = 210.0;
 
@@ -66,17 +71,21 @@ public class BoardController {
     private String currentDots = "";
     private boolean isShowingError = false;
 
+    // FIX LEADERBOARD: Flag per evitare transizioni multiple
+    private boolean isGameOver = false;
+
     // --- MANAGERS ---
     private MarketManager marketManager;
     private DashboardManager dashboardManager;
     private TotemManager totemManager;
+    private it.polimi.ingsw.am54.gui.managers.EventSummaryManager eventSummaryManager;
 
     @FXML
     public void initialize() {
-        // Inizializza i Manager passando le componenti FXML
         marketManager = new MarketManager(upperMarket, lowerMarket, tribeDeckView, buildingsDeckView);
         dashboardManager = new DashboardManager(handCardsContainer, opponentsContainer, foodLabel, auraLabel, magicLabel, tribeCountLabel, buildingCountLabel);
         totemManager = new TotemManager(turnOrderImage, totemArea, offeringTrack);
+        eventSummaryManager = new it.polimi.ingsw.am54.gui.managers.EventSummaryManager(eventSummaryContainer);
 
         rootPane.widthProperty().addListener((obs, oldV, newV) -> updateDynamicLayout());
         rootPane.heightProperty().addListener((obs, oldV, newV) -> updateDynamicLayout());
@@ -87,6 +96,16 @@ public class BoardController {
         ClientModel model = Client.getInstance().getModel();
         if (model != null) {
             model.setOnModelUpdatedCallback(this::refreshBoard);
+
+            model.setOnEventResolvedCallback(reports -> {
+                javafx.application.Platform.runLater(() -> {
+                    eventSummaryManager.buildEventSummary(reports, model.getPlayerColors());
+                    if (eventSummaryOverlay != null) {
+                        eventSummaryOverlay.setVisible(true);
+                    }
+                });
+            });
+
             refreshBoard();
         }
 
@@ -219,6 +238,17 @@ public class BoardController {
             ClientModel model = Client.getInstance().getModel();
             if (model == null) return;
 
+            // FIX LEADERBOARD: Controlla lo stato di fine gioco e cambia scena
+            String state = model.getCurrentState();
+            boolean hasWinners = model.getWinners() != null && !model.getWinners().isEmpty();
+            boolean isEndState = state != null && (state.equalsIgnoreCase("ENDGAMESTATE") || state.equalsIgnoreCase("ENDGAME"));
+
+            if (!isGameOver && (isEndState || hasWinners)) {
+                isGameOver = true;
+                GUIApp.loadLeaderboardScene();
+                return; // Ferma l'aggiornamento della board
+            }
+
             marketManager.updateMarkets(model);
             marketManager.updateDecksGraphics(model);
 
@@ -231,6 +261,10 @@ public class BoardController {
 
             handleTurnChangeNotification(model);
             updateActionBanner(model);
+
+            if (roundCountLabel != null) {
+                roundCountLabel.setText("ROUND: " + model.getRoundCount());
+            }
 
             if (model.getLastErrorMessage() != null && !model.getLastErrorMessage().isEmpty()) {
                 showTemporaryError(model.getLastErrorMessage());
@@ -322,6 +356,16 @@ public class BoardController {
             default:
                 actionInstructionLabel.setText("Tocca a te! Fai la tua mossa.");
                 break;
+        }
+    }
+
+    @FXML
+    private void closeEventSummary() {
+        if (eventSummaryOverlay != null) {
+            eventSummaryOverlay.setVisible(false);
+        }
+        if (Client.getInstance().getModel() != null) {
+            Client.getInstance().getModel().clearPendingEvents();
         }
     }
 }

@@ -46,7 +46,7 @@ public interface ClientConnection {
     void notifyTotemPlaced(String nickname, int position);
     void notifyCardPicked(String nickname, String row, int index, int food, int magic, Map<Integer, String> offering);
     void notifyTotemReturned(String nickname, int position, int food, int aura);
-    void notifyEventResolved(Map<String, EventUpdate.PlayerSnapshot> stats,
+    void notifyEventResolved(String name, Map<String, EventUpdate.PlayerSnapshot> stats,
                              List<String> charUp, List<String> charLow,
                              List<String> eventUp, List<String> eventLow,
                              List<String> buildUp, List<String> buildLow);

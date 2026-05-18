@@ -313,9 +313,9 @@ public class Game implements IGame{
         }
     }
 
-    public void notifyEventResolved() {
+    public void notifyEventResolved(EventCard eventCard) {
         for (IGameObserver obs : observers) {
-            obs.onEventResolved(this);
+            obs.onEventResolved(this, eventCard);
         }
     }
 

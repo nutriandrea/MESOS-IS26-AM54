@@ -43,6 +43,17 @@ public class ClientModel {
 
     private String lastSystemMessage;
 
+    private final java.util.List<EventReport> pendingEventReports = new java.util.ArrayList<>();
+    private java.util.function.Consumer<java.util.List<EventReport>> onEventResolvedCallback;
+
+    public void setOnEventResolvedCallback(java.util.function.Consumer<java.util.List<EventReport>> callback) {
+        this.onEventResolvedCallback = callback;
+    }
+
+    public synchronized void clearPendingEvents() {
+        this.pendingEventReports.clear();
+    }
+
     public void setOnModelUpdatedCallback(Runnable callback) {
         this.onModelUpdatedCallback = callback;
     }
@@ -322,17 +333,38 @@ public class ClientModel {
     }
 
     public synchronized void updateEventSnapshot(EventUpdate msg) {
-        // Aggiorna Risorse di TUTTI i Giocatori simultaneamente
+        EventReport report = new EventReport();
+        report.eventName = msg.getEventName() != null ? msg.getEventName() : "Risoluzione Eventi";
+
+        // Aggiorna Risorse di TUTTI i Giocatori simultaneamente (LA TUA LOGICA INTATTA)
         msg.getPlayersStats().forEach((nick, stats) -> {
+
+            // <-- CATTURA DATI PRIMA DELLA SOVRASCRITTURA -->
+            PlayerDelta pd = new PlayerDelta();
+            pd.nickname = nick;
+            pd.oldFood = playerFood.getOrDefault(nick, 0);
+            pd.oldAura = playerAura.getOrDefault(nick, 0);
+            pd.oldMagic = playerMagic.getOrDefault(nick, 0);
+            pd.diffFood = stats.food - pd.oldFood;
+            pd.diffAura = stats.aura - pd.oldAura;
+            pd.diffMagic = stats.magicPoints - pd.oldMagic;
+            report.playerDeltas.add(pd);
+            // <--------------------------------------------->
+
             playerFood.put(nick, stats.food);
             playerAura.put(nick, stats.aura);
             playerMagic.put(nick, stats.magicPoints);
-            playerTribe.put(nick, new ArrayList<>(stats.tribe));
-            playerBuildings.put(nick, new ArrayList<>(stats.buildings));
-            // playerMagicPoints.put(nick, stats.magicPoints); // (Se serve per la GUI)
+            playerTribe.put(nick, new java.util.ArrayList<>(stats.tribe));
+            playerBuildings.put(nick, new java.util.ArrayList<>(stats.buildings));
         });
 
-        // Pialla e Ricostruisci la Board in un colpo solo
+        // Memorizza l'evento e notifica la GUI
+        pendingEventReports.add(report);
+        if (onEventResolvedCallback != null) {
+            onEventResolvedCallback.accept(new java.util.ArrayList<>(pendingEventReports));
+        }
+
+        // Pialla e Ricostruisci la Board in un colpo solo (LA TUA LOGICA INTATTA)
         characterUpperRow.clear(); characterUpperRow.addAll(msg.getCharUpper());
         characterLowerRow.clear(); characterLowerRow.addAll(msg.getCharLower());
         eventUpperRow.clear();     eventUpperRow.addAll(msg.getEventUpper());

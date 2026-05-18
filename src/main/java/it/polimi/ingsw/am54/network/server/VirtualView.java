@@ -173,8 +173,11 @@ public class VirtualView implements IGameObserver {
     }
 
     @Override
-    public void onEventResolved(Game game) {
+    public void onEventResolved(Game game, EventCard resolvedEvent) {
         Board b = game.getBoard();
+
+        // 0. Recupera il vero nome dell'evento!
+        String eventName = resolvedEvent.getName();
 
         // 1. Mappatura statistiche giocatori
         Map<String, EventUpdate.PlayerSnapshot> stats = new HashMap<>();
@@ -186,7 +189,7 @@ public class VirtualView implements IGameObserver {
             ));
         }
 
-        // 2. Trasformazione delle carte in Stringhe (Nomi o identificativi)
+        // 2. Trasformazione delle carte in Stringhe
         List<String> charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
         List<String> charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
         List<String> eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
@@ -194,10 +197,9 @@ public class VirtualView implements IGameObserver {
         List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
         List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
 
-        // 3. Spedisci lo Snapshot completo!
-        connection.notifyEventResolved(stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
+        // 3. Spedisci lo Snapshot completo aggiungendo il nome in cima!
+        connection.notifyEventResolved(eventName, stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
     }
-
     /**
      * COSA FA: Notifica a tutti chi è il nuovo giocatore di turno.
      * PERCHÉ LO FA: Permette all'interfaccia grafica di attivare i pulsanti solo per quel giocatore, e mostrare agli altri la scritta "In attesa di...".

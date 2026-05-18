@@ -17,7 +17,7 @@ public interface IGameObserver {
     void onTurnChanged(Game game, Player newCurrentPlayer);
     void onStateChanged(Game game, GameState newState);
 
-    void onEventResolved(Game game);
+    void onEventResolved(Game game, EventCard eventCard);
     // Evento Finale
     void onEndGame(Game game, List<Player> winners);
 }

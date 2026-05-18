@@ -2,12 +2,14 @@ package it.polimi.ingsw.am54.gui.managers;
 
 import it.polimi.ingsw.am54.network.client.Client;
 import it.polimi.ingsw.am54.network.client.ClientModel;
+import it.polimi.ingsw.am54.model.TotemColors;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -79,16 +81,52 @@ public class DashboardManager {
             int aura = model.getPlayerAura().getOrDefault(oppName, 0);
             int magic = model.getPlayerMagic() != null ? model.getPlayerMagic().getOrDefault(oppName, 0) : 0;
 
-            Label nameLabel = new Label("👤 " + oppName.toUpperCase() + "   |   🍖 Cibo: " + food + "   |   ✨ Aura: " + aura + "   |   🔮 Magia: " + magic);
+            HBox headerBox = new HBox(15);
+            headerBox.setAlignment(Pos.CENTER_LEFT);
+
+            ImageView totemIcon = new ImageView();
+            totemIcon.setFitWidth(35);
+            totemIcon.setFitHeight(35);
+            totemIcon.setPreserveRatio(true);
+
+            TotemColors oppColor = model.getPlayerColors().get(oppName);
+            if (oppColor != null) {
+                String colorName = oppColor.name().toLowerCase();
+                try {
+                    totemIcon.setImage(new Image(getClass().getResourceAsStream("/images/totem_front_" + colorName + ".png")));
+                } catch (Exception e) {}
+            }
+
+            Label nameLabel = new Label(oppName.toUpperCase() + "   |   🍖 Cibo: " + food + "   |   ✨ Aura: " + aura + "   |   🔮 Magia: " + magic);
             nameLabel.getStyleClass().add("opponent-name-label");
 
+            headerBox.getChildren().addAll(totemIcon, nameLabel);
+
+            // --- FIX SCROLL: Blindiamo in orizzontale e blocchiamo il verticale ---
             ScrollPane cardsScroll = new ScrollPane();
             cardsScroll.setFitToHeight(true);
             cardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            cardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             cardsScroll.getStyleClass().add("opponent-scroll-pane");
+
+            // Forza altezze rigide per non far vibrare la VBox
+            cardsScroll.setMinHeight(150);
+            cardsScroll.setMaxHeight(150);
+            cardsScroll.setVmax(0); // Nessun margine per scrollare giù!
 
             HBox cardsBox = new HBox(10);
             cardsBox.setAlignment(Pos.CENTER_LEFT);
+            cardsBox.setMinHeight(140);
+
+            // Traduciamo la rotellina del mouse: Verticale diventa Orizzontale
+            cardsScroll.addEventFilter(ScrollEvent.SCROLL, event -> {
+                if (event.getDeltaY() != 0) {
+                    double speed = 2.5;
+                    cardsScroll.setHvalue(cardsScroll.getHvalue() - (event.getDeltaY() * speed) / cardsBox.getWidth());
+                    event.consume(); // Cancella il movimento verticale
+                }
+            });
+            // ----------------------------------------------------------------------
 
             List<String> oppChars = model.getPlayerTribe().getOrDefault(oppName, new ArrayList<>());
             List<String> oppBuilds = model.getPlayerBuildings().getOrDefault(oppName, new ArrayList<>());
@@ -105,14 +143,10 @@ public class DashboardManager {
             }
 
             cardsScroll.setContent(cardsBox);
-            oppBox.getChildren().addAll(nameLabel, cardsScroll);
+            oppBox.getChildren().addAll(headerBox, cardsScroll);
             opponentsContainer.getChildren().add(oppBox);
         }
     }
-
-    // ==============================================================================
-    // LOGICA DI ORDINAMENTO AVANZATA
-    // ==============================================================================
 
     public List<String> sortPlayerCards(List<String> chars, List<String> builds) {
         List<String> allCards = new ArrayList<>();
@@ -120,17 +154,14 @@ public class DashboardManager {
         for (String b : builds) allCards.add(b + "|building");
 
         allCards.sort((c1, c2) -> {
-            // 1. Ordine principale per Tipo di Lavoro / Building
             int w1 = getSortWeight(c1);
             int w2 = getSortWeight(c2);
             if (w1 != w2) return Integer.compare(w1, w2);
 
-            // 2. A parità di lavoro, ordina per Era (1 -> 2 -> 3)
             int e1 = getEra(c1);
             int e2 = getEra(c2);
             if (e1 != e2) return Integer.compare(e1, e2);
 
-            // 3. A parità di Era, ordina per ID della carta
             return Integer.compare(getId(c1), getId(c2));
         });
 
@@ -152,7 +183,7 @@ public class DashboardManager {
         if (str.contains("builder")) return 5;
         if (str.contains("inventor")) return 6;
 
-        return 50; // Per personaggi generici o senza job stampato
+        return 50;
     }
 
     private int getEra(String cardStr) {
@@ -166,8 +197,6 @@ public class DashboardManager {
         try { return Integer.parseInt(parts[0]); }
         catch (Exception e) { return 0; }
     }
-
-    // ==============================================================================
 
     public ImageView createHandCardView(String cardStrWithType, double desiredHeight) {
         ImageView view = new ImageView();

@@ -12,7 +12,10 @@
     <VBox alignment="CENTER" spacing="10.0">
         <BorderPane fx:id="actionBanner" minHeight="60.0" styleClass="action-banner">
             <left>
-                <Region prefWidth="250.0" />
+                <HBox alignment="CENTER_LEFT" prefWidth="250.0" pickOnBounds="false">
+                    <padding><Insets left="40.0" /></padding>
+                    <Label fx:id="roundCountLabel" text="ROUND: 1" styleClass="round-count-label" />
+                </HBox>
             </left>
 
             <center>
@@ -84,7 +87,7 @@
         </VBox>
     </StackPane>
 
-<!--    <StackPane fx:id="eventSummaryOverlay" visible="false" styleClass="recap-overlay">
+    <StackPane fx:id="eventSummaryOverlay" visible="false" styleClass="recap-overlay">
         <VBox alignment="CENTER" spacing="20.0" maxWidth="1300.0" maxHeight="800.0" styleClass="opponents-panel">
             <padding><Insets top="30.0" right="30.0" bottom="30.0" left="30.0" /></padding>
             <Label text="RISOLUZIONE EVENTI" styleClass="opponents-title" />
@@ -95,7 +98,7 @@
             </ScrollPane>
             <Button text="CHIUDI E CONTINUA" styleClass="recap-button" onAction="#closeEventSummary" />
         </VBox>
-    </StackPane>-->
+    </StackPane>
 
     <StackPane fx:id="turnNotificationOverlay" visible="false" styleClass="turn-notification-overlay"><VBox alignment="CENTER" spacing="15.0" maxWidth="600.0" maxHeight="200.0"><styleClass><String fx:value="dashboard-panel" /><String fx:value="turn-notification-panel" /></styleClass><Label fx:id="turnNotificationTitle" text="" styleClass="turn-title-mine" /></VBox></StackPane>
     <StackPane fx:id="opponentsOverlay" visible="false" styleClass="recap-overlay"><VBox alignment="CENTER" spacing="20.0" maxWidth="1100.0" maxHeight="800.0" styleClass="opponents-panel"><padding><Insets top="30.0" right="30.0" bottom="30.0" left="30.0" /></padding><Label text="STATO DEGLI AVVERSARI" styleClass="opponents-title" /><ScrollPane fitToWidth="true" styleClass="dashboard-scroll-pane" VBox.vgrow="ALWAYS"><VBox fx:id="opponentsContainer" spacing="30.0"><padding><Insets top="10.0" right="10.0" bottom="10.0" left="10.0" /></padding></VBox></ScrollPane><Button text="CHIUDI" styleClass="recap-close-button" onAction="#toggleOpponentsOverlay" /></VBox></StackPane>

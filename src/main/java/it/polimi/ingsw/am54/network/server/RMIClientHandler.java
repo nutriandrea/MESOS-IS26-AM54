@@ -128,11 +128,11 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
 
     @Override
-    public void notifyEventResolved(Map<String, EventUpdate.PlayerSnapshot> stats,
+    public void notifyEventResolved(String name, Map<String, EventUpdate.PlayerSnapshot> stats,
                                     List<String> charUp, List<String> charLow,
                                     List<String> eventUp, List<String> eventLow,
                                     List<String> buildUp, List<String> buildLow) {
-        try { clientStub.onEventResolved(stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow); }
+        try { clientStub.onEventResolved(name, stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow); }
         catch (RemoteException e) { disconnect(); }
     }
 

@@ -258,3 +258,60 @@
 .totem-face {
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.9), 6, 0, 2, 2);
 }
+
+/* --- STILI OVERLAY RIEPILOGO EVENTI --- */
+
+.event-summary-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffd700; /* Colore oro per l'intestazione dell'evento */
+    -fx-padding: 0 0 10px 0;
+}
+
+.event-player-row {
+    -fx-background-color: rgba(255, 255, 255, 0.07);
+    -fx-padding: 12px 20px 12px 20px;
+    -fx-background-radius: 10px;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 10px;
+}
+
+.event-player-name {
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 16px;
+}
+
+.event-player-activation {
+    -fx-text-fill: #cccccc;
+    -fx-font-size: 14px;
+}
+
+/* Stati del delta risorse: assegnati dinamicamente in base al calcolo matematico */
+.event-delta-neutral {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 14px;
+}
+
+.event-delta-positive {
+    -fx-font-weight: bold;
+    -fx-text-fill: #51cf66; /* Verde scattante per i guadagni */
+    -fx-font-size: 14px;
+}
+
+.event-delta-negative {
+    -fx-font-weight: bold;
+    -fx-text-fill: #ff6b6b; /* Rosso per le perdite di risorse */
+    -fx-font-size: 14px;
+}
+
+.round-count-label {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffd700;
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-padding: 8px 18px 8px 18px;
+    -fx-background-radius: 20px;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 20px;
+}

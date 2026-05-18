@@ -26,17 +26,14 @@ public class MarketManager {
         lowerMarket.getChildren().clear();
 
         // --- UPPER ROW ---
-        // 1. Eventi (Posizionati a sinistra, Non pickabili)
         for (String cardStr : model.getEventUpperRow()) {
             upperMarket.getChildren().add(createCardView(cardStr, "event", "upper", -1, false));
         }
-        // 2. Characters (Al centro, Pickabili, indice corretto da 0 a size-1)
         int characterUpperSize = model.getCharacterUpperRow().size();
         for (int i = 0; i < characterUpperSize; i++) {
             String cardStr = model.getCharacterUpperRow().get(i);
             upperMarket.getChildren().add(createCardView(cardStr, "character", "upper", i, true));
         }
-        // 3. Buildings (A destra, Pickabili, indice a partire da characterUpperSize)
         int buildingUpperSize = model.getUpperBuildingRow().size();
         for (int i = 0; i < buildingUpperSize; i++) {
             String cardStr = model.getUpperBuildingRow().get(i);
@@ -44,17 +41,14 @@ public class MarketManager {
         }
 
         // --- LOWER ROW ---
-        // 1. Eventi (Posizionati a sinistra, Non pickabili)
         for (String cardStr : model.getEventLowerRow()) {
             lowerMarket.getChildren().add(createCardView(cardStr, "event", "lower", -1, false));
         }
-        // 2. Characters (Al centro, Pickabili, indice corretto da 0 a size-1)
         int characterLowerSize = model.getCharacterLowerRow().size();
         for (int i = 0; i < characterLowerSize; i++) {
             String cardStr = model.getCharacterLowerRow().get(i);
             lowerMarket.getChildren().add(createCardView(cardStr, "character", "lower", i, true));
         }
-        // 3. Buildings (A destra, Pickabili, indice a partire da characterLowerSize)
         int buildingLowerSize = model.getLowerBuildingRow().size();
         for (int i = 0; i < buildingLowerSize; i++) {
             String cardStr = model.getLowerBuildingRow().get(i);
@@ -66,10 +60,25 @@ public class MarketManager {
         int playerCount = (model.getPlayers() != null && !model.getPlayers().isEmpty()) ? model.getPlayers().size() : 3;
         int era = model.getCurrentEra();
 
-        // --- DECK TRIBÙ ---
+        // --- FIX DECK TRIBÙ: MAPPATURA ORIENTATA AGLI ASSET COMPATIBILI PER EVITARE IL BLOCCO DELLA COMPILAZIONE ---
         String tribeBackId = "8";
-        if (era == 2) tribeBackId = "29";
-        else if (era == 3) tribeBackId = "58";
+        if (playerCount == 2) {
+            if (era == 1) tribeBackId = "8";
+            else if (era == 2) tribeBackId = "29";
+            else if (era == 3) tribeBackId = "58";
+        } else if (playerCount == 3) {
+            if (era == 1) tribeBackId = "3";
+            else if (era == 2) tribeBackId = "31";
+            else if (era == 3) tribeBackId = "73";
+        } else if (playerCount == 4) {
+            if (era == 1) tribeBackId = "17";
+            else if (era == 2) tribeBackId = "33";
+            else if (era == 3) tribeBackId = "66";
+        } else {
+            if (era == 1) tribeBackId = "7";
+            else if (era == 2) tribeBackId = "34";
+            else if (era == 3) tribeBackId = "57";
+        }
 
         String tribeFolder = playerCount >= 3 ? (playerCount >= 4 ? (playerCount >= 5 ? "5_players" : "4+_players") : "3+_players") : "2+_players";
         String tribeBack = "/images/cards/characters/" + tribeFolder + "/era" + era + "/back/" + tribeBackId + ".jpg";
@@ -138,7 +147,6 @@ public class MarketManager {
 
         Tooltip.install(view, new Tooltip(finalCardName));
 
-        // Applica animazioni e handler di click solo se la carta è pickabile (disabilitato per eventi)
         if (isPickable) {
             view.setOnMouseEntered(e -> view.setTranslateY(-10));
             view.setOnMouseExited(e -> view.setTranslateY(0));

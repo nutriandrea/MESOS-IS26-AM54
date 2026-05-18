@@ -16,7 +16,7 @@ public class EventState extends GameState {
             // Questo modificherà le statistiche dei giocatori (Cibo, PP)
             currentEvent.resolveEvent(game);
 
-            game.notifyEventResolved();
+            game.notifyEventResolved(currentEvent);
         }
 
         // 3. Scarto tutte le carte (Personaggi) rimaste nella fila inferiore

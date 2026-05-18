@@ -21,7 +21,7 @@ public class EndGameState extends GameState {
             // Risolviamo l'evento (modifica i punteggi/cibo dei giocatori)
             currentFinalEvent.resolveEvent(game);
 
-            game.notifyEventResolved();
+            game.notifyEventResolved(currentFinalEvent);
         }
 
         // CALCOLO PUNTEGGI

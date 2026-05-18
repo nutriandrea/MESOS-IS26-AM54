@@ -70,9 +70,10 @@ public class BoardController {
     private Timeline dotsTimeline;
     private String currentDots = "";
     private boolean isShowingError = false;
-
-    // FIX LEADERBOARD: Flag per evitare transizioni multiple
     private boolean isGameOver = false;
+
+    // FIX SOVRAPPOSIZIONE: Memorizza il nome del player per ritardare la notifica visiva del turno
+    private String pendingNotifyPlayer = null;
 
     // --- MANAGERS ---
     private MarketManager marketManager;
@@ -238,7 +239,6 @@ public class BoardController {
             ClientModel model = Client.getInstance().getModel();
             if (model == null) return;
 
-            // FIX LEADERBOARD: Controlla lo stato di fine gioco e cambia scena
             String state = model.getCurrentState();
             boolean hasWinners = model.getWinners() != null && !model.getWinners().isEmpty();
             boolean isEndState = state != null && (state.equalsIgnoreCase("ENDGAMESTATE") || state.equalsIgnoreCase("ENDGAME"));
@@ -246,7 +246,7 @@ public class BoardController {
             if (!isGameOver && (isEndState || hasWinners)) {
                 isGameOver = true;
                 GUIApp.loadLeaderboardScene();
-                return; // Ferma l'aggiornamento della board
+                return;
             }
 
             marketManager.updateMarkets(model);
@@ -282,24 +282,35 @@ public class BoardController {
         if (activePlayer == null || activePlayer.isEmpty()) return;
 
         if (!activePlayer.equals(lastKnownPlayer)) {
-            lastKnownPlayer = activePlayer;
-
-            turnNotificationTitle.getStyleClass().removeAll("turn-title-mine", "turn-title-other");
-
-            if (activePlayer.equals(myName)) {
-                turnNotificationTitle.setText("🔮 È IL TUO TURNO! 🔮");
-                turnNotificationTitle.getStyleClass().add("turn-title-mine");
-            } else {
-                turnNotificationTitle.setText("👥 È IL TURNO DI " + activePlayer.toUpperCase() + " 👥");
-                turnNotificationTitle.getStyleClass().add("turn-title-other");
+            // FIX SOVRAPPOSIZIONE: Se l'overlay eventi è aperto, congeliamo la notifica in coda e usciamo
+            if (eventSummaryOverlay != null && eventSummaryOverlay.isVisible()) {
+                pendingNotifyPlayer = activePlayer;
+                return;
             }
-
-            turnNotificationOverlay.setVisible(true);
-
-            PauseTransition hideDelay = new PauseTransition(Duration.seconds(2.0));
-            hideDelay.setOnFinished(e -> turnNotificationOverlay.setVisible(false));
-            hideDelay.play();
+            showTurnNotification(activePlayer, myName);
         }
+    }
+
+    // Estratta la visualizzazione grafica pura della notifica turno per invocarla al momento giusto
+    private void showTurnNotification(String activePlayer, String myName) {
+        lastKnownPlayer = activePlayer;
+        pendingNotifyPlayer = null; // Svuotiamo la coda del congelamento
+
+        turnNotificationTitle.getStyleClass().removeAll("turn-title-mine", "turn-title-other");
+
+        if (activePlayer.equals(myName)) {
+            turnNotificationTitle.setText("🔮 È IL TUO TURNO! 🔮");
+            turnNotificationTitle.getStyleClass().add("turn-title-mine");
+        } else {
+            turnNotificationTitle.setText("👥 È IL TURNO DI " + activePlayer.toUpperCase() + " 👥");
+            turnNotificationTitle.getStyleClass().add("turn-title-other");
+        }
+
+        turnNotificationOverlay.setVisible(true);
+
+        PauseTransition hideDelay = new PauseTransition(Duration.seconds(2.0));
+        hideDelay.setOnFinished(e -> turnNotificationOverlay.setVisible(false));
+        hideDelay.play();
     }
 
     private void updateActionBanner(ClientModel model) {
@@ -366,6 +377,12 @@ public class BoardController {
         }
         if (Client.getInstance().getModel() != null) {
             Client.getInstance().getModel().clearPendingEvents();
+        }
+
+        // FIX SOVRAPPOSIZIONE: Se durante l'overlay è arrivata una notifica turno, la mostriamo ORA
+        if (pendingNotifyPlayer != null) {
+            String myName = Client.getInstance().getNickname();
+            showTurnNotification(pendingNotifyPlayer, myName);
         }
     }
 }

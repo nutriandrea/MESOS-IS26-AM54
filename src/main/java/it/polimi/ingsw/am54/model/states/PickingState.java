@@ -8,9 +8,9 @@ public class PickingState extends GameState {
     @Override
     public void pickCard(Game game, String nickname, String row, int cardIndex) throws Exception {
         Player player = game.getPlayerByNickname(nickname);
-        Player currentPicker = game.getCurrentPicker();
 
-        if (currentPicker == null || !currentPicker.equals(player)) {
+        // Usiamo getCurrentPlayer() invece di getCurrentPicker() per supportare il Turno Bonus
+        if (!game.getCurrentPlayer().equals(player)) {
             throw new Exception("Non è il tuo turno per pescare!");
         }
 
@@ -27,19 +27,24 @@ public class PickingState extends GameState {
         // ==========================================
         boolean usingExtraPick = false;
 
-        if (isUpper) {
-            // Se la tessera è vuota, controlliamo il bonus
-            if (tile.getRemainingUpperPicks() <= 0) {
-                if (player.hasExtraPick()) {
-                    usingExtraPick = true; // Segniamo che stiamo per usare il bonus
-                } else {
-                    throw new Exception("Non hai più pick disponibili per la fila upper.");
-                }
+        if (tile == null) {
+            // Se la tessera è NULL, significa che il giro normale è finito
+            // e siamo nel "Turno Bonus Extra Pick"
+            if (player.hasExtraPick() && isUpper) {
+                usingExtraPick = true;
+            } else {
+                throw new Exception("Non hai tessere attive. Puoi usare l'Extra Pick SOLO per la fila upper.");
             }
         } else {
-            // L'Extra Pick vale SOLO per la upper row. Sulla lower non ci salva.
-            if (tile.getRemainingLowerPicks() <= 0) {
-                throw new Exception("Non hai più pick disponibili per la fila lower.");
+            // Logica normale durante il turno
+            if (isUpper) {
+                if (tile.getRemainingUpperPicks() <= 0) {
+                    throw new Exception("Non hai più pick disponibili per la fila upper.");
+                }
+            } else {
+                if (tile.getRemainingLowerPicks() <= 0) {
+                    throw new Exception("Non hai più pick disponibili per la fila lower.");
+                }
             }
         }
 
@@ -50,10 +55,8 @@ public class PickingState extends GameState {
         Card card = null;
 
         if (cardIndex < charRowSize) {
-            // È un personaggio
             card = game.getBoard().takeCharacterCard(row, cardIndex);
         } else {
-            // È un edificio
             int buildingIndex = cardIndex - charRowSize;
             card = game.getBoard().takeBuildingCard(row, buildingIndex);
         }
@@ -62,9 +65,7 @@ public class PickingState extends GameState {
             throw new Exception("Carta non trovata o non disponibile a quell'indice.");
         }
 
-        // --- CONTROLLO POLIMORFICO E ROLLBACK ---
         if (!card.canBePurchased(player)) {
-            // Se non può essere acquistata, rimettiamo la carta sulla board
             card.reveal(game.getBoard(), row);
             throw new Exception("Non hai abbastanza cibo (\uD83C\uDF56) per prendere questa carta!");
         }
@@ -72,18 +73,13 @@ public class PickingState extends GameState {
         // ==========================================
         // 3. CONSUMO EFFETTIVO DEL PICK
         // ==========================================
-        // Lo facciamo solo ORA, perché siamo certi che la carta verrà acquistata!
-        if (isUpper) {
-            if (usingExtraPick) {
-                player.setExtraPick(false); // Consumiamo il bonus
-            } else {
-                tile.useUpperPick(); // Consumiamo la tessera
-            }
+        if (usingExtraPick) {
+            player.setExtraPick(false); // Consumiamo il bonus
         } else {
-            tile.useLowerPick();
+            if (isUpper) tile.useUpperPick();
+            else tile.useLowerPick();
         }
 
-        // Esecuzione logica di acquisto
         card.pick(player, game);
 
         int finalFood = player.getFood();
@@ -93,8 +89,10 @@ public class PickingState extends GameState {
         // ==========================================
         // 4. AUTO-FINE TURNO
         // ==========================================
-        // MODIFICATO: Passiamo il player per controllare l'Extra Pick
-        if (shouldAutoEndTurn(game, player)) {
+        if (usingExtraPick) {
+            // Il turno bonus dura esattamente una mossa, quindi finisce subito
+            executeEndTurnLogic(game, player);
+        } else if (shouldAutoEndTurn(game, player)) {
             executeEndTurnLogic(game, player);
         }
     }
@@ -102,22 +100,27 @@ public class PickingState extends GameState {
     @Override
     public void endTurn(Game game, String nickname) throws Exception {
         Player player = game.getPlayerByNickname(nickname);
-        Player currentPicker = game.getCurrentPicker();
 
-        if (currentPicker == null || !currentPicker.equals(player)) {
+        if (!game.getCurrentPlayer().equals(player)) {
             throw new Exception("Non è il tuo turno!");
         }
 
         OfferingTile tile = player.getCurrentTile();
 
-        // MODIFICATO: Pulizia del bonus se il giocatore passa volontariamente
-        if (player.hasExtraPick()) {
-            player.setExtraPick(false);
+        // Se siamo nel Turno Bonus e il giocatore decide di passare
+        if (tile == null) {
+            if (player.hasExtraPick()) {
+                player.setExtraPick(false); // Rinuncia al bonus
+                executeEndTurnLogic(game, player);
+                return;
+            } else {
+                throw new Exception("Azione non valida.");
+            }
         }
 
-        // CONTROLLO REGOLE: Pescata Obbligatoria dei Personaggi
+        // CONTROLLO REGOLE NORMALI: Pescata Obbligatoria dei Personaggi
         if (hasMandatoryCharactersLeft(game, tile)) {
-            throw new Exception("Non puoi terminare il turno volontariamente: ci sono ancora Personaggi disponibili che DEVI pescare!");
+            throw new Exception("Non puoi terminare il turno: ci sono ancora Personaggi disponibili che DEVI pescare!");
         }
 
         executeEndTurnLogic(game, player);
@@ -126,26 +129,20 @@ public class PickingState extends GameState {
     // --- Helper Methods ---
 
     private boolean hasMandatoryCharactersLeft(Game game, OfferingTile tile) {
-        // Se ho ancora pick "upper" E ci sono personaggi in "upper", devo pescare.
         boolean mandatoryUpper = tile.getRemainingUpperPicks() > 0 && game.getBoard().getCharacterRowSize("upper") > 0;
-        // Stessa cosa per "lower"
         boolean mandatoryLower = tile.getRemainingLowerPicks() > 0 && game.getBoard().getCharacterRowSize("lower") > 0;
-
         return mandatoryUpper || mandatoryLower;
     }
 
-    // MODIFICATO: Prende (Game, Player) invece di (Game, OfferingTile)
     private boolean shouldAutoEndTurn(Game game, Player player) {
-        // REGOLA AUREA: Se ho l'Extra Pick, il turno NON deve chiudersi in automatico!
-        if (player.hasExtraPick()) return false;
-
         OfferingTile tile = player.getCurrentTile();
+        if (tile == null) return true; // Sicurezza
 
-        // Se ho esaurito tutte le azioni sulla tessera
+        // NOTA: Abbiamo rimosso il blocco sull'extra pick.
+        // Il giocatore DEVE chiudere il turno normale anche se ha il bonus.
+
         if (!tile.hasPicksLeft()) return true;
 
-        // Se mi sono rimasti pick, controllo se le file sono fisicamente VUOTE.
-        // Se sia Personaggi che Edifici sono esauriti nella fila in cui potrei pescare, devo finire il turno.
         boolean upperEmpty = game.getBoard().getCharacterRowSize("upper") == 0 && game.getBoard().getBuildingRowSize("upper") == 0;
         boolean lowerEmpty = game.getBoard().getCharacterRowSize("lower") == 0 && game.getBoard().getBuildingRowSize("lower") == 0;
 
@@ -155,60 +152,64 @@ public class PickingState extends GameState {
         return true;
     }
 
-    /**
-     * Salta il turno del giocatore disconnesso durante la fase di pesca.
-     * Termina automaticamente il turno (senza controllare carte obbligatorie)
-     * e avanza al prossimo picker o alla fase eventi.
-     */
     @Override
     public void skipTurn(Game game, String nickname) throws Exception {
         Player player = game.getPlayerByNickname(nickname);
-        Player currentPicker = game.getCurrentPicker();
 
-        if (currentPicker == null || !currentPicker.equals(player)) {
+        if (!game.getCurrentPlayer().equals(player)) {
             throw new Exception("Non e' il turno di " + nickname);
         }
 
-        // MODIFICATO: Pulizia del bonus in caso di disconnessione
         if (player.hasExtraPick()) {
             player.setExtraPick(false);
         }
 
-        // Termina il turno saltando il controllo sulle carte obbligatorie
         executeEndTurnLogic(game, player);
     }
 
     private void executeEndTurnLogic(Game game, Player player) {
-        // Assegnazione turno e gestione bonus Cibo
-        TurnOrderSlot slot = game.assignPickerToTurnOrder(player);
-        if (slot != null) {
-            int bonus = slot.getBonusFood();
-            if (bonus < 0) {
-                // Pagamento cibo usando valore assoluto per sicurezza
-                if (player.getFood() >= Math.abs(bonus)) {
-                    player.modifyFood(bonus); // Esempio: -1
+        // 1. GESTIONE TURNO NORMALE: Liberiamo la tessera e diamo il bonus cibo
+        if (player.getCurrentTile() != null) {
+            TurnOrderSlot slot = game.assignPickerToTurnOrder(player);
+            if (slot != null) {
+                int bonus = slot.getBonusFood();
+                if (bonus < 0) {
+                    if (player.getFood() >= Math.abs(bonus)) player.modifyFood(bonus);
+                    else player.modifyAuraPoints(-2);
                 } else {
-                    player.modifyAuraPoints(-2);
+                    player.modifyFood(bonus);
                 }
-            } else {
-                player.modifyFood(bonus);
             }
+
+            game.notifyTotemReturned(player, slot.getPosition());
+            player.getCurrentTile().freeSlot();
+            player.setCurrentTile(null); // Chiudiamo la connessione con la plancia
         }
 
-        game.notifyTotemReturned(player, slot.getPosition());
-        // Libera la tessera offerta
-        player.getCurrentTile().freeSlot();
-        player.setCurrentTile(null); // Pulizia del riferimento
-
-        // Transizione di Fase o Turno
+        // 2. CONTROLLO FLUSSO E TURNO BONUS
         if (game.isPickingComplete()) {
-            if (game.isTribeDeckEmpty() && game.getCurrentEra() == 3) {
-                game.setState(new EndGameState());
+
+            // Tutti i giocatori hanno finito il giro normale.
+            // Cerchiamo il primo giocatore che ha un Extra Pick non usato!
+            Player extraPicker = game.getPlayers().stream()
+                    .filter(Player::hasExtraPick)
+                    .findFirst()
+                    .orElse(null);
+
+            if (extraPicker != null) {
+                // INIZIA IL TURNO BONUS
+                game.setCurrentPlayer(extraPicker);
+                // Rimaniamo in PickingState per permettergli di pescare
             } else {
-                game.setState(new EventState());
+                // Nessuno ha l'Extra Pick (o lo hanno tutti consumato). ORA si cambia fase!
+                if (game.isTribeDeckEmpty() && game.getCurrentEra() == 3) {
+                    game.setState(new EndGameState());
+                } else {
+                    game.setState(new EventState());
+                }
             }
         } else {
-            // Aggiorniamo il currentPlayer con il prossimo "picker" da sinistra a destra
+            // Il giro normale continua al giocatore successivo
             game.setCurrentPlayer(game.getCurrentPicker());
         }
     }

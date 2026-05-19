@@ -2,8 +2,8 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import com.fasterxml.jackson.databind.JsonNode;
 import it.polimi.ingsw.am54.model.*;
 
-// Gestisce le 3 carte di Era 1 e 2 che danno sconti sul cibo durante l'Evento Sostentamento
-// (per Artisti, Inventori e Raccoglitori) e le 2 carte che alterano gli eventi Caccia e Pitture Rupestri
+// Gestisce le 3 carte di Era 1 e 2 che danno sconti sul cibo durante l'Evento Sostentamento (per Artisti, Inventori e Raccoglitori)
+// e le 2 carte che alterano gli eventi Caccia e Pitture Rupestri
 // aggiungendo cibo o aura extra
 public class BuildingEventCostModifier implements IEffect<BuildingCard> {
     private final JobType jobType;

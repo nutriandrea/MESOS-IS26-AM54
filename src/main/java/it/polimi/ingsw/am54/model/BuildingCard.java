@@ -3,7 +3,7 @@ package it.polimi.ingsw.am54.model;
 import java.util.*;
 
 
-public class BuildingCard extends Card implements IPurchasable {
+public class BuildingCard extends Card {
 
     private String name;
 
@@ -27,10 +27,8 @@ public class BuildingCard extends Card implements IPurchasable {
     }
 
     public void resolveEffects(Player p, Game g) {
-        // Scorri tutti gli effetti assegnati a questo edificio
-        for (IEffect effect : this.effects) {
-            // Applica l'effetto. Passi null al posto di CharacterCard perché è un edificio
-            effect.apply(p, g, null);
+        for (IEffect<BuildingCard> effect : this.effects) {
+            effect.applyOnPurchase(p, g, this);
         }
     }
 

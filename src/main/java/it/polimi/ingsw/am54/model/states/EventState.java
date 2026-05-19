@@ -12,8 +12,24 @@ public class EventState extends GameState {
         EventCard currentEvent;
         while ((currentEvent = game.getBoard().popNextEvent()) != null) {
 
-            //RISOLVIAMO L'EVENTO
-            // Questo modificherà le statistiche dei giocatori (Cibo, PP)
+            // ==========================================
+            // INIEZIONE TRIGGER: On Event
+            // Prima che l'evento colpisca, diamo la possibilità agli Edifici di preparare
+            // la "cartella clinica" del giocatore (sconti, scudi dello sciamano, ecc.)
+            // ==========================================
+            for (it.polimi.ingsw.am54.model.Player p : game.getPlayers()) {
+                for (it.polimi.ingsw.am54.model.BuildingCard building : p.getBuildings()) {
+                    if (building.getEffects() != null) {
+                        for (it.polimi.ingsw.am54.model.IEffect<it.polimi.ingsw.am54.model.BuildingCard> effect : building.getEffects()) {
+                            effect.applyOnEvent(p, game, building, currentEvent);
+                        }
+                    }
+                }
+            }
+
+            // RISOLVIAMO L'EVENTO
+            // Ora l'evento calcolerà i danni/bonus leggendo i modificatori temporanei
+            // appena impostati dagli Edifici, dopodiché pulirà tutto (resetEventAttributes).
             currentEvent.resolveEvent(game);
 
             game.notifyEventResolved(currentEvent);

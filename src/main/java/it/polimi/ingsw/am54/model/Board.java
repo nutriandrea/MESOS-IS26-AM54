@@ -249,7 +249,7 @@ public class Board {
     }
 
 
-    // Ordina eventi: sostentamento ultimo
+    // Ordina eventi: sostentamento (FARMER) ultimo
     public EventCard popNextEvent() {
         if (eventLowerRow.isEmpty()) {
             return null; // Non ci sono più eventi
@@ -259,8 +259,11 @@ public class Board {
         // Sostentamento alla fine, a parità di quello l'Era più bassa
         EventCard nextEvent = eventLowerRow.stream()
                 .min((a, b) -> {
-                    if (a.shouldResolveLast() != b.shouldResolveLast()) {
-                        return a.shouldResolveLast() ? 1 : -1;
+                    boolean aIsFarmer = a.getName() != null && a.getName().toUpperCase().contains("FARMER");
+                    boolean bIsFarmer = b.getName() != null && b.getName().toUpperCase().contains("FARMER");
+
+                    if (aIsFarmer != bIsFarmer) {
+                        return aIsFarmer ? 1 : -1; // Il Farmer va in fondo
                     }
                     return Integer.compare(a.getEra(), b.getEra());
                 })
@@ -273,7 +276,6 @@ public class Board {
         return nextEvent;
     }
 
-
     public EventCard popNextVisibleEvent() {
         // Prima cerchiamo nella fila inferiore (regola standard)
         EventCard next = popNextEvent(); // Il metodo creato in precedenza per la fila inferiore
@@ -282,9 +284,12 @@ public class Board {
         if (next == null && !eventUpperRow.isEmpty()) {
             next = eventUpperRow.stream()
                     .min((a, b) -> {
+                        boolean aIsFarmer = a.getName() != null && a.getName().toUpperCase().contains("FARMER");
+                        boolean bIsFarmer = b.getName() != null && b.getName().toUpperCase().contains("FARMER");
+
                         // Prima priorità: Eventi Sostentamento (vanno in fondo)
-                        if (a.shouldResolveLast() != b.shouldResolveLast()) {
-                            return a.shouldResolveLast() ? 1 : -1;
+                        if (aIsFarmer != bIsFarmer) {
+                            return aIsFarmer ? 1 : -1;
                         }
                         // Seconda priorità: Ordine crescente di Era
                         return Integer.compare(a.getEra(), b.getEra());

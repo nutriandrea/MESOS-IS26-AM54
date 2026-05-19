@@ -4,19 +4,11 @@ import it.polimi.ingsw.am54.model.*;
 
 public class EventFarmer implements IEffect<EventCard> {
 
-    // Effettuiamo l'override dei metodi di default della tua interfaccia
-    @Override
-    public boolean isFarmerEffect() {
-        return true;
-    }
+    // I flag isFarmerEffect() e shouldResolveLast() sono stati ELIMINATI!
 
+    // FIRMA AGGIORNATA PER LA FASE EVENTI
     @Override
-    public boolean shouldResolveLast() {
-        return true;
-    }
-
-    @Override
-    public void apply(Player p, Game g, EventCard ec) {
+    public void applyOnEvent(Player p, Game g, EventCard ec, EventCard currentEvent) {
         g.getPlayers().forEach(pl -> {
             int playerFood = pl.getFood();
 
@@ -25,7 +17,7 @@ public class EventFarmer implements IEffect<EventCard> {
                     .filter(c -> c.getJobType() == JobType.FARMER)
                     .count() * 3;
 
-            //2. Usiamo Math.abs per trasformare il -1 dell'edificio in un +1 da sommare!
+            // 2. Usiamo Math.abs per trasformare il -1 dell'edificio in un +1 da sommare!
             int scontoEdifici = Math.abs(pl.getEventCostFood());
             int scontoTotale = scontoContadini + scontoEdifici;
 
@@ -51,6 +43,7 @@ public class EventFarmer implements IEffect<EventCard> {
                 }
             }
 
+            // A fine risoluzione evento, resettiamo i modificatori temporanei
             pl.resetEventAttributes();
         });
     }

@@ -1,12 +1,38 @@
 package it.polimi.ingsw.am54.model;
 
-import java.util.*;
-
+import java.util.ArrayList;
 
 public class Player {
 
+    private String nickname;
+    private TotemColors totemColor;
+
+    // Risorse base
+    private int food;
+    private int aura;
+    private int magicPoints;
+
+    // Strutture dati
+    private ArrayList<CharacterCard> myTribe;
+    private ArrayList<BuildingCard> myBuildings;
+
+    // Sconti permanenti (Acquisto carte)
+    private int myBuildingDiscount;
+    private int myFoodDiscount;
+
+    // Modificatori temporanei (Fase Eventi)
+    private int eventCostFood;
+    private int eventCostAura;
+    private boolean shamanNoLoss;
+    private boolean shamanDoubleAura;
+
+    // Flag di stato
+    private boolean extraPick;
+    private boolean hasPlacedTotem;
+    private OfferingTile currentTile;
+
     /**
-     * Default constructor
+     * Costruttore di default
      */
     public Player() {
         this.food = 0;
@@ -14,91 +40,37 @@ public class Player {
         this.magicPoints = 0;
         this.myTribe = new ArrayList<>();
         this.myBuildings = new ArrayList<>();
+        this.hasPlacedTotem = false;
+        this.shamanNoLoss = false;
+        this.shamanDoubleAura = false;
     }
 
-    
-    private String nickname;
-    private TotemColors totemColor;
-    private int food;
-    private int aura;
-    private int magicPoints;
-    private boolean extraPick;
-    private ArrayList<CharacterCard> myTribe;
-    private ArrayList<BuildingCard> myBuildings;
-    private int myBuildingDiscount;
-    private int myFoodDiscount;
-    private int eventCostFood;
-    private int eventCostAura;
-    private boolean hasPlacedTotem = false;
-    
-    private OfferingTile currentTile;
+    // --- GETTER E SETTER BASE ---
+
+    public String getNickname() { return nickname; }
+    public void setNickname(String nickname) { this.nickname = nickname; }
+
+    public TotemColors getTotemColors() { return totemColor; }
+    public void setTotemColor(TotemColors color) { this.totemColor = color; }
+
+    public int getFood() { return food; }
+    public int getFoodTokens() { return food; } // Alias mantenuto per compatibilità
+    public int getAuraPoints() { return aura; }
+    public int getMagicPoints() { return magicPoints; }
+
+    public ArrayList<CharacterCard> getMyTribe() { return myTribe; }
+    public ArrayList<BuildingCard> getBuildings() { return myBuildings; }
+
+    public OfferingTile getCurrentTile() { return currentTile; }
+    public void setCurrentTile(OfferingTile tile) { this.currentTile = tile; }
 
     public boolean hasPlacedTotem() { return hasPlacedTotem; }
     public void setHasPlacedTotem(boolean value) { this.hasPlacedTotem = value; }
 
-    public int getEventCostFood() {
-        return eventCostFood;
-    }
-    public int getEventCostAura() {
-        return eventCostAura;
-    }
-    public void setEventCostFood(int eventCost) {
-        this.eventCostFood += eventCost;
-    }
-    public void setEventCostAura(int eventCost) {
-        this.eventCostAura += eventCost;
-    }
-    
-    public int getFood() {
-        return food;
-    }
+    public boolean hasExtraPick() { return extraPick; }
+    public void setExtraPick(boolean extraPick) { this.extraPick = extraPick; }
 
-    
-    public int getAuraPoints() {
-        return aura;
-    }
-
-    
-    public String getNickname() {
-        return nickname;
-    }
-
-    
-    public TotemColors getTotemColors() {
-        return totemColor;
-    }
-
-    
-    public int getFoodTokens() {
-        return food;
-    }
-
-    
-    public int getMagicPoints() {
-        return magicPoints;
-    }
-
-    
-    public ArrayList<CharacterCard> getMyTribe() {
-        return myTribe;
-    }
-
-    
-    public ArrayList<BuildingCard> getBuildings() {
-        return myBuildings;
-    }
-
-    
-    public int getMyBuildingDiscount() {
-        return myBuildingDiscount;
-    }
-
-    
-    public int getMyFoodDiscount() {
-        return myFoodDiscount;
-    }
-
-
+    // --- MODIFICATORI DELLE RISORSE ---
 
     public void modifyFood(int amount) {
         if (amount > 0) {
@@ -108,63 +80,48 @@ public class Player {
         }
     }
 
-
     public void modifyAuraPoints(int amount) {
         this.aura += amount;
     }
-
 
     public void modifyMagicPoints(int amount) {
         this.magicPoints += amount;
     }
 
-
     public void modifyMyTribe(CharacterCard c) {
         myTribe.add(c);
     }
 
+    // --- SCONTI PERMANENTI ---
 
-    public void modifyMyBuildingDiscount(int amount) {
-        this.myBuildingDiscount += amount;
-    }
+    public int getMyBuildingDiscount() { return myBuildingDiscount; }
+    public void modifyMyBuildingDiscount(int amount) { this.myBuildingDiscount += amount; }
 
+    public int getMyFoodDiscount() { return myFoodDiscount; }
+    public void modifyMyFoodDiscount(int amount) { this.myFoodDiscount += amount; }
 
-    public void modifyMyFoodDiscount(int amount) {
-        this.myFoodDiscount += amount;
-    }
+    // --- MODIFICATORI TEMPORANEI (EVENTI) ---
 
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
-    }
+    public int getEventCostFood() { return eventCostFood; }
+    public void setEventCostFood(int eventCost) { this.eventCostFood = eventCost; }
 
-    public void setTotemColor(TotemColors color) {
-        this.totemColor = color;
-    }
+    public int getEventCostAura() { return eventCostAura; }
+    public void setEventCostAura(int eventCost) { this.eventCostAura = eventCost; }
 
-    public void setExtraPick(boolean extraPick) {
-        this.extraPick = extraPick;
-    }
+    public boolean hasShamanNoLoss() { return shamanNoLoss; }
+    public void setShamanNoLoss(boolean shamanNoLoss) { this.shamanNoLoss = shamanNoLoss; }
+
+    public boolean hasShamanDoubleAura() { return shamanDoubleAura; }
+    public void setShamanDoubleAura(boolean shamanDoubleAura) { this.shamanDoubleAura = shamanDoubleAura; }
 
     /**
-     * Verifica se il giocatore ha un pick extra.
-     * Utilizzato dal PersistenceManager per salvare lo stato.
-     *
-     * @return true se il giocatore ha un pick extra, false altrimenti
+     * Resetta a zero tutti i modificatori temporanei della fase eventi.
+     * Va chiamato alla fine della risoluzione di ogni singolo Evento.
      */
-    public boolean hasExtraPick() {
-        return extraPick;
-    }
-
-    public void resetEventAttributes(){
-        this.eventCostAura=0;
-        this.eventCostFood=0;
-    }
-
-    public OfferingTile getCurrentTile() {
-        return currentTile;
-    }
-
-    public void setCurrentTile(OfferingTile tile) {
-        this.currentTile = tile;
+    public void resetEventAttributes() {
+        this.eventCostAura = 0;
+        this.eventCostFood = 0;
+        this.shamanNoLoss = false;
+        this.shamanDoubleAura = false;
     }
 }

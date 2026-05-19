@@ -8,7 +8,7 @@
   { "JobType": "NULL", "cost": 3, "finalAura": 3, "phase": "STARTTURN", "nomeLambda": "BONUS_FOOD", "era": 1, "imageId": 100},
   { "JobType": "NULL", "cost": 3, "finalAura": 4, "phase": "POSTPICK", "nomeLambda": "DOUBLE_INVENTOR", "era": 1, "imageId": 101},
   { "JobType": "SHAMAN", "cost": 7, "finalAura": 0, "phase": "EVENT", "nomeLambda": "SHAMAN_PASSIVE", "era": 2, "effectParams": { "doubleAura": true }, "imageId": 102},
-  { "JobType": "NULL", "cost": 6, "finalAura": 4, "phase": "POSTPICK", "nomeLambda": "FLAT_BONUS", "era": 2, "effectParams": { "magic": 3 }, "imageId": 103},
+  { "JobType": "NULL", "cost": 6, "finalAura": 4, "phase": "POSTPICK", "nomeLambda": "IMMEDIATE_RESOURCE", "era": 2, "effectParams": { "magic": 3 }, "imageId": 103},
   { "JobType": "FARMER", "cost": 7, "finalAura": 4, "phase": "EVENT", "nomeLambda": "EVENT_COST_MODIFIER", "era": 2,
     "effectParams": { "jobType": "INVENTOR", "foodDiscountMultiplier": -1 }, "imageId": 104},
   { "JobType": "HUNTER", "cost": 7, "finalAura": 2, "phase": "EVENT", "nomeLambda": "EVENT_COST_MODIFIER", "era": 2,
@@ -29,7 +29,7 @@
     "effectParams": { "jobType": "ARTIST", "multiplier": 4 }, "imageId": 113},
   { "JobType": "NULL", "cost": 6, "finalAura": 6, "phase": "ENDGAME", "nomeLambda": "JOB_AURA_BONUS", "era": 3,
     "effectParams": { "jobType": "INVENTOR", "multiplier": 2 }, "imageId": 114},
-  { "JobType": "NULL", "cost": 9, "finalAura": 3, "phase": "POSTACTION", "nomeLambda": "FLAT_BONUS", "era": 3, "effectParams": { "extraPick": true }, "imageId": 115},
-  { "JobType": "NULL", "cost": 10, "finalAura": 0, "phase": "ENDGAME", "nomeLambda": "FLAT_BONUS", "era": 3,
-    "effectParams": { "aura": 25, "isEndgame": true }, "imageId": 116}
+  { "JobType": "NULL", "cost": 9, "finalAura": 3, "phase": "POSTACTION", "nomeLambda": "EXTRA_PICK", "era": 3, "imageId": 115},
+  { "JobType": "NULL", "cost": 10, "finalAura": 0, "phase": "ENDGAME", "nomeLambda": "ENDGAME_AURA", "era": 3,
+    "effectParams": { "aura": 25}, "imageId": 116}
 ]

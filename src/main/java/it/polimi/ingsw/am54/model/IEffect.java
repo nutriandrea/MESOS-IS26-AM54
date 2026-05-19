@@ -1,28 +1,25 @@
 package it.polimi.ingsw.am54.model;
 
-@FunctionalInterface
 public interface IEffect<T extends Card> {
-    /**
-     */
-    public void apply(Player p, Game g, T card);
 
-    default boolean isFarmerEffect() {
-        return false;
+    // 1. FASE PICK: Chiamato istantaneamente quando la carta viene comprata/pescata
+    default void applyOnPurchase(Player p, Game g, T card) {
+        // Di default non fa nulla
     }
 
-    default boolean isNoLossEffect() {
-        return false;
+    // 2. FASE CHIUSURA TURNO: Chiamato quando il singolo giocatore restituisce il totem
+    // e prende il bonus dalla Turn Order Track
+    default void applyOnTurnEnd(Player p, Game g, T card) {
+        // Di default non fa nulla
     }
 
-    default boolean isDoubleAuraShamanEffect() {
-        return false;
+    // 3. FASE EVENTI: Chiamato un attimo prima di risolvere una carta Evento globale
+    default void applyOnEvent(Player p, Game g, T card, EventCard currentEvent) {
+        // Di default non fa nulla
     }
 
-    default boolean shouldResolveLast() {
-        return false;
-    }
-
-    default boolean isEndgameEffect() {
-        return false;
+    // 4. FASE FINE PARTITA: Chiamato alla fine del gioco per il calcolo dei punti vittoria
+    default void applyOnEndGame(Player p, Game g, T card) {
+        // Di default non fa nulla
     }
 }

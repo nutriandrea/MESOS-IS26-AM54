@@ -47,10 +47,8 @@ public class CharacterCard extends TribeCard implements IDrawable {
     }
 
     public void resolveEffects(Player p, Game g) {
-        // Scorri tutti gli effetti assegnati a questo personaggio
-        for (IEffect effect : this.effects) {
-            // Applica l'effetto. Passi 'this' perché la lambda potrebbe aver bisogno di leggere il livello o il tipo di QUESTA carta
-            effect.apply(p, g, this);
+        for (IEffect<CharacterCard> effect : this.effects) {
+            effect.applyOnPurchase(p, g, this);
         }
     }
 

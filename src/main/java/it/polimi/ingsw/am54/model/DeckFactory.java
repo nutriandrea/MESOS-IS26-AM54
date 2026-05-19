@@ -243,13 +243,12 @@ public class DeckFactory {
         if (nomeLambda == null || nomeLambda.isEmpty() || nomeLambda.equals("null")) return null;
 
         return switch (nomeLambda) {
-            // 1 classe per + Buildings
             case "SHAMAN_PASSIVE"      -> new BuildingShamanPassive(params);
             case "EVENT_COST_MODIFIER" -> new BuildingEventCostModifier(params);
-            case "FLAT_BONUS"          -> new BuildingFlatBonus(params);
             case "JOB_AURA_BONUS"      -> new BuildingJobAuraBonus(params);
-
-            // 1 classe per Building
+            case "IMMEDIATE_RESOURCE"  -> new BuildingImmediateResource(params);
+            case "EXTRA_PICK"          -> new BuildingExtraPick(params);
+            case "ENDGAME_AURA"        -> new BuildingEndgameAura(params);
             case "BONUS_FOOD"          -> new BuildingTurnOrderBonus();
             case "SIX_DIFFERENT_AURA"  -> new BuildingSixDifferentAura();
             case "SIX_OF_TYPE"         -> new BuildingSixOfType();

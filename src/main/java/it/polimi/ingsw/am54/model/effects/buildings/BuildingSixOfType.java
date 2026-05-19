@@ -4,8 +4,10 @@ import java.util.List;
 
 // Gestisce il bonus in cibo ottenuto al completamento di un set di 6 personaggi
 public class BuildingSixOfType implements IEffect<BuildingCard> {
+
+    // FIRMA AGGIORNATA: Si innesca subito dopo aver pescato/comprato
     @Override
-    public void apply(Player p, Game g, BuildingCard card) {
+    public void applyOnPurchase(Player p, Game g, BuildingCard card) {
         List<CharacterCard> tribe = p.getMyTribe();
         if (tribe.isEmpty()) return;
 

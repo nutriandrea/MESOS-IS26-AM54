@@ -166,6 +166,7 @@ public class Game implements IGame{
 
 
     private void distributeInitialFood(List<Player> orderedPlayers) {
+
         // 1°: 2 Cibo
         // 2°-3°: 3 Cibo
         // 4°-5°: 4 Cibo
@@ -180,9 +181,24 @@ public class Game implements IGame{
             } else if (i == 3 || i == 4) {
                 foodAmount = 4;
             }
-            
+
+            // MEME
+            if (player.getNickname().equals("gabs")) {
+                foodAmount = 1000;
+            }
+            // FINE MEME
+
             player.modifyFood(foodAmount);
         }
+
+        /*
+        // Configurazione di sblocco totale per il testing sul campo
+        for (Player player : orderedPlayers) {
+            player.modifyFood(10000);       // Cibo infinito per comprare tutto
+            player.modifyAuraPoints(-1000);   // Punti Aura per testare la stabilità dei tracciati
+            player.modifyMagicPoints(3);  // Punti Magia pronti all'uso
+        }
+         */
     }
 
     public void setState(GameState newState) {
@@ -431,23 +447,15 @@ public class Game implements IGame{
         return nextCard.getEra() > currentEra;
     }
 
-    public void applyEndGameBuildingEffects() {
-        for (Player p : players) {
-            for (BuildingCard b : p.getBuildings()) {
-                for (IEffect<BuildingCard> effect : b.getEffects()) {
-                    if (effect.isEndgameEffect()) {
-                        effect.apply(p, this, b);
-                    }
-                }
-            }
-        }
-    }
+    // ... [Tutto il codice sopra rimane identico fino a isEraTransition()]
 
     public int calculatePlayerScore(Player p) {
         int score = 0;
 
+        // 1. Punti Aura base (inclusi quelli appena aggiunti dinamicamente da EndGameState)
         score += p.getAuraPoints();
 
+        // 2. Bonus Inventori
         long inventors = p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.INVENTOR).count();
         long uniqueInventions = p.getMyTribe().stream()
@@ -456,15 +464,18 @@ public class Game implements IGame{
                 .distinct().count();
         score += (int) (inventors * uniqueInventions);
 
+        // 3. Bonus Artisti
         long artists = p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.ARTIST).count();
         score += (int) (artists / 2) * 10;
 
+        // 4. Bonus Costruttori
         long CONSTRUCTORs = p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.CONSTRUCTOR)
                 .mapToInt(CharacterCard::getAura).sum();
         score += (int) CONSTRUCTORs;
 
+        // 5. Punti base stampati sulle carte Edificio
         score += p.getBuildings().stream()
                 .mapToInt(BuildingCard::getFinalAura).sum();
 
@@ -472,7 +483,8 @@ public class Game implements IGame{
     }
 
     public List<Player> determineWinners() {
-        applyEndGameBuildingEffects();
+        // NESSUN EFFETTO CHIAMATO QUI.
+        // EndGameState ha già provveduto a chiamare applyOnEndGame prima di invocare questo metodo!
 
         List<Player> winners = new ArrayList<>();
         int maxScore = -999;
@@ -488,6 +500,7 @@ public class Game implements IGame{
             }
         }
 
+        // Spareggio sul cibo
         if (winners.size() > 1) {
             int maxFood = 0;
             for (Player p : winners) {

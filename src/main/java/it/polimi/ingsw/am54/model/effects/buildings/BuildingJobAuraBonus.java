@@ -15,10 +15,11 @@ public class BuildingJobAuraBonus implements IEffect<BuildingCard> {
         this.useCardBaseAura = params != null && params.has("useCardBaseAura") && params.get("useCardBaseAura").asBoolean();
     }
 
-    @Override public boolean isEndgameEffect() { return true; }
+    // IL FLAG isEndgameEffect È STATO ELIMINATO!
 
+    // FIRMA AGGIORNATA PER LA FASE FINE PARTITA
     @Override
-    public void apply(Player p, Game g, BuildingCard card) {
+    public void applyOnEndGame(Player p, Game g, BuildingCard card) {
         if (jobType == null) return;
 
         if (useCardBaseAura) {

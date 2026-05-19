@@ -71,7 +71,7 @@ public class PickingState extends GameState {
         }
 
         // ==========================================
-        // 3. CONSUMO EFFETTIVO DEL PICK
+        // 3. CONSUMO DEL PICK E RISOLUZIONE CARTA
         // ==========================================
         if (usingExtraPick) {
             player.setExtraPick(false); // Consumiamo il bonus
@@ -80,6 +80,8 @@ public class PickingState extends GameState {
             else tile.useLowerPick();
         }
 
+        // MAGIA DEL POLIMORFISMO: Zero instanceof.
+        // Sarà la singola carta, nel suo Override di pick(), a lanciare internamente i suoi effetti "applyOnPurchase"
         card.pick(player, game);
 
         int finalFood = player.getFood();
@@ -138,9 +140,6 @@ public class PickingState extends GameState {
         OfferingTile tile = player.getCurrentTile();
         if (tile == null) return true; // Sicurezza
 
-        // NOTA: Abbiamo rimosso il blocco sull'extra pick.
-        // Il giocatore DEVE chiudere il turno normale anche se ha il bonus.
-
         if (!tile.hasPicksLeft()) return true;
 
         boolean upperEmpty = game.getBoard().getCharacterRowSize("upper") == 0 && game.getBoard().getBuildingRowSize("upper") == 0;
@@ -178,6 +177,18 @@ public class PickingState extends GameState {
                     else player.modifyAuraPoints(-2);
                 } else {
                     player.modifyFood(bonus);
+                }
+
+                // ==========================================
+                // INIEZIONE TRIGGER: On Turn End
+                // La fine del turno del singolo giocatore lancia l'hook per edifici come BuildingTurnOrderBonus
+                // ==========================================
+                for (BuildingCard building : player.getBuildings()) {
+                    if (building.getEffects() != null) {
+                        for (var effect : building.getEffects()) {
+                            effect.applyOnTurnEnd(player, game, building);
+                        }
+                    }
                 }
             }
 

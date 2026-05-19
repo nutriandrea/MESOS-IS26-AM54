@@ -5,7 +5,7 @@ import it.polimi.ingsw.am54.model.*;
 public class CharacterShaman implements IEffect<CharacterCard> {
 
     @Override
-    public void apply(Player p, Game g, CharacterCard card) {
+    public void applyOnPurchase(Player p, Game g, CharacterCard card) {
         p.modifyMagicPoints(card.getLevel());
     }
 }

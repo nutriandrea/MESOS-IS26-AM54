@@ -4,18 +4,17 @@ import it.polimi.ingsw.am54.model.*;
 
 public class EventShaman implements IEffect<EventCard> {
 
+    // FIRMA AGGIORNATA PER LA FASE EVENTI
     @Override
-    public void apply(Player p, Game g, EventCard ec) {
+    public void applyOnEvent(Player p, Game g, EventCard ec, EventCard currentEvent) {
         int max = g.getPlayers().stream().mapToInt(Player::getMagicPoints).max().orElse(0);
         int min = g.getPlayers().stream().mapToInt(Player::getMagicPoints).min().orElse(0);
 
         g.getPlayers().forEach(pl -> {
-            boolean isZero = pl.getBuildings().stream()
-                    .flatMap(b -> b.getEffects().stream())
-                    .anyMatch(IEffect::isNoLossEffect);
-            boolean isDouble = pl.getBuildings().stream()
-                    .flatMap(b -> b.getEffects().stream())
-                    .anyMatch(IEffect::isDoubleAuraShamanEffect);
+            // IL REFACTORING IN AZIONE: Non scorriamo più gli edifici!
+            // Leggiamo i modificatori temporanei direttamente dal giocatore
+            boolean isZero = pl.hasShamanNoLoss();
+            boolean isDouble = pl.hasShamanDoubleAura();
 
             if (pl.getMagicPoints() == max) {
                 if (isDouble)
@@ -26,6 +25,8 @@ public class EventShaman implements IEffect<EventCard> {
             if (pl.getMagicPoints() == min) {
                 if (!isZero) pl.modifyAuraPoints(-ec.getMalus());
             }
+
+            // Resetta tutti i modificatori temporanei (inclusi gli scudi dello sciamano) a fine evento
             pl.resetEventAttributes();
         });
     }

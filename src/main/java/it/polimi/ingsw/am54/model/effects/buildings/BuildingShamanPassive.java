@@ -13,7 +13,11 @@ public class BuildingShamanPassive implements IEffect<BuildingCard> {
         this.doubleAura = params != null && params.has("doubleAura") && params.get("doubleAura").asBoolean();
     }
 
-    @Override public boolean isNoLossEffect() { return noLoss; }
-    @Override public boolean isDoubleAuraShamanEffect() { return doubleAura; }
-    @Override public void apply(Player p, Game g, BuildingCard card) { /* Nessun effetto attivo */ }
+    @Override
+    public void applyOnEvent(Player p, Game g, BuildingCard card, EventCard currentEvent) {
+        // Nessun check sull'evento! Io alzo le mie difese.
+        // Sarà l'evento in corso a decidere se guardare queste variabili o no.
+        if (noLoss) p.setShamanNoLoss(true);
+        if (doubleAura) p.setShamanDoubleAura(true);
+    }
 }

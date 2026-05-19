@@ -4,9 +4,12 @@ import java.util.Arrays;
 
 // Gestisce i 6 Punti Prestigio a fine partita per ogni set di 6 personaggi diversi
 public class BuildingSixDifferentAura implements IEffect<BuildingCard> {
-    @Override public boolean isEndgameEffect() { return true; }
+
+    // IL FLAG isEndgameEffect È STATO RIMOSSO
+
+    // FIRMA AGGIORNATA PER LA FASE DI FINE PARTITA
     @Override
-    public void apply(Player p, Game g, BuildingCard card) {
+    public void applyOnEndGame(Player p, Game g, BuildingCard card) {
         JobType[] allJobs = { JobType.HUNTER, JobType.CONSTRUCTOR, JobType.SHAMAN, JobType.FARMER, JobType.ARTIST, JobType.INVENTOR };
         long minCount = Arrays.stream(allJobs)
                 .mapToLong(job -> p.getMyTribe().stream().filter(c -> c.getJobType() == job).count())

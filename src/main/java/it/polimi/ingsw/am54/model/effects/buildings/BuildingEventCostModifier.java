@@ -18,8 +18,9 @@ public class BuildingEventCostModifier implements IEffect<BuildingCard> {
         this.overrideAuraCost = params != null && params.has("overrideAuraCost") && params.get("overrideAuraCost").asBoolean();
     }
 
+    // FIRMA AGGIORNATA PER LA FASE EVENTI
     @Override
-    public void apply(Player p, Game g, BuildingCard card) {
+    public void applyOnEvent(Player p, Game g, BuildingCard card, EventCard currentEvent) {
         long count = jobType != null ? p.getMyTribe().stream().filter(c -> c.getJobType() == jobType).count() : 0;
 
         if (foodDiscountMultiplier < 0) p.setEventCostFood((int) (count * foodDiscountMultiplier));

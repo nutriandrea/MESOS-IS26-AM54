@@ -4,8 +4,10 @@ import java.util.List;
 
 // Gestisce i 3 Cibo ottenuti formando coppie di Inventori uguali
 public class BuildingDoubleInventor implements IEffect<BuildingCard> {
+
+    // CAMBIATO SOLO IL NOME DEL METODO IN applyOnPurchase
     @Override
-    public void apply(Player p, Game g, BuildingCard card) {
+    public void applyOnPurchase(Player p, Game g, BuildingCard card) {
         List<CharacterCard> tribe = p.getMyTribe();
         if (tribe.isEmpty()) return;
 

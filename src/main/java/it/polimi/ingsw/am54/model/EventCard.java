@@ -42,31 +42,24 @@ public class EventCard extends TribeCard {
         return this.name != null ? this.name + " - ERA: " + getEra() : "Event - Era: " + getEra();
     }
 
-    public int getBaseFood() {
-        return baseFood;
-    }
-    public int getAuraPerCharacter() {
-        return auraPerCharacter;
-    }
-    public int getThreshold() {
-        return threshold;
-    }
-    public int getBonusMultiplier() {
-        return bonusMultiplier;
-    }
-    public int getPenalty() {
-        return penalty;
-    }
-    public int getBonus() {
-        return bonus;
-    }
-    public int getMalus() {
-        return malus;
-    }
+    public int getBaseFood() { return baseFood; }
+    public int getAuraPerCharacter() { return auraPerCharacter; }
+    public int getThreshold() { return threshold; }
+    public int getBonusMultiplier() { return bonusMultiplier; }
+    public int getPenalty() { return penalty; }
+    public int getBonus() { return bonus; }
+    public int getMalus() { return malus; }
 
+    // ==========================================
+    // RISOLUZIONE DELL'EVENTO AGGIORNATA
+    // ==========================================
     public void resolveEvent(Game g) {
         for (IEffect<EventCard> effect : effects) {
-            effect.apply(null, g, this); // il player può essere null se l'effetto riguarda tutti
+            // Chiamiamo il nuovo gancio.
+            // Passiamo 'null' per il Player perché classi come EventHunter o EventShaman
+            // fanno già un ciclo su tutti i giocatori al loro interno!
+            // Passiamo 'this' sia come carta proprietaria dell'effetto, sia come evento corrente.
+            effect.applyOnEvent(null, g, this, this);
         }
     }
 
@@ -80,18 +73,7 @@ public class EventCard extends TribeCard {
         return finalEvent;
     }
 
-    public boolean isFarmerEvent() {
-        return effects.stream().anyMatch(IEffect::isFarmerEffect);
-    }
-
-    // True if any effect in this card should resolve last
-    public boolean shouldResolveLast() {
-        return effects.stream().anyMatch(IEffect::shouldResolveLast);
-    }
-
     public void setName(String name) {
         this.name = name;
     }
-
-
 }

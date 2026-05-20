@@ -62,5 +62,15 @@ public class CharacterCard extends TribeCard implements IDrawable {
     public void pick(Player player, Game game) throws Exception {
         player.modifyMyTribe(this);
         this.resolveEffects(player, game);
+
+        // NUOVO TRIGGER: Avvisiamo tutti gli edifici che la tribù si è espansa!
+        for (BuildingCard building : player.getBuildings()) {
+            if (building.getEffects() != null) {
+                for (IEffect<BuildingCard> effect : building.getEffects()) {
+                    // Passiamo 'this' che è il personaggio appena acquistato
+                    effect.applyOnCharacterPicked(player, game, building, this);
+                }
+            }
+        }
     }
 }

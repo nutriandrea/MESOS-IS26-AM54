@@ -2,17 +2,14 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import it.polimi.ingsw.am54.model.*;
 import java.util.List;
 
-// Gestisce il bonus in cibo ottenuto al completamento di un set di 6 personaggi
 public class BuildingSixOfType implements IEffect<BuildingCard> {
 
-    // FIRMA AGGIORNATA: Si innesca subito dopo aver pescato/comprato
     @Override
-    public void applyOnPurchase(Player p, Game g, BuildingCard card) {
+    public void applyOnCharacterPicked(Player p, Game g, BuildingCard card, CharacterCard newCharacter) {
         List<CharacterCard> tribe = p.getMyTribe();
-        if (tribe.isEmpty()) return;
+        JobType job = newCharacter.getJobType();
 
-        JobType job = tribe.get(tribe.size() - 1).getJobType();
-        if (job == null) return;
+        if (job == null || job == JobType.NULL) return;
 
         long currentCount = tribe.stream().filter(c -> c.getJobType() == job).count();
         JobType[] allJobs = { JobType.HUNTER, JobType.CONSTRUCTOR, JobType.SHAMAN, JobType.FARMER, JobType.ARTIST, JobType.INVENTOR };
@@ -20,6 +17,7 @@ public class BuildingSixOfType implements IEffect<BuildingCard> {
         for (JobType j : allJobs) {
             if (tribe.stream().filter(c -> c.getJobType() == j).count() < currentCount) return; // Rompe se un lavoro è in difetto
         }
-        p.modifyFood(5);
+
+        p.modifyFood(5); // Se arriva qui, il set è completo!
     }
 }

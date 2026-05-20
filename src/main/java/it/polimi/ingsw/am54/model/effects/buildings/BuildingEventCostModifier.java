@@ -21,10 +21,29 @@ public class BuildingEventCostModifier implements IEffect<BuildingCard> {
     // FIRMA AGGIORNATA PER LA FASE EVENTI
     @Override
     public void applyOnEvent(Player p, Game g, BuildingCard card, EventCard currentEvent) {
-        long count = jobType != null ? p.getMyTribe().stream().filter(c -> c.getJobType() == jobType).count() : 0;
+        if (jobType == null || currentEvent == null) return;
 
-        if (foodDiscountMultiplier < 0) p.setEventCostFood((int) (count * foodDiscountMultiplier));
-        if (overrideFoodCost) p.setEventCostFood((int) count);
-        if (overrideAuraCost) p.setEventCostAura((int) count);
+        // Recuperiamo il nome dell'evento in corso (es. "FARMER - ERA: 1")
+        String eventName = currentEvent.getName() != null ? currentEvent.getName().toUpperCase() : "";
+        long count = p.getMyTribe().stream().filter(c -> c.getJobType() == jobType).count();
+
+        // 1. Sconti per l'Evento Sostentamento (FARMER)
+        // Questi sconti usano sempre un moltiplicatore negativo nel JSON.
+        // Caso speciale: Sostentamento (Legame arbitrario Edificio <-> Evento) quindi uso "FARMER"
+        if (foodDiscountMultiplier < 0 && eventName.contains("FARMER")) {
+            p.setEventCostFood(p.getEventCostFood() + (int) (count * foodDiscountMultiplier));
+        }
+
+        // 2. Bonus di Cibo per Eventi specifici (es. Caccia, Pitture Rupestri)
+        // L'edificio reagisce SOLO se il nome dell'evento corrisponde al suo JobType (HUNTER o ARTIST)
+        if ((overrideFoodCost || foodDiscountMultiplier > 0) && eventName.contains(jobType.name())) {
+            int multi = foodDiscountMultiplier > 0 ? foodDiscountMultiplier : 1;
+            p.setEventCostFood(p.getEventCostFood() + (int) (count * multi));
+        }
+
+        // 3. Bonus di Punti Aura (Es. Edificio del Cacciatore)
+        if (overrideAuraCost && eventName.contains(jobType.name())) {
+            p.setEventCostAura(p.getEventCostAura() + (int) count);
+        }
     }
 }

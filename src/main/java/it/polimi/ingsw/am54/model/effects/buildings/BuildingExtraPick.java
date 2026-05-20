@@ -8,7 +8,7 @@ public class BuildingExtraPick implements IEffect<BuildingCard> {
     }
 
     @Override
-    public void applyOnPurchase(Player p, Game g, BuildingCard card) {
+    public void applyOnTurnEnd(Player p, Game g, BuildingCard card) {
         p.setExtraPick(true);
     }
 }

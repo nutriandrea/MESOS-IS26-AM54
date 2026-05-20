@@ -22,4 +22,9 @@ public interface IEffect<T extends Card> {
     default void applyOnEndGame(Player p, Game g, T card) {
         // Di default non fa nulla
     }
+
+    // 5. FASE PASSIVA: Chiamato ogni volta che un Personaggio viene aggiunto alla tribù
+    default void applyOnCharacterPicked(Player p, Game g, T card, CharacterCard newCharacter) {
+        // Di default non fa nulla
+    }
 }

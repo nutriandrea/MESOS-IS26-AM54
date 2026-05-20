@@ -20,6 +20,15 @@ public class Client {
         return instance;
     }
 
+    public static void resetClient() {
+        if (instance != null && instance.connection != null) {
+            try {
+                instance.connection.disconnect();
+            } catch (Exception ignored) {}
+        }
+        instance = new Client();
+    }
+
     // Metodo per "accendere" il client dopo la scelta RMI/Socket
     public void setConnection(ServerConnection connection) {
         this.connection = connection;

@@ -31,8 +31,8 @@ public class LeaderboardController {
 
     @FXML private VBox rankingTable;
 
-    private final double NATIVE_WIDTH = 1920.0;
-    private final double NATIVE_HEIGHT = 1080.0;
+    private final double NATIVE_WIDTH = 1672.0;
+    private final double NATIVE_HEIGHT = 941.0;
 
     // Classe locale per gestire l'ordinamento facilmente
     private class PlayerStats {
@@ -215,14 +215,11 @@ public class LeaderboardController {
 
     @FXML
     private void handleReturnToMenu() {
-        // Disconnettiamo il client pulitamente e lo riportiamo al login
         try {
-            if (Client.getInstance().getConnection() != null) {
-                Client.getInstance().setConnection(null);
-            }
-            Client.getInstance().setNickname(null);
+            // Reset completo e profondo del client, cancellando vecchi player e stati
+            Client.resetClient();
 
-            // Chiamiamo il metodo del GUIApp (vedi punto 3 sotto)
+            // Ritorno alla schermata di login
             GUIApp.loadLoginScene();
         } catch (Exception e) {
             e.printStackTrace();

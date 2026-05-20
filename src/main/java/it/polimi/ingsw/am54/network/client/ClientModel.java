@@ -52,6 +52,17 @@ public class ClientModel {
 
     public synchronized void clearPendingEvents() {
         this.pendingEventReports.clear();
+
+        // Se la fine della partita era stata messa in attesa, sbloccala ora
+        if (isEndGamePending) {
+            this.winners = pendingWinners;
+            if (pendingLastMatchScores != null) {
+                this.lastMatchScores = pendingLastMatchScores;
+                this.lastMatchNumPlayers = pendingLastMatchNumPlayers;
+            }
+            isEndGamePending = false;
+            notifyUI();
+        }
     }
 
     public void setOnModelUpdatedCallback(Runnable callback) {
@@ -158,6 +169,12 @@ public class ClientModel {
     /** Ultimo messaggio di errore ricevuto */
     private String lastErrorMessage;
 
+    // --- VARIABILI AGGIUNTIVE PER GESTIONE FINE PARTITA RITARDATA ---
+    private boolean isEndGamePending = false;
+    private List<String> pendingWinners = null;
+    private Map<String, Integer> pendingLastMatchScores = null;
+    private int pendingLastMatchNumPlayers = 0;
+
     /**
      * Set di nickname dei giocatori temporaneamente disconnessi.
      * Popolato quando si riceve PlayerDisconnectedUpdate.
@@ -255,7 +272,12 @@ public class ClientModel {
      * - Aggiunge il giocatore all'offeringTrack alla posizione specificata
      */
     public synchronized void updateTotemPlacement(String nickname, int position) {
-        turnOrderTrack.removeIf(s -> s.contains(nickname));
+        // Estraiamo il nome pulito (nel caso ci sia " -> ") e controlliamo l'uguaglianza esatta
+        turnOrderTrack.removeIf(s -> {
+            String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
+            return name.equalsIgnoreCase(nickname);
+        });
+
         String oldTile = offeringTrack.get(position);
         if (oldTile != null) {
             offeringTrack.put(position, oldTile.replace("VUOTO", nickname));
@@ -320,13 +342,23 @@ public class ClientModel {
     }
 
     public synchronized void updateTotemReturned(String nickname, int newFoodBalance, int newAuraBalance) {
-        // Rimuove il totem dalle offerte
-        offeringTrack.values().remove(nickname);
+        // Rimuove il totem dalle offerte confrontando il nome effettivo
+        offeringTrack.entrySet().removeIf(entry -> {
+            String occupier = entry.getValue();
+            String name = occupier.contains(" -> ") ? occupier.split(" -> ")[occupier.split(" -> ").length - 1].trim() : occupier;
+            return name.equalsIgnoreCase(nickname);
+        });
 
-        // Lo rimette in fondo all'ordine di turno per il prossimo round
-        if (!turnOrderTrack.contains(nickname)) {
+        // Controlla l'uguaglianza esatta prima di rimetterlo nell'ordine di turno
+        boolean alreadyInTurnOrder = turnOrderTrack.stream().anyMatch(s -> {
+            String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
+            return name.equalsIgnoreCase(nickname);
+        });
+
+        if (!alreadyInTurnOrder) {
             turnOrderTrack.add(nickname);
         }
+
         playerFood.put(nickname, newFoodBalance);
         playerAura.put(nickname, newAuraBalance);
         notifyUI();
@@ -413,7 +445,12 @@ public class ClientModel {
 
     /** Aggiornato quando la partita finisce */
     public synchronized void updateEndGame(List<String> winners) {
-        this.winners = winners;
+        if (!pendingEventReports.isEmpty()) {
+            this.isEndGamePending = true;
+            this.pendingWinners = winners;
+        } else {
+            this.winners = winners;
+        }
         notifyUI();
     }
 
@@ -422,8 +459,13 @@ public class ClientModel {
      * Chiamato dal ServerHandler dopo EndGameUpdate quando il server include i punteggi.
      */
     public synchronized void setLastMatchScores(Map<String, Integer> scores, int numPlayers) {
-        this.lastMatchScores = scores;
-        this.lastMatchNumPlayers = numPlayers;
+        if (isEndGamePending) {
+            this.pendingLastMatchScores = scores;
+            this.pendingLastMatchNumPlayers = numPlayers;
+        } else {
+            this.lastMatchScores = scores;
+            this.lastMatchNumPlayers = numPlayers;
+        }
     }
 
     /**

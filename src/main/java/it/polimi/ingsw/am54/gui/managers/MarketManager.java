@@ -93,19 +93,36 @@ public class MarketManager {
         }
 
         // --- DECK EDIFICI ---
-        String buildBackId = "99";
-        if (era == 2) buildBackId = "102";
-        else if (era == 3) buildBackId = "109";
-
-        String buildingsBack = "/images/cards/buildings/era " + era + "/back/" + buildBackId + ".jpg";
-
-        try {
-            if (buildingsDeckView != null) {
-                buildingsDeckView.setImage(new Image(getClass().getResourceAsStream(buildingsBack)));
-                buildingsDeckView.setVisible(true);
+        if (buildingsDeckView != null) {
+            javafx.scene.Node deckContainer = buildingsDeckView.getParent();
+            if (era == 3) {
+                buildingsDeckView.setVisible(false);
+                if (deckContainer != null) {
+                    deckContainer.setVisible(false);
+                    deckContainer.setManaged(false);
+                }
+            } else {
+                int nextEra = era + 1;
+                String buildBackId = "102"; // Back dell'Era 2 (mostrato in Era 1)
+                if (nextEra == 3) {
+                    buildBackId = "109"; // Back dell'Era 3 (mostrato in Era 2)
+                }
+                String buildingsBack = "/images/cards/buildings/era " + nextEra + "/back/" + buildBackId + ".jpg";
+                try {
+                    buildingsDeckView.setImage(new Image(getClass().getResourceAsStream(buildingsBack)));
+                    buildingsDeckView.setVisible(true);
+                    if (deckContainer != null) {
+                        deckContainer.setVisible(true);
+                        deckContainer.setManaged(true);
+                    }
+                } catch (Exception e) {
+                    buildingsDeckView.setVisible(false);
+                    if (deckContainer != null) {
+                        deckContainer.setVisible(false);
+                        deckContainer.setManaged(false);
+                    }
+                }
             }
-        } catch (Exception e) {
-            if (buildingsDeckView != null) buildingsDeckView.setVisible(false);
         }
     }
 

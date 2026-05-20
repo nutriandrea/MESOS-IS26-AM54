@@ -97,15 +97,15 @@ public class TotemManager {
     public void updateOfferingTrack(ClientModel model, double currentTileHeight) {
         if(offeringTrack == null) return;
         offeringTrack.getChildren().clear();
+
+        // Rimuoviamo il blocco che fermava il disegno se la mappa era vuota.
         Map<Integer, String> offeringData = model.getOfferingTrack();
-        if (offeringData == null || offeringData.isEmpty()) return;
 
         int numPlayers = (model.getPlayers() != null) ? model.getPlayers().size() : 3;
         List<String> expectedTiles = getExpectedOfferingTiles(numPlayers);
 
-        for (Integer position : offeringData.keySet()) {
-            if (position >= expectedTiles.size()) continue;
-
+        // Iteriamo in modo fisso sul numero di tessere ATTESE in base al numero di giocatori
+        for (int position = 0; position < expectedTiles.size(); position++) {
             String tileLetter = expectedTiles.get(position);
             Group tileGroup = new Group();
 
@@ -118,7 +118,8 @@ public class TotemManager {
             AnchorPane totemPane = new AnchorPane();
             totemPane.setPickOnBounds(false);
 
-            String occupier = offeringData.get(position);
+            // Controlliamo in modo sicuro se c'è un totem in questa specifica posizione
+            String occupier = (offeringData != null) ? offeringData.get(position) : null;
 
             boolean hasReturned = false;
             String playerName = "";
@@ -214,7 +215,6 @@ public class TotemManager {
             offeringTrack.getChildren().add(tileGroup);
         }
     }
-
     public void refreshTotemsPosition() {
         ClientModel model = Client.getInstance().getModel();
         if (model == null || totemArea == null || totemArea.getChildren().isEmpty()) return;

@@ -12,10 +12,12 @@
     <VBox alignment="TOP_CENTER" spacing="10" pickOnBounds="false">
         <padding><Insets top="50"/></padding>
         <HBox alignment="CENTER" pickOnBounds="false">
-            <Region prefWidth="300" mouseTransparent="true" />
-            <Label text="BENVENUTO NELLA CAVERNA" styleClass="lobby-title" mouseTransparent="true"/>
-            <HBox alignment="CENTER_LEFT" spacing="15" prefWidth="300" pickOnBounds="false">
-                <padding><Insets left="30"/></padding>
+            <Region prefWidth="450" mouseTransparent="true" />
+
+            <Label fx:id="welcomeLabel" text="BENVENUTO NELLA CAVERNA" styleClass="lobby-title" mouseTransparent="true"/>
+
+            <HBox alignment="CENTER_LEFT" spacing="15" prefWidth="450" pickOnBounds="false">
+                <padding><Insets left="180"/></padding>
                 <Label text="Regole del gioco" styleClass="info-label" mouseTransparent="true"/>
                 <Button fx:id="infoButton" text="i" styleClass="info-button" onAction="#handleOpenRules"/>
             </HBox>

@@ -67,7 +67,7 @@ public class PickingState extends GameState {
 
         if (!card.canBePurchased(player)) {
             card.reveal(game.getBoard(), row);
-            throw new Exception("Non hai abbastanza cibo (\uD83C\uDF56) per prendere questa carta!");
+            throw new Exception("Non hai abbastanza cibo (🍖) per prendere questa carta!");
         }
 
         // ==========================================

@@ -49,6 +49,8 @@ public class LobbyController {
     @FXML private Label subtitleLabel;
     @FXML private Button startButton;
 
+    @FXML private Label welcomeLabel;
+
     @FXML private StackPane rulesOverlay;
     @FXML private ImageView leftPageImage;
     @FXML private ImageView rightPageImage;
@@ -134,6 +136,18 @@ public class LobbyController {
             subtitleLabel.setText(baseWaitingText + dotStates[dotCount]);
         }));
         dotAnimation.setCycleCount(Animation.INDEFINITE);
+
+        // Ridimensionamento fluido e proporzionale del font della scritta di benvenuto
+        lobbyRoot.widthProperty().addListener((obs, oldVal, newVal) -> {
+            double baseWidth = 1920.0;
+            double currentWidth = newVal.doubleValue();
+            double factor = currentWidth / baseWidth;
+            double targetSize = 52.0 * factor;
+            if (targetSize < 26) {
+                targetSize = 26; // Limite minimo per preservare l'estetica su schermi molto stretti
+            }
+            welcomeLabel.setStyle("-fx-font-size: " + targetSize + "px;");
+        });
 
         updateLobbyUI();
     }

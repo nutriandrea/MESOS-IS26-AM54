@@ -123,11 +123,26 @@ public class GUIApp extends Application {
     public static void loadBoardScene() {
         Platform.runLater(() -> {
             try {
+                // Inseriamo uno schermo nero temporaneo per coprire il glitch grafico iniziale
+                Rectangle blackScreen = new Rectangle();
+                blackScreen.setFill(Color.BLACK);
+                blackScreen.widthProperty().bind(rootWrapper.widthProperty());
+                blackScreen.heightProperty().bind(rootWrapper.heightProperty());
+                transitionLayer.getChildren().add(blackScreen);
+
                 FXMLLoader loader = new FXMLLoader(GUIApp.class.getResource("/fxml/Board.fxml"));
                 Parent boardRoot = loader.load();
 
                 changeBackground("board-background");
                 changeSceneContent(boardRoot);
+
+                // Dissolvenza dello schermo nero dopo un leggero delay per stabilizzare il layout
+                FadeTransition ft = new FadeTransition(Duration.millis(300), blackScreen);
+                ft.setFromValue(1.0);
+                ft.setToValue(0.0);
+                ft.setDelay(Duration.millis(450));
+                ft.setOnFinished(e -> transitionLayer.getChildren().remove(blackScreen));
+                ft.play();
 
                 System.out.println("[GUI] Board caricata con successo.");
             } catch (Exception e) {

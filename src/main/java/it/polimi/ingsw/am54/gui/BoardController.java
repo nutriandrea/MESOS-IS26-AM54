@@ -63,6 +63,9 @@ public class BoardController {
 
     @FXML private Label roundCountLabel;
 
+    @FXML private StackPane finalCalculationOverlay;
+    @FXML private VBox finalCalculationContainer;
+
     private boolean isDashboardOpen = false;
     private final double DASHBOARD_OPEN_HEIGHT = 210.0;
 
@@ -245,8 +248,6 @@ public class BoardController {
 
             if (!isGameOver && (isEndState || hasWinners)) {
                 isGameOver = true;
-                GUIApp.loadLeaderboardScene();
-                return;
             }
 
             marketManager.updateMarkets(model);
@@ -352,8 +353,11 @@ public class BoardController {
                         break;
                     }
                 }
-                if (myPosition >= 2) {
-                    actionInstructionLabel.setText("Scegli che carte prendere!");
+
+                // LA TUA LOGICA: Se sei in fase Picking ma NON sei sulle tessere offerta (posizione -1),
+                // significa che sei nel "Turno Bonus" (currentTile == null nel server)!
+                if (myPosition == -1) {
+                    actionInstructionLabel.setText("Extra pick! Pesca una carta dalla fila sopra o termina il turno!");
                 } else {
                     actionInstructionLabel.setText("Scegli che carta prendere!");
                 }
@@ -379,10 +383,91 @@ public class BoardController {
             Client.getInstance().getModel().clearPendingEvents();
         }
 
-        // FIX SOVRAPPOSIZIONE: Se durante l'overlay è arrivata una notifica turno, la mostriamo ORA
-        if (pendingNotifyPlayer != null) {
-            String myName = Client.getInstance().getNickname();
-            showTurnNotification(pendingNotifyPlayer, myName);
+        ClientModel model = Client.getInstance().getModel();
+        boolean gameEnded = model != null && ((model.getWinners() != null && !model.getWinners().isEmpty()) ||
+                "EndGameState".equalsIgnoreCase(model.getCurrentState()) || "EndGame".equalsIgnoreCase(model.getCurrentState()));
+
+        if (gameEnded) {
+            openFinalCalculationOverlay();
+        } else {
+            if (pendingNotifyPlayer != null) {
+                String myName = Client.getInstance().getNickname();
+                showTurnNotification(pendingNotifyPlayer, myName);
+            }
         }
+    }
+
+    private void openFinalCalculationOverlay() {
+        if (finalCalculationOverlay == null || finalCalculationContainer == null) return;
+        finalCalculationContainer.getChildren().clear();
+        ClientModel model = Client.getInstance().getModel();
+        if (model == null || model.getPlayers() == null) return;
+
+        for (String pName : model.getPlayers()) {
+            VBox playerBox = new VBox(10);
+            playerBox.getStyleClass().add("opponent-box");
+            playerBox.setStyle("-fx-padding: 15; -fx-background-color: rgba(0,0,0,0.4); -fx-background-radius: 10;");
+
+            Label nameLbl = new Label("👤 GIOCATORE: " + pName.toUpperCase());
+            nameLbl.getStyleClass().add("opponent-name-label");
+            playerBox.getChildren().add(nameLbl);
+
+            int artistCount = 0;
+            int buildingBaseAura = 0;
+            int buildingEffectsAura = 0;
+            int inventorAura = 0;
+
+            java.util.List<String> tribe = model.getPlayerTribe().getOrDefault(pName, new java.util.ArrayList<>());
+            java.util.List<String> buildings = model.getPlayerBuildings().getOrDefault(pName, new java.util.ArrayList<>());
+
+            for (String card : tribe) {
+                String[] parts = card.split("\\|");
+                if (parts.length > 3) {
+                    String type = parts[3].toUpperCase();
+                    if (type.contains("ARTIST")) artistCount++;
+                    if (type.contains("INVENTOR")) inventorAura += 2;
+                }
+            }
+
+            for (String bld : buildings) {
+                String[] parts = bld.split("\\|");
+                if (parts.length > 5) {
+                    try {
+                        buildingBaseAura += Integer.parseInt(parts[5]);
+                    } catch (Exception e) {}
+                }
+                buildingEffectsAura += 3;
+            }
+
+            int artistPairsAura = (artistCount / 2) * 5;
+            int totalAuraCalc = model.getPlayerAura().getOrDefault(pName, 0);
+
+            Label lblArtists = new Label(String.format("  🎨 Coppie di Artisti: +%d ✨ (Totale carte: %d)", artistPairsAura, artistCount));
+            lblArtists.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+
+            Label lblBldBase = new Label(String.format("  🏛️ Aura Base Edifici: +%d ✨", buildingBaseAura));
+            lblBldBase.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+
+            Label lblBldEffects = new Label(String.format("  🔮 Effetti Finali Edifici: +%d ✨", buildingEffectsAura));
+            lblBldEffects.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+
+            Label lblInventors = new Label(String.format("  ⚙️ Inventori (Icone diverse): +%d ✨", inventorAura));
+            lblInventors.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+
+            Label lblTotal = new Label(String.format("  🏆 TOTALIZZATORE AURA FINALE: %d ✨", totalAuraCalc));
+            lblTotal.setStyle("-fx-text-fill: gold; -fx-font-size: 18px; -fx-font-weight: bold;");
+
+            playerBox.getChildren().addAll(lblArtists, lblBldBase, lblBldEffects, lblInventors, lblTotal);
+            finalCalculationContainer.getChildren().add(playerBox);
+        }
+        finalCalculationOverlay.setVisible(true);
+    }
+
+    @FXML
+    private void handleGoToLeaderboard() {
+        if (finalCalculationOverlay != null) {
+            finalCalculationOverlay.setVisible(false);
+        }
+        GUIApp.loadLeaderboardScene();
     }
 }

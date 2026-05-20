@@ -50,22 +50,23 @@ public class EventSummaryManager {
                 }
 
                 Label lblName = new Label(data.nickname.toUpperCase());
-                lblName.setPrefWidth(130);
+                lblName.setPrefWidth(140);
                 lblName.getStyleClass().add("event-player-name");
 
-                // FIX SPAZIO: Stringa ridotta al minimo, ravvicinata ed espressa con icone chiare
+                // Prima Colonna: Situazione Iniziale
                 Label lblActivation = new Label(String.format("Inizio: 🍖%d  ✨%d  🔮%d",
                         data.oldFood, data.oldAura, data.oldMagic));
-                lblActivation.setPrefWidth(200);
+                lblActivation.setPrefWidth(220);
                 lblActivation.getStyleClass().add("event-player-activation");
 
                 String foodSign = data.diffFood >= 0 ? "+" : "";
                 String auraSign = data.diffAura >= 0 ? "+" : "";
                 String magicSign = data.diffMagic >= 0 ? "+" : "";
 
-                // FIX SPAZIO: Formato compatto per i delta numerici relativi alle variazioni
+                // Seconda Colonna: Variazione delle Risorse
                 Label lblDiff = new Label(String.format("Variazione: 🍖%s%d  ✨%s%d  🔮%s%d",
                         foodSign, data.diffFood, auraSign, data.diffAura, magicSign, data.diffMagic));
+                lblDiff.setPrefWidth(240);
 
                 if (data.diffAura < 0 || data.diffFood < 0 || data.diffMagic < 0) {
                     lblDiff.getStyleClass().add("event-delta-negative");
@@ -75,7 +76,13 @@ public class EventSummaryManager {
                     lblDiff.getStyleClass().add("event-delta-neutral");
                 }
 
-                row.getChildren().addAll(totemIcon, lblName, lblActivation, lblDiff);
+                // Terza Colonna: Situazione Finale Post-Evento
+                Label lblFinal = new Label(String.format("Fine: 🍖%d  ✨%d  🔮%d",
+                        data.oldFood + data.diffFood, data.oldAura + data.diffAura, data.oldMagic + data.diffMagic));
+                lblFinal.setPrefWidth(220);
+                lblFinal.getStyleClass().add("event-player-activation");
+
+                row.getChildren().addAll(totemIcon, lblName, lblActivation, lblDiff, lblFinal);
                 eventBox.getChildren().add(row);
             }
             eventSummaryContainer.getChildren().add(eventBox);

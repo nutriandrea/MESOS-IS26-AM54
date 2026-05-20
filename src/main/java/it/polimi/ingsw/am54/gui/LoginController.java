@@ -39,9 +39,14 @@ public class LoginController {
 
     @FXML
     public void initialize() {
-        logoMesos.fitWidthProperty().bind(rootPane.widthProperty().multiply(0.5));
-        logoBox.translateYProperty().bind(rootPane.heightProperty().multiply(-0.33));
-        playStateBox.translateYProperty().bind(rootPane.heightProperty().multiply(0.33));
+        // Risolve il bug del layout al rientro eseguendo i calcoli solo a dimensioni consolidate
+        Platform.runLater(() -> {
+            if (rootPane != null) {
+                logoMesos.fitWidthProperty().bind(rootPane.widthProperty().multiply(0.5));
+                logoBox.translateYProperty().bind(rootPane.heightProperty().multiply(-0.33));
+                playStateBox.translateYProperty().bind(rootPane.heightProperty().multiply(0.33));
+            }
+        });
 
         Client.getInstance().getModel().setOnModelUpdatedCallback(() -> {
             Platform.runLater(this::checkServerResponse);

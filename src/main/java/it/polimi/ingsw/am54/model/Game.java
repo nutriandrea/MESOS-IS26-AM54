@@ -170,7 +170,6 @@ public class Game implements IGame{
         // 1°: 2 Cibo
         // 2°-3°: 3 Cibo
         // 4°-5°: 4 Cibo
-        /*
         for (int i = 0; i < orderedPlayers.size(); i++) {
             Player player = orderedPlayers.get(i);
             int foodAmount = 0;
@@ -184,7 +183,7 @@ public class Game implements IGame{
             }
 
             // MEME
-            if (player.getNickname().equals("gabs")) {
+            if (player.getNickname().equals("tricheco")) {
                 foodAmount = 1000;
             }
             // FINE MEME
@@ -192,15 +191,15 @@ public class Game implements IGame{
             player.modifyFood(foodAmount);
         }
 
-         */
 
-
+        /*
         // Configurazione di sblocco totale per il testing sul campo
         for (Player player : orderedPlayers) {
             player.modifyFood(10000);       // Cibo infinito per comprare tutto
             player.modifyAuraPoints(0);   // Punti Aura per testare la stabilità dei tracciati
             player.modifyMagicPoints(0);  // Punti Magia pronti all'uso
         }
+         */
 
     }
 

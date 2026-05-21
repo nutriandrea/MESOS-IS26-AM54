@@ -2,6 +2,7 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import it.polimi.ingsw.am54.model.*;
 import java.util.List;
 
+//ogni volta che completi il set
 public class BuildingSixOfType implements IEffect<BuildingCard> {
 
     @Override

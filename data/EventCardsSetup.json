@@ -48,7 +48,7 @@
     "finalEvent": false,
     "etichettaSottoclasse": "ARTIST",
     "era": 1,
-    "threshold": 0,
+    "threshold": 1,
     "bonusMultiplier": 1,
     "penalty": 2,
     "imageId": 87

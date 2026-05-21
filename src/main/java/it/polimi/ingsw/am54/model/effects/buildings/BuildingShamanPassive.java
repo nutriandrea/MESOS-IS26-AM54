@@ -15,8 +15,7 @@ public class BuildingShamanPassive implements IEffect<BuildingCard> {
 
     @Override
     public void applyOnEvent(Player p, Game g, BuildingCard card, EventCard currentEvent) {
-        // Nessun check sull'evento! Io alzo le mie difese.
-        // Sarà l'evento in corso a decidere se guardare queste variabili o no.
+        // nel player ci sono ste 2 flag
         if (noLoss) p.setShamanNoLoss(true);
         if (doubleAura) p.setShamanDoubleAura(true);
     }

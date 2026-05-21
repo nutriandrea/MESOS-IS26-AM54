@@ -5,8 +5,6 @@ import java.util.Arrays;
 // Gestisce i 6 Punti Prestigio a fine partita per ogni set di 6 personaggi diversi
 public class BuildingSixDifferentAura implements IEffect<BuildingCard> {
 
-    // IL FLAG isEndgameEffect È STATO RIMOSSO
-
     // FIRMA AGGIORNATA PER LA FASE DI FINE PARTITA
     @Override
     public void applyOnEndGame(Player p, Game g, BuildingCard card) {

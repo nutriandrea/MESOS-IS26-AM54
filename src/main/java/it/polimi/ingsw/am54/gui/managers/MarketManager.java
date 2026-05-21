@@ -189,6 +189,7 @@ public class MarketManager {
             if (node instanceof ImageView) ((ImageView) node).setFitHeight(lowerHeight);
         }
     }
+
     public int getUpperItemsCount() { return upperMarket.getChildren().size(); }
     public int getLowerItemsCount() { return lowerMarket.getChildren().size(); }
 }

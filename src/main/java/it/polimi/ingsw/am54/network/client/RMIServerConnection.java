@@ -122,9 +122,23 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
                                List<String> charUp, List<String> charLow,
                                List<String> eventUp, List<String> eventLow,
                                List<String> buildUp, List<String> buildLow) throws RemoteException {
-        // usiamo il DTO localmente per semplicità
+        String oldState = clientModel.getCurrentState();
+
         StateChangedUpdate localSnapshot = new StateChangedUpdate(stateName, era, currentRound, players, turnOrder, offering, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
         clientModel.updateState(localSnapshot);
+
+        String newState = clientModel.getCurrentState();
+
+        if (oldState != null && newState != null) {
+            if (("SetUpGameState".equals(oldState) || "Lobby".equals(oldState)) &&
+                    (!"SetUpGameState".equals(newState) && !"Lobby".equals(newState))) {
+                try {
+                    it.polimi.ingsw.am54.gui.GUIApp.loadBoardScene();
+                } catch (Exception | NoClassDefFoundError e) {
+                    // Modalità CLI attiva, transizione GUI ignorata
+                }
+            }
+        }
     }
 
     @Override

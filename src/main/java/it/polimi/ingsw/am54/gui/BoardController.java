@@ -24,6 +24,9 @@ public class BoardController {
 
     @FXML private StackPane rootPane;
 
+    @FXML private Region topSpacer;
+    @FXML private Region bottomSpacer;
+
     @FXML private HBox upperMarket;
     @FXML private HBox lowerMarket;
     @FXML private HBox middleRow;
@@ -102,7 +105,7 @@ public class BoardController {
             model.setOnModelUpdatedCallback(this::refreshBoard);
 
             model.setOnEventResolvedCallback(reports -> {
-                javafx.application.Platform.runLater(() -> {
+                Platform.runLater(() -> {
                     eventSummaryManager.buildEventSummary(reports, model.getPlayerColors());
                     if (eventSummaryOverlay != null) {
                         eventSummaryOverlay.setVisible(true);
@@ -137,46 +140,27 @@ public class BoardController {
         double h = rootPane.getHeight();
         if (w <= 0 || h <= 0) return;
 
-        // Calcoliamo lo spazio disponibile in altezza.
-        // Togliamo lo spazio per il banner (60), i totem (~30%), la dashboard chiusa (~40), e i margini.
-        double availableHeightForCards = h - 60 - (h * 0.30) - 40 - 150; // 150 è un margine di sicurezza
-
-        // Baseline di divisione equa dello spazio verticale
-        double maxCardHeightFromAvailableSpace = availableHeightForCards / 2.0;
-
-        // Target base proporzionale per schermi standard
-        double targetCardHeight = h * 0.20;
+        double targetCardHeight = h * 0.22;
         double targetMiddleHeight = h * 0.30;
 
-        // 1. Spazio e larghezza massima per la riga superiore
         int totalUpperItems = marketManager.getUpperItemsCount() + 2;
         double upperSpacing = 80.0 + 40.0 + 25.0;
         if (totalUpperItems > 3) upperSpacing += (totalUpperItems - 3) * 15.0;
         double maxUpperCardWidth = (w - upperSpacing) / totalUpperItems;
 
-        // 2. Spazio e larghezza massima per la riga inferiore
         int lowerCardsCount = marketManager.getLowerItemsCount();
         double lowerSpacing = 80.0;
         if (lowerCardsCount > 1) lowerSpacing += (lowerCardsCount - 1) * 15.0;
         double maxLowerCardWidth = lowerCardsCount > 0 ? (w - lowerSpacing) / lowerCardsCount : w;
 
-        // Calcoliamo separatamente le altezze massime derivate dal vincolo di larghezza delle colonne
         double maxUpperCardHeightFromWidth = maxUpperCardWidth / (135.0 / 190.0);
         double maxLowerCardHeightFromWidth = maxLowerCardWidth / (135.0 / 190.0);
 
-        // Calcolo dell'altezza definitiva della riga superiore
-        double finalUpperCardHeight = Math.min(Math.min(targetCardHeight, maxUpperCardHeightFromWidth), maxCardHeightFromAvailableSpace);
+        double finalUpperCardHeight = Math.min(targetCardHeight, maxUpperCardHeightFromWidth);
+        double finalLowerCardHeight = Math.min(targetCardHeight * 1.15, maxLowerCardHeightFromWidth);
 
-        // Spazio verticale rimanente che la riga inferiore ha il diritto di occupare interamente
-        double remainingHeightForLower = availableHeightForCards - finalUpperCardHeight;
-
-        // Calcolo dell'altezza definitiva della riga inferiore: può spingersi fino a h * 0.25 se la larghezza lo permette
-        double finalLowerCardHeight = Math.min(Math.min(h * 0.25, maxLowerCardHeightFromWidth), remainingHeightForLower);
-
-        // Applichiamo le due altezze differenziate al manager delle carte
         marketManager.setCardsHeight(finalUpperCardHeight, finalLowerCardHeight);
 
-        // --- CALCOLO ZONA CENTRALE (I TOTEM) ---
         double maxMiddleWidth = (w - 200) / 8.0;
         double maxMiddleHeightFromWidth = maxMiddleWidth / 0.622;
         double finalMiddleHeight = Math.min(targetMiddleHeight, maxMiddleHeightFromWidth);

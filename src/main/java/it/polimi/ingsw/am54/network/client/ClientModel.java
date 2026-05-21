@@ -46,6 +46,11 @@ public class ClientModel {
     private final java.util.List<EventReport> pendingEventReports = new java.util.ArrayList<>();
     private java.util.function.Consumer<java.util.List<EventReport>> onEventResolvedCallback;
 
+    private boolean isEndGamePending = false;
+    private List<String> pendingWinners = null;
+    private Map<String, Integer> pendingLastMatchScores = null;
+    private int pendingLastMatchNumPlayers = 0;
+
     public void setOnEventResolvedCallback(java.util.function.Consumer<java.util.List<EventReport>> callback) {
         this.onEventResolvedCallback = callback;
     }
@@ -53,14 +58,11 @@ public class ClientModel {
     public synchronized void clearPendingEvents() {
         this.pendingEventReports.clear();
 
-        // Se la fine della partita era stata messa in attesa, sbloccala ora
         if (isEndGamePending) {
             this.winners = pendingWinners;
-            if (pendingLastMatchScores != null) {
-                this.lastMatchScores = pendingLastMatchScores;
-                this.lastMatchNumPlayers = pendingLastMatchNumPlayers;
-            }
-            isEndGamePending = false;
+            this.lastMatchScores = pendingLastMatchScores;
+            this.lastMatchNumPlayers = pendingLastMatchNumPlayers;
+            this.isEndGamePending = false;
             notifyUI();
         }
     }
@@ -168,12 +170,6 @@ public class ClientModel {
 
     /** Ultimo messaggio di errore ricevuto */
     private String lastErrorMessage;
-
-    // --- VARIABILI AGGIUNTIVE PER GESTIONE FINE PARTITA RITARDATA ---
-    private boolean isEndGamePending = false;
-    private List<String> pendingWinners = null;
-    private Map<String, Integer> pendingLastMatchScores = null;
-    private int pendingLastMatchNumPlayers = 0;
 
     /**
      * Set di nickname dei giocatori temporaneamente disconnessi.
@@ -444,28 +440,72 @@ public class ClientModel {
     }
 
     /** Aggiornato quando la partita finisce */
-    public synchronized void updateEndGame(List<String> winners) {
+    public synchronized void updateEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers) {
         if (!pendingEventReports.isEmpty()) {
             this.isEndGamePending = true;
             this.pendingWinners = winners;
-        } else {
-            this.winners = winners;
-        }
-        notifyUI();
-    }
-
-    /**
-     * Memorizza i punteggi finali di tutti i giocatori per l'ultima partita.
-     * Chiamato dal ServerHandler dopo EndGameUpdate quando il server include i punteggi.
-     */
-    public synchronized void setLastMatchScores(Map<String, Integer> scores, int numPlayers) {
-        if (isEndGamePending) {
-            this.pendingLastMatchScores = scores;
+            this.pendingLastMatchScores = allScores;
             this.pendingLastMatchNumPlayers = numPlayers;
         } else {
-            this.lastMatchScores = scores;
+            this.winners = winners;
+            this.lastMatchScores = allScores;
             this.lastMatchNumPlayers = numPlayers;
+            notifyUI();
         }
+    }
+
+    // ==========================================
+    // CALCOLO BONUS STATICI (DA GAME.JAVA)
+    // ==========================================
+
+    public int getArtistBonus(String pName) {
+        int artistCount = 0;
+        List<String> tribe = this.playerTribe.getOrDefault(pName, new ArrayList<>());
+        for (String card : tribe) {
+            String[] parts = card.split("\\|");
+            if (parts.length > 3 && parts[3].toUpperCase().contains("ARTIST")) {
+                artistCount++;
+            }
+        }
+        return (artistCount / 2) * 10;
+    }
+
+    public int getInventorBonus(String pName) {
+        int inventorCount = 0;
+        java.util.Set<Integer> uniqueInventions = new java.util.HashSet<>();
+        List<String> tribe = this.playerTribe.getOrDefault(pName, new ArrayList<>());
+        for (String card : tribe) {
+            String[] parts = card.split("\\|");
+            if (parts.length > 4 && parts[3].toUpperCase().contains("INVENTOR")) {
+                inventorCount++;
+                try { uniqueInventions.add(Integer.parseInt(parts[4])); } catch (Exception ignored) {}
+            }
+        }
+        return inventorCount * uniqueInventions.size();
+    }
+
+    public int getConstructorBonus(String pName) {
+        int constructorAura = 0;
+        List<String> tribe = this.playerTribe.getOrDefault(pName, new ArrayList<>());
+        for (String card : tribe) {
+            String[] parts = card.split("\\|");
+            if (parts.length > 5 && parts[3].toUpperCase().contains("CONSTRUCTOR")) {
+                try { constructorAura += Integer.parseInt(parts[5]); } catch (Exception ignored) {}
+            }
+        }
+        return constructorAura;
+    }
+
+    public int getBuildingBaseAura(String pName) {
+        int buildingBaseAura = 0;
+        List<String> buildings = this.playerBuildings.getOrDefault(pName, new ArrayList<>());
+        for (String bld : buildings) {
+            String[] parts = bld.split("\\|");
+            if (parts.length > 5) {
+                try { buildingBaseAura += Integer.parseInt(parts[5]); } catch (Exception ignored) {}
+            }
+        }
+        return buildingBaseAura;
     }
 
     /**

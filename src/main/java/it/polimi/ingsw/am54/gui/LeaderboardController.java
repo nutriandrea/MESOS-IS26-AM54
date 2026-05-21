@@ -91,7 +91,12 @@ public class LeaderboardController {
             }
 
             // Punti base
-            ps.aura = model.getPlayerAura().getOrDefault(pName, 0);
+            if (model.getLastMatchScores() != null && model.getLastMatchScores().containsKey(pName)) {
+                ps.aura = model.getLastMatchScores().get(pName);
+            } else {
+                ps.aura = model.getPlayerAura().getOrDefault(pName, 0); // Fallback di sicurezza
+            }
+
             ps.food = model.getPlayerFood().getOrDefault(pName, 0);
 
             // Punti magia (gestiti con sicurezza)
@@ -207,9 +212,9 @@ public class LeaderboardController {
 
     private Label createStatLabel(String val) {
         Label l = new Label(val);
-        l.setPrefWidth(120);
-        l.setTextFill(Color.WHITE);
-        l.setStyle("-fx-font-size: 20px;");
+        l.setPrefWidth(120); // Questo deve essere identico al prefWidth dell'FXML (120)
+        l.setAlignment(Pos.CENTER); // <-- AGGIUNGI QUESTA RIGA per centrare il testo
+        l.getStyleClass().add("ranking-table-value"); // Applica il CSS per il font Herculanum e colore
         return l;
     }
 

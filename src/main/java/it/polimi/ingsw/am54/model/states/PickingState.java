@@ -121,8 +121,16 @@ public class PickingState extends GameState {
         }
 
         // CONTROLLO REGOLE NORMALI: Pescata Obbligatoria dei Personaggi
+        // CONTROLLO REGOLE NORMALI: Pescata Obbligatoria dei Personaggi
         if (hasMandatoryCharactersLeft(game, tile)) {
-            throw new Exception("Non puoi terminare il turno: ci sono ancora Personaggi disponibili che DEVI pescare!");
+
+            // --- INIZIO TRUCCO PER TEST ---
+            // Sostituisci "tester" con il nickname che usi di solito per fare debug rapido
+            if (player.getNickname().equalsIgnoreCase("tester")||player.getNickname().equalsIgnoreCase("tester2")) {
+                System.out.println("[DEV MODE] Il giocatore " + nickname + " ha saltato forzatamente la fase di pick.");
+            } else {
+                throw new Exception("Non puoi terminare il turno: ci sono ancora Personaggi disponibili che DEVI pescare!");
+            }
         }
 
         executeEndTurnLogic(game, player);

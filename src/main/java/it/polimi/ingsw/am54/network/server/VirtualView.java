@@ -267,12 +267,18 @@ public class VirtualView implements IGameObserver {
 
     @Override
     public void onEndGame(Game game, List<Player> winners) {
-        // Tutti vedono la fine della partita e i vincitori.
-        // Convertiamo Player -> String per non serializzare oggetti pesanti su rete
         List<String> winnerNames = winners.stream()
                 .map(Player::getNickname)
                 .collect(Collectors.toList());
-        connection.notifyEndGame(winnerNames);
+
+        // Calcoliamo la mappa dei punteggi reali qui sul Server
+        java.util.Map<String, Integer> finalScores = new java.util.HashMap<>();
+        for (Player p : game.getPlayers()) {
+            finalScores.put(p.getNickname(), game.calculatePlayerScore(p));
+        }
+
+        // Inviamo i dati completi alla connessione
+        connection.notifyEndGame(winnerNames, finalScores, game.getPlayers().size());
     }
 
     //PER LA RECONNECT

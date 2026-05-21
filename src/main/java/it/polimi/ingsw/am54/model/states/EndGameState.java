@@ -45,6 +45,8 @@ public class EndGameState extends GameState {
         // Edifici che assegnano i Punti Aura finali prima del conteggio!
         // ==========================================
         for (Player p : game.getPlayers()) {
+            int auraBefore = p.getAuraPoints(); // Registriamo lo stato dell'Aura a fine round 10 post-eventi
+
             for (BuildingCard building : p.getBuildings()) {
                 if (building.getEffects() != null) {
                     for (IEffect<BuildingCard> effect : building.getEffects()) {
@@ -52,6 +54,9 @@ public class EndGameState extends GameState {
                     }
                 }
             }
+
+            int auraAfter = p.getAuraPoints(); // Registriamo l'Aura modificata dagli effetti degli edifici
+            p.setEndGameBuildingsAura(auraAfter - auraBefore); // Salviamo il delta esatto calcolato dal Server
         }
 
         // CALCOLO PUNTEGGI
@@ -60,4 +65,17 @@ public class EndGameState extends GameState {
         // NOTIFICA VITTORIA
         game.notifyEndGame(winners);
     }
+
+    @Override
+    public void joinGame(Game game, String nickname) throws Exception {
+        System.out.println("[SERVER] Riavvio della partita richiesto dal client: " + nickname);
+
+        // Svuotiamo la lista dei vecchi giocatori e resettiamo lo stato iniziale
+        game.getPlayers().clear();
+        game.setState(new SetUpGameState());
+
+        // Ora che il server è pulito, passiamo la palla al nuovo stato per farlo entrare come Host!
+        game.getCurrentState().joinGame(game, nickname);
+    }
+
 }

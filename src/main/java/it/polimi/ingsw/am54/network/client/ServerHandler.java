@@ -160,11 +160,13 @@ public class ServerHandler implements Runnable {
         else if (message instanceof TotemColorUpdate msg) {
             clientModel.updateTotemColor(msg.getNickname(), msg.getColor());
         }
-        else if (message instanceof EndGameUpdate msg) {
-            clientModel.updateEndGame(msg.getWinners());
-            if (msg.getAllScores() != null && !msg.getAllScores().isEmpty()) {
-                clientModel.setLastMatchScores(msg.getAllScores(), msg.getNumPlayers());
-            }
+        else if (message instanceof EndGameUpdate) {
+            EndGameUpdate update = (EndGameUpdate) message;
+            clientModel.updateEndGame(
+                    update.getWinners(),
+                    update.getAllScores(),
+                    update.getNumPlayers()
+            );
         }
         else if (message instanceof LeaderboardUpdate msg) {
             clientModel.updateLeaderboard(msg.getPlayerPosition(), msg.getEntries(), msg.getNumPlayers());

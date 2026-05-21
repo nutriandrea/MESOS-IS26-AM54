@@ -59,7 +59,7 @@ public interface ClientConnection {
                             List<String> charUpper, List<String> charLower,
                             List<String> eventUpper, List<String> eventLower,
                             List<String> buildUpper, List<String> buildLower);
-    void notifyEndGame(List<String> winnerNames);
+    void notifyEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers);
     void notifyError(String message);
     void sendPing();
 

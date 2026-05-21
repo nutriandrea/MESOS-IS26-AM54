@@ -13,28 +13,13 @@ import java.rmi.registry.Registry;
  * ============================================================================
  * Server — Entry point del server AM54 (single game)
  * ============================================================================
- *
- * RESPONSABILITA':
- * - Avviare il server Socket TCP sulla porta specificata (default 12345)
- * - Avviare il server RMI sulla porta specificata (default 1099)
- * - Gestire una singola partita (una sola istanza di Game + Controller)
- * ============================================================================
  */
 public class Server {
 
-    /** Una singola istanza del gioco */
     private final Game game;
-
-    /** Un solo controller per la partita */
     private final Controller controller;
-
-    /** Flag per controllare se il server e' in esecuzione */
     private boolean isRunning;
 
-    /**
-     * Costruttore del Server.
-     * Inizializza sempre una nuova partita pulita.
-     */
     public Server() {
         this.game = new Game();
         this.controller = new Controller(game);
@@ -47,12 +32,6 @@ public class Server {
         return controller;
     }
 
-    /**
-     * Avvia il server su TCP e RMI.
-     *
-     * @param tcpPort porta per le connessioni Socket TCP
-     * @param rmiPort porta per le connessioni RMI
-     */
     public void start(int tcpPort, int rmiPort) {
         startRMI(rmiPort);
         startTCP(tcpPort);
@@ -60,7 +39,7 @@ public class Server {
 
     private void startRMI(int port) {
         try {
-            System.setProperty("java.rmi.server.hostname", "localhost");
+            // L'hostname RMI è già stato settato globalmente nel main!
             Registry registry = LocateRegistry.createRegistry(port);
             RMIServerImpl rmiServer = new RMIServerImpl(this);
             registry.rebind("AM54-Server", rmiServer);
@@ -88,6 +67,22 @@ public class Server {
 
     public static void main(String[] args) {
         System.out.println("=== Avvio Server AM54 ===");
+
+        String serverIp = "127.0.0.1"; // Fallback di sicurezza
+
+        try (java.net.DatagramSocket s = new java.net.DatagramSocket()) {
+            // Finge di connettersi all'esterno per scoprire l'IP della scheda Wi-Fi attiva
+            s.connect(java.net.InetAddress.getByName("8.8.8.8"), 10002);
+            serverIp = s.getLocalAddress().getHostAddress();
+        } catch (Exception e) {
+            System.err.println("Autodetect IP fallito. Uso localhost.");
+        }
+
+        // Imposta l'hostname RMI in modo dinamico
+        System.setProperty("java.rmi.server.hostname", serverIp);
+        System.out.println("[Server] RMI Hostname globale impostato a: " + serverIp);
+        System.out.println("\n---> COMUNICA QUESTO IP AGLI ALTRI GIOCATORI: " + serverIp + " <--- \n");
+
         Server server = new Server();
         server.start(12345, 1099);
     }

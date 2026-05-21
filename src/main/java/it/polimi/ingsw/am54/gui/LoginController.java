@@ -91,7 +91,18 @@ public class LoginController {
                 if (socketRadio.isSelected()) {
                     connection = new SocketServerConnection(ip, 12345, model);
                 } else {
-                    Registry registry = LocateRegistry.getRegistry(ip, 1099);
+                    // 1. Il Client usa l'IP digitato nella GUI per autoconfigurare RMI
+                    try (java.net.DatagramSocket s = new java.net.DatagramSocket()) {
+                        s.connect(java.net.InetAddress.getByName(ip), 1099);
+                        String myClientIp = s.getLocalAddress().getHostAddress();
+                        System.setProperty("java.rmi.server.hostname", myClientIp);
+                        System.out.println("[Client RMI] Hostname impostato a: " + myClientIp);
+                    } catch (Exception ex) {
+                        System.err.println("Impossibile determinare l'IP del client. Fallback.");
+                    }
+
+                    // 2. Connessione effettiva al Server
+                    java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(ip, 1099);
                     RMIGameServer serverStub = (RMIGameServer) registry.lookup("AM54-Server");
                     connection = new RMIServerConnection(serverStub, model);
                 }

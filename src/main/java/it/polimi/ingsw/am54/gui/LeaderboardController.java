@@ -44,6 +44,15 @@ public class LeaderboardController {
     public void initialize() {
         setupScaling();
 
+        if (Client.getInstance().getConnection() != null) {
+            try {
+                // Inviamo un messaggio di fine sessione (se lo hai) o semplicemente disconnettiamo
+                Client.getInstance().getConnection().disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         Platform.runLater(this::buildLeaderboard);
     }
 
@@ -221,11 +230,22 @@ public class LeaderboardController {
     @FXML
     private void handleReturnToMenu() {
         try {
-            // Reset completo e profondo del client, cancellando vecchi player e stati
+            // 1. Disconnessione di rete pulita
+            if (Client.getInstance().getConnection() != null) {
+                try {
+                    // Chiama il metodo per chiudere Socket/RMI (vedi punto 2)
+                    Client.getInstance().getConnection().disconnect();
+                } catch (Exception e) {
+                    System.err.println("[CLIENT] Errore durante la disconnessione: " + e.getMessage());
+                }
+            }
+
+            // 2. Reset profondo dei dati locali del Client
             Client.resetClient();
 
-            // Ritorno alla schermata di login
+            // 3. Ritorno alla schermata iniziale
             GUIApp.loadLoginScene();
+
         } catch (Exception e) {
             e.printStackTrace();
         }

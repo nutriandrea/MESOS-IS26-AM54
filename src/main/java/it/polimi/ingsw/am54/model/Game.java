@@ -344,6 +344,16 @@ public class Game implements IGame{
         currentState.endTurn(this, nickname);
     }
 
+    public synchronized void removePlayerEntirely(String nickname) {
+        // 1. Rimuove fisicamente il giocatore dalla lista
+        players.removeIf(p -> p.getNickname().equalsIgnoreCase(nickname));
+
+        // 2. Se tutti abbandonano a fine partita, riporta il server allo stato di Setup iniziale
+        if (players.isEmpty() && (currentState instanceof it.polimi.ingsw.am54.model.states.EndGameState)) {
+            this.setState(new SetUpGameState());
+        }
+    }
+
 
     // ==========================================
     // GETTERS & SETTERS ESSENZIALI

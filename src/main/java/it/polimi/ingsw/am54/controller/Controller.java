@@ -220,16 +220,44 @@ public class Controller {
 
     public void removeClient(String nickname) {
         VirtualView view = virtualViews.remove(nickname);
-        // Il giocatore resta in disconnectedPlayers per permettere la riconnessione.
-        // Se non e' gia' presente (es. connessione chiusa senza ping timeout), lo aggiungiamo.
-        disconnectedPlayers.add(nickname);
-        if (view != null) {
-            synchronized (game.getPlayers()) {
-                game.removeObserver(view);
+
+        // --- LOGICA DI PULIZIA DEFINITIVA ---
+        // Se siamo in LOBBY o a PARTITA FINITA, vogliamo rimuovere il giocatore PER SEMPRE.
+        String stateName = game.getCurrentState().getClass().getSimpleName();
+
+        if (stateName.equals("SetUpGameState") || stateName.equals("EndGameState")) {
+            LOGGER.info("Giocatore " + nickname + " abbandona la stanza definitivamente.");
+
+            // Rimuoviamo il giocatore dal modello di gioco
+            game.removePlayerEntirely(nickname);
+
+            // Rimuoviamo il nickname dal set dei disconnessi, così è libero di rientrare
+            disconnectedPlayers.remove(nickname);
+
+            if (view != null) game.removeObserver(view);
+
+            // Notifica gli altri che il Totem si è liberato
+            notifyAllClientsStateChanged();
+
+        } else {
+            // --- LOGICA DI DISCONNESSIONE TEMPORANEA (Crash in-game) ---
+            disconnectedPlayers.add(nickname);
+            if (view != null) {
+                synchronized (game.getPlayers()) {
+                    game.removeObserver(view);
+                }
             }
+            LOGGER.info("Giocatore " + nickname + " disconnesso temporaneamente.");
+            autoHandleDisconnection(nickname);
         }
-        LOGGER.info("Giocatore " + nickname + " rimosso dal server.");
-        autoHandleDisconnection(nickname);
+    }
+
+    // Aggiungi questo metodo nella classe Controller.java
+    private void notifyAllClientsStateChanged() {
+        for (VirtualView view : virtualViews.values()) {
+            // Se la view è ancora valida, mandiamo un aggiornamento
+            view.onStateChanged(game, game.getCurrentState());
+        }
     }
 
     public boolean isDisconnected(String nickname) {

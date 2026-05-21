@@ -20,6 +20,7 @@
                 <padding><Insets right="50"/></padding>
                 <Label fx:id="infoLabel" text="Regole del gioco" styleClass="info-label" mouseTransparent="true"/>
                 <Button fx:id="infoButton" text="i" styleClass="info-button" onAction="#handleOpenRules"/>
+                <Button fx:id="musicButton" text="🎵" styleClass="music-button" onAction="#handleMusicToggle"/>
             </HBox>
 
         </StackPane>

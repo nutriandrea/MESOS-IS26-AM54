@@ -2,6 +2,7 @@ package it.polimi.ingsw.am54.gui;
 
 import it.polimi.ingsw.am54.gui.managers.DashboardManager;
 import it.polimi.ingsw.am54.gui.managers.MarketManager;
+import it.polimi.ingsw.am54.gui.managers.MusicManager;
 import it.polimi.ingsw.am54.gui.managers.TotemManager;
 import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.client.Client;
@@ -61,6 +62,7 @@ public class BoardController {
     @FXML private Label turnNotificationTitle;
 
     @FXML private Button endTurnButton;
+    @FXML private Button musicButton;
 
     @FXML private StackPane eventSummaryOverlay;
     @FXML private VBox eventSummaryContainer;
@@ -217,13 +219,12 @@ public class BoardController {
 
     @FXML
     private void handleEndTurn() {
-        if (Client.getInstance().getConnection() != null) {
-            try {
-                Client.getInstance().getConnection().endTurn();
-            } catch (Exception e) {
-                showTemporaryError("Hai ancora pick disponibili!");
-            }
-        }
+        Client.getInstance().getConnection().endTurn();
+    }
+
+    @FXML
+    private void handleMusicToggle() {
+        MusicManager.getInstance().toggle("board", musicButton);
     }
 
     public void showTemporaryError(String errorMessage) {

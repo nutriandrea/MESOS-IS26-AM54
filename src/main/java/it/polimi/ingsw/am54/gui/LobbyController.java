@@ -1,5 +1,6 @@
 package it.polimi.ingsw.am54.gui;
 
+import it.polimi.ingsw.am54.gui.managers.MusicManager;
 import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.client.Client;
 import it.polimi.ingsw.am54.network.client.ClientModel;
@@ -55,7 +56,10 @@ public class LobbyController {
     @FXML private Button prevPageButton;
     @FXML private Button nextPageButton;
     @FXML private Label pageLabel;
+    @FXML private Button infoButton;
+    @FXML private Button musicButton;
     @FXML private Label lobbyTitle;
+
 
     private Map<String, ImageView> totemMap;
     private Map<String, Label> labelMap;
@@ -270,6 +274,11 @@ public class LobbyController {
 
     @FXML private void handleOpenRules() { rulesOverlay.toFront(); rulesOverlay.setVisible(true); rulesOverlay.setManaged(true); updateRulesUI(); }
     @FXML private void handleCloseRules() { rulesOverlay.setVisible(false); rulesOverlay.setManaged(false); }
+
+    @FXML
+    private void handleMusicToggle() {
+        MusicManager.getInstance().toggle("lobby", musicButton);
+    }
 
     @FXML
     private void handleNextPage() {

@@ -19,6 +19,7 @@
             <HBox alignment="CENTER_RIGHT" spacing="15" pickOnBounds="false" StackPane.alignment="CENTER_RIGHT">
                 <Label text="Regole del gioco" styleClass="info-label" mouseTransparent="true"/>
                 <Button fx:id="infoButton" text="i" styleClass="info-button" onAction="#handleOpenRules"/>
+                <Button fx:id="musicButton" text="🎵" styleClass="music-button" onAction="#handleMusicToggle"/>
             </HBox>
         </StackPane>
         <Label fx:id="subtitleLabel" text="SCEGLI IL TUO TOTEM!" styleClass="lobby-subtitle" mouseTransparent="true"/>

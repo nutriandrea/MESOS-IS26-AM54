@@ -58,14 +58,14 @@ public class EndGameStateTest {
             @Override public void onPlayerJoined(Game game, Player player) {}
             @Override public void onTotemColorChosen(Game game, Player player, TotemColors color) {}
             @Override public void onTotemPlaced(Game game, Player player, int offerPosition) {}
-            @Override public void onCardPicked(Game game, Player player, String row, int cardIndex, int newFood) {}
+            @Override public void onCardPicked(Game game, Player player, String row, int cardIndex, int newFoodBalance, int newMagicBalance) {}
             @Override public void onTurnChanged(Game game, Player player) {}
             @Override public void onStateChanged(Game game, GameState newState) {}
             @Override public void onTotemReturned(Game game, Player player, int position, int f, int a) {}
 
             // INTERCETTIAMO LE DUE NOTIFICHE DELL'ENDGAMESTATE
             @Override
-            public void onEventResolved(Game game) {
+            public void onEventResolved(Game game, EventCard eventCard) {
                 eventNotified[0] = true;
             }
 

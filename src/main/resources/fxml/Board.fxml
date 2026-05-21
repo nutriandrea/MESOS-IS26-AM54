@@ -28,6 +28,7 @@
                 <HBox alignment="CENTER_RIGHT" prefWidth="250.0" pickOnBounds="false">
                     <padding><Insets right="40.0" /></padding>
                     <Button text="👥 AVVERSARI" styleClass="recap-button" onAction="#toggleOpponentsOverlay" />
+                    <Button fx:id="musicButton" text="🎵" styleClass="music-button" onAction="#handleMusicToggle" />
                 </HBox>
             </right>
         </BorderPane>

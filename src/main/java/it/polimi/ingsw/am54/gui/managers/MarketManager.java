@@ -178,18 +178,17 @@ public class MarketManager {
         return view;
     }
 
-    public void setCardsHeight(double height) {
-        if (tribeDeckView != null) tribeDeckView.setFitHeight(height);
-        if (buildingsDeckView != null) buildingsDeckView.setFitHeight(height);
+    public void setCardsHeight(double upperHeight, double lowerHeight) {
+        if (tribeDeckView != null) tribeDeckView.setFitHeight(upperHeight);
+        if (buildingsDeckView != null) buildingsDeckView.setFitHeight(upperHeight);
 
         for (javafx.scene.Node node : upperMarket.getChildren()) {
-            if (node instanceof ImageView) ((ImageView) node).setFitHeight(height);
+            if (node instanceof ImageView) ((ImageView) node).setFitHeight(upperHeight);
         }
         for (javafx.scene.Node node : lowerMarket.getChildren()) {
-            if (node instanceof ImageView) ((ImageView) node).setFitHeight(height);
+            if (node instanceof ImageView) ((ImageView) node).setFitHeight(lowerHeight);
         }
     }
-
     public int getUpperItemsCount() { return upperMarket.getChildren().size(); }
     public int getLowerItemsCount() { return lowerMarket.getChildren().size(); }
 }

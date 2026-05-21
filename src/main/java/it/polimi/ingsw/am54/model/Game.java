@@ -450,37 +450,45 @@ public class Game implements IGame{
         return nextCard.getEra() > currentEra;
     }
 
-    // ... [Tutto il codice sopra rimane identico fino a isEraTransition()]
-
-    public int calculatePlayerScore(Player p) {
-        int score = 0;
-
-        // 1. Punti Aura base (inclusi quelli appena aggiunti dinamicamente da EndGameState)
-        score += p.getAuraPoints();
-
-        // 2. Bonus Inventori
+    public int getPlayerInventorsBonus(Player p) {
         long inventors = p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.INVENTOR).count();
         long uniqueInventions = p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.INVENTOR)
                 .mapToInt(c -> c.getLevel())
                 .distinct().count();
-        score += (int) (inventors * uniqueInventions);
+        return (int) (inventors * uniqueInventions);
+    }
 
-        // 3. Bonus Artisti
+    public int getPlayerArtistsBonus(Player p) {
         long artists = p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.ARTIST).count();
-        score += (int) (artists / 2) * 10;
+        return (int) (artists / 2) * 10;
+    }
 
-        // 4. Bonus Costruttori
-        long CONSTRUCTORs = p.getMyTribe().stream()
+    public int getPlayerConstructorsBonus(Player p) {
+        return p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.CONSTRUCTOR)
                 .mapToInt(CharacterCard::getAura).sum();
-        score += (int) CONSTRUCTORs;
+    }
 
-        // 5. Punti base stampati sulle carte Edificio
-        score += p.getBuildings().stream()
+    public int getPlayerBuildingsBaseAura(Player p) {
+        return p.getBuildings().stream()
                 .mapToInt(BuildingCard::getFinalAura).sum();
+    }
+
+    public int calculatePlayerScore(Player p) {
+        int score = 0;
+        // 1. Punti Aura comprensivi di modifiche EndGameState
+        score += p.getAuraPoints();
+        // 2. Bonus Inventori
+        score += getPlayerInventorsBonus(p);
+        // 3. Bonus Artisti
+        score += getPlayerArtistsBonus(p);
+        // 4. Bonus Costruttori
+        score += getPlayerConstructorsBonus(p);
+        // 5. Punti base stampati sulle carte Edificio
+        score += getPlayerBuildingsBaseAura(p);
 
         return score;
     }

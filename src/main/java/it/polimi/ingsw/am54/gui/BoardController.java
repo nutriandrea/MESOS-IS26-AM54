@@ -137,26 +137,46 @@ public class BoardController {
         double h = rootPane.getHeight();
         if (w <= 0 || h <= 0) return;
 
-        double targetCardHeight = h * 0.22;
+        // Calcoliamo lo spazio disponibile in altezza.
+        // Togliamo lo spazio per il banner (60), i totem (~30%), la dashboard chiusa (~40), e i margini.
+        double availableHeightForCards = h - 60 - (h * 0.30) - 40 - 150; // 150 è un margine di sicurezza
+
+        // Baseline di divisione equa dello spazio verticale
+        double maxCardHeightFromAvailableSpace = availableHeightForCards / 2.0;
+
+        // Target base proporzionale per schermi standard
+        double targetCardHeight = h * 0.20;
         double targetMiddleHeight = h * 0.30;
 
+        // 1. Spazio e larghezza massima per la riga superiore
         int totalUpperItems = marketManager.getUpperItemsCount() + 2;
         double upperSpacing = 80.0 + 40.0 + 25.0;
         if (totalUpperItems > 3) upperSpacing += (totalUpperItems - 3) * 15.0;
         double maxUpperCardWidth = (w - upperSpacing) / totalUpperItems;
 
+        // 2. Spazio e larghezza massima per la riga inferiore
         int lowerCardsCount = marketManager.getLowerItemsCount();
         double lowerSpacing = 80.0;
         if (lowerCardsCount > 1) lowerSpacing += (lowerCardsCount - 1) * 15.0;
         double maxLowerCardWidth = lowerCardsCount > 0 ? (w - lowerSpacing) / lowerCardsCount : w;
 
-        double maxCardWidth = Math.min(maxUpperCardWidth, maxLowerCardWidth);
-        double maxCardHeightFromWidth = maxCardWidth / (135.0 / 190.0);
+        // Calcoliamo separatamente le altezze massime derivate dal vincolo di larghezza delle colonne
+        double maxUpperCardHeightFromWidth = maxUpperCardWidth / (135.0 / 190.0);
+        double maxLowerCardHeightFromWidth = maxLowerCardWidth / (135.0 / 190.0);
 
-        double finalCardHeight = Math.min(targetCardHeight, maxCardHeightFromWidth);
+        // Calcolo dell'altezza definitiva della riga superiore
+        double finalUpperCardHeight = Math.min(Math.min(targetCardHeight, maxUpperCardHeightFromWidth), maxCardHeightFromAvailableSpace);
 
-        marketManager.setCardsHeight(finalCardHeight);
+        // Spazio verticale rimanente che la riga inferiore ha il diritto di occupare interamente
+        double remainingHeightForLower = availableHeightForCards - finalUpperCardHeight;
 
+        // Calcolo dell'altezza definitiva della riga inferiore: può spingersi fino a h * 0.25 se la larghezza lo permette
+        double finalLowerCardHeight = Math.min(Math.min(h * 0.25, maxLowerCardHeightFromWidth), remainingHeightForLower);
+
+        // Applichiamo le due altezze differenziate al manager delle carte
+        marketManager.setCardsHeight(finalUpperCardHeight, finalLowerCardHeight);
+
+        // --- CALCOLO ZONA CENTRALE (I TOTEM) ---
         double maxMiddleWidth = (w - 200) / 8.0;
         double maxMiddleHeightFromWidth = maxMiddleWidth / 0.622;
         double finalMiddleHeight = Math.min(targetMiddleHeight, maxMiddleHeightFromWidth);
@@ -400,64 +420,68 @@ public class BoardController {
     private void openFinalCalculationOverlay() {
         if (finalCalculationOverlay == null || finalCalculationContainer == null) return;
         finalCalculationContainer.getChildren().clear();
+
         ClientModel model = Client.getInstance().getModel();
         if (model == null || model.getPlayers() == null) return;
 
         for (String pName : model.getPlayers()) {
             VBox playerBox = new VBox(10);
-            playerBox.getStyleClass().add("opponent-box");
-            playerBox.setStyle("-fx-padding: 15; -fx-background-color: rgba(0,0,0,0.4); -fx-background-radius: 10;");
+            playerBox.getStyleClass().addAll("opponent-box", "final-calc-player-box");
 
             Label nameLbl = new Label("👤 GIOCATORE: " + pName.toUpperCase());
             nameLbl.getStyleClass().add("opponent-name-label");
             playerBox.getChildren().add(nameLbl);
 
-            int artistCount = 0;
-            int buildingBaseAura = 0;
-            int buildingEffectsAura = 0;
-            int inventorAura = 0;
+            // 1. Calcoli statici dal ClientModel
+            int artistsBonus = model.getArtistBonus(pName);
+            int inventorsBonus = model.getInventorBonus(pName);
+            int constructorAura = model.getConstructorBonus(pName);
+            int buildingBaseAura = model.getBuildingBaseAura(pName);
 
-            java.util.List<String> tribe = model.getPlayerTribe().getOrDefault(pName, new java.util.ArrayList<>());
-            java.util.List<String> buildings = model.getPlayerBuildings().getOrDefault(pName, new java.util.ArrayList<>());
+            // 2. Dati ufficiali dal Server
+            int clientBaseAura = model.getPlayerAura().getOrDefault(pName, 0); // L'Aura registrata prima del conteggio finale
+            int leftoverFood = model.getPlayerFood().getOrDefault(pName, 0);
 
-            for (String card : tribe) {
-                String[] parts = card.split("\\|");
-                if (parts.length > 3) {
-                    String type = parts[3].toUpperCase();
-                    if (type.contains("ARTIST")) artistCount++;
-                    if (type.contains("INVENTOR")) inventorAura += 2;
-                }
+            // Il server ci ha inviato il punteggio totale reale e insindacabile!
+            int finalScore = 0;
+            if (model.getLastMatchScores() != null && model.getLastMatchScores().containsKey(pName)) {
+                finalScore = model.getLastMatchScores().get(pName);
+            } else {
+                finalScore = clientBaseAura + artistsBonus + inventorsBonus + constructorAura + buildingBaseAura; // Fallback di sicurezza
             }
 
-            for (String bld : buildings) {
-                String[] parts = bld.split("\\|");
-                if (parts.length > 5) {
-                    try {
-                        buildingBaseAura += Integer.parseInt(parts[5]);
-                    } catch (Exception e) {}
-                }
-                buildingEffectsAura += 3;
-            }
+            // 3. LA DEDUZIONE MATEMATICA DEGLI EFFETTI
+            // Sottraendo i bonus fissi e l'Aura di partenza dal Totale del Server, otteniamo
+            // in modo impeccabile quanto hanno fruttato gli effetti applyOnEndGame degli edifici.
+            int staticBonuses = artistsBonus + inventorsBonus + constructorAura + buildingBaseAura;
+            int endGameBuildingsBonus = finalScore - clientBaseAura - staticBonuses;
 
-            int artistPairsAura = (artistCount / 2) * 5;
-            int totalAuraCalc = model.getPlayerAura().getOrDefault(pName, 0);
+            // 4. Stampa a schermo
+            Label lblBase = new Label(String.format("  ✨ Aura a fine Round 10 (post eventi): %+d", clientBaseAura));
+            lblBase.getStyleClass().add("final-calc-detail");
 
-            Label lblArtists = new Label(String.format("  🎨 Coppie di Artisti: +%d ✨ (Totale carte: %d)", artistPairsAura, artistCount));
-            lblArtists.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+            Label lblArtists = new Label(String.format("  🎨 Bonus Artisti: %d ✨", artistsBonus));
+            lblArtists.getStyleClass().add("final-calc-detail");
 
-            Label lblBldBase = new Label(String.format("  🏛️ Aura Base Edifici: +%d ✨", buildingBaseAura));
-            lblBldBase.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+            Label lblInventors = new Label(String.format("  ⚙️ Bonus Inventori: %d ✨", inventorsBonus));
+            lblInventors.getStyleClass().add("final-calc-detail");
 
-            Label lblBldEffects = new Label(String.format("  🔮 Effetti Finali Edifici: +%d ✨", buildingEffectsAura));
-            lblBldEffects.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+            Label lblConstructors = new Label(String.format("  🔨 Aura Base Costruttori: %d ✨", constructorAura));
+            lblConstructors.getStyleClass().add("final-calc-detail");
 
-            Label lblInventors = new Label(String.format("  ⚙️ Inventori (Icone diverse): +%d ✨", inventorAura));
-            lblInventors.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+            Label lblBldBase = new Label(String.format("  🏛️ Aura Base Edifici: %d ✨", buildingBaseAura));
+            lblBldBase.getStyleClass().add("final-calc-detail");
 
-            Label lblTotal = new Label(String.format("  🏆 TOTALIZZATORE AURA FINALE: %d ✨", totalAuraCalc));
-            lblTotal.setStyle("-fx-text-fill: gold; -fx-font-size: 18px; -fx-font-weight: bold;");
+            Label lblEndGameBld = new Label(String.format("  🔮 Aura da Effetti Edifici a Fine Partita: %d ✨", endGameBuildingsBonus));
+            lblEndGameBld.getStyleClass().add("final-calc-detail");
 
-            playerBox.getChildren().addAll(lblArtists, lblBldBase, lblBldEffects, lblInventors, lblTotal);
+            Label lblFood = new Label(String.format("  🍖 Cibo residuo (usato per spareggi): %d", leftoverFood));
+            lblFood.getStyleClass().add("final-calc-food");
+
+            Label lblTotal = new Label(String.format("  🏆 AURA FINALE: %d ✨", finalScore));
+            lblTotal.getStyleClass().add("final-calc-total");
+
+            playerBox.getChildren().addAll(lblBase, lblArtists, lblInventors, lblConstructors, lblBldBase, lblEndGameBld, lblFood, lblTotal);
             finalCalculationContainer.getChildren().add(playerBox);
         }
         finalCalculationOverlay.setVisible(true);

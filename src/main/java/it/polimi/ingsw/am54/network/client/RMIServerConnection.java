@@ -128,8 +128,12 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     }
 
     @Override
-    public void onEndGame(List<String> winnerNames) throws RemoteException {
-        clientModel.updateEndGame(winnerNames);
+    public void onEndGame(EndGameUpdate update) throws RemoteException {
+       clientModel.updateEndGame(
+                update.getWinners(),
+                update.getAllScores(),
+                update.getNumPlayers()
+        );
     }
 
     @Override

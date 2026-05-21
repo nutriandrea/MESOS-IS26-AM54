@@ -1,6 +1,7 @@
 package it.polimi.ingsw.am54.network.rmi;
 
 import it.polimi.ingsw.am54.model.TotemColors;
+import it.polimi.ingsw.am54.network.messages.EndGameUpdate;
 import it.polimi.ingsw.am54.network.messages.EventUpdate;
 import it.polimi.ingsw.am54.network.messages.StateChangedUpdate;
 import it.polimi.ingsw.am54.network.messages.Update;
@@ -28,7 +29,7 @@ public interface RMIClientInterface extends Remote {
                         List<String> charLow, List<String> eventUp, List<String> eventLow,
                         List<String> buildUp, List<String> buildLow)
             throws RemoteException;
-    void onEndGame(List<String> winnerNames) throws RemoteException;
+    void onEndGame(EndGameUpdate update) throws RemoteException;
     void onErrorMessage(String message) throws RemoteException;
 
     void onPlayerDisconnected(String nickname) throws RemoteException;

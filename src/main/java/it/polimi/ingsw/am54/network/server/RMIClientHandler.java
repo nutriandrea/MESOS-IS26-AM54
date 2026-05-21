@@ -155,9 +155,13 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
 
     @Override
-    public void notifyEndGame(List<String> winnerNames) {
-        try { clientStub.onEndGame(winnerNames); }
-        catch (RemoteException e) { disconnect(); }
+    public void notifyEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers) {
+        try {
+            // clientStub rappresenta l'interfaccia remota del client (RMIClientInterface)
+            clientStub.onEndGame(new EndGameUpdate(winners, allScores, numPlayers));
+        } catch (RemoteException e) {
+            disconnect();
+        }
     }
 
     @Override

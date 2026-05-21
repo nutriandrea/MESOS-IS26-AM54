@@ -176,8 +176,10 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     @Override
-    public void notifyEndGame(List<String> winnerNames) {
-        writeToStream(new EndGameUpdate(winnerNames));
+    public void notifyEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers) {
+        EndGameUpdate updateMessage = new EndGameUpdate(winners, allScores, numPlayers);
+
+        writeToStream(updateMessage);
     }
 
     @Override

@@ -80,29 +80,39 @@ public class LoginController {
         isConnecting = true;
         errorLabel.setText("CONNESSIONE...");
 
-        try {
-            ServerConnection connection;
-            ClientModel model = Client.getInstance().getModel();
+        // BEST PRACTICE JAVAFX: Spostare il lavoro di rete su un thread demone
+        Thread connectionThread = new Thread(() -> {
+            try {
+                ServerConnection connection;
+                ClientModel model = Client.getInstance().getModel();
 
-            model.clearError();
+                Platform.runLater(model::clearError);
 
-            if (socketRadio.isSelected()) {
-                connection = new SocketServerConnection(ip, 12345, model);
-            } else {
-                Registry registry = LocateRegistry.getRegistry(ip, 1099);
-                RMIGameServer serverStub = (RMIGameServer) registry.lookup("AM54-Server");
-                connection = new RMIServerConnection(serverStub, model);
+                if (socketRadio.isSelected()) {
+                    connection = new SocketServerConnection(ip, 12345, model);
+                } else {
+                    Registry registry = LocateRegistry.getRegistry(ip, 1099);
+                    RMIGameServer serverStub = (RMIGameServer) registry.lookup("AM54-Server");
+                    connection = new RMIServerConnection(serverStub, model);
+                }
+
+                Client.getInstance().setConnection(connection);
+                Client.getInstance().setNickname(nick);
+
+                // Questa chiamata RMI ora bloccherà solo QUESTO thread, lasciando libera la grafica!
+                connection.joinGame(nick);
+
+            } catch (Exception e) {
+                // Se fallisce, torniamo sul Thread della grafica per mostrare l'errore
+                Platform.runLater(() -> {
+                    errorLabel.setText("ERRORE: " + e.getMessage());
+                    isConnecting = false;
+                });
             }
+        });
 
-            Client.getInstance().setConnection(connection);
-            Client.getInstance().setNickname(nick);
-
-            connection.joinGame(nick);
-
-        } catch (Exception e) {
-            errorLabel.setText("ERRORE: " + e.getMessage());
-            isConnecting = false;
-        }
+        connectionThread.setDaemon(true); // Se chiudi la finestra, il thread muore con essa
+        connectionThread.start();
     }
 
     private void checkServerResponse() {

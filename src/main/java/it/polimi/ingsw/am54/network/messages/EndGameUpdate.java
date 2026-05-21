@@ -9,12 +9,6 @@ public class EndGameUpdate implements Update {
     private final Map<String, Integer> allScores;
     private final int numPlayers;
 
-    public EndGameUpdate(List<String> winners) {
-        this.winners = winners;
-        this.allScores = Map.of();
-        this.numPlayers = 0;
-    }
-
     public EndGameUpdate(List<String> winners, Map<String, Integer> allScores, int numPlayers) {
         this.winners = winners;
         this.allScores = allScores;

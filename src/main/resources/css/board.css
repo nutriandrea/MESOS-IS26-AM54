@@ -135,29 +135,36 @@
     -fx-scale-y: 1.08;
 }
 
-/* --- SCROLLPANE ANTI-TAGLIO --- */
+/* --- SCROLLPANE ANTI-TAGLIO (ORIZZONTALE E VERTICALE) --- */
 /* Rimuove sfondi e bordi da contenitore e viewport */
 .dashboard-scroll-pane,
 .dashboard-scroll-pane .viewport,
-.dashboard-scroll-pane .scroll-bar:horizontal .track {
+.dashboard-scroll-pane .scroll-bar:horizontal .track,
+.dashboard-scroll-pane .scroll-bar:vertical .track {
     -fx-background-color: transparent;
     -fx-background: transparent;
     -fx-border-color: transparent;
 }
 
-/* Rende la barra sottile e scura */
+/* Rende le barre sottili e scure */
 .dashboard-scroll-pane .scroll-bar:horizontal {
     -fx-background-color: rgba(35, 30, 25, 0.5);
     -fx-pref-height: 8px;
 }
 
-/* Maniglia dorata arrotondata */
-.dashboard-scroll-pane .scroll-bar:horizontal .thumb {
+.dashboard-scroll-pane .scroll-bar:vertical {
+    -fx-background-color: rgba(35, 30, 25, 0.5);
+    -fx-pref-width: 8px;
+}
+
+/* Maniglia dorata arrotondata (Thumb) */
+.dashboard-scroll-pane .scroll-bar:horizontal .thumb,
+.dashboard-scroll-pane .scroll-bar:vertical .thumb {
     -fx-background-color: #d4af37;
     -fx-background-radius: 4px;
 }
 
-/* Nasconde le freccette laterali */
+/* Nasconde le freccette alle estremità */
 .dashboard-scroll-pane .scroll-bar .increment-button,
 .dashboard-scroll-pane .scroll-bar .decrement-button {
     -fx-background-color: transparent;
@@ -320,4 +327,38 @@
     -fx-font-weight: bold;
     -fx-text-fill: #ff6b6b;
     -fx-font-size: 14px;
+}
+
+/* OVERLAY CONTEGGIO AURA FINALE              */
+
+/* Applica il font Herculanum a TUTTE le etichette dentro l'overlay finale */
+#finalCalculationOverlay .label {
+    -fx-font-family: "Herculanum";
+}
+
+/* Stile per il riquadro di ogni giocatore */
+.final-calc-player-box {
+    -fx-padding: 15;
+    -fx-background-color: rgba(0,0,0,0.4);
+    -fx-background-radius: 10;
+}
+
+/* Stile per le righe dei singoli punteggi */
+.final-calc-detail {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+}
+
+/* Stile per la riga del cibo (usato per spareggi) */
+.final-calc-food {
+    -fx-text-fill: lightgray;
+    -fx-font-size: 14px;
+    -fx-font-style: italic;
+}
+
+/* Stile per il totale evidenziato */
+.final-calc-total {
+    -fx-text-fill: gold;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
 }

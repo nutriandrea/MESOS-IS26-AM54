@@ -158,6 +158,13 @@ public class DashboardManager {
             int w2 = getSortWeight(c2);
             if (w1 != w2) return Integer.compare(w1, w2);
 
+            // NOVITÀ: Se le carte sono Inventori (peso 6), le raggruppiamo per Livello/Icona
+            if (w1 == 6) {
+                int lvl1 = getCardLevel(c1);
+                int lvl2 = getCardLevel(c2);
+                if (lvl1 != lvl2) return Integer.compare(lvl1, lvl2);
+            }
+
             int e1 = getEra(c1);
             int e2 = getEra(c2);
             if (e1 != e2) return Integer.compare(e1, e2);
@@ -166,6 +173,13 @@ public class DashboardManager {
         });
 
         return allCards;
+    }
+
+    private int getCardLevel(String cardStr) {
+        String[] parts = cardStr.split("\\|");
+        // Estraiamo il Livello che si trova all'indice 4
+        try { return parts.length > 4 ? Integer.parseInt(parts[4]) : 0; }
+        catch (Exception e) { return 0; }
     }
 
     private int getSortWeight(String cardStrWithType) {

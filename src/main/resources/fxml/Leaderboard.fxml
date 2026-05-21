@@ -7,13 +7,13 @@
 <?import javafx.geometry.Insets?>
 <?import java.lang.String?>
 
-<StackPane fx:id="rootPane" styleClass="root-pane"
+<StackPane fx:id="rootPane" styleClass="root-pane, leaderboard-root"
            stylesheets="@../css/board.css, @../css/lobby.css"
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="it.polimi.ingsw.am54.gui.LeaderboardController">
 
-    <Region style="-fx-background-color: black;" />
+    <Region styleClass="leaderboard-bg" />
 
     <AnchorPane fx:id="mainArea" prefWidth="1672" prefHeight="941"
                 minWidth="1672" minHeight="941" maxWidth="1672" maxHeight="941">
@@ -26,43 +26,45 @@
 
         <Label text="CLASSIFICA FINALE!"
                styleClass="lobby-title" textFill="WHITE"
-               layoutX="0" layoutY="100" prefWidth="1672" alignment="CENTER" />
+               layoutX="0" layoutY="80" prefWidth="1672" alignment="CENTER" />
 
         <VBox fx:id="podium2" alignment="BOTTOM_CENTER" spacing="10"
-              layoutX="660" layoutY="68" prefWidth="150" prefHeight="300" visible="false">
-            <Label fx:id="name2" text="NAME" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 28px;"/>
-            <ImageView fx:id="totem2" fitHeight="120" preserveRatio="true" />
+              layoutX="672" layoutY="168" prefWidth="150" prefHeight="200" visible="false">
+            <Label fx:id="name2" text="NAME" styleClass="podium-name-2"/>
+            <ImageView fx:id="totem2" fitHeight="90" preserveRatio="true" />
         </VBox>
 
         <VBox fx:id="podium1" alignment="BOTTOM_CENTER" spacing="10"
-              layoutX="753" layoutY="26" prefWidth="150" prefHeight="300" visible="false">
-            <Label fx:id="name1" text="NAME" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 36px; -fx-text-fill: gold;"/>
-            <ImageView fx:id="totem1" fitHeight="150" preserveRatio="true" />
+              layoutX="753" layoutY="126" prefWidth="150" prefHeight="200" visible="false">
+            <Label fx:id="name1" text="NAME" styleClass="podium-name-1"/>
+            <ImageView fx:id="totem1" fitHeight="120" preserveRatio="true" />
         </VBox>
 
         <VBox fx:id="podium3" alignment="BOTTOM_CENTER" spacing="10"
-              layoutX="849" layoutY="87" prefWidth="150" prefHeight="300" visible="false">
-            <Label fx:id="name3" text="NAME" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 24px;"/>
-            <ImageView fx:id="totem3" fitHeight="105" preserveRatio="true" />
+              layoutX="849" layoutY="187" prefWidth="150" prefHeight="200" visible="false">
+            <Label fx:id="name3" text="NAME" styleClass="podium-name-3"/>
+            <ImageView fx:id="totem3" fitHeight="75" preserveRatio="true" />
         </VBox>
 
         <VBox alignment="TOP_CENTER" layoutX="286" layoutY="520" prefWidth="1100" spacing="10">
             <Label text="Classifica generale:" textFill="WHITE" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+            <ScrollPane styleClass="dashboard-scroll-pane" fitToWidth="true" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER">
+                <VBox fx:id="rankingTable" spacing="5" styleClass="ranking-table-container">
+                    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="ranking-table-header-row">
+                        <Label text="POS" prefWidth="60" styleClass="ranking-table-header-label" alignment="CENTER_LEFT"/>
+                        <Label text="TOTEM" prefWidth="80" styleClass="ranking-table-header-label" alignment="CENTER_LEFT"/>
+                        <Label text="NICKNAME" prefWidth="300" styleClass="ranking-table-header-label" alignment="CENTER_LEFT"/>
 
-            <VBox fx:id="rankingTable" spacing="5" style="-fx-background-color: rgba(0,0,0,0.6); -fx-background-radius: 15; -fx-padding: 20;">
-                <HBox alignment="CENTER_LEFT" spacing="20" style="-fx-border-color: transparent transparent white transparent; -fx-padding: 0 0 10 0;">
-                    <Label text="POS" prefWidth="60" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="TOTEM" prefWidth="80" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="NICKNAME" prefWidth="300" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="✨ AURA" prefWidth="120" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="🍖 CIBO" prefWidth="120" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="🔮 MAGIA" prefWidth="120" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="👥 TRIBÙ" prefWidth="120" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                    <Label text="🏛️ EDIFICI" prefWidth="120" textFill="WHITE" style="-fx-font-weight: bold; -fx-font-size: 18px;"/>
-                </HBox>
-            </VBox>
+                        <Label text="✨ AURA" prefWidth="120" styleClass="ranking-table-header-label" alignment="CENTER"/>
+                        <Label text="🍖 CIBO" prefWidth="120" styleClass="ranking-table-header-label" alignment="CENTER"/>
+                        <Label text="🔮 MAGIA" prefWidth="120" styleClass="ranking-table-header-label" alignment="CENTER"/>
+                        <Label text="👥 TRIBÙ" prefWidth="120" styleClass="ranking-table-header-label" alignment="CENTER"/>
+                        <Label text="🏛️ EDIFICI" prefWidth="120" styleClass="ranking-table-header-label" alignment="CENTER"/>
+                    </HBox>
+                </VBox>
+            </ScrollPane>
         </VBox>
 
-        <Button text="TORNA AL MENU" styleClass="recap-button" layoutX="736" layoutY="860" onAction="#handleReturnToMenu"/>
+        <Button text="TORNA AL MENU" styleClass="recap-button" layoutX="736" layoutY="820" onAction="#handleReturnToMenu"/>
     </AnchorPane>
 </StackPane>

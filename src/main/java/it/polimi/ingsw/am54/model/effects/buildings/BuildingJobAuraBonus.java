@@ -15,9 +15,6 @@ public class BuildingJobAuraBonus implements IEffect<BuildingCard> {
         this.useCardBaseAura = params != null && params.has("useCardBaseAura") && params.get("useCardBaseAura").asBoolean();
     }
 
-    // IL FLAG isEndgameEffect È STATO ELIMINATO!
-
-    // FIRMA AGGIORNATA PER LA FASE FINE PARTITA
     @Override
     public void applyOnEndGame(Player p, Game g, BuildingCard card) {
         if (jobType == null) return;

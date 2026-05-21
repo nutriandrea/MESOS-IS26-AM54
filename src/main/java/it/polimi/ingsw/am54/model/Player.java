@@ -124,4 +124,22 @@ public class Player {
         this.shamanNoLoss = false;
         this.shamanDoubleAura = false;
     }
+
+    // Modificatore finale per gli edifici con attivazione onEndGame
+    private int endGameBuildingsAura = 0;
+
+    public int getEndGameBuildingsAura() {
+        return endGameBuildingsAura;
+    }
+
+    public void setEndGameBuildingsAura(int value) {
+        this.endGameBuildingsAura = value;
+    }
+
+    /**
+     * Ritorna l'Aura accumulata fino alla fine del round 10 prima dell'attivazione degli edifici finali.
+     */
+    public int getBaseAuraBeforeEndGame() {
+        return this.aura - this.endGameBuildingsAura;
+    }
 }

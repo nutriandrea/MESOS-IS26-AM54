@@ -1,0 +1,55 @@
+/* Applica il font Herculanum a tutta la schermata della classifica */
+.leaderboard-root * {
+    -fx-font-family: "Herculanum";
+}
+
+/* Sfondo nero base */
+.leaderboard-bg {
+    -fx-background-color: black;
+}
+
+/* Stili per i nomi sul podio */
+.podium-name-1 {
+    -fx-font-weight: bold;
+    -fx-font-size: 36px;
+    -fx-text-fill: gold;
+}
+
+.podium-name-2 {
+    -fx-font-weight: bold;
+    -fx-font-size: 28px;
+    -fx-text-fill: white;
+}
+
+.podium-name-3 {
+    -fx-font-weight: bold;
+    -fx-font-size: 24px;
+    -fx-text-fill: white;
+}
+
+/* Contenitore della tabella */
+.ranking-table-container {
+    -fx-background-color: rgba(0,0,0,0.6);
+    -fx-background-radius: 15;
+    -fx-padding: 20;
+}
+
+/* Riga di intestazione della tabella */
+.ranking-table-header-row {
+    -fx-border-color: transparent transparent white transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 0 10 0;
+}
+
+/* Label dell'intestazione */
+.ranking-table-header-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+    -fx-text-fill: white;
+}
+
+/* Stile per i valori generati dal Controller */
+.ranking-table-value {
+    -fx-font-size: 20px;
+    -fx-text-fill: white;
+}

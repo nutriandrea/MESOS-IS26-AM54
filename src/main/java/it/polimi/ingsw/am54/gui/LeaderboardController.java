@@ -175,7 +175,7 @@ public class LeaderboardController {
         Label lblPos = new Label(position + "°");
         lblPos.setPrefWidth(60);
         lblPos.setTextFill(Color.WHITE);
-        lblPos.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        lblPos.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-font-family: 'Herculanum';");
 
         // TOTEM ICON (Piccolo)
         ImageView iconView = new ImageView();
@@ -197,7 +197,7 @@ public class LeaderboardController {
         Label lblName = new Label(p.name.toUpperCase());
         lblName.setPrefWidth(300);
         lblName.setTextFill(Color.WHITE);
-        lblName.setStyle("-fx-font-size: 20px;");
+        lblName.setStyle("-fx-font-size: 20px; -fx-font-family: 'Herculanum';");
 
         // STATS (Larghezza 120px per combaciare con l'header)
         Label lblAura = createStatLabel(String.valueOf(p.aura));

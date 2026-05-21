@@ -121,7 +121,6 @@ public class PickingState extends GameState {
         }
 
         // CONTROLLO REGOLE NORMALI: Pescata Obbligatoria dei Personaggi
-        // CONTROLLO REGOLE NORMALI: Pescata Obbligatoria dei Personaggi
         if (hasMandatoryCharactersLeft(game, tile)) {
 
             // --- INIZIO TRUCCO PER TEST ---

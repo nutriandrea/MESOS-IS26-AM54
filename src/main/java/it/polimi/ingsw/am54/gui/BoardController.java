@@ -3,6 +3,7 @@ package it.polimi.ingsw.am54.gui;
 import it.polimi.ingsw.am54.gui.managers.DashboardManager;
 import it.polimi.ingsw.am54.gui.managers.MarketManager;
 import it.polimi.ingsw.am54.gui.managers.TotemManager;
+import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.client.Client;
 import it.polimi.ingsw.am54.network.client.ClientModel;
 import javafx.animation.KeyFrame;
@@ -158,6 +159,9 @@ public class BoardController {
 
         double finalUpperCardHeight = Math.min(targetCardHeight, maxUpperCardHeightFromWidth);
         double finalLowerCardHeight = Math.min(targetCardHeight * 1.15, maxLowerCardHeightFromWidth);
+
+        if (upperMarket != null) upperMarket.setMinHeight(finalUpperCardHeight);
+        if (lowerMarket != null) lowerMarket.setMinHeight(finalLowerCardHeight);
 
         marketManager.setCardsHeight(finalUpperCardHeight, finalLowerCardHeight);
 
@@ -412,9 +416,29 @@ public class BoardController {
             VBox playerBox = new VBox(10);
             playerBox.getStyleClass().addAll("opponent-box", "final-calc-player-box");
 
-            Label nameLbl = new Label("👤 GIOCATORE: " + pName.toUpperCase());
+            // --- INIZIO NUOVO HEADER CON TOTEM ---
+            HBox headerBox = new HBox(15);
+            headerBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            ImageView totemIcon = new ImageView();
+            totemIcon.setFitWidth(35);
+            totemIcon.setFitHeight(35);
+            totemIcon.setPreserveRatio(true);
+
+            // Recupera il colore del giocatore per assegnare l'immagine giusta
+            TotemColors oppColor = model.getPlayerColors().get(pName);
+            if (oppColor != null) {
+                String colorName = oppColor.name().toLowerCase();
+                try {
+                    totemIcon.setImage(new javafx.scene.image.Image(getClass().getResourceAsStream("/images/totem_front_" + colorName + ".png")));
+                } catch (Exception e) {}
+            }
+
+            Label nameLbl = new Label("GIOCATORE: " + pName.toUpperCase());
             nameLbl.getStyleClass().add("opponent-name-label");
-            playerBox.getChildren().add(nameLbl);
+
+            headerBox.getChildren().addAll(totemIcon, nameLbl);
+            playerBox.getChildren().add(headerBox);
 
             // 1. Calcoli statici dal ClientModel
             int artistsBonus = model.getArtistBonus(pName);

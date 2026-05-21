@@ -8,7 +8,7 @@
 <?import java.lang.String?>
 
 <StackPane fx:id="rootPane" styleClass="root-pane, leaderboard-root"
-           stylesheets="@../css/board.css, @../css/lobby.css"
+           stylesheets="@../css/board.css, @../css/leaderboard.css"
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="it.polimi.ingsw.am54.gui.LeaderboardController">
@@ -29,7 +29,7 @@
                layoutX="0" layoutY="80" prefWidth="1672" alignment="CENTER" />
 
         <VBox fx:id="podium2" alignment="BOTTOM_CENTER" spacing="10"
-              layoutX="672" layoutY="168" prefWidth="150" prefHeight="200" visible="false">
+              layoutX="662" layoutY="168" prefWidth="150" prefHeight="200" visible="false">
             <Label fx:id="name2" text="NAME" styleClass="podium-name-2"/>
             <ImageView fx:id="totem2" fitHeight="90" preserveRatio="true" />
         </VBox>
@@ -46,9 +46,9 @@
             <ImageView fx:id="totem3" fitHeight="75" preserveRatio="true" />
         </VBox>
 
-        <VBox alignment="TOP_CENTER" layoutX="286" layoutY="520" prefWidth="1100" spacing="10">
+        <VBox alignment="TOP_CENTER" layoutX="286" layoutY="520" prefWidth="1100" prefHeight="280" spacing="10">
             <Label text="Classifica generale:" textFill="WHITE" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
-            <ScrollPane styleClass="dashboard-scroll-pane" fitToWidth="true" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER">
+            <ScrollPane styleClass="dashboard-scroll-pane" fitToWidth="true" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
                 <VBox fx:id="rankingTable" spacing="5" styleClass="ranking-table-container">
                     <HBox alignment="CENTER_LEFT" spacing="20" styleClass="ranking-table-header-row">
                         <Label text="POS" prefWidth="60" styleClass="ranking-table-header-label" alignment="CENTER_LEFT"/>

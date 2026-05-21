@@ -182,11 +182,11 @@ public class Game implements IGame{
                 foodAmount = 4;
             }
 
-            // MEME
-            if (player.getNickname().equals("tricheco")) {
+            /*// MEME
+            if (player.getNickname().equals("tricheco")|| player.getNickname().equalsIgnoreCase("Tester")|| player.getNickname().equalsIgnoreCase("Tester2")) {
                 foodAmount = 1000;
             }
-            // FINE MEME
+            // FINE MEME*/
 
             player.modifyFood(foodAmount);
         }

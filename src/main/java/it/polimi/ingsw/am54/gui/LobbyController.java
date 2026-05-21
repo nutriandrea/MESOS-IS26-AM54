@@ -57,6 +57,9 @@ public class LobbyController {
     @FXML private Button prevPageButton;
     @FXML private Button nextPageButton;
     @FXML private Label pageLabel;
+    @FXML private Label infoLabel;
+    @FXML private Button infoButton;
+
 
     private Map<String, ImageView> totemMap;
     private Map<String, Label> labelMap;
@@ -137,16 +140,29 @@ public class LobbyController {
         }));
         dotAnimation.setCycleCount(Animation.INDEFINITE);
 
-        // Ridimensionamento fluido e proporzionale del font della scritta di benvenuto
+        // Ridimensionamento fluido e proporzionale
+        // Ridimensionamento fluido e proporzionale del blocco testuale superiore
         lobbyRoot.widthProperty().addListener((obs, oldVal, newVal) -> {
-            double baseWidth = 1920.0;
             double currentWidth = newVal.doubleValue();
-            double factor = currentWidth / baseWidth;
-            double targetSize = 52.0 * factor;
-            if (targetSize < 26) {
-                targetSize = 26; // Limite minimo per preservare l'estetica su schermi molto stretti
+            double factor = currentWidth / 1920.0;
+
+            // 1. Welcome Label (Titolo principale)
+            double targetWelcomeSize = Math.max(18.0, 52.0 * factor);
+            // Inseriamo Font e Colore (da CSS) per evitare il flash Arial/Nero
+            welcomeLabel.setStyle("-fx-font-size: " + targetWelcomeSize + "px; -fx-font-family: 'Herculanum'; -fx-text-fill: white;");
+
+            // 2. Etichetta "Regole del gioco"
+            double targetLabelSize = Math.max(16.0, 32.0 * factor);
+            if (infoLabel != null) {
+                infoLabel.setStyle("-fx-font-size: " + targetLabelSize + "px; -fx-font-family: 'Herculanum'; -fx-text-fill: white;");
             }
-            welcomeLabel.setStyle("-fx-font-size: " + targetSize + "px;");
+
+            // 3. Testo interno del pulsante informativo "i"
+            double targetButtonSize = Math.max(16.0, 28.0 * factor);
+            if (infoButton != null) {
+                // Il bottone usa Arial e gold nel tuo CSS!
+                infoButton.setStyle("-fx-font-size: " + targetButtonSize + "px; -fx-font-family: 'Arial'; -fx-text-fill: gold;");
+            }
         });
 
         updateLobbyUI();

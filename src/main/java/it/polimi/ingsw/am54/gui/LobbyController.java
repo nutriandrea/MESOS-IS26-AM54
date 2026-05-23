@@ -144,7 +144,6 @@ public class LobbyController {
         dotAnimation.setCycleCount(Animation.INDEFINITE);
 
         // Ridimensionamento fluido e proporzionale
-        // Ridimensionamento fluido e proporzionale del blocco testuale superiore
         lobbyRoot.widthProperty().addListener((obs, oldVal, newVal) -> {
             double currentWidth = newVal.doubleValue();
             double factor = currentWidth / 1920.0;

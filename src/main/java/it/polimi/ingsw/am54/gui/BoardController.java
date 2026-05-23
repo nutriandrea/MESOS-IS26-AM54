@@ -36,6 +36,7 @@ public class BoardController {
     @FXML private ImageView buildingsDeckView;
 
     @FXML private ImageView turnOrderImage;
+    @FXML private StackPane turnOrderContainer;
     @FXML private AnchorPane totemArea;
     @FXML private HBox offeringTrack;
 
@@ -141,38 +142,70 @@ public class BoardController {
         double h = rootPane.getHeight();
         if (w <= 0 || h <= 0) return;
 
+        // Target massimi basati sull'altezza della finestra
         double targetCardHeight = h * 0.22;
         double targetMiddleHeight = h * 0.30;
 
+        // 1. Calcolo esatto per gli elementi superiori (Mercato alto + Mazzi)
         int totalUpperItems = marketManager.getUpperItemsCount() + 2;
         double upperSpacing = 80.0 + 40.0 + 25.0;
         if (totalUpperItems > 3) upperSpacing += (totalUpperItems - 3) * 15.0;
         double maxUpperCardWidth = (w - upperSpacing) / totalUpperItems;
-
-        int lowerCardsCount = marketManager.getLowerItemsCount();
-        double lowerSpacing = 80.0;
-        if (lowerCardsCount > 1) lowerSpacing += (lowerCardsCount - 1) * 15.0;
-        double maxLowerCardWidth = lowerCardsCount > 0 ? (w - lowerSpacing) / lowerCardsCount : w;
-
         double maxUpperCardHeightFromWidth = maxUpperCardWidth / (135.0 / 190.0);
-        double maxLowerCardHeightFromWidth = maxLowerCardWidth / (135.0 / 190.0);
-
         double finalUpperCardHeight = Math.min(targetCardHeight, maxUpperCardHeightFromWidth);
-        double finalLowerCardHeight = Math.min(targetCardHeight * 1.15, maxLowerCardHeightFromWidth);
 
-        if (upperMarket != null) upperMarket.setMinHeight(finalUpperCardHeight);
-        if (lowerMarket != null) lowerMarket.setMinHeight(finalLowerCardHeight);
-
-        marketManager.setCardsHeight(finalUpperCardHeight, finalLowerCardHeight);
-
+        // 2. Calcolo esatto per il centro (TurnOrder e Offering Track)
         double maxMiddleWidth = (w - 200) / 8.0;
         double maxMiddleHeightFromWidth = maxMiddleWidth / 0.622;
         double finalMiddleHeight = Math.min(targetMiddleHeight, maxMiddleHeightFromWidth);
 
-        if (turnOrderImage != null) turnOrderImage.setFitHeight(finalMiddleHeight);
+        // 3. Calcolo iniziale per gli elementi inferiori (SENZA restrizioni dei bottoni)
+        int lowerCardsCount = marketManager.getLowerItemsCount();
+        double baseLowerSpacing = 80.0;
+        if (lowerCardsCount > 1) baseLowerSpacing += (lowerCardsCount - 1) * 15.0;
+
+        double maxLowerCardWidth = lowerCardsCount > 0 ? (w - baseLowerSpacing) / lowerCardsCount : w;
+        double maxLowerCardHeightFromWidth = maxLowerCardWidth / (135.0 / 190.0);
+        double initialLowerCardHeight = Math.min(targetCardHeight * 1.15, maxLowerCardHeightFromWidth);
+
+        // --- CONTROLLO DI COLLISIONE DINAMICO PER LE CARTE INFERIORI ---
+        // Sommiamo lo spazio verticale reale occupato da tutto il blocco centrale di gioco
+        double actualContentH = 60.0 + finalUpperCardHeight + 20.0 + finalMiddleHeight + initialLowerCardHeight + 70.0;
+        double freeSpace = Math.max(0, h - actualContentH);
+
+        // In JavaFX i nostri due VBox.vgrow (topSpacer e bottomSpacer) si dividono lo spazio libero a metà
+        double bottomSpacerHeight = freeSpace / 2.0;
+
+        // Calcoliamo la distanza stimata tra il fondo reale delle carte e il fondo dello schermo
+        double cardsDistanceFromBottom = bottomSpacerHeight + 70.0;
+
+        double finalLowerCardHeight = initialLowerCardHeight;
+
+        // Se la finestra si schiaccia e le carte scendono nella zona calda dei bottoni (meno di 150px dal fondo)
+        if (cardsDistanceFromBottom < 150.0) {
+            // Imponiamo i margini laterali per stringerle al centro e non farle finire sotto i pulsanti
+            double penalizedLowerSpacing = baseLowerSpacing + 420.0;
+            double penalizedMaxLowerWidth = lowerCardsCount > 0 ? (w - penalizedLowerSpacing) / lowerCardsCount : w;
+            double penalizedMaxLowerHeight = Math.max(10, penalizedMaxLowerWidth / (135.0 / 190.0));
+            finalLowerCardHeight = Math.min(targetCardHeight * 1.15, penalizedMaxLowerHeight);
+        }
+        // Se la finestra è più alta che larga, l'if salta e le carte si allargano sfruttando lo spazio sopra i bottoni
+
+        // Applicazione delle altezze definitive ai mercati
+        if (upperMarket != null) upperMarket.setMinHeight(finalUpperCardHeight);
+        if (lowerMarket != null) lowerMarket.setMinHeight(finalLowerCardHeight);
+        marketManager.setCardsHeight(finalUpperCardHeight, finalLowerCardHeight);
+
+        if (turnOrderImage != null) {
+            turnOrderImage.setFitHeight(finalMiddleHeight);
+        }
         if (totemArea != null) {
             totemArea.setPrefHeight(finalMiddleHeight);
             totemArea.setPrefWidth(180.5 * (finalMiddleHeight / 290.0));
+        }
+
+        if (turnOrderContainer != null) {
+            turnOrderContainer.setTranslateY(-3.5);
         }
 
         ClientModel model = Client.getInstance().getModel();
@@ -406,6 +439,11 @@ public class BoardController {
     }
 
     private void openFinalCalculationOverlay() {
+
+        if (!isDashboardOpen) {
+            toggleDashboard();
+        }
+
         if (finalCalculationOverlay == null || finalCalculationContainer == null) return;
         finalCalculationContainer.getChildren().clear();
 

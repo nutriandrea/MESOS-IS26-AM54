@@ -1,29 +1,85 @@
 package it.polimi.ingsw.am54.database;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
+
 /**
- * Configuration for the embedded H2 database.
- * The database file (am54.mv.db) is created automatically in the working directory.
- * No external setup required.
+ * Configuration for the MySQL database, read from a .env file
+ * in the working directory (gitignored — secrets stay local).
  *
- * Optionally override via system properties (only needed for custom paths):
- *   - db.file     (default: am54)
+ * If .env is missing, falls back to localhost defaults (for development).
  */
 public class DatabaseConfig {
-    private final String file;
+    private static final Logger LOGGER = Logger.getLogger(DatabaseConfig.class.getName());
+
+    private final String host;
+    private final int port;
+    private final String dbName;
+    private final String user;
+    private final String password;
+    private final String sslMode;
+    private final String params;
 
     public DatabaseConfig() {
-        this.file = System.getProperty("db.file", "am54");
-    }
+        Map<String, String> env = loadEnv();
 
-    public DatabaseConfig(String file) {
-        this.file = file;
+        this.host     = env.getOrDefault("DB_HOST", "localhost");
+        this.port     = Integer.parseInt(env.getOrDefault("DB_PORT", "3306"));
+        this.dbName   = env.getOrDefault("DB_NAME", "am54");
+        this.user     = env.getOrDefault("DB_USER", "root");
+        this.password = env.getOrDefault("DB_PASSWORD", "");
+        this.sslMode  = env.getOrDefault("DB_SSL_MODE", "PREFERRED");
+        this.params   = env.getOrDefault("DB_PARAMS", "");
     }
 
     public String getJdbcUrl() {
-        return "jdbc:h2:./" + file + ";AUTO_SERVER=TRUE";
+        StringBuilder url = new StringBuilder();
+        url.append("jdbc:mysql://").append(host).append(":").append(port).append("/").append(dbName);
+        url.append("?sslMode=").append(sslMode);
+        url.append("&allowPublicKeyRetrieval=true");
+        url.append("&enabledTLSProtocols=TLSv1.2,TLSv1.3");
+        if (!params.isEmpty()) {
+            url.append("&").append(params);
+        }
+        return url.toString();
     }
 
-    public String getUser()   { return "sa"; }
-    public String getPassword() { return ""; }
-    public String getFile()   { return file; }
+    public String getUser()       { return user; }
+    public String getPassword()   { return password; }
+    public String getHost()       { return host; }
+    public int    getPort()       { return port; }
+    public String getDbName()     { return dbName; }
+
+    /**
+     * Reads key=value pairs from .env file in the working directory.
+     * Returns empty map if the file does not exist.
+     */
+    private static Map<String, String> loadEnv() {
+        Map<String, String> map = new HashMap<>();
+        Path path = Paths.get(".env");
+        if (!Files.exists(path)) {
+            LOGGER.info(".env non trovato — uso impostazioni predefinite (localhost)");
+            return map;
+        }
+        try {
+            for (String line : Files.readAllLines(path)) {
+                line = line.trim();
+                if (line.isEmpty() || line.startsWith("#")) continue;
+                int eq = line.indexOf('=');
+                if (eq > 0) {
+                    String key = line.substring(0, eq).trim();
+                    String val = line.substring(eq + 1).trim();
+                    map.put(key, val);
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.warning("Errore leggendo .env: " + e.getMessage());
+        }
+        return map;
+    }
 }

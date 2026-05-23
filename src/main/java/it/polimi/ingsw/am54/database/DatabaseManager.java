@@ -9,18 +9,18 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Manages the H2 embedded database connection and all database operations
- * for persisting match results and querying the leaderboard.
+ * Manages the MySQL database connection (Aiven cloud) and all database
+ * operations for persisting match results and querying the leaderboard.
  *
- * The database file is created automatically in the working directory
- * on first use — no external setup required.
+ * The connection is configured via a .env file (see .env.example).
+ * Falls back to localhost if .env is missing.
  *
- * Table schema:
+ * Table schema (auto-created on init):
  *   match_results (
  *       id          INT AUTO_INCREMENT PRIMARY KEY,
  *       nickname    VARCHAR(50)  NOT NULL,
  *       score       INTEGER      NOT NULL,
- *       match_date  TIMESTAMP    NOT NULL DEFAULT NOW(),
+ *       match_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
  *       num_players INTEGER      NOT NULL
  *   )
  */
@@ -48,15 +48,43 @@ public class DatabaseManager {
                 "    id          INT AUTO_INCREMENT PRIMARY KEY," +
                 "    nickname    VARCHAR(50)  NOT NULL," +
                 "    score       INTEGER      NOT NULL," +
-                "    match_date  TIMESTAMP    NOT NULL DEFAULT NOW()," +
+                "    match_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP," +
                 "    num_players INTEGER      NOT NULL" +
-                ")"
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             );
             this.available = true;
-            LOGGER.info("Database inizializzato: " + config.getJdbcUrl() + " (file: " + config.getFile() + ".mv.db)");
+            LOGGER.info("Database connesso: " + config.getHost() + ":" + config.getPort() + "/" + config.getDbName());
+
+            seedIfEmpty(conn);
         } catch (SQLException e) {
-            LOGGER.warning("Database unavailable – leaderboard features will be disabled: " + e.getMessage());
+            LOGGER.warning("Database MySQL non raggiungibile – leaderboard disabilitata: " + e.getMessage());
             this.available = false;
+        }
+    }
+
+    /**
+     * Inserisce nutria 1312 pts per 2-5 players solo se la tabella è vuota (primo avvio).
+     */
+    private void seedIfEmpty(Connection conn) {
+        try (Statement countStmt = conn.createStatement();
+             ResultSet rs = countStmt.executeQuery("SELECT COUNT(*) FROM match_results")) {
+            if (rs.next() && rs.getInt(1) == 0) {
+                LOGGER.info("Database vuoto — inserimento dati seed...");
+                String sql = "INSERT INTO match_results (nickname, score, match_date, num_players) VALUES (?, ?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    LocalDateTime base = LocalDateTime.of(2026, 5, 22, 10, 0);
+                    for (int np = 2; np <= 5; np++) {
+                        ps.setString(1, "nutria");
+                        ps.setInt(2, 1312);
+                        ps.setTimestamp(3, Timestamp.valueOf(base.plusHours(np)));
+                        ps.setInt(4, np);
+                        ps.executeUpdate();
+                    }
+                }
+                LOGGER.info("Seed completato: 4 entry per nutria (2-5 players) da 1312 pts.");
+            }
+        } catch (SQLException e) {
+            LOGGER.warning("Seed fallito: " + e.getMessage());
         }
     }
 
@@ -128,6 +156,39 @@ public class DatabaseManager {
     }
 
     /**
+     * Returns ALL leaderboard entries regardless of numPlayers,
+     * ordered by score descending. Used for the login-screen global leaderboard.
+     */
+    public List<LeaderboardEntry> getAllLeaderboardEntries() {
+        List<LeaderboardEntry> entries = new ArrayList<>();
+        if (!available) return entries;
+
+        String sql =
+            "SELECT nickname, score, match_date, num_players, " +
+            "       RANK() OVER (ORDER BY score DESC) AS position " +
+            "FROM match_results " +
+            "ORDER BY position, match_date DESC";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(new LeaderboardEntry(
+                        rs.getString("nickname"),
+                        rs.getInt("score"),
+                        rs.getInt("num_players"),
+                        rs.getTimestamp("match_date").toLocalDateTime(),
+                        rs.getInt("position")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.warning("Failed to query global leaderboard: " + e.getMessage());
+        }
+        return entries;
+    }
+
+    /**
      * Finds the position of a specific player in the leaderboard.
      *
      * @param nickname   the player's nickname
@@ -153,16 +214,12 @@ public class DatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            LOGGER.warning("Failed to query player position: " + e.getMessage());
+            LOGGER.warning("Failed to get player position: " + e.getMessage());
         }
         return -1;
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(
-            config.getJdbcUrl(),
-            config.getUser(),
-            config.getPassword()
-        );
+        return DriverManager.getConnection(config.getJdbcUrl(), config.getUser(), config.getPassword());
     }
 }

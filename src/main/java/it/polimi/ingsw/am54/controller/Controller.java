@@ -1,5 +1,7 @@
 package it.polimi.ingsw.am54.controller;
 
+import it.polimi.ingsw.am54.database.DatabaseConfig;
+import it.polimi.ingsw.am54.database.DatabaseManager;
 import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.Player;
 import it.polimi.ingsw.am54.model.TotemColors;
@@ -46,6 +48,9 @@ public class Controller {
 
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
+    /** Database manager per salvare i risultati delle partite. */
+    private final DatabaseManager dbManager;
+
     /** Flag: true quando un solo giocatore e' attivo e il gioco e' sospeso */
     private volatile boolean suspended = false;
 
@@ -60,6 +65,8 @@ public class Controller {
 
     public Controller(Game game) {
         this.game = game;
+        this.dbManager = new DatabaseManager(new DatabaseConfig());
+        this.dbManager.init();
     }
 
     /**
@@ -71,6 +78,10 @@ public class Controller {
      */
     public void setServer(Server server) {
         this.server = server;
+    }
+
+    public DatabaseManager getDatabaseManager() {
+        return dbManager;
     }
 
     /**
@@ -111,6 +122,7 @@ public class Controller {
 
             // CASO 3: Il nome è libero, normale procedura di Join
             VirtualView playerView = new VirtualView(connection, nickname);
+            playerView.setController(this);
             virtualViews.put(nickname, playerView);
             game.addObserver(playerView);
 
@@ -146,6 +158,7 @@ public class Controller {
                 game.removeObserver(oldView);
             }
             VirtualView newView = new VirtualView(connection, nickname);
+            newView.setController(this);
             virtualViews.put(nickname, newView);
             game.addObserver(newView);
             LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
@@ -414,6 +427,17 @@ public class Controller {
                 .filter(p -> !disconnectedPlayers.contains(p.getNickname()))
                 .findFirst()
                 .orElse(null);
+    }
+
+    /**
+     * Handles a request from a client to receive the global leaderboard.
+     * Queries the embedded H2 database and sends a LeaderboardUpdate back.
+     */
+    public void handleGetLeaderboard(ClientConnection connection, int numPlayers) {
+        List<it.polimi.ingsw.am54.network.messages.LeaderboardEntry> entries = dbManager.getAllLeaderboardEntries();
+        int playerPosition = -1;
+        LOGGER.info("Leaderboard request: " + entries.size() + " entries found");
+        connection.sendLeaderboardUpdate(new LeaderboardUpdate(playerPosition, entries, numPlayers));
     }
 
     private void executeCommand(String nickname, GameAction action) {

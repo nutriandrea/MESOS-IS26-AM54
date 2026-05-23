@@ -3,7 +3,6 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
-<?import javafx.scene.media.*?>
 <?import javafx.geometry.Insets?>
 
 <StackPane fx:id="rootPane" onMouseClicked="#handleRootClick"
@@ -46,6 +45,38 @@
 
         <Button text="CONFERMA" onAction="#handleNicknameSubmit" styleClass="play-button" style="-fx-font-size: 22px;" />
         <Label fx:id="errorLabel" styleClass="error-label" text="" wrapText="true" maxWidth="450" alignment="CENTER"/>
+    </VBox>
+
+    <!-- Leaderboard button (always visible, bottom center) -->
+    <Button fx:id="leaderboardButton" text="CLASSIFICA" styleClass="leaderboard-button"
+            onAction="#handleLeaderboardButton"
+            StackPane.alignment="BOTTOM_CENTER">
+        <StackPane.margin>
+            <Insets bottom="110"/>
+        </StackPane.margin>
+    </Button>
+
+    <!-- Full-screen leaderboard overlay (initially hidden) -->
+    <VBox fx:id="leaderboardOverlay" visible="false" managed="false"
+          StackPane.alignment="CENTER"
+          style="-fx-background-color: rgba(0,0,0,0.9);"
+          maxWidth="Infinity" maxHeight="Infinity"
+          alignment="CENTER"
+          onMouseClicked="#handleOverlayClose">
+        <VBox styleClass="leaderboard-panel" maxWidth="600" maxHeight="520" spacing="4"
+              onMouseClicked="#handlePanelClick">
+            <Label text="CLASSIFICA" styleClass="leaderboard-title" />
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                         styleClass="leaderboard-scroll"
+                         hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                         maxHeight="400">
+                <VBox fx:id="leaderboardEntriesContainer" spacing="1"
+                      style="-fx-padding: 4;" />
+            </ScrollPane>
+            <Label fx:id="leaderboardFooter" text="" styleClass="leaderboard-footer" />
+            <Label text="CHIUDI" styleClass="leaderboard-close-btn"
+                   onMouseClicked="#handleOverlayClose" />
+        </VBox>
     </VBox>
 
     <Label fx:id="clickToEnterLabel"

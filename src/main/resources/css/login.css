@@ -87,3 +87,178 @@
     -fx-font-size: 16px;
     -fx-effect: dropshadow(three-pass-box, black, 5, 0, 0, 0);
 }
+
+/* === LEADERBOARD BUTTON === */
+
+.leaderboard-button {
+    -fx-background-color: rgba(0, 0, 0, 0.6);
+    -fx-text-fill: #d4af37;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-border-color: #d4af37;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 6, 0, 0, 2);
+}
+
+.leaderboard-button:hover {
+    -fx-background-color: rgba(212, 175, 55, 0.2);
+    -fx-text-fill: #f0e68c;
+    -fx-effect: dropshadow(three-pass-box, rgba(212, 175, 55, 0.5), 10, 0, 0, 0);
+}
+
+.leaderboard-close-btn {
+    -fx-text-fill: #8b7355;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 12px;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+    -fx-padding: 4 0 0 0;
+}
+
+.leaderboard-close-btn:hover {
+    -fx-text-fill: #d4af37;
+}
+
+/* === LEADERBOARD - Stone Tablet Panel === */
+
+.leaderboard-panel {
+    -fx-background-color: rgba(10, 8, 5, 0.85);
+    -fx-background-radius: 12;
+    -fx-border-color: #d4af37;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 12;
+    -fx-padding: 10 8 8 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 15, 0, 0, 4);
+}
+
+.leaderboard-title {
+    -fx-text-fill: #d4af37;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+    -fx-padding: 0 0 4 0;
+}
+
+/* ScrollPane inside the panel */
+.leaderboard-scroll {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.leaderboard-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 6;
+}
+
+.leaderboard-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(212, 175, 55, 0.4);
+    -fx-background-radius: 3;
+}
+
+.leaderboard-scroll .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-border-color: transparent;
+}
+
+.leaderboard-scroll .scroll-bar:vertical .increment-button,
+.leaderboard-scroll .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+}
+
+.leaderboard-scroll .scroll-bar:vertical .increment-arrow,
+.leaderboard-scroll .scroll-bar:vertical .decrement-arrow {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* Individual rows */
+.leaderboard-row {
+    -fx-padding: 3 6 3 8;
+    -fx-background-radius: 4;
+    -fx-min-height: 24;
+}
+
+.leaderboard-row-even {
+    -fx-background-color: rgba(212, 175, 55, 0.06);
+}
+
+.leaderboard-row-odd {
+    -fx-background-color: transparent;
+}
+
+.leaderboard-row:hover {
+    -fx-background-color: rgba(212, 175, 55, 0.15);
+}
+
+/* Rank number */
+.leaderboard-rank {
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #d4af37;
+    -fx-min-width: 28;
+    -fx-alignment: center;
+}
+
+.leaderboard-rank-top1 {
+    -fx-text-fill: #FFD700;
+    -fx-font-size: 15px;
+}
+
+.leaderboard-rank-top2 {
+    -fx-text-fill: #C0C0C0;
+    -fx-font-size: 14px;
+}
+
+.leaderboard-rank-top3 {
+    -fx-text-fill: #CD7F32;
+    -fx-font-size: 14px;
+}
+
+/* Player name */
+.leaderboard-name {
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 13px;
+    -fx-text-fill: #f0e68c;
+}
+
+/* Score */
+.leaderboard-score {
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 12px;
+    -fx-text-fill: #FFD700;
+    -fx-font-weight: bold;
+    -fx-alignment: center-right;
+}
+
+/* Player count badge */
+.leaderboard-mode {
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 10px;
+    -fx-text-fill: #8b7355;
+    -fx-alignment: center;
+    -fx-min-width: 24;
+    -fx-background-color: rgba(139, 115, 85, 0.2);
+    -fx-background-radius: 3;
+    -fx-padding: 1 4;
+}
+
+/* Footer with gold separator */
+.leaderboard-footer {
+    -fx-text-fill: #b8960f;
+    -fx-font-family: "Herculanum", "Arial";
+    -fx-font-size: 12px;
+    -fx-alignment: center;
+    -fx-padding: 6 0 2 0;
+    -fx-border-color: rgba(212, 175, 55, 0.3);
+    -fx-border-width: 1 0 0 0;
+}

@@ -1,5 +1,6 @@
 package it.polimi.ingsw.am54.network.server;
 
+import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.model.*;
 import it.polimi.ingsw.am54.network.messages.*;
 
@@ -65,6 +66,13 @@ public class VirtualView implements IGameObserver {
 
     /** Nickname del giocatore proprietario di questa connessione */
     private final String nickname;
+
+    /** Riferimento al Controller per comunicazioni inverse */
+    private Controller controller;
+
+    public void setController(Controller controller) {
+        this.controller = controller;
+    }
 
     /**
      * Costruttore: crea la VirtualView quando un giocatore entra in partita.

@@ -1,6 +1,7 @@
 package it.polimi.ingsw.am54.network.server;
 
 import it.polimi.ingsw.am54.network.messages.EventUpdate;
+import it.polimi.ingsw.am54.network.messages.LeaderboardUpdate;
 import it.polimi.ingsw.am54.network.messages.StateChangedUpdate;
 import it.polimi.ingsw.am54.network.messages.Update;
 import it.polimi.ingsw.am54.model.TotemColors;
@@ -62,6 +63,7 @@ public interface ClientConnection {
     void notifyEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers);
     void notifyError(String message);
     void sendPing();
+    void sendLeaderboardUpdate(LeaderboardUpdate update);
 
     /**
      * Metodi per gestire giocatori che si sconnettono e riconettono

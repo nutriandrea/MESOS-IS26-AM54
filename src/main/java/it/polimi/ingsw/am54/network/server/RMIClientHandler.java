@@ -201,6 +201,12 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
 
     @Override
+    public void sendLeaderboardUpdate(LeaderboardUpdate update) {
+        try { clientStub.onLeaderboardUpdate(update); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
+    @Override
     public void disconnect() {
         if (!connected) return;
         connected = false;

@@ -3,6 +3,7 @@ package it.polimi.ingsw.am54.network.rmi;
 import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.messages.EndGameUpdate;
 import it.polimi.ingsw.am54.network.messages.EventUpdate;
+import it.polimi.ingsw.am54.network.messages.LeaderboardUpdate;
 import it.polimi.ingsw.am54.network.messages.StateChangedUpdate;
 import it.polimi.ingsw.am54.network.messages.Update;
 import java.rmi.Remote;
@@ -31,6 +32,7 @@ public interface RMIClientInterface extends Remote {
             throws RemoteException;
     void onEndGame(EndGameUpdate update) throws RemoteException;
     void onErrorMessage(String message) throws RemoteException;
+    void onLeaderboardUpdate(LeaderboardUpdate update) throws RemoteException;
 
     void onPlayerDisconnected(String nickname) throws RemoteException;
     void onPlayerReconnected(String nickname) throws RemoteException;

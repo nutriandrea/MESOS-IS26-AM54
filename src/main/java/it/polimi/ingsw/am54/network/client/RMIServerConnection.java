@@ -156,6 +156,11 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     }
 
     @Override
+    public void onLeaderboardUpdate(LeaderboardUpdate update) throws RemoteException {
+        clientModel.updateLeaderboard(update.getPlayerPosition(), update.getEntries(), update.getNumPlayers());
+    }
+
+    @Override
     public void onPlayerDisconnected(String nickname) throws RemoteException {
         clientModel.updatePlayerDisconnected(nickname);
     }

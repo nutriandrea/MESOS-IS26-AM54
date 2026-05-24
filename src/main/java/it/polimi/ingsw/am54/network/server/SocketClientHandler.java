@@ -188,6 +188,11 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     @Override
+    public void sendLeaderboardUpdate(LeaderboardUpdate update) {
+        writeToStream(update);
+    }
+
+    @Override
     public void notifyPlayerDisconnected(String nickname) {
         writeToStream(new PlayerDisconnectedUpdate(nickname));
     }

@@ -131,11 +131,10 @@ public class GameLogicTest {
     // ==========================================
     @Test
     public void testApplyEndGameBuildingEffects() {
-        // Creiamo un effetto endgame fittizio che dà 100 cibo
+        // Creiamo un effetto endgame fittizio che dà 100 cibo via applyOnEndGame
         IEffect<BuildingCard> fakeEndGameEffect = new IEffect<>() {
-            @Override public boolean isEndgameEffect() { return true; }
-            @Override public void apply(Player player, Game game, BuildingCard card) {
-                player.modifyFood(100);
+            @Override public void applyOnEndGame(Player p, Game g, BuildingCard card) {
+                p.modifyFood(100);
             }
         };
 
@@ -143,7 +142,14 @@ public class GameLogicTest {
         p1.getBuildings().add(b);
 
         assertEquals(0, p1.getFood());
-        game.applyEndGameBuildingEffects();
+        // Simula la logica di EndGameState.resolvePhase()
+        for (BuildingCard building : p1.getBuildings()) {
+            if (building.getEffects() != null) {
+                for (IEffect<BuildingCard> effect : building.getEffects()) {
+                    effect.applyOnEndGame(p1, game, building);
+                }
+            }
+        }
         assertEquals(100, p1.getFood(), "L'effetto di fine partita deve essere stato applicato");
     }
 

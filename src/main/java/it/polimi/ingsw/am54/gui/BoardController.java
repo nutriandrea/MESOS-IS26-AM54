@@ -120,6 +120,10 @@ public class BoardController {
             refreshBoard();
         }
 
+        if (musicButton != null) {
+            musicButton.setText(MusicManager.getInstance().getCurrentIcon());
+        }
+
         Platform.runLater(this::updateDynamicLayout);
     }
 

@@ -13,7 +13,7 @@
     <VBox alignment="CENTER" spacing="0">
         <BorderPane fx:id="actionBanner" minHeight="60.0" styleClass="action-banner">
             <left>
-                <HBox alignment="CENTER_LEFT" prefWidth="250.0" pickOnBounds="false">
+                <HBox alignment="CENTER_LEFT" prefWidth="320.0" pickOnBounds="false">
                     <padding><Insets left="40.0" /></padding>
                     <Label fx:id="roundCountLabel" text="ROUND: 1" styleClass="round-count-label" />
                 </HBox>
@@ -24,10 +24,11 @@
                 </Label>
             </center>
             <right>
-                <HBox alignment="CENTER_RIGHT" prefWidth="250.0" pickOnBounds="false">
+                <HBox alignment="CENTER_RIGHT" prefWidth="320.0" spacing="12.0" pickOnBounds="false">
                     <padding><Insets right="40.0" /></padding>
-                    <Button text="👥 AVVERSARI" styleClass="recap-button" onAction="#toggleOpponentsOverlay" />
-                    <Button fx:id="musicButton" text="🎵" styleClass="music-button" onAction="#handleMusicToggle" />
+
+                    <Button text="👥 AVVERSARI" styleClass="recap-button" onAction="#toggleOpponentsOverlay" minWidth="-Infinity" HBox.hgrow="NEVER" />
+                    <Button fx:id="musicButton" text="🔊" styleClass="music-button" onAction="#handleMusicToggle" minWidth="-Infinity" HBox.hgrow="NEVER" />
                 </HBox>
             </right>
         </BorderPane>

@@ -10,6 +10,13 @@
            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="it.polimi.ingsw.am54.gui.LoginController">
 
+    <Button fx:id="leaderboardButton" text="🏆 CLASSIFICA" styleClass="leaderboard-login-button"
+            StackPane.alignment="TOP_RIGHT" onAction="#handleLeaderboardButton">
+        <StackPane.margin>
+            <Insets top="30" right="40" />
+        </StackPane.margin>
+    </Button>
+
     <VBox fx:id="logoBox" alignment="CENTER" pickOnBounds="false">
         <ImageView fx:id="logoMesos" preserveRatio="true">
             <image><Image url="@../images/logo_mesos.png" /></image>
@@ -17,13 +24,13 @@
     </VBox>
 
     <VBox fx:id="playStateBox" alignment="CENTER" pickOnBounds="false">
-        <Button fx:id="playButton" text="PLAY" onAction="#handlePlayAction" styleClass="play-button" />
+        <Button fx:id="playButton" text="GIOCA" onAction="#handlePlayAction" styleClass="play-button" />
     </VBox>
 
     <VBox fx:id="nicknameStateBox" alignment="CENTER" spacing="25" visible="false" managed="false"
           maxWidth="520" maxHeight="300" styleClass="translucent-box">
 
-        <Label text="UNISCITI ALLA TRIBU" styleClass="gold-text" style="-fx-font-size: 36px;" />
+        <Label text="UNISCITI ALLA TRIBÙ" styleClass="gold-text" style="-fx-font-size: 36px;" />
 
         <VBox alignment="CENTER" spacing="10">
             <Label text="INDIRIZZO IP SERVER" styleClass="gold-text" style="-fx-font-size: 14px;" />
@@ -47,38 +54,6 @@
         <Label fx:id="errorLabel" styleClass="error-label" text="" wrapText="true" maxWidth="450" alignment="CENTER"/>
     </VBox>
 
-    <!-- Leaderboard button (always visible, bottom center) -->
-    <Button fx:id="leaderboardButton" text="CLASSIFICA" styleClass="leaderboard-button"
-            onAction="#handleLeaderboardButton"
-            StackPane.alignment="BOTTOM_CENTER">
-        <StackPane.margin>
-            <Insets bottom="110"/>
-        </StackPane.margin>
-    </Button>
-
-    <!-- Full-screen leaderboard overlay (initially hidden) -->
-    <VBox fx:id="leaderboardOverlay" visible="false" managed="false"
-          StackPane.alignment="CENTER"
-          style="-fx-background-color: rgba(0,0,0,0.9);"
-          maxWidth="Infinity" maxHeight="Infinity"
-          alignment="CENTER"
-          onMouseClicked="#handleOverlayClose">
-        <VBox styleClass="leaderboard-panel" maxWidth="600" maxHeight="520" spacing="4"
-              onMouseClicked="#handlePanelClick">
-            <Label text="CLASSIFICA" styleClass="leaderboard-title" />
-            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
-                         styleClass="leaderboard-scroll"
-                         hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
-                         maxHeight="400">
-                <VBox fx:id="leaderboardEntriesContainer" spacing="1"
-                      style="-fx-padding: 4;" />
-            </ScrollPane>
-            <Label fx:id="leaderboardFooter" text="" styleClass="leaderboard-footer" />
-            <Label text="CHIUDI" styleClass="leaderboard-close-btn"
-                   onMouseClicked="#handleOverlayClose" />
-        </VBox>
-    </VBox>
-
     <Label fx:id="clickToEnterLabel"
            text="CLICCA OVUNQUE PER ENTRARE NELLA CAVERNA!"
            styleClass="cave-prompt"
@@ -91,5 +66,22 @@
             <Insets bottom="60"/>
         </StackPane.margin>
     </Label>
+
+    <StackPane fx:id="leaderboardOverlay" visible="false" managed="false" styleClass="leaderboard-overlay-bg" onMouseClicked="#handleOverlayClose">
+        <VBox styleClass="leaderboard-modal-panel" maxWidth="750" maxHeight="600" spacing="15" alignment="CENTER" onMouseClicked="#handlePanelClick">
+            <Label text="🏆 CLASSIFICA GLOBALE 🏆" styleClass="leaderboard-modal-title" />
+
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="leaderboard-scroll-pane" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+                <VBox fx:id="leaderboardEntriesContainer" spacing="8" alignment="TOP_CENTER">
+                    <padding>
+                        <Insets top="10" bottom="10" left="10" right="10"/>
+                    </padding>
+                </VBox>
+            </ScrollPane>
+
+            <Label fx:id="leaderboardFooter" text="" styleClass="leaderboard-modal-footer" />
+            <Button text="CHIUDI" styleClass="leaderboard-close-btn" onAction="#handleOverlayClose" />
+        </VBox>
+    </StackPane>
 
 </StackPane>

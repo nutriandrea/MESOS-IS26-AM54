@@ -166,7 +166,7 @@ public class LobbyController {
                 infoButton.setStyle("-fx-font-size: " + targetButtonSize + "px; -fx-font-family: 'Arial'; -fx-text-fill: gold;");
             }
         });
-
+        musicButton.setText(MusicManager.getInstance().getCurrentIcon());
         updateLobbyUI();
     }
 

@@ -64,31 +64,32 @@ public class MusicManager {
             default -> null;
         };
 
-        if (target == null) {
-            button.setText("🎵");
-            System.out.println("[Musica] Nessun file MP3 trovato per " + track
-                + " — metti " + track + ".mp3 in src/main/resources/audio/");
-            return;
-        }
+        if (target == null) return;
 
-        // Se è già in riproduzione un'altra traccia, fermala
+        // Se sta suonando, ferma
         if (isPlaying && currentPlayer != null) {
             currentPlayer.stop();
             isPlaying = false;
-            button.setText("🎵");
+            button.setText("🔇"); // Cambiato emoji
             return;
         }
 
-        // Avvia la traccia
+        // Se è un cambio traccia o primo avvio
         if (currentPlayer == null || !currentPlayer.getMedia().getSource().equals(target.getSource())) {
+            if (currentPlayer != null) currentPlayer.dispose();
             currentPlayer = new MediaPlayer(target);
-            currentPlayer.setCycleCount(MediaPlayer.INDEFINITE); // loop
-            currentPlayer.setVolume(0.5);
+            currentPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+            currentPlayer.setVolume(0.4);
         }
 
         currentPlayer.play();
         isPlaying = true;
-        button.setText("🔊");
+        button.setText("🔊"); // Cambiato emoji
+    }
+
+    // Aggiungi questo metodo per sapere lo stato all'apertura delle scene
+    public String getCurrentIcon() {
+        return isPlaying ? "🔊" : "🔇";
     }
 
     /**

@@ -41,7 +41,6 @@ public class EndGameStateTest {
             public void resolveEvent(Game g) {
                 eventResolved[0] = true; // Il test capirà che questa riga è stata eseguita
             }
-            @Override public boolean shouldResolveLast() { return false; }
         };
 
         // Aggiungiamo l'evento alla board.

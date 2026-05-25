@@ -431,7 +431,7 @@ public class Controller {
 
     /**
      * Handles a request from a client to receive the global leaderboard.
-     * Queries the embedded H2 database and sends a LeaderboardUpdate back.
+     * Queries the MySQL database and sends a LeaderboardUpdate back.
      */
     public void handleGetLeaderboard(ClientConnection connection, int numPlayers) {
         List<it.polimi.ingsw.am54.network.messages.LeaderboardEntry> entries = dbManager.getAllLeaderboardEntries();

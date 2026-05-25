@@ -15,6 +15,7 @@ public interface ServerConnection {
     void placeTotem(int position);
     void pickCard(String row, int index);
     void endTurn();
+    void requestLeaderboard(int numPlayers);
 
     // Chiude la connessione col server
     void disconnect();

@@ -69,6 +69,12 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
         catch (RemoteException e) { disconnect(); }
     }
 
+    @Override
+    public void requestLeaderboard(int numPlayers) {
+        try { serverStub.getLeaderboardRequest(numPlayers); }
+        catch (RemoteException e) { disconnect(); }
+    }
+
     /* =====================================================================
      * EVENTI IN INGRESSO (Dal Server al Client) - Implementa RMIClientInterface
      * Il Server chiama direttamente questi metodi, niente istanceof

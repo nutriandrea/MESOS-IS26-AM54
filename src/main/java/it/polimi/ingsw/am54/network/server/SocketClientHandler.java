@@ -95,6 +95,8 @@ public class SocketClientHandler implements Runnable, ClientConnection {
             lastPongTime = System.currentTimeMillis();
         } else if (request instanceof EndTurnRequest) {
             controller.handleEndTurn(this.playerNickname);
+        } else if (request instanceof GetLeaderboardRequest req) {
+            controller.handleGetLeaderboard(this, req.getNumPlayers());
         }
     }
 

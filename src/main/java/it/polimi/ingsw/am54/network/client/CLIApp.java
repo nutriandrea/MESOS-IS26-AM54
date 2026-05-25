@@ -367,7 +367,13 @@ public class CLIApp {
             } else if (input.toUpperCase().startsWith("CLASSIFICA ")) {
                 try {
                     int np = Integer.parseInt(input.substring(11).trim());
-                    currentInputHandler = null;
+                    if (np < 2 || np > 5) {
+                        System.out.println("Numero giocatori non valido. Usa un numero tra 2 e 5.");
+                    } else {
+                        currentInputHandler = null;
+                        server.requestLeaderboard(np);
+                        System.out.println("Richiesta classifica per partite da " + np + " giocatori inviata...");
+                    }
                 } catch (NumberFormatException e) {
                     System.out.println("Formato non valido. Usa: CLASSIFICA 4");
                 }

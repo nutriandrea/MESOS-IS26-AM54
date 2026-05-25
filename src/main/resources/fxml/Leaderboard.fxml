@@ -67,4 +67,29 @@
 
         <Button text="TORNA AL MENU" styleClass="recap-button" layoutX="736" layoutY="820" onAction="#handleReturnToMenu"/>
     </AnchorPane>
+
+    <Button fx:id="globalLeaderboardButton" text="🏆 RANKING GLOBALE" styleClass="leaderboard-login-button"
+            StackPane.alignment="TOP_RIGHT" onAction="#handleGlobalLeaderboardButton">
+        <StackPane.margin>
+            <Insets top="30" right="40" />
+        </StackPane.margin>
+    </Button>
+
+    <StackPane fx:id="globalLeaderboardOverlay" visible="false" managed="false" styleClass="leaderboard-overlay-bg" onMouseClicked="#handleOverlayClose">
+        <VBox styleClass="leaderboard-modal-panel" maxWidth="750" maxHeight="600" spacing="15" alignment="CENTER" onMouseClicked="#handlePanelClick">
+            <Label text="🏆 CLASSIFICA GLOBALE 🏆" styleClass="leaderboard-modal-title" />
+
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="leaderboard-scroll-pane" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+                <VBox fx:id="globalLeaderboardEntriesContainer" spacing="8" alignment="TOP_CENTER">
+                    <padding>
+                        <Insets top="10" bottom="10" left="10" right="10"/>
+                    </padding>
+                </VBox>
+            </ScrollPane>
+
+            <Label fx:id="globalLeaderboardFooter" text="" styleClass="leaderboard-modal-footer" />
+            <Button text="CHIUDI" styleClass="leaderboard-close-btn" onAction="#handleOverlayClose" />
+        </VBox>
+    </StackPane>
+
 </StackPane>

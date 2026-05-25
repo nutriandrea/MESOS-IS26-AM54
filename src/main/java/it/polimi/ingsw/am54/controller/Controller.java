@@ -431,7 +431,7 @@ public class Controller {
 
     /**
      * Handles a request from a client to receive the global leaderboard.
-     * Queries the embedded H2 database and sends a LeaderboardUpdate back.
+     * Queries the MySQL database and sends a LeaderboardUpdate back.
      */
     public void handleGetLeaderboard(ClientConnection connection, int numPlayers) {
         List<it.polimi.ingsw.am54.network.messages.LeaderboardEntry> entries = dbManager.getAllLeaderboardEntries();
@@ -471,6 +471,11 @@ public class Controller {
         // Se dopo gli eventi (o in altri modi) siamo finiti nella fase finale, calcola i vincitori
         if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.EndGameState) {
             game.getCurrentState().resolvePhase(game);
+
+            int numPlayers = game.getPlayers().size();
+            for (Player p : game.getPlayers()) {
+                dbManager.saveMatchResult(p.getNickname(), game.calculatePlayerScore(p), numPlayers);
+            }
         }
     }
 }

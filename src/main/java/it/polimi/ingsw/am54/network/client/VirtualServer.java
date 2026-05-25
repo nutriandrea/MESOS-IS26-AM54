@@ -41,4 +41,8 @@ public class VirtualServer {
         connection.endTurn();
     }
 
+    public void requestLeaderboard(int numPlayers) {
+        connection.requestLeaderboard(numPlayers);
+    }
+
 }

@@ -471,6 +471,11 @@ public class Controller {
         // Se dopo gli eventi (o in altri modi) siamo finiti nella fase finale, calcola i vincitori
         if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.EndGameState) {
             game.getCurrentState().resolvePhase(game);
+
+            int numPlayers = game.getPlayers().size();
+            for (Player p : game.getPlayers()) {
+                dbManager.saveMatchResult(p.getNickname(), game.calculatePlayerScore(p), numPlayers);
+            }
         }
     }
 }

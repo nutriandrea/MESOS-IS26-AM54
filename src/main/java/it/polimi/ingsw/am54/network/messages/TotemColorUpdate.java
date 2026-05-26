@@ -14,4 +14,7 @@ public class TotemColorUpdate implements Update {
 
     public String getNickname() { return nickname; }
     public TotemColors getColor() { return color; }
+
+    public static final String TYPE = "totem_color";
+    @Override public String getType() { return TYPE; }
 }

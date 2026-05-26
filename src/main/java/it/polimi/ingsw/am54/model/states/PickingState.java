@@ -4,6 +4,7 @@ import it.polimi.ingsw.am54.model.*;
 
 // Stato di pesca: i giocatori pescano personaggi e comprano edifici dalle offering tiles
 public class PickingState extends GameState {
+    @Override public String getStateName() { return "PickingState"; }
 
     @Override
     public void pickCard(Game game, String nickname, String row, int cardIndex) throws Exception {

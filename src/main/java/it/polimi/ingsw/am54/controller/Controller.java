@@ -199,7 +199,7 @@ public class Controller {
         synchronized (game.getPlayers()) {
 
             // 1. Ripristiniamo il turno in base alla fase attuale della partita!
-            if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.StartTurnState) {
+            if (game.getCurrentState().getStateName().equals("StartTurnState")) {
                 // Durante il piazzamento, il turno è del primo giocatore rimasto nella TurnOrderTrack
                 for (it.polimi.ingsw.am54.model.TurnOrderSlot slot : game.getBoard().getTurnOrderTile()) {
                     it.polimi.ingsw.am54.model.Player p = slot.getOccupiedBy();
@@ -209,7 +209,7 @@ public class Controller {
                     }
                 }
             }
-            else if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.PickingState) {
+            else if (game.getCurrentState().getStateName().equals("PickingState")) {
                 // Durante la pesca, il turno è di chi è sulla OfferingTrack (il CurrentPicker)
                 it.polimi.ingsw.am54.model.Player picker = game.getCurrentPicker();
                 if (picker != null) {
@@ -385,8 +385,8 @@ public class Controller {
      */
     private void autoHandleDisconnection(String nickname) {
         synchronized (game.getPlayers()) {
-            if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.SetUpGameState) return;
-            if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.EndGameState) return;
+            if (game.getCurrentState().getStateName().equals("SetUpGameState")) return;
+            if (game.getCurrentState().getStateName().equals("EndGameState")) return;
 
             // Informa il Model di quanti giocatori sono ancora attivi
             game.setActivePlayerCount(activePlayerCount());
@@ -398,7 +398,7 @@ public class Controller {
 
                     // skipTurn in StartTurnState libera lo slot e marca il giocatore.
                     // Bisogna avanzare al prossimo giocatore valido per non rimanere bloccati.
-                    if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.StartTurnState) {
+                    if (game.getCurrentState().getStateName().equals("StartTurnState")) {
                         game.nextPlayer();
                         if (game.getBoard().allTotemsPlaced(activePlayerCount())) {
                             game.setState(new it.polimi.ingsw.am54.model.states.PickingState());
@@ -409,12 +409,12 @@ public class Controller {
 
                     checkAndResolveAutomaticPhases();
                 } else if (p.getCurrentTile() != null
-                        && game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.PickingState) {
+                        && game.getCurrentState().getStateName().equals("PickingState")) {
                     p.getCurrentTile().freeSlot();
                     p.setCurrentTile(null);
                     game.moveToLastSlot(p);
                     game.notifyTotemReturned(p, -1);
-                } else if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.StartTurnState
+                } else if (game.getCurrentState().getStateName().equals("StartTurnState")
                         && p.hasPlacedTotem()) {
                     if (p.getCurrentTile() != null) {
                         p.getCurrentTile().freeSlot();
@@ -428,7 +428,7 @@ public class Controller {
                         Player first = game.getBoard().getFirstPlayerFromOfferingTrack();
                         if (first != null) game.setCurrentPlayer(first);
                     }
-                } else if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.StartTurnState
+                } else if (game.getCurrentState().getStateName().equals("StartTurnState")
                         && !p.hasPlacedTotem()) {
                     game.moveToLastSlot(p);
                     p.setHasPlacedTotem(true);
@@ -574,12 +574,12 @@ public class Controller {
     }
 
     private void checkAndResolveAutomaticPhases() throws Exception {
-        if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.EventState) {
+        if (game.getCurrentState().getStateName().equals("EventState")) {
             game.getCurrentState().resolvePhase(game);
             saveState(); // Aggiorna il JSON dopo la risoluzione dell'evento
         }
 
-        if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.EndGameState) {
+        if (game.getCurrentState().getStateName().equals("EndGameState")) {
             game.getCurrentState().resolvePhase(game);
             saveState(); // Questo svuoterà il file JSON (grazie alla logica in saveState)
 

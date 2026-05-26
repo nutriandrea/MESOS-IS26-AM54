@@ -5,6 +5,7 @@ import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.GameState;
 
 public class EventState extends GameState {
+    @Override public String getStateName() { return "EventState"; }
 
     @Override
     public void resolvePhase(Game game){

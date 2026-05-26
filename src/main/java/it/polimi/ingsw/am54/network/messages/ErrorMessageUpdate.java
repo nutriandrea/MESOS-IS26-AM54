@@ -15,4 +15,7 @@ public class ErrorMessageUpdate implements Update {
     public String getMessage() {
         return message;
     }
+
+    public static final String TYPE = "error_message";
+    @Override public String getType() { return TYPE; }
 }

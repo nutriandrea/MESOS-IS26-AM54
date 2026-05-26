@@ -5,4 +5,7 @@ package it.polimi.ingsw.am54.network.messages;
  */
 public class EndTurnRequest implements Request {
     // Vuota: il server deduce il mittente dal Socket/RMI
+
+    public static final String TYPE = "end_turn";
+    @Override public String getType() { return TYPE; }
 }

@@ -7,6 +7,8 @@ package it.polimi.ingsw.am54.model;
  */
 public abstract class GameState {
 
+    public abstract String getStateName();
+
     public void joinGame(Game game, String nickname) throws Exception {
         throw new IllegalStateException("Non puoi unirti alla partita in questa fase");
     }
@@ -45,4 +47,5 @@ public abstract class GameState {
     public void skipTurn(Game game, String nickname) throws Exception {
         throw new IllegalStateException("Non puoi saltare il turno in questa fase");
     }
+
 }

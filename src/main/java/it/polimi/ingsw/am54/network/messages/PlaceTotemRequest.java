@@ -16,4 +16,7 @@ public class PlaceTotemRequest implements Request {
     public int getOfferPosition() {
         return offerPosition;
     }
+
+    public static final String TYPE = "place_totem";
+    @Override public String getType() { return TYPE; }
 }

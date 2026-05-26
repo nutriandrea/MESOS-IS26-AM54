@@ -6,6 +6,7 @@ import it.polimi.ingsw.am54.model.Player;
 import it.polimi.ingsw.am54.model.OfferingTile;
 
 public class StartTurnState extends GameState {
+    @Override public String getStateName() { return "StartTurnState"; }
 
     @Override
     public void placeTotem(Game game, String nickname, int offerPosition) throws Exception {

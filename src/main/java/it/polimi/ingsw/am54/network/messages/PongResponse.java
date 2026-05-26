@@ -14,4 +14,7 @@ public class PongResponse implements Request {
     public long getTimestamp() {
         return timestamp;
     }
+
+    public static final String TYPE = "pong";
+    @Override public String getType() { return TYPE; }
 }

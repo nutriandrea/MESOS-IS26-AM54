@@ -50,4 +50,7 @@ public class EventUpdate implements Update {
     public List<String> getEventLower() { return eventLower; }
     public List<String> getBuildUpper() { return buildUpper; }
     public List<String> getBuildLower() { return buildLower; }
+
+    public static final String TYPE = "event";
+    @Override public String getType() { return TYPE; }
 }

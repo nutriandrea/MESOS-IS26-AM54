@@ -342,7 +342,7 @@ public class Game implements IGame{
         players.removeIf(p -> p.getNickname().equalsIgnoreCase(nickname));
 
         // 2. Se tutti abbandonano a fine partita, riporta il server allo stato di Setup iniziale
-        if (players.isEmpty() && (currentState instanceof it.polimi.ingsw.am54.model.states.EndGameState)) {
+        if (players.isEmpty() && currentState.getStateName().equals("EndGameState")) {
             this.setState(new SetUpGameState());
         }
     }

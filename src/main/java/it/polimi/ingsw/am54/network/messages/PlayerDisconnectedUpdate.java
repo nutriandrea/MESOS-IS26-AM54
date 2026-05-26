@@ -14,4 +14,7 @@ public class PlayerDisconnectedUpdate implements Update {
     public String getNickname() {
         return nickname;
     }
+
+    public static final String TYPE = "player_disconnected";
+    @Override public String getType() { return TYPE; }
 }

@@ -27,4 +27,7 @@ public class LeaderboardUpdate implements Update {
     public int getPlayerPosition()            { return playerPosition; }
     public List<LeaderboardEntry> getEntries() { return entries; }
     public int getNumPlayers()                { return numPlayers; }
+
+    public static final String TYPE = "leaderboard";
+    @Override public String getType() { return TYPE; }
 }

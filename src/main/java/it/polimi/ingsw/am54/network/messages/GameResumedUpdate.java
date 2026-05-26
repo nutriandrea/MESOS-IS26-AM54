@@ -6,4 +6,7 @@ package it.polimi.ingsw.am54.network.messages;
  * SERVER -> CLIENT
  */
 public class GameResumedUpdate implements Update {
+
+    public static final String TYPE = "game_resumed";
+    @Override public String getType() { return TYPE; }
 }

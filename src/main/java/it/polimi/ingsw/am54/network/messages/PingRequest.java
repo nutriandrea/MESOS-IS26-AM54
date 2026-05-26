@@ -14,4 +14,7 @@ public class PingRequest implements Update {
     public long getTimestamp() {
         return timestamp;
     }
+
+    public static final String TYPE = "ping";
+    @Override public String getType() { return TYPE; }
 }

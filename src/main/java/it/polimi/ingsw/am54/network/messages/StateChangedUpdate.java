@@ -105,4 +105,7 @@ public class StateChangedUpdate implements Update {
     public int getCurrentRound() {
         return currentRound;
     }
+
+    public static final String TYPE = "state_changed";
+    @Override public String getType() { return TYPE; }
 }

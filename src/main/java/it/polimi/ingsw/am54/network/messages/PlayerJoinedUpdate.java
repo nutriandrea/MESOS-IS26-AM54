@@ -12,4 +12,7 @@ public class PlayerJoinedUpdate implements Update {
     public String getNickname() {
         return nickname;
     }
+
+    public static final String TYPE = "player_joined";
+    @Override public String getType() { return TYPE; }
 }

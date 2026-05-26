@@ -23,4 +23,7 @@ public class TotemReturnedUpdate implements Update {
     public int getPosition() { return position; }
     public int getNewFoodBalance() { return newFoodBalance; }
     public int getNewAuraBalance() { return newAuraBalance; }
+
+    public static final String TYPE = "totem_returned";
+    @Override public String getType() { return TYPE; }
 }

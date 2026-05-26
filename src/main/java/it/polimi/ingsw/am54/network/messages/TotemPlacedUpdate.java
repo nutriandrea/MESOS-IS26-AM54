@@ -13,4 +13,7 @@ public class TotemPlacedUpdate implements Update {
 
     public String getNickname() { return nickname; }
     public int getOfferPosition() { return offerPosition; }
+
+    public static final String TYPE = "totem_placed";
+    @Override public String getType() { return TYPE; }
 }

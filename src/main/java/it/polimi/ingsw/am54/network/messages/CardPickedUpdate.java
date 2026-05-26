@@ -23,4 +23,7 @@ public class CardPickedUpdate implements Update {
     public int getNewFoodBalance() { return newFoodBalance; }
     public int getNewMagicBalance() { return newMagicBalance; }
     public java.util.Map<Integer, String> getUpdatedOfferingTrack() { return updatedOfferingTrack; }
+
+    public static final String TYPE = "card_picked";
+    @Override public String getType() { return TYPE; }
 }

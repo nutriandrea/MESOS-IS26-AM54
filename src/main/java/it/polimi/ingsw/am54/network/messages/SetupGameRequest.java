@@ -9,4 +9,7 @@ public class SetupGameRequest implements Request {
     // Classe volutamente vuota.
     // Nessun parametro necessario, nessun costruttore speciale richiesto.
 
+
+    public static final String TYPE = "setup_game";
+    @Override public String getType() { return TYPE; }
 }

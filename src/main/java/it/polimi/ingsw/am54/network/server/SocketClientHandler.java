@@ -80,23 +80,31 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     private void handleRequest(Request request) {
-        if (request instanceof JoinGameRequest req) {
-            this.playerNickname = req.getNickname();
-            controller.handleJoinGame(this.playerNickname, this);
-        } else if (request instanceof SetupGameRequest) {
-            controller.handleSetupGame(this.playerNickname);
-        } else if (request instanceof ChooseTotemRequest req) {
-            controller.handleChooseTotemColor(this.playerNickname, req.getColor().name());
-        } else if (request instanceof PlaceTotemRequest req) {
-            controller.handlePlaceTotem(this.playerNickname, req.getOfferPosition());
-        } else if (request instanceof PickCardRequest req) {
-            controller.handlePickCard(this.playerNickname, req.getRow(), req.getCardIndex());
-        } else if (request instanceof PongResponse pong) {
-            lastPongTime = System.currentTimeMillis();
-        } else if (request instanceof EndTurnRequest) {
-            controller.handleEndTurn(this.playerNickname);
-        } else if (request instanceof GetLeaderboardRequest req) {
-            controller.handleGetLeaderboard(this, req.getNumPlayers());
+        switch (request.getType()) {
+            case JoinGameRequest.TYPE -> {
+                JoinGameRequest req = (JoinGameRequest) request;
+                this.playerNickname = req.getNickname();
+                controller.handleJoinGame(this.playerNickname, this);
+            }
+            case SetupGameRequest.TYPE -> controller.handleSetupGame(this.playerNickname);
+            case ChooseTotemRequest.TYPE -> {
+                ChooseTotemRequest req = (ChooseTotemRequest) request;
+                controller.handleChooseTotemColor(this.playerNickname, req.getColor().name());
+            }
+            case PlaceTotemRequest.TYPE -> {
+                PlaceTotemRequest req = (PlaceTotemRequest) request;
+                controller.handlePlaceTotem(this.playerNickname, req.getOfferPosition());
+            }
+            case PickCardRequest.TYPE -> {
+                PickCardRequest req = (PickCardRequest) request;
+                controller.handlePickCard(this.playerNickname, req.getRow(), req.getCardIndex());
+            }
+            case PongResponse.TYPE -> lastPongTime = System.currentTimeMillis();
+            case EndTurnRequest.TYPE -> controller.handleEndTurn(this.playerNickname);
+            case GetLeaderboardRequest.TYPE -> {
+                GetLeaderboardRequest req = (GetLeaderboardRequest) request;
+                controller.handleGetLeaderboard(this, req.getNumPlayers());
+            }
         }
     }
 

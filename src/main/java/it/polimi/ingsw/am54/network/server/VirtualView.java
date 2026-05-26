@@ -321,8 +321,6 @@ public class VirtualView implements IGameObserver {
         List<String> buildUp = new java.util.ArrayList<>();
         List<String> buildLow = new java.util.ArrayList<>();
 
-        Board b = game.getBoard();
-
         // Protezione Board
         if (b != null) {
             turnOrder = b.getTurnOrderTile().stream()

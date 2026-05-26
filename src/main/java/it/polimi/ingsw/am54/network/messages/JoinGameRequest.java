@@ -12,4 +12,7 @@ public class JoinGameRequest implements Request {
     }
 
     public String getNickname() { return nickname; }
+
+    public static final String TYPE = "join_game";
+    @Override public String getType() { return TYPE; }
 }

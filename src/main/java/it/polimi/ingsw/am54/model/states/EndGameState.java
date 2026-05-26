@@ -12,6 +12,7 @@ import java.util.List;
 //Stato di fine partita: calcola i punteggi finali e decreta il vincitore
 //Nessun giocatore puo' pescare o piazzare totem
 public class EndGameState extends GameState {
+    @Override public String getStateName() { return "EndGameState"; }
 
     @Override
     public void resolvePhase(Game game) {

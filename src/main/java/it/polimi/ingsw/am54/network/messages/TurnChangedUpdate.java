@@ -10,4 +10,7 @@ public class TurnChangedUpdate implements Update {
     }
 
     public String getNickname() { return nickname; }
+
+    public static final String TYPE = "turn_changed";
+    @Override public String getType() { return TYPE; }
 }

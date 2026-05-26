@@ -12,4 +12,7 @@ public class GetLeaderboardRequest implements Request {
     }
 
     public int getNumPlayers() { return numPlayers; }
+
+    public static final String TYPE = "get_leaderboard";
+    @Override public String getType() { return TYPE; }
 }

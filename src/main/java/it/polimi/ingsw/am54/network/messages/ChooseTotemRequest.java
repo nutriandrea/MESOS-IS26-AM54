@@ -17,4 +17,7 @@ public class ChooseTotemRequest implements Request {
     public TotemColors getColor() {
         return color;
     }
+
+    public static final String TYPE = "choose_totem";
+    @Override public String getType() { return TYPE; }
 }

@@ -7,6 +7,7 @@ import it.polimi.ingsw.am54.model.TotemColors;
 
 //Stato di setup: i giocatori si uniscono, scelgono il colore e avviano la partita
 public class SetUpGameState extends GameState {
+    @Override public String getStateName() { return "SetUpGameState"; }
 
     @Override
     public void joinGame(Game game, String nickname) throws Exception {

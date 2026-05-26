@@ -22,4 +22,7 @@ public class PickCardRequest implements Request {
     public int getCardIndex() {
         return cardIndex;
     }
+
+    public static final String TYPE = "pick_card";
+    @Override public String getType() { return TYPE; }
 }

@@ -68,10 +68,12 @@ public class ServerHandler implements Runnable {
         while (running) {
             try {
                 Object message = in.readObject();
-                if (message instanceof PingRequest ping) {
-                    handlePing(ping);
-                } else if (message instanceof Update update) {
-                    handleUpdate(update);
+                if (message instanceof Update update) {
+                    if (PingRequest.TYPE.equals(update.getType())) {
+                        handlePing((PingRequest) update);
+                    } else {
+                        handleUpdate(update);
+                    }
                 }
             } catch (Exception e) {
                 // SE IL SERVER CADE, ENTRA QUI:
@@ -124,73 +126,79 @@ public class ServerHandler implements Runnable {
      * - ErrorMessageUpdate -> updateError()
      */
     private void handleUpdate(Update message) {
-        // StateChangedUpdate può contenere stato completo per riconnessione
-        if (message instanceof StateChangedUpdate stateUpdate) {
-            String oldState = clientModel.getCurrentState();
-            clientModel.updateState(stateUpdate);
-            String newState = clientModel.getCurrentState();
+        switch (message.getType()) {
+            case StateChangedUpdate.TYPE -> {
+                StateChangedUpdate stateUpdate = (StateChangedUpdate) message;
+                String oldState = clientModel.getCurrentState();
+                clientModel.updateState(stateUpdate);
+                String newState = clientModel.getCurrentState();
 
-            if (oldState != null && newState != null) {
-                if (("SetUpGameState".equals(oldState) || "Lobby".equals(oldState)) &&
-                        (!"SetUpGameState".equals(newState) && !"Lobby".equals(newState))) {
+                if (oldState != null && newState != null) {
+                    if (("SetUpGameState".equals(oldState) || "Lobby".equals(oldState)) &&
+                            (!"SetUpGameState".equals(newState) && !"Lobby".equals(newState))) {
 
-                    try {
-                        it.polimi.ingsw.am54.gui.GUIApp.loadBoardScene();
-                    } catch (Exception | NoClassDefFoundError e) {
-                        // Modalità CLI attiva, transizione GUI ignorata
+                        try {
+                            it.polimi.ingsw.am54.gui.GUIApp.loadBoardScene();
+                        } catch (Exception | NoClassDefFoundError e) {
+                            // Modalità CLI attiva, transizione GUI ignorata
+                        }
                     }
                 }
             }
-            return;
-        }
-
-        // Gestione dei normali update
-        if (message instanceof PlayerJoinedUpdate msg) {
-            clientModel.updatePlayerJoined(msg.getNickname());
-        }
-        else if (message instanceof PlayerDisconnectedUpdate msg) {
-            clientModel.updatePlayerDisconnected(msg.getNickname());
-        }
-        else if (message instanceof PlayerReconnectedUpdate msg) {
-            clientModel.updatePlayerReconnected(msg.getNickname());
-        }
-        else if (message instanceof TotemPlacedUpdate msg) {
-            clientModel.updateTotemPlacement(msg.getNickname(), msg.getOfferPosition());
-        }
-        else if (message instanceof CardPickedUpdate msg) {
-            clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex(), msg.getNewFoodBalance(), msg.getNewMagicBalance(), msg.getUpdatedOfferingTrack());
-        }
-        else if (message instanceof TurnChangedUpdate msg) {
-            clientModel.updateTurn(msg.getNickname());
-        }
-        else if (message instanceof TotemReturnedUpdate msg) {
-            clientModel.updateTotemReturned(msg.getNickname(), msg.getNewFoodBalance(), msg.getNewAuraBalance());
-        }
-        else if (message instanceof TotemColorUpdate msg) {
-            clientModel.updateTotemColor(msg.getNickname(), msg.getColor());
-        }
-        else if (message instanceof EndGameUpdate) {
-            EndGameUpdate update = (EndGameUpdate) message;
-            clientModel.updateEndGame(
-                    update.getWinners(),
-                    update.getAllScores(),
-                    update.getNumPlayers()
-            );
-        }
-        else if (message instanceof LeaderboardUpdate msg) {
-            clientModel.updateLeaderboard(msg.getPlayerPosition(), msg.getEntries(), msg.getNumPlayers());
-        }
-        else if (message instanceof ErrorMessageUpdate msg) {
-            clientModel.updateError(msg.getMessage());
-        }
-        else if (message instanceof EventUpdate msg) {
-            clientModel.updateEventSnapshot(msg);
-        }
-        else if (message instanceof GameSuspendedUpdate) {
-            clientModel.updateGameSuspended();
-        }
-        else if (message instanceof GameResumedUpdate) {
-            clientModel.updateGameResumed();
+            case PlayerJoinedUpdate.TYPE -> {
+                PlayerJoinedUpdate msg = (PlayerJoinedUpdate) message;
+                clientModel.updatePlayerJoined(msg.getNickname());
+            }
+            case PlayerDisconnectedUpdate.TYPE -> {
+                PlayerDisconnectedUpdate msg = (PlayerDisconnectedUpdate) message;
+                clientModel.updatePlayerDisconnected(msg.getNickname());
+            }
+            case PlayerReconnectedUpdate.TYPE -> {
+                PlayerReconnectedUpdate msg = (PlayerReconnectedUpdate) message;
+                clientModel.updatePlayerReconnected(msg.getNickname());
+            }
+            case TotemPlacedUpdate.TYPE -> {
+                TotemPlacedUpdate msg = (TotemPlacedUpdate) message;
+                clientModel.updateTotemPlacement(msg.getNickname(), msg.getOfferPosition());
+            }
+            case CardPickedUpdate.TYPE -> {
+                CardPickedUpdate msg = (CardPickedUpdate) message;
+                clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex(), msg.getNewFoodBalance(), msg.getNewMagicBalance(), msg.getUpdatedOfferingTrack());
+            }
+            case TurnChangedUpdate.TYPE -> {
+                TurnChangedUpdate msg = (TurnChangedUpdate) message;
+                clientModel.updateTurn(msg.getNickname());
+            }
+            case TotemReturnedUpdate.TYPE -> {
+                TotemReturnedUpdate msg = (TotemReturnedUpdate) message;
+                clientModel.updateTotemReturned(msg.getNickname(), msg.getNewFoodBalance(), msg.getNewAuraBalance());
+            }
+            case TotemColorUpdate.TYPE -> {
+                TotemColorUpdate msg = (TotemColorUpdate) message;
+                clientModel.updateTotemColor(msg.getNickname(), msg.getColor());
+            }
+            case EndGameUpdate.TYPE -> {
+                EndGameUpdate update = (EndGameUpdate) message;
+                clientModel.updateEndGame(
+                        update.getWinners(),
+                        update.getAllScores(),
+                        update.getNumPlayers()
+                );
+            }
+            case LeaderboardUpdate.TYPE -> {
+                LeaderboardUpdate msg = (LeaderboardUpdate) message;
+                clientModel.updateLeaderboard(msg.getPlayerPosition(), msg.getEntries(), msg.getNumPlayers());
+            }
+            case ErrorMessageUpdate.TYPE -> {
+                ErrorMessageUpdate msg = (ErrorMessageUpdate) message;
+                clientModel.updateError(msg.getMessage());
+            }
+            case EventUpdate.TYPE -> {
+                EventUpdate msg = (EventUpdate) message;
+                clientModel.updateEventSnapshot(msg);
+            }
+            case GameSuspendedUpdate.TYPE -> clientModel.updateGameSuspended();
+            case GameResumedUpdate.TYPE -> clientModel.updateGameResumed();
         }
     }
 }

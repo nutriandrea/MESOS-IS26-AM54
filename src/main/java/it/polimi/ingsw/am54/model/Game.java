@@ -213,15 +213,34 @@ public class Game implements IGame{
     }
 
     public void nextPlayer() {
-        // L'ordine di turno è fisso. Il prossimo giocatore è semplicemente il primo
-        // che troviamo nella TurnOrderTrack che NON ha ancora piazzato il totem!
-        for (TurnOrderSlot slot : board.getTurnOrderTile()) {
-            Player p = slot.getOccupiedBy();
+        List<TurnOrderSlot> turnTrack = board.getTurnOrderTile();
 
-            if (p != null && !p.hasPlacedTotem()) {
-                this.currentPlayer = p;
+        // troviamo in quale slot si trova il giocatore corrente
+        int currentIndex = 0;
+        boolean foundCurrent = false;
+
+        while (currentIndex < turnTrack.size() && !foundCurrent) {
+            if (currentPlayer.equals(turnTrack.get(currentIndex).getOccupiedBy())) {
+                foundCurrent = true;
+            } else {
+                currentIndex++;
+            }
+        }
+
+        // passiamo al prossimo slot occupato
+        int offset = 1;
+
+        while (offset <= turnTrack.size()) {
+            int nextIndex = (currentIndex + offset) % turnTrack.size();
+            Player nextP = turnTrack.get(nextIndex).getOccupiedBy();
+
+            // Se in questo slot c'è seduto qualcuno, e non ha ancora piazzato il totem
+            if (nextP != null && !nextP.hasPlacedTotem()) {
+                this.currentPlayer = nextP;
                 notifyTurnChanged(currentPlayer);
                 return; // Abbiamo trovato il prossimo, usciamo dal metodo
+            } else {
+                offset++; // posto successivo
             }
         }
     }

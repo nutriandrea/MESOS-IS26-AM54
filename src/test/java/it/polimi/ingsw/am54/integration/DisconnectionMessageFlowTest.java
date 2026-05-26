@@ -107,6 +107,15 @@ public class DisconnectionMessageFlowTest {
         vvAlice.setController(controller);
         vvBob.setController(controller);
         vvCharlie.setController(controller);
+
+        // Il costruttore del Controller aggiunge TUTTI i giocatori a disconnectedPlayers
+        // (per gestire il recupero da persistenza). In un setup di test fresco,
+        // nessuno è disconnesso all'inizio; puliamo il set.
+        java.lang.reflect.Field dpField = Controller.class.getDeclaredField("disconnectedPlayers");
+        dpField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Set<String> dp = (Set<String>) dpField.get(controller);
+        dp.clear();
     }
 
     // ================================================================

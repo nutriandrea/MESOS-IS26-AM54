@@ -4,6 +4,7 @@ import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.model.*;
 import it.polimi.ingsw.am54.network.messages.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -299,8 +300,10 @@ public class VirtualView implements IGameObserver {
 
     //PER LA RECONNECT
     public void sendFullStateOnReconnect(Game game) {
+        Board b = game.getBoard();
+
         // 1. Statistiche e Carte Giocatori
-        Map<String, StateChangedUpdate.PlayerSnapshot> stats = new java.util.LinkedHashMap<>();
+        Map<String, StateChangedUpdate.PlayerSnapshot> stats = new LinkedHashMap<>();
         for (Player p : game.getPlayers()) {
             List<String> tribeStr = p.getMyTribe().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
             List<String> buildStr = p.getBuildings().stream().map(this::formatBuildingForClient).collect(Collectors.toList());

@@ -58,7 +58,7 @@ public class Controller {
     private volatile boolean suspended = false;
 
     /** Timeout dopo cui il giocatore rimasto attivo vince (in secondi) */
-    private static final long SOLO_TIMEOUT_SECONDS = 120;
+    private static final long SOLO_TIMEOUT_SECONDS = 60;
 
     /** Scheduler per il timeout di sospensione */
     private final ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -288,7 +288,10 @@ public class Controller {
 
             // 1. Rimuove il giocatore dal modello e rimette il colore Totem a disposizione
             game.removePlayerEntirely(nickname);
+
+            // Rimuoviamo il nickname dal set dei disconnessi, così è libero di rientrare
             disconnectedPlayers.remove(nickname);
+
             if (view != null) game.removeObserver(view);
 
             if (game.getPlayers().isEmpty()) {
@@ -303,7 +306,7 @@ public class Controller {
                 notifyAllClientsStateChanged();
             }
         } else {
-            // Logica normale di crash in partita (Disconnessione Temporanea)
+            // --- LOGICA DI DISCONNESSIONE TEMPORANEA (Crash in-game) ---
             disconnectedPlayers.add(nickname);
             if (view != null) {
                 synchronized (game.getPlayers()) {
@@ -311,6 +314,7 @@ public class Controller {
                 }
             }
             LOGGER.info("Giocatore " + nickname + " disconnesso temporaneamente.");
+            broadcastPlayerDisconnected(nickname);
             autoHandleDisconnection(nickname);
         }
     }
@@ -392,7 +396,10 @@ public class Controller {
                 if (game.getCurrentPlayer() != null && game.getCurrentPlayer().equals(p)) {
                     game.getCurrentState().skipTurn(game, nickname);
 
+                    // skipTurn in StartTurnState libera lo slot e marca il giocatore.
+                    // Bisogna avanzare al prossimo giocatore valido per non rimanere bloccati.
                     if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.StartTurnState) {
+                        game.nextPlayer();
                         if (game.getBoard().allTotemsPlaced(activePlayerCount())) {
                             game.setState(new it.polimi.ingsw.am54.model.states.PickingState());
                             Player first = game.getBoard().getFirstPlayerFromOfferingTrack();
@@ -401,6 +408,30 @@ public class Controller {
                     }
 
                     checkAndResolveAutomaticPhases();
+                } else if (p.getCurrentTile() != null
+                        && game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.PickingState) {
+                    p.getCurrentTile().freeSlot();
+                    p.setCurrentTile(null);
+                    game.moveToLastSlot(p);
+                    game.notifyTotemReturned(p, -1);
+                } else if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.StartTurnState
+                        && p.hasPlacedTotem()) {
+                    if (p.getCurrentTile() != null) {
+                        p.getCurrentTile().freeSlot();
+                        p.setCurrentTile(null);
+                        game.notifyTotemReturned(p, -1);
+                    }
+                    game.moveToLastSlot(p);
+
+                    if (game.getBoard().allTotemsPlaced(activePlayerCount())) {
+                        game.setState(new it.polimi.ingsw.am54.model.states.PickingState());
+                        Player first = game.getBoard().getFirstPlayerFromOfferingTrack();
+                        if (first != null) game.setCurrentPlayer(first);
+                    }
+                } else if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.StartTurnState
+                        && !p.hasPlacedTotem()) {
+                    game.moveToLastSlot(p);
+                    p.setHasPlacedTotem(true);
                 }
             } catch (Exception e) {
                 LOGGER.warning("Skip turn fallito per " + nickname + ": " + e.getMessage());
@@ -530,13 +561,11 @@ public class Controller {
     }
 
     private void checkAndResolveAutomaticPhases() throws Exception {
-        // Se siamo finiti nella fase Eventi, risolvila automaticamente
         if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.EventState) {
             game.getCurrentState().resolvePhase(game);
             saveState(); // Aggiorna il JSON dopo la risoluzione dell'evento
         }
 
-        // Se dopo gli eventi (o in altri modi) siamo finiti nella fase finale, calcola i vincitori
         if (game.getCurrentState() instanceof it.polimi.ingsw.am54.model.states.EndGameState) {
             game.getCurrentState().resolvePhase(game);
             saveState(); // Questo svuoterà il file JSON (grazie alla logica in saveState)
@@ -558,6 +587,12 @@ public class Controller {
                     }
                 }).start();
             }
+            return;
+        }
+
+        if (game.getCurrentPlayer() != null
+                && disconnectedPlayers.contains(game.getCurrentPlayer().getNickname())) {
+            autoHandleDisconnection(game.getCurrentPlayer().getNickname());
         }
     }
 }

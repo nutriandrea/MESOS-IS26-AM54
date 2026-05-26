@@ -90,7 +90,6 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
             if (timeSinceLastPong > PING_TIMEOUT_MS) {
                 System.out.println("[Server RMI] Ping timeout per " + playerNickname + " (" + timeSinceLastPong + "ms)");
 
-                controller.markDisconnected(playerNickname);
                 disconnect();
                 return;
             }

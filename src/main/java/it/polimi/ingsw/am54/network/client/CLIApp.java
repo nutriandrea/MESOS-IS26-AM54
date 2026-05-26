@@ -44,47 +44,53 @@ public class CLIApp {
     }
 
     public synchronized void render() {
-        if (currentInputHandler != null) {
-            if (model.getLastSystemMessage() != null) {
-                System.out.println("\n--- 🔔 NOTIFICA DI SISTEMA ---");
-                System.out.println(model.getLastSystemMessage());
-                System.out.println("------------------------------\n");
-                model.clearSystemMessage();
-            }
-            if (model.getLastErrorMessage() != null) {
-                System.out.println("\n❌ [ERRORE DAL SERVER]: " + model.getLastErrorMessage());
-                model.clearError();
-            }
-            return;
+        String currentState = model.getCurrentState();
+
+        //per capire cosa fare, guardo dal ClientModel
+        boolean isMyTurn = myNickname.equals(model.getCurrentPlayer());
+        boolean hasSystemAlert = model.getLastSystemMessage() != null;
+        boolean isEndGame = currentState.equals("EndGameState");
+
+        // REGOLA D'ORO: Togliamo la tastiera all'utente SE:
+        // A) C'è un allarme di sistema (es. crash di un giocatore, sospensione)
+        // B) La partita è finita (Vittoria a tavolino)
+        // C) Siamo in gioco (StartTurn o Picking) ma NON è il nostro turno
+
+        if (hasSystemAlert || isEndGame ||
+                (!isMyTurn && (currentState.equals("StartTurnState") || currentState.equals("PickingState")))) {
+
+            currentInputHandler = null; // Strappiamo il controllo!
         }
 
+        // 2. RIDISEGNAMO SEMPRE LO SCHERMO
         clearConsole();
 
-        if (model.getLastSystemMessage() != null) {
-            System.out.println("--- 🔔 NOTIFICA DI SISTEMA ---");
-            System.out.println(model.getLastSystemMessage());
-            System.out.println("------------------------------\n");
+
+        // 3. DISEGNO DELLA FASE CORRENTE
+        if (currentState.equals("Lobby") || currentState.equals("SetUpGameState")) {
+            renderSetup();
+        } else if (currentState.equals("StartTurnState")) {
+            renderStartTurn();
+        } else if (currentState.equals("PickingState")) {
+            renderPicking();
+        } else if (currentState.equals("EventState")) {
+            System.out.println("Fase Eventi in corso... Attendi la risoluzione automatica...");
+        } else if (currentState.equals("EndGameState")) {
+            renderEndGame();
+        } else {
+            System.out.println("Stato sconosciuto: " + currentState);
+        }
+
+        // 4. STAMPA DIROMPENTE DEGLI ALLARMI
+        if (hasSystemAlert) {
+            System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            System.out.println(" 🚨 NOTIFICA DI RETE: " + model.getLastSystemMessage().toUpperCase());
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
             model.clearSystemMessage();
         }
 
-        String state = model.getCurrentState();
-
-        if (state.equals("Lobby") || state.equals("SetUpGameState")) {
-            renderSetup();
-        } else if (state.equals("StartTurnState")) {
-            renderStartTurn();
-        } else if (state.equals("PickingState")) {
-            renderPicking();
-        } else if (state.equals("EventState")) {
-            System.out.println("Fase Eventi in corso... Attendi...");
-        } else if (state.equals("EndGameState")) {
-            renderEndGame();
-        } else {
-            System.out.println("Stato sconosciuto: " + state);
-        }
-
         if (model.getLastErrorMessage() != null) {
-            System.out.println("\n❌ [ERRORE]: " + model.getLastErrorMessage());
+            System.out.println("\n❌ [ERRORE DAL SERVER]: " + model.getLastErrorMessage());
             model.clearError();
         }
     }

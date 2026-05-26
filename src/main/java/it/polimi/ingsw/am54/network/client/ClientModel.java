@@ -407,14 +407,24 @@ public class ClientModel {
     }
 
     public synchronized void updateState(StateChangedUpdate msg) {
-        // 1. Aggiorna lo stato testuale
         this.currentState = msg.getStateName();
         this.currentEra = msg.getCurrentEra();
         this.currentRound = msg.getCurrentRound();
 
-        // 2. Sincronizza giocatori, colori e statistiche
+        // 1. PULIZIA TOTALE: Dobbiamo svuotare TUTTO prima di riempire.
+        // Se non svuotiamo queste mappe, i dati dei giocatori disconnessi rimangono "fantasmi".
+        this.players.clear();
+        this.playerColors.clear();
+        this.playerFood.clear();
+        this.playerAura.clear();
+        this.playerMagic.clear();
+        this.playerTribe.clear();
+        this.playerBuildings.clear();
+
+        // 2. Ricarica i dati puliti inviati dal server
+        this.players.addAll(msg.getPlayersStats().keySet());
+
         msg.getPlayersStats().forEach((nick, stats) -> {
-            if (!players.contains(nick)) players.add(nick);
             playerColors.put(nick, stats.color);
             playerFood.put(nick, stats.food);
             playerAura.put(nick, stats.aura);
@@ -423,9 +433,12 @@ public class ClientModel {
             playerBuildings.put(nick, new ArrayList<>(stats.buildings));
         });
 
-        // 3. Sincronizza posizioni dei totem
-        turnOrderTrack.clear(); turnOrderTrack.addAll(msg.getTurnOrderTrack());
-        offeringTrack.clear();  offeringTrack.putAll(msg.getOfferingTrack());
+        // 3. Sincronizzazione strutture di gioco rimanenti
+        turnOrderTrack.clear();
+        turnOrderTrack.addAll(msg.getTurnOrderTrack());
+
+        offeringTrack.clear();
+        offeringTrack.putAll(msg.getOfferingTrack());
 
         // 4. Sincronizza plancia di gioco
         characterUpperRow.clear(); characterUpperRow.addAll(msg.getCharUpper());

@@ -222,10 +222,8 @@ public class VirtualView implements IGameObserver {
 
     @Override
     public void onStateChanged(Game game, GameState newState) {
-        Board b = game.getBoard();
-
-        // 1. Statistiche e Carte Giocatori
-        Map<String, StateChangedUpdate.PlayerSnapshot> stats = new LinkedHashMap<>();
+        // 1. Statistiche e Carte Giocatori (sempre valide)
+        Map<String, StateChangedUpdate.PlayerSnapshot> stats = new java.util.LinkedHashMap<>();
         for (Player p : game.getPlayers()) {
             List<String> tribeStr = p.getMyTribe().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
             List<String> buildStr = p.getBuildings().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
@@ -234,38 +232,48 @@ public class VirtualView implements IGameObserver {
             ));
         }
 
-        // 2. Ordine di turno e Tracciato Offerte (FORMATTATI)
-        List<String> turnOrder = b.getTurnOrderTile().stream()
-                .map(slot -> {
-                    int bonus = slot.getBonusFood();
-                    // Crea la stringa del cibo (es. "+2", "0", "-1")
-                    String foodStr = (bonus > 0 ? "+" : "") + bonus;
+        // Inizializziamo le strutture della Board a vuote
+        List<String> turnOrder = new java.util.ArrayList<>();
+        Map<Integer, String> offering = new java.util.LinkedHashMap<>();
+        List<String> charUp = new java.util.ArrayList<>();
+        List<String> charLow = new java.util.ArrayList<>();
+        List<String> eventUp = new java.util.ArrayList<>();
+        List<String> eventLow = new java.util.ArrayList<>();
+        List<String> buildUp = new java.util.ArrayList<>();
+        List<String> buildLow = new java.util.ArrayList<>();
 
-                    // Se il bonus è negativo, aggiunge l'avviso dell'Aura (basato sulla logica di PickingState)
-                    String auraWarning = (bonus < 0) ? " (-2 ✨ se non hai cibo)" : "";
+        Board b = game.getBoard();
 
-                    String occName = (slot.getOccupiedBy() != null) ? slot.getOccupiedBy().getNickname() : "VUOTO";
+        // =========================================================
+        // FIX: Se la Board esiste (siamo in gioco), raccogliamo i dati.
+        // Se è null (siamo in Lobby), skippiamo per evitare il NullPointer!
+        // =========================================================
+        if (b != null) {
+            turnOrder = b.getTurnOrderTile().stream()
+                    .map(slot -> {
+                        int bonus = slot.getBonusFood();
+                        String foodStr = (bonus > 0 ? "+" : "") + bonus;
+                        String auraWarning = (bonus < 0) ? " (-2 ✨ se non hai cibo)" : "";
+                        String occName = (slot.getOccupiedBy() != null) ? slot.getOccupiedBy().getNickname() : "VUOTO";
+                        return "[Slot " + slot.getPosition() + " | Cibo: " + foodStr + auraWarning + "] -> " + occName;
+                    })
+                    .collect(Collectors.toList());
 
-                    return "[Slot " + slot.getPosition() + " | Cibo: " + foodStr + auraWarning + "] -> " + occName;
-                })
-                .collect(Collectors.toList());
+            for (int i = 0; i < b.getOfferingTrack().size(); i++) {
+                OfferingTile tile = b.getOfferingTrack().get(i);
+                String occName = (tile.getOccupiedBy() != null) ? tile.getOccupiedBy().getNickname() : "VUOTO";
+                offering.put(i, "[Tessera " + tile.getId() + " | Pick Su:" + tile.getRemainingUpperPicks() + " Giù:" + tile.getRemainingLowerPicks() + " | Bonus 🍖:+" + tile.getFoodBonus() + "] -> " + occName);
+            }
 
-        Map<Integer, String> offering = new LinkedHashMap<>();
-        for (int i = 0; i < b.getOfferingTrack().size(); i++) {
-            OfferingTile tile = b.getOfferingTrack().get(i);
-            String occName = (tile.getOccupiedBy() != null) ? tile.getOccupiedBy().getNickname() : "VUOTO";
-            offering.put(i, "[Tessera " + tile.getId() + " | Pick Su:" + tile.getRemainingUpperPicks() + " Giù:" + tile.getRemainingLowerPicks() + " | Bonus 🍖:+" + tile.getFoodBonus() + "] -> " + occName);
+            charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+            charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+            eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
+            eventLow = b.getEventLowerRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
+            buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+            buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
         }
 
-        // 3. Carte sul tavolo
-        List<String> charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-        List<String> charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-        List<String> eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
-        List<String> eventLow = b.getEventLowerRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
-        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
-        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
-
-        // Spedisci il super-pacchetto!
+        // Spedisci il pacchetto (sicuro!)
         connection.notifyStateChanged(
                 newState.getClass().getSimpleName(), game.getCurrentEra(), game.getRoundCount(),
                 stats, turnOrder, offering,
@@ -291,10 +299,8 @@ public class VirtualView implements IGameObserver {
 
     //PER LA RECONNECT
     public void sendFullStateOnReconnect(Game game) {
-        Board b = game.getBoard();
-
         // 1. Statistiche e Carte Giocatori
-        Map<String, StateChangedUpdate.PlayerSnapshot> stats = new LinkedHashMap<>();
+        Map<String, StateChangedUpdate.PlayerSnapshot> stats = new java.util.LinkedHashMap<>();
         for (Player p : game.getPlayers()) {
             List<String> tribeStr = p.getMyTribe().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
             List<String> buildStr = p.getBuildings().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
@@ -303,31 +309,42 @@ public class VirtualView implements IGameObserver {
             ));
         }
 
-        // 2. Ordine di turno e Tracciato Offerte (FORMATTATI)
-        List<String> turnOrder = b.getTurnOrderTile().stream()
-                .map(slot -> {
-                    int bonus = slot.getBonusFood();
-                    String foodStr = (bonus > 0 ? "+" : "") + bonus;
-                    String auraWarning = (bonus < 0) ? " (-2 ✨ se non hai cibo)" : "";
-                    String occName = (slot.getOccupiedBy() != null) ? slot.getOccupiedBy().getNickname() : "VUOTO";
-                    return "[Slot " + slot.getPosition() + " | Cibo: " + foodStr + auraWarning + "] -> " + occName;
-                })
-                .collect(Collectors.toList());
+        List<String> turnOrder = new java.util.ArrayList<>();
+        Map<Integer, String> offering = new java.util.LinkedHashMap<>();
+        List<String> charUp = new java.util.ArrayList<>();
+        List<String> charLow = new java.util.ArrayList<>();
+        List<String> eventUp = new java.util.ArrayList<>();
+        List<String> eventLow = new java.util.ArrayList<>();
+        List<String> buildUp = new java.util.ArrayList<>();
+        List<String> buildLow = new java.util.ArrayList<>();
 
-        Map<Integer, String> offering = new LinkedHashMap<>();
-        for (int i = 0; i < b.getOfferingTrack().size(); i++) {
-            OfferingTile tile = b.getOfferingTrack().get(i);
-            String occName = (tile.getOccupiedBy() != null) ? tile.getOccupiedBy().getNickname() : "VUOTO";
-            offering.put(i, "[Tessera " + tile.getId() + " | Pick Su:" + tile.getRemainingUpperPicks() + " Giù:" + tile.getRemainingLowerPicks() + " | Bonus 🍖:+" + tile.getFoodBonus() + "] -> " + occName);
+        Board b = game.getBoard();
+
+        // Protezione Board
+        if (b != null) {
+            turnOrder = b.getTurnOrderTile().stream()
+                    .map(slot -> {
+                        int bonus = slot.getBonusFood();
+                        String foodStr = (bonus > 0 ? "+" : "") + bonus;
+                        String auraWarning = (bonus < 0) ? " (-2 ✨ se non hai cibo)" : "";
+                        String occName = (slot.getOccupiedBy() != null) ? slot.getOccupiedBy().getNickname() : "VUOTO";
+                        return "[Slot " + slot.getPosition() + " | Cibo: " + foodStr + auraWarning + "] -> " + occName;
+                    })
+                    .collect(Collectors.toList());
+
+            for (int i = 0; i < b.getOfferingTrack().size(); i++) {
+                OfferingTile tile = b.getOfferingTrack().get(i);
+                String occName = (tile.getOccupiedBy() != null) ? tile.getOccupiedBy().getNickname() : "VUOTO";
+                offering.put(i, "[Tessera " + tile.getId() + " | Pick Su:" + tile.getRemainingUpperPicks() + " Giù:" + tile.getRemainingLowerPicks() + " | Bonus 🍖:+" + tile.getFoodBonus() + "] -> " + occName);
+            }
+
+            charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+            charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
+            eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
+            eventLow = b.getEventLowerRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
+            buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+            buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
         }
-
-        // 3. Carte
-        List<String> charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-        List<String> charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-        List<String> eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
-        List<String> eventLow = b.getEventLowerRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
-        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
-        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
 
         // Manda il pacchetto solo a QUESTA connessione
         connection.notifyStateChanged(

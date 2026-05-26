@@ -280,36 +280,30 @@ public class Controller {
 
     public void removeClient(String nickname) {
         VirtualView view = virtualViews.remove(nickname);
-
-        // --- LOGICA DI PULIZIA DEFINITIVA ---
-        // Se siamo in LOBBY o a PARTITA FINITA, vogliamo rimuovere il giocatore PER SEMPRE.
         String stateName = game.getCurrentState().getClass().getSimpleName();
 
+        // Se siamo in LOBBY o FINE PARTITA -> Cancellazione Definitiva
         if (stateName.equals("SetUpGameState") || stateName.equals("EndGameState")) {
-            LOGGER.info("Giocatore " + nickname + " abbandona la stanza definitivamente.");
+            LOGGER.info("Giocatore " + nickname + " abbandona la lobby. Libero il posto e il Totem.");
 
-            // Rimuoviamo il giocatore dal modello di gioco
+            // 1. Rimuove il giocatore dal modello e rimette il colore Totem a disposizione
             game.removePlayerEntirely(nickname);
-
-            // Rimuoviamo il nickname dal set dei disconnessi, così è libero di rientrare
             disconnectedPlayers.remove(nickname);
-
             if (view != null) game.removeObserver(view);
 
-            // Notifica gli altri che il Totem si è liberato (se siamo in lobby)
-            notifyAllClientsStateChanged();
-
-            // ==========================================
-            // NUOVA AGGIUNTA: CONTROLLO STANZA VUOTA
-            // Se l'ultimo giocatore se ne è andato, pialliamo il file!
-            // ==========================================
             if (game.getPlayers().isEmpty()) {
                 persistenceManager.clearBackup();
-                LOGGER.info("[PERSISTENZA] Tutti i giocatori hanno abbandonato la stanza. Backup eliminato.");
+            } else {
+                // =================================================================
+                // FIX: Notifica forzata agli altri client.
+                // Poiché il ClientModel aggiorna la sua lista interna (e quindi l'indice 0)
+                // in base alla nuova lista che riceve dal server, non serve setGameReady.
+                // Il client riceverà la lista aggiornata e si autogestirà l'Host.
+                // =================================================================
+                notifyAllClientsStateChanged();
             }
-
         } else {
-            // --- LOGICA DI DISCONNESSIONE TEMPORANEA (Crash in-game) ---
+            // Logica normale di crash in partita (Disconnessione Temporanea)
             disconnectedPlayers.add(nickname);
             if (view != null) {
                 synchronized (game.getPlayers()) {

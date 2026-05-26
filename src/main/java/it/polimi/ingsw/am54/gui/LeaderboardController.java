@@ -2,18 +2,18 @@ package it.polimi.ingsw.am54.gui;
 
 import it.polimi.ingsw.am54.network.client.Client;
 import it.polimi.ingsw.am54.network.client.ClientModel;
+import it.polimi.ingsw.am54.network.messages.LeaderboardEntry;
 import it.polimi.ingsw.am54.model.TotemColors;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.transform.Scale;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -31,6 +31,11 @@ public class LeaderboardController {
 
     @FXML private VBox rankingTable;
 
+    // --- VARIABILI PER L'OVERLAY DELLA CLASSIFICA GLOBALE (Copia dal Login) ---
+    @FXML private StackPane leaderboardOverlay;
+    @FXML private VBox leaderboardEntriesContainer;
+    @FXML private Label leaderboardFooter;
+
     private final double NATIVE_WIDTH = 1672.0;
     private final double NATIVE_HEIGHT = 941.0;
 
@@ -44,13 +49,19 @@ public class LeaderboardController {
     public void initialize() {
         setupScaling();
 
-        if (Client.getInstance().getConnection() != null) {
-            try {
-                // Inviamo un messaggio di fine sessione (se lo hai) o semplicemente disconnettiamo
-                Client.getInstance().getConnection().disconnect();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        // 1. NON DISCONNETTIAMO LA RETE SUBITO! Ci serve per richiedere la classifica.
+        // Se c'è una connessione, la manteniamo aperta per il pulsante globale.
+
+        // 2. Registriamo il Listener per quando il Server ci manda i dati della Classifica Globale
+        if (Client.getInstance().getModel() != null) {
+            Client.getInstance().getModel().setOnModelUpdatedCallback(() -> {
+                Platform.runLater(() -> {
+                    // Costruiamo la tabella della partita corrente
+                    buildLeaderboard();
+                    // Proviamo ad aggiornare l'overlay globale se ci sono dati
+                    updateGlobalLeaderboardUI();
+                });
+            });
         }
 
         Platform.runLater(this::buildLeaderboard);
@@ -81,9 +92,16 @@ public class LeaderboardController {
         mainArea.setTranslateY((screenH - scaledH) / 2.0);
     }
 
+    /* =====================================================================
+     * LOGICA PER LA CLASSIFICA DELLA PARTITA CORRENTE
+     * ===================================================================== */
+
     private void buildLeaderboard() {
         ClientModel model = Client.getInstance().getModel();
         if (model == null || model.getPlayers() == null) return;
+
+        // Evitiamo di ridisegnare la tabella se è già stata popolata
+        if (!rankingTable.getChildren().isEmpty()) return;
 
         List<PlayerStats> statsList = new ArrayList<>();
 
@@ -91,7 +109,6 @@ public class LeaderboardController {
             PlayerStats ps = new PlayerStats();
             ps.name = pName;
 
-            // Colore Totem (con fallback sicuro)
             ps.color = model.getPlayerColors().get(pName);
             if (ps.color == null) {
                 for (Map.Entry<String, TotemColors> entry : model.getPlayerColors().entrySet()) {
@@ -99,22 +116,19 @@ public class LeaderboardController {
                 }
             }
 
-            // Punti base
             if (model.getLastMatchScores() != null && model.getLastMatchScores().containsKey(pName)) {
                 ps.aura = model.getLastMatchScores().get(pName);
             } else {
-                ps.aura = model.getPlayerAura().getOrDefault(pName, 0); // Fallback di sicurezza
+                ps.aura = model.getPlayerAura().getOrDefault(pName, 0);
             }
 
             ps.food = model.getPlayerFood().getOrDefault(pName, 0);
 
-            // Punti magia (gestiti con sicurezza)
             ps.magic = 0;
             try {
                 if (model.getPlayerMagic() != null) ps.magic = model.getPlayerMagic().getOrDefault(pName, 0);
             } catch (Exception e) {}
 
-            // Conteggio carte
             List<String> tribe = model.getPlayerTribe().get(pName);
             ps.tribeCards = (tribe != null) ? tribe.size() : 0;
 
@@ -124,24 +138,16 @@ public class LeaderboardController {
             statsList.add(ps);
         }
 
-        // ==============================================================
-        // ORDINAMENTO LOGICO:
-        // 1° Criterio: Aura (Maggiore)
-        // 2° Criterio: Cibo (Maggiore)
-        // 3° Criterio: Ordine Alfabetico del Nome
-        // ==============================================================
         statsList.sort((p1, p2) -> {
             if (p1.aura != p2.aura) return Integer.compare(p2.aura, p1.aura);
             if (p1.food != p2.food) return Integer.compare(p2.food, p1.food);
             return p1.name.compareToIgnoreCase(p2.name);
         });
 
-        // Popola il Podio
         if (statsList.size() > 0) setupPodiumPlace(podium1, totem1, name1, statsList.get(0));
         if (statsList.size() > 1) setupPodiumPlace(podium2, totem2, name2, statsList.get(1));
         if (statsList.size() > 2) setupPodiumPlace(podium3, totem3, name3, statsList.get(2));
 
-        // Popola la Tabella Generale
         for (int i = 0; i < statsList.size(); i++) {
             PlayerStats p = statsList.get(i);
             HBox row = createRankingRow(i + 1, p);
@@ -152,7 +158,6 @@ public class LeaderboardController {
     private void setupPodiumPlace(VBox podiumBox, ImageView totemView, Label nameLabel, PlayerStats p) {
         podiumBox.setVisible(true);
 
-        // Ridimensionamento testo intelligente se il nome è troppo lungo
         String dispName = p.name.toUpperCase();
         nameLabel.setText(dispName);
         if (dispName.length() > 10) {
@@ -162,16 +167,12 @@ public class LeaderboardController {
         if (p.color != null) {
             String cName = p.color.name().toLowerCase();
             try {
-                // Carichiamo l'immagine totem_front_COLORE.png
                 InputStream is = getClass().getResourceAsStream("/images/totem_front_" + cName + ".png");
                 if (is != null) {
                     totemView.setImage(new Image(is));
-                    // Aggiungiamo la classe CSS della lobby per l'illuminazione (glow effect)
                     totemView.getStyleClass().add("totem-selected-" + cName);
                 }
-            } catch (Exception e) {
-                System.err.println("Errore caricamento totem front per podio: " + cName);
-            }
+            } catch (Exception e) {}
         }
     }
 
@@ -180,21 +181,18 @@ public class LeaderboardController {
         row.setAlignment(Pos.CENTER_LEFT);
         row.setStyle("-fx-padding: 10 0 10 0; -fx-border-color: transparent transparent rgba(255,255,255,0.2) transparent;");
 
-        // POS
         Label lblPos = new Label(position + "°");
         lblPos.setPrefWidth(60);
         lblPos.setTextFill(Color.WHITE);
         lblPos.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-font-family: 'Herculanum';");
 
-        // TOTEM ICON (Piccolo)
         ImageView iconView = new ImageView();
         iconView.setFitHeight(40);
         iconView.setFitWidth(40);
         iconView.setPreserveRatio(true);
         if (p.color != null) {
-            String cName = p.color.name().toLowerCase();
             try {
-                InputStream is = getClass().getResourceAsStream("/images/totem_front_" + cName + ".png");
+                InputStream is = getClass().getResourceAsStream("/images/totem_front_" + p.color.name().toLowerCase() + ".png");
                 if (is != null) iconView.setImage(new Image(is));
             } catch (Exception e) {}
         }
@@ -202,13 +200,11 @@ public class LeaderboardController {
         iconBox.setPrefWidth(80);
         iconBox.setAlignment(Pos.CENTER_LEFT);
 
-        // NICKNAME
         Label lblName = new Label(p.name.toUpperCase());
         lblName.setPrefWidth(300);
         lblName.setTextFill(Color.WHITE);
         lblName.setStyle("-fx-font-size: 20px; -fx-font-family: 'Herculanum';");
 
-        // STATS (Larghezza 120px per combaciare con l'header)
         Label lblAura = createStatLabel(String.valueOf(p.aura));
         Label lblFood = createStatLabel(String.valueOf(p.food));
         Label lblMagic = createStatLabel(String.valueOf(p.magic));
@@ -221,29 +217,122 @@ public class LeaderboardController {
 
     private Label createStatLabel(String val) {
         Label l = new Label(val);
-        l.setPrefWidth(120); // Questo deve essere identico al prefWidth dell'FXML (120)
-        l.setAlignment(Pos.CENTER); // <-- AGGIUNGI QUESTA RIGA per centrare il testo
-        l.getStyleClass().add("ranking-table-value"); // Applica il CSS per il font Herculanum e colore
+        l.setPrefWidth(120);
+        l.setAlignment(Pos.CENTER);
+        l.getStyleClass().add("ranking-table-value");
         return l;
     }
+
+    /* =====================================================================
+     * LOGICA PER L'OVERLAY DELLA CLASSIFICA GLOBALE
+     * ===================================================================== */
+
+    @FXML
+    private void handleGlobalLeaderboardButton() {
+        if (leaderboardOverlay == null) return;
+
+        // Mostriamo l'overlay con una scritta di attesa
+        if (leaderboardFooter != null) leaderboardFooter.setText("CARICAMENTO IN CORSO...");
+        leaderboardOverlay.setVisible(true);
+        leaderboardOverlay.setManaged(true);
+
+        // Richiediamo al server la classifica filtrata per il numero di giocatori attuale
+        if (Client.getInstance().getConnection() != null && Client.getInstance().getModel() != null) {
+            int numPlayers = Client.getInstance().getModel().getPlayers().size();
+            Client.getInstance().getConnection().requestLeaderboard(numPlayers);
+        } else {
+            if (leaderboardFooter != null) leaderboardFooter.setText("CONNESSIONE SERVER ASSENTE");
+        }
+    }
+
+    @FXML
+    private void handleOverlayClose() {
+        if (leaderboardOverlay != null) {
+            leaderboardOverlay.setVisible(false);
+            leaderboardOverlay.setManaged(false);
+        }
+    }
+
+    @FXML
+    private void handlePanelClick(MouseEvent event) {
+        // Intercetta i click sul pannello interno per non far chiudere l'overlay
+        event.consume();
+    }
+
+    private void updateGlobalLeaderboardUI() {
+        if (leaderboardEntriesContainer == null || leaderboardOverlay == null || !leaderboardOverlay.isVisible()) return;
+
+        ClientModel model = Client.getInstance().getModel();
+
+        java.util.List<LeaderboardEntry> entries = new java.util.ArrayList<>(model.getLeaderboardEntries());
+
+        if (entries == null || entries.isEmpty()) {
+            if (leaderboardFooter != null) leaderboardFooter.setText("NESSUNA PARTITA ARCHIVIATA");
+            return;
+        }
+
+        entries.sort((a, b) -> Integer.compare(b.getScore(), a.getScore()));
+
+        leaderboardEntriesContainer.getChildren().clear();
+
+        if (leaderboardFooter != null) leaderboardFooter.setText("TOTALE PARTITE ARCHIVIATE: " + entries.size());
+
+        int shown = Math.min(entries.size(), 50);
+        for (int i = 0; i < shown; i++) {
+            LeaderboardEntry e = entries.get(i);
+            HBox row = new HBox(15);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.getStyleClass().add("leaderboard-entry-row");
+
+            Label rankLabel = new Label("#" + (i + 1));
+            rankLabel.getStyleClass().add("leaderboard-entry-rank");
+            rankLabel.setPrefWidth(50);
+
+            Label nameLabel = new Label(e.getNickname().toUpperCase());
+            nameLabel.getStyleClass().add("leaderboard-entry-name");
+            HBox.setHgrow(nameLabel, Priority.ALWAYS);
+            nameLabel.setMaxWidth(Double.MAX_VALUE);
+
+            Label scoreLabel = new Label(e.getScore() + " ✨");
+            scoreLabel.getStyleClass().add("leaderboard-entry-score");
+            scoreLabel.setPrefWidth(80);
+
+            Label modeLabel = new Label(e.getNumPlayers() + "P");
+            modeLabel.getStyleClass().add("leaderboard-entry-mode");
+            modeLabel.setPrefWidth(40);
+
+            // ========================================================
+            // NUOVO: RECUPERO E VISUALIZZAZIONE DATA DELLA PARTITA
+            // ========================================================
+            String fullDate = e.getMatchDate();
+            String displayDate = (fullDate != null && fullDate.length() >= 10) ? fullDate.substring(0, 10) : "---";
+            Label dateLabel = new Label(displayDate);
+            dateLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: rgba(255,255,255,0.6); -fx-font-family: 'Herculanum';");
+            dateLabel.setPrefWidth(120);
+            dateLabel.setAlignment(Pos.CENTER_RIGHT);
+
+            row.getChildren().addAll(rankLabel, nameLabel, scoreLabel, modeLabel, dateLabel);
+            leaderboardEntriesContainer.getChildren().add(row);
+        }
+    }
+
+    /* =====================================================================
+     * RITORNO AL MENU E DISCONNESSIONE
+     * ===================================================================== */
 
     @FXML
     private void handleReturnToMenu() {
         try {
-            // 1. Disconnessione di rete pulita
+            // La disconnessione della rete avviene SOLO in questo momento!
             if (Client.getInstance().getConnection() != null) {
                 try {
-                    // Chiama il metodo per chiudere Socket/RMI (vedi punto 2)
                     Client.getInstance().getConnection().disconnect();
                 } catch (Exception e) {
                     System.err.println("[CLIENT] Errore durante la disconnessione: " + e.getMessage());
                 }
             }
 
-            // 2. Reset profondo dei dati locali del Client
             Client.resetClient();
-
-            // 3. Ritorno alla schermata iniziale
             GUIApp.loadLoginScene();
 
         } catch (Exception e) {

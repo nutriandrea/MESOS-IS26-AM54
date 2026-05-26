@@ -141,7 +141,18 @@ public class LoginController {
             modeLabel.getStyleClass().add("leaderboard-entry-mode");
             modeLabel.setPrefWidth(40);
 
-            row.getChildren().addAll(rankLabel, nameLabel, scoreLabel, modeLabel);
+            // ========================================================
+            // AGGIUNTA DELLA DATA ANCHE NEL LOGIN
+            // ========================================================
+            String fullDate = e.getMatchDate();
+            String displayDate = (fullDate != null && fullDate.length() >= 10) ? fullDate.substring(0, 10) : "---";
+            Label dateLabel = new Label(displayDate);
+            dateLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: rgba(255,255,255,0.6); -fx-font-family: 'Herculanum';");
+            dateLabel.setPrefWidth(120);
+            dateLabel.setAlignment(Pos.CENTER_RIGHT);
+
+            // Aggiungiamo dateLabel alla fine della riga
+            row.getChildren().addAll(rankLabel, nameLabel, scoreLabel, modeLabel, dateLabel);
             leaderboardEntriesContainer.getChildren().add(row);
         }
     }

@@ -170,7 +170,49 @@ public class PickingState extends GameState {
             player.setExtraPick(false);
         }
 
-        executeEndTurnLogic(game, player);
+        if (player.getCurrentTile() != null) {
+            TurnOrderSlot slot = game.moveToLastSlot(player);
+            if (slot != null) {
+                int bonus = slot.getBonusFood();
+                if (bonus < 0) {
+                    if (player.getFood() >= Math.abs(bonus)) player.modifyFood(bonus);
+                    else player.modifyAuraPoints(-2);
+                } else {
+                    player.modifyFood(bonus);
+                }
+
+                for (BuildingCard building : player.getBuildings()) {
+                    if (building.getEffects() != null) {
+                        for (var effect : building.getEffects()) {
+                            effect.applyOnTurnEnd(player, game, building);
+                        }
+                    }
+                }
+            }
+
+            game.notifyTotemReturned(player, slot != null ? slot.getPosition() : -1);
+            player.getCurrentTile().freeSlot();
+            player.setCurrentTile(null);
+        }
+
+        if (game.isPickingComplete()) {
+            Player extraPicker = game.getPlayers().stream()
+                    .filter(Player::hasExtraPick)
+                    .findFirst()
+                    .orElse(null);
+
+            if (extraPicker != null) {
+                game.setCurrentPlayer(extraPicker);
+            } else {
+                if (game.isTribeDeckEmpty() && game.getCurrentEra() == 3) {
+                    game.setState(new EndGameState());
+                } else {
+                    game.setState(new EventState());
+                }
+            }
+        } else {
+            game.setCurrentPlayer(game.getCurrentPicker());
+        }
     }
 
     private void executeEndTurnLogic(Game game, Player player) {

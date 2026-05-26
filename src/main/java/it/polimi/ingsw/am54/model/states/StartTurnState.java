@@ -76,13 +76,10 @@ public class StartTurnState extends GameState {
             throw new Exception(nickname + " ha gia' piazzato il totem");
         }
 
+        game.moveToLastSlot(player); // libera slot, compatta, mette in ultima posizione
+
         // Marca come completato (nextPlayer() saltera' questo giocatore)
         player.setHasPlacedTotem(true);
-        // Libera lo slot (nextPlayer() non lo trovera' nell'ordine di turno)
-        game.getBoard().getTurnOrderTile().stream()
-                .filter(slot -> player.equals(slot.getOccupiedBy()))
-                .findFirst()
-                .ifPresent(slot -> slot.freeSlot());
 
         // Avanza al prossimo giocatore ancora in attesa di piazzare
         game.nextPlayer();

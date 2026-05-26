@@ -451,13 +451,56 @@ public class Game implements IGame{
         return null;
     }
 
-    public boolean isPickingComplete() {
-        int needed = (activePlayerCount > 0) ? activePlayerCount : players.size();
-        int filled = 0;
-        for (TurnOrderSlot slot : board.getTurnOrderTile()) {
-            if (slot.getOccupiedBy() != null) filled++;
+    public TurnOrderSlot moveToLastSlot(Player p) {
+        List<TurnOrderSlot> slots = board.getTurnOrderTile();
+
+        // libera il giocatore dallo slot corrente
+        int freedIndex = -1;
+        for (int i = 0; i < slots.size(); i++) {
+            if (p.equals(slots.get(i).getOccupiedBy())) {
+                slots.get(i).freeSlot();
+                freedIndex = i;
+                break;
+            }
         }
-        return filled >= needed;
+
+        // compatta spostando a sinistra gli occupanti dopo freedIndex
+        if (freedIndex >= 0) {
+            for (int i = freedIndex; i < slots.size() - 1; i++) {
+                Player occupant = slots.get(i + 1).getOccupiedBy();
+                if (occupant != null) {
+                    slots.get(i + 1).freeSlot();
+                    slots.get(i).occupy(occupant);
+                }
+            }
+        }
+
+        int lastIdx = slots.size() - 1;
+        TurnOrderSlot lastSlot = slots.get(lastIdx);
+        if (lastSlot.getOccupiedBy() == null) {
+            lastSlot.occupy(p);
+            return lastSlot;
+        }
+
+        return null;
+    }
+
+    public boolean isPickingComplete() {
+        // Il conteggio basato su activePlayerCount fallisce quando un giocatore
+        // disconnesso viene spostato nel turn order da moveToLastSlot (in
+        // autoHandleDisconnection): viene conteggiato come "aver pescato",
+        // saltando i giocatori ancora sul tracciato offerte.
+        //
+        // La condizione corretta: tutti i giocatori che hanno piazzato un totem
+        // sul tracciato offerte hanno completato la pesca, cioè il loro occupante
+        // è stato spostato nel turn order (o la tessera è stata liberata).
+        for (OfferingTile tile : board.getOfferingTrack()) {
+            Player occupant = tile.getOccupiedBy();
+            if (occupant != null && !isInTurnOrder(occupant)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean isTribeDeckEmpty() {

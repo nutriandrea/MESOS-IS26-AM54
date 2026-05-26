@@ -4,6 +4,7 @@ import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.model.*;
 import it.polimi.ingsw.am54.network.messages.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -234,6 +235,20 @@ public class VirtualView implements IGameObserver {
             ));
         }
 
+        // Difesa: se il board non è ancora stato inizializzato (es. SetUpGameState),
+        // inviamo comunque uno snapshot minimo con i soli dati dei giocatori,
+        // evitando NPE sull'accesso al turnOrder/offering.
+        if (b == null) {
+            connection.notifyStateChanged(
+                    newState.getClass().getSimpleName(), 0, 0,
+                    stats, Collections.emptyList(), Collections.emptyMap(),
+                    Collections.emptyList(), Collections.emptyList(),
+                    Collections.emptyList(), Collections.emptyList(),
+                    Collections.emptyList(), Collections.emptyList()
+            );
+            return;
+        }
+
         // 2. Ordine di turno e Tracciato Offerte (FORMATTATI)
         List<String> turnOrder = b.getTurnOrderTile().stream()
                 .map(slot -> {
@@ -301,6 +316,18 @@ public class VirtualView implements IGameObserver {
             stats.put(p.getNickname(), new StateChangedUpdate.PlayerSnapshot(
                     p.getFood(), p.getAuraPoints(), p.getMagicPoints(), p.getTotemColors(), tribeStr, buildStr
             ));
+        }
+
+        // Difesa: board potrebbe non essere ancora inizializzato
+        if (b == null) {
+            connection.notifyStateChanged(
+                    game.getCurrentState().getClass().getSimpleName(), 0, 0,
+                    stats, Collections.emptyList(), Collections.emptyMap(),
+                    Collections.emptyList(), Collections.emptyList(),
+                    Collections.emptyList(), Collections.emptyList(),
+                    Collections.emptyList(), Collections.emptyList()
+            );
+            return;
         }
 
         // 2. Ordine di turno e Tracciato Offerte (FORMATTATI)

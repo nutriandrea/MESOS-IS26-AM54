@@ -310,6 +310,12 @@ public class BoardController {
 
             if (!isGameOver && (isEndState || hasWinners)) {
                 isGameOver = true;
+
+                // NUOVA LOGICA: Se la partita è finita ma il popup degli eventi NON è aperto
+                // (es. vittoria a tavolino per timeout), apriamo immediatamente il calcolo finale!
+                if (eventSummaryOverlay == null || !eventSummaryOverlay.isVisible()) {
+                    openFinalCalculationOverlay();
+                }
             }
 
             marketManager.updateMarkets(model);

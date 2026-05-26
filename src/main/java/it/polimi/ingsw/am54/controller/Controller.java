@@ -516,19 +516,32 @@ public class Controller {
             synchronized (game.getPlayers()) {
                 if (!suspended) return;
                 Player winner = findSoloActivePlayer();
+
                 if (winner != null) {
-                    LOGGER.info("Timeout sospensione scaduto: " + winner.getNickname() + " vince la partita!");
+                    LOGGER.info("Timeout sospensione scaduto: " + winner.getNickname() + " vince la partita per abbandono!");
 
-                    // Salvataggio nel DB del vincitore a tavolino integrato qui
-                    if (!scoresSavedToDatabase) {
-                        scoresSavedToDatabase = true;
-                        int finalScore = game.calculatePlayerScore(winner);
-                        int numPlayers = game.getPlayers().size();
-                        dbManager.saveMatchResult(winner.getNickname(), finalScore, numPlayers);
-                        LOGGER.info("[DATABASE] Punteggio per abbandono salvato.");
+                    // 1. Mettiamo il Model nello stato di fine partita
+                    game.setState(new it.polimi.ingsw.am54.model.states.EndGameState());
+
+                    // 2. Chiamiamo una risoluzione speciale per la vittoria a tavolino
+                    // Perché non usiamo resolvePhase()? Perché resolvePhase() calcola i punteggi
+                    // e applica l'aura. Qui vogliamo far vincere il giocatore e basta.
+                    try {
+                        // Salvataggio nel DB del vincitore a tavolino (come avevi già fatto)
+                        if (!scoresSavedToDatabase) {
+                            scoresSavedToDatabase = true;
+                            int finalScore = game.calculatePlayerScore(winner);
+                            int numPlayers = game.getPlayers().size();
+                            dbManager.saveMatchResult(winner.getNickname(), finalScore, numPlayers);
+                            LOGGER.info("[DATABASE] Punteggio per abbandono salvato.");
+                        }
+
+                        // Lasciamo che sia il Model a notificare la fine della partita, non il Controller
+                        game.notifyEndGame(Collections.singletonList(winner));
+
+                    } catch (Exception e) {
+                        LOGGER.severe("Errore durante la vittoria a tavolino: " + e.getMessage());
                     }
-
-                    game.notifyEndGame(Collections.singletonList(winner));
                 }
                 suspended = false;
             }

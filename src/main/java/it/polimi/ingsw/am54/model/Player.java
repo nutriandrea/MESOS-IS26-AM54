@@ -29,8 +29,7 @@ public class Player {
     // Flag di stato
     private boolean extraPick;
     private boolean hasPlacedTotem;
-    private OfferingTile currentTile;
-
+    private transient OfferingTile currentTile;
     /**
      * Costruttore di default
      */
@@ -141,5 +140,18 @@ public class Player {
      */
     public int getBaseAuraBeforeEndGame() {
         return this.aura - this.endGameBuildingsAura;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Player player = (Player) o;
+        return nickname != null && nickname.equalsIgnoreCase(player.getNickname());
+    }
+
+    @Override
+    public int hashCode() {
+        return nickname != null ? nickname.toLowerCase().hashCode() : 0;
     }
 }

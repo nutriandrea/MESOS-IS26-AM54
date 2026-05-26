@@ -21,11 +21,27 @@ public class Server {
     private boolean isRunning;
 
     public Server() {
-        this.game = new Game();
-        this.controller = new Controller(game);
+        PersistenceManager pm = new PersistenceManager("backup.json");
+        Game loadedGame = pm.loadGame();
+
+        // Si attiva SOLO se il file di backup esiste ed è valido
+        if (loadedGame != null) {
+            this.game = loadedGame;
+            this.controller = new Controller(this.game);
+
+            // CHIAMATA QUI: Solo durante il vero ripristino
+            this.controller.validateGameStateAfterRecovery();
+
+            System.out.println("[Server] Crash rilevato: partita ripristinata.");
+        } else {
+            // Avvio normale pulito
+            this.game = new Game();
+            this.controller = new Controller(game);
+            System.out.println("Server creato con una nuova partita.");
+        }
+
         this.controller.setServer(this);
         this.isRunning = true;
-        System.out.println("Server creato con una nuova partita.");
     }
 
     public Controller getController() {

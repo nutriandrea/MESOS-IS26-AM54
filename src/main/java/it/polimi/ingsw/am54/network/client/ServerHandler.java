@@ -74,7 +74,12 @@ public class ServerHandler implements Runnable {
                     handleUpdate(update);
                 }
             } catch (Exception e) {
-                if (running) stop();
+                // SE IL SERVER CADE, ENTRA QUI:
+                if (running) {
+                    System.err.println("[SOCKET] Connessione persa, avvio auto-reconnect...");
+                    clientModel.triggerConnectionLost();
+                    stop();
+                }
             }
         }
     }
@@ -92,7 +97,11 @@ public class ServerHandler implements Runnable {
             out.flush();
             out.reset();
         } catch (Exception e) {
-            stop();
+            if (running) {
+                System.err.println("[SOCKET] Connessione persa al ping, avvio auto-reconnect...");
+                clientModel.triggerConnectionLost();
+                stop();
+            }
         }
     }
 

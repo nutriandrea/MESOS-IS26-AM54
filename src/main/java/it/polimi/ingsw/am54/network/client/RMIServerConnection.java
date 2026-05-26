@@ -8,7 +8,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 import java.util.Map;
 
-
 public class RMIServerConnection extends UnicastRemoteObject implements ServerConnection, RMIClientInterface {
 
     /** Stub RMI del server: usato per inviare Request e rispondere ai ping */
@@ -27,6 +26,18 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
         this.serverStub = server.connect(this);
     }
 
+    /**
+     * Metodo di supporto per gestire il crash del server in RMI.
+     * Segnala la caduta della rete al Modello in modo disaccoppiato.
+     */
+    private void handleServerCrash() {
+        if (this.serverStub == null) return;
+        System.err.println("[RMI] Connessione persa, avviso il modello...");
+        clientModel.triggerConnectionLost();
+        // Sganciamo lo stub rotto
+        this.serverStub = null;
+    }
+
     /* =====================================================================
      * AZIONI IN USCITA (Dal Client al Server) - Implementa ServerConnection
      * Il giocatore interagisce con la GUI, il VirtualServer chiama questi
@@ -36,43 +47,43 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     @Override
     public void joinGame(String nickname) {
         try { serverStub.joinGameRequest(nickname); }
-        catch (RemoteException e) { disconnect(); }
+        catch (RemoteException | NullPointerException e) { handleServerCrash(); }
     }
 
     @Override
     public void setupGame() {
         try { serverStub.setupGameRequest(); }
-        catch (RemoteException e) { disconnect(); }
+        catch (RemoteException | NullPointerException e) { handleServerCrash(); }
     }
 
     @Override
     public void chooseTotem(TotemColors color) {
         try { serverStub.chooseTotemColorRequest(color.name()); }
-        catch (RemoteException e) { disconnect(); }
+        catch (RemoteException | NullPointerException e) { handleServerCrash(); }
     }
 
     @Override
     public void placeTotem(int position) {
         try { serverStub.placeTotemRequest(position); }
-        catch (RemoteException e) { disconnect(); }
+        catch (RemoteException | NullPointerException e) { handleServerCrash(); }
     }
 
     @Override
     public void pickCard(String row, int index) {
         try { serverStub.pickCardRequest(row, index); }
-        catch (RemoteException e) { disconnect(); }
+        catch (RemoteException | NullPointerException e) { handleServerCrash(); }
     }
 
     @Override
     public void endTurn() {
         try { serverStub.endTurnRequest(); }
-        catch (RemoteException e) { disconnect(); }
+        catch (RemoteException | NullPointerException e) { handleServerCrash(); }
     }
 
     @Override
     public void requestLeaderboard(int numPlayers) {
         try { serverStub.getLeaderboardRequest(numPlayers); }
-        catch (RemoteException e) { disconnect(); }
+        catch (RemoteException | NullPointerException e) { handleServerCrash(); }
     }
 
     /* =====================================================================
@@ -97,7 +108,6 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
 
     @Override
     public void onTotemReturned(String nickname, int food, int aura) throws RemoteException {
-        // Presupponendo che tu abbia o aggiunga questo metodo nel ClientModel
         clientModel.updateTotemReturned(nickname, food, aura);
     }
 
@@ -149,7 +159,7 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
 
     @Override
     public void onEndGame(EndGameUpdate update) throws RemoteException {
-       clientModel.updateEndGame(
+        clientModel.updateEndGame(
                 update.getWinners(),
                 update.getAllScores(),
                 update.getNumPlayers()
@@ -195,20 +205,22 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
         try {
             // Risposta immediata al server per confermare che siamo vivi
             serverStub.pong();
-        } catch (RemoteException e) {
+        } catch (RemoteException | NullPointerException e) {
             // Se non riusciamo a rispondere, il server e' giù
-            disconnect();
+            handleServerCrash();
         }
     }
 
     /* =====================================================================
-     * DISCONNESSIONE
+     * DISCONNESSIONE VOLONTARIA
      * ===================================================================== */
 
     @Override
     public void disconnect() {
         try {
-            serverStub.disconnect();
+            if (serverStub != null) {
+                serverStub.disconnect();
+            }
         } catch (RemoteException ignored) {}
     }
 }

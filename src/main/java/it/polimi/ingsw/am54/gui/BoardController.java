@@ -73,6 +73,9 @@ public class BoardController {
     @FXML private StackPane finalCalculationOverlay;
     @FXML private VBox finalCalculationContainer;
 
+    @FXML private StackPane reconnectingOverlay;
+    @FXML private Label reconnectingLabel;
+
     private boolean isDashboardOpen = false;
     private final double DASHBOARD_OPEN_HEIGHT = 210.0;
 
@@ -106,6 +109,15 @@ public class BoardController {
 
         ClientModel model = Client.getInstance().getModel();
         if (model != null) {
+
+            model.setOnReconnectingChangedCallback(() -> {
+                javafx.application.Platform.runLater(() -> {
+                    if (reconnectingOverlay != null) {
+                        reconnectingOverlay.setVisible(model.isReconnecting());
+                    }
+                });
+            });
+
             model.setOnModelUpdatedCallback(this::refreshBoard);
 
             model.setOnEventResolvedCallback(reports -> {
@@ -137,6 +149,10 @@ public class BoardController {
             ClientModel model = Client.getInstance().getModel();
             if (model != null) {
                 updateActionBanner(model);
+            }
+
+            if (reconnectingLabel != null) {
+                reconnectingLabel.setText("Tentativo di riconnessione automatica in corso" + currentDots);
             }
         }));
         dotsTimeline.setCycleCount(Timeline.INDEFINITE);

@@ -160,6 +160,7 @@ public class LoginController {
 
     @FXML
     private void handleNicknameSubmit() {
+
         String ip = serverIpField.getText().trim();
         String nick = nicknameField.getText().trim();
 
@@ -167,6 +168,9 @@ public class LoginController {
             errorLabel.setText("DATI MANCANTI!");
             return;
         }
+
+        // SALVATAGGIO DATI PER LA RICONNESSIONE MAGICA (Messo qui, dopo i controlli!)
+        Client.getInstance().setConnectionInfo(ip, socketRadio.isSelected());
 
         if (isConnecting) return;
         isConnecting = true;

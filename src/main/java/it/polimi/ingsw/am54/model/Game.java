@@ -27,7 +27,7 @@ public class Game implements IGame{
 
     private int activePlayerCount = 0;
 
-    private List<IGameObserver> observers;
+    private transient List<IGameObserver> observers = new ArrayList<>();
 
     // I campi offeringTiles, turnOrderSlots, upperRow, lowerRow sono gestiti da Board
     public Game() {
@@ -64,14 +64,14 @@ public class Game implements IGame{
 
     @Override
     public void addObserver(IGameObserver observer) {
-        if (!observers.contains(observer)) {
-            observers.add(observer);
+        if (!getSafeObservers().contains(observer)) {
+            getSafeObservers().add(observer);
         }
     }
 
     @Override
     public void removeObserver(IGameObserver observer) {
-        observers.remove(observer);
+        getSafeObservers().remove(observer);
     }
 
     // ==========================================
@@ -213,40 +213,16 @@ public class Game implements IGame{
     }
 
     public void nextPlayer() {
-        List<TurnOrderSlot> turnTrack = board.getTurnOrderTile();
+        // L'ordine di turno è fisso. Il prossimo giocatore è semplicemente il primo
+        // che troviamo nella TurnOrderTrack che NON ha ancora piazzato il totem!
+        for (TurnOrderSlot slot : board.getTurnOrderTile()) {
+            Player p = slot.getOccupiedBy();
 
-        // troviamo in quale slot si trova il giocatore corrente
-        int currentIndex = 0;
-        boolean foundCurrent = false;
-
-        while (currentIndex < turnTrack.size() && !foundCurrent) {
-            if (currentPlayer.equals(turnTrack.get(currentIndex).getOccupiedBy())) {
-                foundCurrent = true;
-            } else {
-                currentIndex++;
+            if (p != null && !p.hasPlacedTotem()) {
+                this.currentPlayer = p;
+                notifyTurnChanged(currentPlayer);
+                return; // Abbiamo trovato il prossimo, usciamo dal metodo
             }
-        }
-
-        // passiamo al prossimo slot occupato
-        boolean nextFound = false;
-        int offset = 1;
-
-        while (offset <= turnTrack.size() && !nextFound) {
-            int nextIndex = (currentIndex + offset) % turnTrack.size();
-            Player nextP = turnTrack.get(nextIndex).getOccupiedBy();
-
-            // Se in questo slot c'è seduto qualcuno, e non ha ancora piazzato il totem
-            if (nextP != null && !nextP.hasPlacedTotem()) {
-                this.currentPlayer = nextP; // aggiorniamo il giocatore corrente
-                nextFound = true; // condizione soddisfatta
-            } else {
-                offset++; //posto successivo
-            }
-        }
-        // Se abbiamo effettivamente trovato e cambiato il giocatore, avvisiamo la grafica
-        if (nextFound) {
-            //nessun print, sarà la view dopo essere notificata a farlo
-            notifyTurnChanged(currentPlayer);
         }
     }
 
@@ -299,42 +275,40 @@ public class Game implements IGame{
     }
 
     private void notifyPlayerJoined(Player player) {
-        for (IGameObserver obs : observers) obs.onPlayerJoined(this, player);
+        for (IGameObserver obs : getSafeObservers()) obs.onPlayerJoined(this, player);
     }
 
     private void notifyTotemColorChosen(Player player, TotemColors color) {
-        for (IGameObserver obs : observers) obs.onTotemColorChosen(this, player, color);
+        for (IGameObserver obs : getSafeObservers()) obs.onTotemColorChosen(this, player, color);
     }
 
     public void notifyTotemPlaced(Player player, int offerPosition) {
-        for (IGameObserver obs : observers) obs.onTotemPlaced(this, player, offerPosition);
+        for (IGameObserver obs : getSafeObservers()) obs.onTotemPlaced(this, player, offerPosition);
     }
 
     public void notifyCardPicked(Player player, String row, int cardIndex, int newFoodBalance, int newMagicBalance) {
-        for (IGameObserver obs : observers) obs.onCardPicked(this, player, row, cardIndex, newFoodBalance, newMagicBalance);
+        for (IGameObserver obs : getSafeObservers()) obs.onCardPicked(this, player, row, cardIndex, newFoodBalance, newMagicBalance);
     }
 
     private void notifyTurnChanged(Player player) {
-        for (IGameObserver obs : observers) obs.onTurnChanged(this, player);
+        for (IGameObserver obs : getSafeObservers()) obs.onTurnChanged(this, player);
     }
 
     private void notifyStateChanged(GameState newState) {
-        for (IGameObserver obs : observers) obs.onStateChanged(this, newState);
+        for (IGameObserver obs : getSafeObservers()) obs.onStateChanged(this, newState);
     }
 
-    // Dentro Game.java
     public void notifyTotemReturned(Player player, int position) {
-        // Leggo i saldi definitivi dal server!
         int finalFood = player.getFood();
         int finalAura = player.getAuraPoints();
 
-        for (IGameObserver obs : observers) {
+        for (IGameObserver obs : getSafeObservers()) {
             obs.onTotemReturned(this, player, position, finalFood, finalAura);
         }
     }
 
     public void notifyEventResolved(EventCard eventCard) {
-        for (IGameObserver obs : observers) {
+        for (IGameObserver obs : getSafeObservers()) {
             obs.onEventResolved(this, eventCard);
         }
     }
@@ -393,6 +367,44 @@ public class Game implements IGame{
         notifyTurnChanged(player);
     }
 
+    /**
+     * Risolve il problema dei "Cloni di Gson".
+     * Deserializzando il JSON, Gson crea copie distinte per gli oggetti referenziati più volte.
+     * Questo metodo riallaccia i puntatori (currentPlayer, slot della board)
+     * alle UNICHE istanze ufficiali contenute nella lista 'players'.
+     */
+    public void restoreReferences() {
+        // 1. Ripristina il currentPlayer
+        if (this.currentPlayer != null) {
+            try {
+                this.currentPlayer = getPlayerByNickname(this.currentPlayer.getNickname());
+            } catch (Exception e) {}
+        }
+
+        // 2. Ripristina gli occupanti degli slot di turno (Turn Order)
+        if (this.board != null && this.board.getTurnOrderTile() != null) {
+            for (it.polimi.ingsw.am54.model.TurnOrderSlot slot : this.board.getTurnOrderTile()) {
+                if (slot.getOccupiedBy() != null) {
+                    try {
+                        slot.occupy(getPlayerByNickname(slot.getOccupiedBy().getNickname()));
+                    } catch (Exception e) {}
+                }
+            }
+        }
+
+        // 3. Ripristina gli occupanti delle offerte e ricollega il riferimento inverso
+        if (this.board != null && this.board.getOfferingTrack() != null) {
+            for (it.polimi.ingsw.am54.model.OfferingTile tile : this.board.getOfferingTrack()) {
+                if (tile.getOccupiedBy() != null) {
+                    try {
+                        Player p = getPlayerByNickname(tile.getOccupiedBy().getNickname());
+                        tile.occupy(p);
+                        p.setCurrentTile(tile);
+                    } catch (Exception e) {}
+                }
+            }
+        }
+    }
     /**
      * Imposta il numero di giocatori attivi per il round corrente.
      * Usato dal Controller per informare il Model di quanti giocatori
@@ -536,9 +548,15 @@ public class Game implements IGame{
     }
 
     public void notifyEndGame(List<Player> winners) {
-        // anche qui il model si limita ad avvisare tutti gli osservatori (le view)
-        for (IGameObserver obs : observers) {
+        for (IGameObserver obs : getSafeObservers()) {
             obs.onEndGame(this, winners);
         }
+    }
+
+    private List<IGameObserver> getSafeObservers() {
+        if (observers == null) {
+            observers = new ArrayList<>();
+        }
+        return observers;
     }
 }

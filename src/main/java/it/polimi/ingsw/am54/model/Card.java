@@ -9,7 +9,7 @@ public class Card {
 
     private int era;
 
-    private Player owner;
+    private transient Player owner;
 
     public int getEra() {
         return era;

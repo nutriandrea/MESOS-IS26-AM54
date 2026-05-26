@@ -171,6 +171,10 @@ public class ClientModel {
     /** Ultimo messaggio di errore ricevuto */
     private String lastErrorMessage;
 
+    private boolean isReconnecting = false;
+    private Runnable onReconnectingChangedCallback;
+    private Runnable onConnectionLostCallback;
+
     /**
      * Set di nickname dei giocatori temporaneamente disconnessi.
      * Popolato quando si riceve PlayerDisconnectedUpdate.
@@ -542,6 +546,29 @@ public class ClientModel {
     }
 
     public synchronized void clearSystemMessage() { this.lastSystemMessage = null; }
+
+    public boolean isReconnecting() { return isReconnecting; }
+
+    public void setReconnectingStatus(boolean status) {
+        this.isReconnecting = status;
+        if (onReconnectingChangedCallback != null) {
+            onReconnectingChangedCallback.run();
+        }
+    }
+
+    public void setOnReconnectingChangedCallback(Runnable callback) {
+        this.onReconnectingChangedCallback = callback;
+    }
+
+    public void setOnConnectionLostCallback(Runnable callback) {
+        this.onConnectionLostCallback = callback;
+    }
+
+    public void triggerConnectionLost() {
+        if (onConnectionLostCallback != null) {
+            onConnectionLostCallback.run();
+        }
+    }
 
     /* =====================================================================
      * CARICAMENTO STATO COMPLETO (per riconnessione)

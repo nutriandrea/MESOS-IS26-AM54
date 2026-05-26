@@ -11,8 +11,13 @@ public class Client {
     private ClientModel model;
     private String nickname;
 
+    private String savedIp;
+    private boolean savedIsSocket;
+    private boolean isReconnecting = false;
+
     private Client() {
         this.model = new ClientModel();
+        this.model.setOnConnectionLostCallback(() -> this.startAutoReconnect());
     }
 
     public static Client getInstance() {
@@ -32,6 +37,44 @@ public class Client {
     // Metodo per "accendere" il client dopo la scelta RMI/Socket
     public void setConnection(ServerConnection connection) {
         this.connection = connection;
+    }
+
+    public void setConnectionInfo(String ip, boolean isSocket) {
+        this.savedIp = ip;
+        this.savedIsSocket = isSocket;
+    }
+
+    public void startAutoReconnect() {
+        if (isReconnecting) return;
+        isReconnecting = true;
+        javafx.application.Platform.runLater(() -> model.setReconnectingStatus(true));
+
+        new Thread(() -> {
+            while (isReconnecting) {
+                try {
+                    System.out.println("[CLIENT] Tento riconnessione a " + savedIp + "...");
+                    Thread.sleep(3000);
+
+                    ServerConnection newConn;
+                    if (savedIsSocket) {
+                        newConn = new SocketServerConnection(savedIp, 12345, model);
+                    } else {
+                        java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(savedIp, 1099);
+                        it.polimi.ingsw.am54.network.rmi.RMIGameServer serverStub = (it.polimi.ingsw.am54.network.rmi.RMIGameServer) registry.lookup("AM54-Server");
+                        newConn = new RMIServerConnection(serverStub, model);
+                    }
+
+                    this.connection = newConn;
+                    newConn.joinGame(nickname);
+
+                    isReconnecting = false;
+                    javafx.application.Platform.runLater(() -> model.setReconnectingStatus(false));
+                    System.out.println("[CLIENT] Riconnesso con successo!");
+                } catch (Exception e) {
+                    // Riprova
+                }
+            }
+        }).start();
     }
 
     public ServerConnection getConnection() { return connection; }

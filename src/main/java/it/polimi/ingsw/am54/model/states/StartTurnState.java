@@ -12,7 +12,7 @@ public class StartTurnState extends GameState {
         Player player = game.getPlayerByNickname(nickname);
 
         // 1. Controlli di sicurezza
-        if (!game.getCurrentPlayer().equals(player)) {
+        if (!game.getCurrentPlayer().getNickname().equalsIgnoreCase(player.getNickname())) {
             throw new Exception("Non è il tuo turno per piazzare il totem!");
         }
         if (player.hasPlacedTotem()) {
@@ -36,15 +36,14 @@ public class StartTurnState extends GameState {
 
         game.notifyTotemPlaced(player, offerPosition);
 
-        // 4. Liberiamo il giocatore dallo slot dell'ordine di turno precedente
+        // 4. Liberiamo il giocatore dallo slot dell'ordine di turno precedente (BLINDATO)
         game.getBoard().getTurnOrderTile().stream()
-                .filter(slot -> player.equals(slot.getOccupiedBy()))
+                .filter(slot -> slot.getOccupiedBy() != null &&
+                        slot.getOccupiedBy().getNickname().equalsIgnoreCase(player.getNickname()))
                 .findFirst()
                 .ifPresent(slot -> slot.freeSlot());
 
-        // 5. GESTIONE DEL FLUSSO: Controlliamo se la fase è finita
-        // Usa getActivePlayerCount() che considera il numero di giocatori
-        // attivi (escludendo eventuali disconnessi).
+        // 5. GESTIONE DEL FLUSSO
         if (game.getBoard().allTotemsPlaced(game.getActivePlayerCount())) {
 
             // Tutti hanno piazzato, si passa alla fase di pesca

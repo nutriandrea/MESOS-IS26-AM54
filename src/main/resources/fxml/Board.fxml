@@ -136,4 +136,16 @@
     <StackPane fx:id="turnNotificationOverlay" visible="false" styleClass="turn-notification-overlay"><VBox alignment="CENTER" spacing="15.0" maxWidth="600.0" maxHeight="200.0"><styleClass><String fx:value="dashboard-panel" /><String fx:value="turn-notification-panel" /></styleClass><Label fx:id="turnNotificationTitle" text="" styleClass="turn-title-mine" /></VBox></StackPane>
     <StackPane fx:id="opponentsOverlay" visible="false" styleClass="recap-overlay"><VBox alignment="CENTER" spacing="20.0" maxWidth="1100.0" maxHeight="800.0" styleClass="opponents-panel"><padding><Insets top="30.0" right="30.0" bottom="30.0" left="30.0" /></padding><Label text="STATO DEGLI AVVERSARI" styleClass="opponents-title" /><ScrollPane fitToWidth="true" styleClass="dashboard-scroll-pane" VBox.vgrow="ALWAYS"><VBox fx:id="opponentsContainer" spacing="30.0"><padding><Insets top="10.0" right="10.0" bottom="10.0" left="10.0" /></padding></VBox></ScrollPane><Button text="CHIUDI" styleClass="recap-close-button" onAction="#toggleOpponentsOverlay" /></VBox></StackPane>
     <StackPane fx:id="recapOverlay" visible="false" styleClass="recap-overlay"><VBox alignment="CENTER" spacing="25.0"><HBox alignment="CENTER" spacing="40.0"><ImageView fx:id="recapFrontImageView" fitHeight="550.0" preserveRatio="true" styleClass="recap-image" /><ImageView fx:id="recapBackImageView" fitHeight="550.0" preserveRatio="true" styleClass="recap-image" /></HBox><Button text="CHIUDI" styleClass="recap-close-button" onAction="#toggleRecapOverlay" /></VBox></StackPane>
+
+    <StackPane fx:id="reconnectingOverlay" visible="false" style="-fx-background-color: rgba(0,0,0,0.95);">
+        <VBox alignment="CENTER" spacing="20">
+            <ProgressIndicator style="-fx-progress-color: #d4af37;" />
+            <Label text="CONNESSIONE COL SERVER PERSA" style="-fx-text-fill: #ff4444; -fx-font-size: 36px; -fx-font-family: 'Herculanum';" />
+
+            <Label fx:id="reconnectingLabel" text="Tentativo di riconnessione automatica in corso" style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-family: 'Herculanum';" />
+
+            <Label text="Non chiudere l'applicazione. La partita riprenderà da sola." style="-fx-text-fill: #aaaaaa; -fx-font-size: 16px; -fx-font-family: 'Herculanum';" />
+        </VBox>
+    </StackPane>
+
 </StackPane>

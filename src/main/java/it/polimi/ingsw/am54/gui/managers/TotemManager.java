@@ -46,50 +46,85 @@ public class TotemManager {
 
         if(totemArea != null) totemArea.getChildren().clear();
 
-        String state = model.getCurrentState();
-        boolean isBidding = state != null && (state.equalsIgnoreCase("STARTTURNSTATE") || state.equalsIgnoreCase("STARTTURN") || state.equalsIgnoreCase("BIDDINGSTATE"));
+        List<String> activeOrEmpty = new ArrayList<>();
+        List<String> disconnectedInTrack = new ArrayList<>();
 
-        int validPlayersCount = 0;
+        // ==========================================================
+        // FIX "INDEXOF": Riversiamo i disconnessi in un ArrayList locale.
+        // Questo sblocca la funzione indexOf, evitando errori di compilazione
+        // e mantenendo fedele l'ordine cronologico di disconnessione!
+        // ==========================================================
+        List<String> chronDisconnected = new ArrayList<>();
+        if (model.getDisconnectedPlayers() != null) {
+            chronDisconnected.addAll(model.getDisconnectedPlayers());
+        }
+
         for (String s : turnOrder) {
             String pName = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
-            if (!pName.equalsIgnoreCase("vuoto") && !pName.equalsIgnoreCase("null")) {
-                validPlayersCount++;
+
+            // Usiamo la lista locale chronDisconnected per controllare lo stato
+            if (!pName.equalsIgnoreCase("vuoto") && !pName.equalsIgnoreCase("null") && chronDisconnected.contains(pName)) {
+                disconnectedInTrack.add(pName);
+            } else {
+                // Conserviamo i VUOTO (fanno da spaziatori) e i giocatori attivi
+                activeOrEmpty.add(pName);
             }
         }
 
-        int visualPos = isBidding ? (totalPlayers - validPlayersCount) : 0;
+        // Ordiniamo cronologicamente in base alla posizione nella lista dei disconnessi
+        disconnectedInTrack.sort((n1, n2) -> {
+            int i1 = chronDisconnected.indexOf(n1);
+            int i2 = chronDisconnected.indexOf(n2);
+            return Integer.compare(i1, i2);
+        });
+
+        // Ribaltiamo: il primo che si è disconnesso finirà nell'ultimo slot grafico assoluto
+        java.util.Collections.reverse(disconnectedInTrack);
+
+        // Combiniamo: prima i vivi e gli spazi vuoti, poi in coda i disconnessi
+        List<String> combinedList = new ArrayList<>(activeOrEmpty);
+        combinedList.addAll(disconnectedInTrack);
+
+        int visualPos = (totalPlayers - combinedList.size());
         if (visualPos < 0) visualPos = 0;
 
-        for (int i = 0; i < turnOrder.size(); i++) {
-            String rawString = turnOrder.get(i);
-            String playerName = rawString.contains(" -> ") ? rawString.split(" -> ")[rawString.split(" -> ").length - 1].trim() : rawString;
+        for (String pName : combinedList) {
+            int actualPos = visualPos;
 
-            if (playerName.equalsIgnoreCase("vuoto") || playerName.equalsIgnoreCase("null")) continue;
+            // Incrementiamo la posizione PRIMA di scartare i "VUOTO".
+            // Questo permette di lasciare i buchi necessari per spingere i disconnessi a destra.
+            visualPos++;
 
-            TotemColors playerColor = colors != null ? colors.get(playerName) : null;
+            if (pName.equalsIgnoreCase("vuoto") || pName.equalsIgnoreCase("null")) continue;
+
+            TotemColors playerColor = colors != null ? colors.get(pName) : null;
             if (playerColor == null) continue;
 
             String colorName = playerColor.name().toLowerCase();
             ImageView totemFace = new ImageView();
             InputStream is = getClass().getResourceAsStream("/images/totem_face_" + colorName + ".png");
-            if (is != null) { totemFace.setImage(new Image(is)); } else {
+            if (is != null) {
+                totemFace.setImage(new Image(is));
+            } else {
                 InputStream fbIs = getClass().getResourceAsStream("/images/totem_" + colorName + "_3d_160x270.png");
                 if (fbIs != null) totemFace.setImage(new Image(fbIs));
             }
+
             totemFace.setFitWidth(TOTEM_FACE_SIZE);
             totemFace.setFitHeight(TOTEM_FACE_SIZE);
             totemFace.setPreserveRatio(true);
             totemFace.getStyleClass().add("totem-face");
 
-            int actualPos = visualPos;
-            visualPos++;
-
             totemFace.setLayoutX(getTotemX(totalPlayers, actualPos));
             totemFace.setLayoutY(getTotemY(totalPlayers, actualPos));
-
             totemFace.setUserData(actualPos);
 
-            Tooltip.install(totemFace, new Tooltip("Giocatore: " + playerName + " (Pos: " + (actualPos + 1) + ")"));
+            // Applica semi-trasparenza ai disconnessi
+            if (disconnectedInTrack.contains(pName)) {
+                totemFace.setOpacity(0.5);
+            }
+
+            Tooltip.install(totemFace, new Tooltip("Giocatore: " + pName + " (Pos: " + (actualPos + 1) + ")"));
             if(totemArea != null) totemArea.getChildren().add(totemFace);
         }
     }

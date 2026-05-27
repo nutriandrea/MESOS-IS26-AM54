@@ -1,9 +1,12 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.controller.Controller;
+import it.polimi.ingsw.am54.network.server.ClientConnection;
+
 /**
  * JoinGameRequest — Primo contatto del client con il server
  */
-public class JoinGameRequest implements Request {
+public final class JoinGameRequest implements Request {
 
     private final String nickname;
 
@@ -13,6 +16,8 @@ public class JoinGameRequest implements Request {
 
     public String getNickname() { return nickname; }
 
-    public static final String TYPE = "join_game";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void execute(Controller controller, String playerNickname, ClientConnection connection) {
+        controller.handleJoinGame(this.nickname, connection);
+    }
 }

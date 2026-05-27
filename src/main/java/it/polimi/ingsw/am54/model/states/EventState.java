@@ -5,7 +5,17 @@ import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.GameState;
 
 public class EventState extends GameState {
-    @Override public String getStateName() { return "EventState"; }
+    public String getStateName() { return "EventState"; }
+
+    @Override
+    public boolean isAutoResolvable() {
+        return true;
+    }
+
+    @Override
+    public boolean isDisconnectBlocked() {
+        return true;
+    }
 
     @Override
     public void resolvePhase(Game game){

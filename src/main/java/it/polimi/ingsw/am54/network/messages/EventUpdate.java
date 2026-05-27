@@ -1,11 +1,12 @@
 // Nel file: network/messages/EventUpdate.java
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-public class EventUpdate implements Update {
+public final class EventUpdate implements Update {
 
     // DTO compatto per le statistiche di un singolo giocatore
     public static class PlayerSnapshot implements Serializable {
@@ -51,6 +52,8 @@ public class EventUpdate implements Update {
     public List<String> getBuildUpper() { return buildUpper; }
     public List<String> getBuildLower() { return buildLower; }
 
-    public static final String TYPE = "event";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updateEventSnapshot(this);
+    }
 }

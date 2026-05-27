@@ -101,8 +101,7 @@ public class Controller {
      * * Se il server non è inizializzato (server null), non fa nulla.
      */
     private void saveState() {
-        String stateName = game.getCurrentState().getClass().getSimpleName();
-        if (stateName.equals("EndGameState")) {
+        if (game.getCurrentState().isGameOver()) {
             persistenceManager.clearBackup();
             return;
         }
@@ -136,7 +135,6 @@ public class Controller {
 
             // CASO 3: Il nome è libero, normale procedura di Join
             VirtualView playerView = new VirtualView(connection, nickname);
-            playerView.setController(this);
             virtualViews.put(nickname, playerView);
             game.addObserver(playerView);
 
@@ -172,7 +170,6 @@ public class Controller {
                 game.removeObserver(oldView);
             }
             VirtualView newView = new VirtualView(connection, nickname);
-            newView.setController(this);
             virtualViews.put(nickname, newView);
             game.addObserver(newView);
             LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
@@ -198,23 +195,10 @@ public class Controller {
     public void validateGameStateAfterRecovery() {
         synchronized (game.getPlayers()) {
 
-            // 1. Ripristiniamo il turno in base alla fase attuale della partita!
-            if (game.getCurrentState().getStateName().equals("StartTurnState")) {
-                // Durante il piazzamento, il turno è del primo giocatore rimasto nella TurnOrderTrack
-                for (it.polimi.ingsw.am54.model.TurnOrderSlot slot : game.getBoard().getTurnOrderTile()) {
-                    it.polimi.ingsw.am54.model.Player p = slot.getOccupiedBy();
-                    if (p != null && !p.hasPlacedTotem()) {
-                        game.setCurrentPlayer(p);
-                        break; // Trovato il giocatore giusto, ci fermiamo
-                    }
-                }
-            }
-            else if (game.getCurrentState().getStateName().equals("PickingState")) {
-                // Durante la pesca, il turno è di chi è sulla OfferingTrack (il CurrentPicker)
-                it.polimi.ingsw.am54.model.Player picker = game.getCurrentPicker();
-                if (picker != null) {
-                    game.setCurrentPlayer(picker);
-                }
+            // Ripristiniamo il turno in base alla fase attuale della partita
+            it.polimi.ingsw.am54.model.Player recovered = game.getCurrentState().recoverActivePlayer(game);
+            if (recovered != null) {
+                game.setCurrentPlayer(recovered);
             }
 
             // 2. Log diagnostico sulla console del server per confermare
@@ -280,10 +264,8 @@ public class Controller {
 
     public void removeClient(String nickname) {
         VirtualView view = virtualViews.remove(nickname);
-        String stateName = game.getCurrentState().getClass().getSimpleName();
 
-        // Se siamo in LOBBY o FINE PARTITA -> Cancellazione Definitiva
-        if (stateName.equals("SetUpGameState") || stateName.equals("EndGameState")) {
+        if (game.getCurrentState().isRemovePermanent()) {
             LOGGER.info("Giocatore " + nickname + " abbandona la lobby. Libero il posto e il Totem.");
 
             // 1. Rimuove il giocatore dal modello e rimette il colore Totem a disposizione
@@ -385,53 +367,18 @@ public class Controller {
      */
     private void autoHandleDisconnection(String nickname) {
         synchronized (game.getPlayers()) {
-            if (game.getCurrentState().getStateName().equals("SetUpGameState")) return;
-            if (game.getCurrentState().getStateName().equals("EndGameState")) return;
+            if (game.getCurrentState().isDisconnectBlocked()) return;
 
-            // Informa il Model di quanti giocatori sono ancora attivi
             game.setActivePlayerCount(activePlayerCount());
 
             try {
                 Player p = game.getPlayerByNickname(nickname);
                 if (game.getCurrentPlayer() != null && game.getCurrentPlayer().equals(p)) {
                     game.getCurrentState().skipTurn(game, nickname);
-
-                    // skipTurn in StartTurnState libera lo slot e marca il giocatore.
-                    // Bisogna avanzare al prossimo giocatore valido per non rimanere bloccati.
-                    if (game.getCurrentState().getStateName().equals("StartTurnState")) {
-                        game.nextPlayer();
-                        if (game.getBoard().allTotemsPlaced(activePlayerCount())) {
-                            game.setState(new it.polimi.ingsw.am54.model.states.PickingState());
-                            Player first = game.getBoard().getFirstPlayerFromOfferingTrack();
-                            if (first != null) game.setCurrentPlayer(first);
-                        }
-                    }
-
+                    game.getCurrentState().handleDisconnection(game, p, true);
                     checkAndResolveAutomaticPhases();
-                } else if (p.getCurrentTile() != null
-                        && game.getCurrentState().getStateName().equals("PickingState")) {
-                    p.getCurrentTile().freeSlot();
-                    p.setCurrentTile(null);
-                    game.moveToLastSlot(p);
-                    game.notifyTotemReturned(p, -1);
-                } else if (game.getCurrentState().getStateName().equals("StartTurnState")
-                        && p.hasPlacedTotem()) {
-                    if (p.getCurrentTile() != null) {
-                        p.getCurrentTile().freeSlot();
-                        p.setCurrentTile(null);
-                        game.notifyTotemReturned(p, -1);
-                    }
-                    game.moveToLastSlot(p);
-
-                    if (game.getBoard().allTotemsPlaced(activePlayerCount())) {
-                        game.setState(new it.polimi.ingsw.am54.model.states.PickingState());
-                        Player first = game.getBoard().getFirstPlayerFromOfferingTrack();
-                        if (first != null) game.setCurrentPlayer(first);
-                    }
-                } else if (game.getCurrentState().getStateName().equals("StartTurnState")
-                        && !p.hasPlacedTotem()) {
-                    game.moveToLastSlot(p);
-                    p.setHasPlacedTotem(true);
+                } else {
+                    game.getCurrentState().handleDisconnection(game, p, false);
                 }
             } catch (Exception e) {
                 LOGGER.warning("Skip turn fallito per " + nickname + ": " + e.getMessage());
@@ -574,32 +521,26 @@ public class Controller {
     }
 
     private void checkAndResolveAutomaticPhases() throws Exception {
-        if (game.getCurrentState().getStateName().equals("EventState")) {
+        if (game.getCurrentState().isAutoResolvable() && !game.getCurrentState().isGameOver()) {
             game.getCurrentState().resolvePhase(game);
-            saveState(); // Aggiorna il JSON dopo la risoluzione dell'evento
+            saveState();
         }
 
-        if (game.getCurrentState().getStateName().equals("EndGameState")) {
-            game.getCurrentState().resolvePhase(game);
-            saveState(); // Questo svuoterà il file JSON (grazie alla logica in saveState)
+        if (game.getCurrentState().isGameOver() && !scoresSavedToDatabase) {
+            scoresSavedToDatabase = true;
+            int numPlayers = game.getPlayers().size();
 
-            // Salvataggio nel database integrato direttamente qui
-            if (!scoresSavedToDatabase) {
-                scoresSavedToDatabase = true;
-                int numPlayers = game.getPlayers().size();
-
-                new Thread(() -> {
-                    try {
-                        for (Player p : game.getPlayers()) {
-                            int finalScore = game.calculatePlayerScore(p);
-                            dbManager.saveMatchResult(p.getNickname(), finalScore, numPlayers);
-                        }
-                        LOGGER.info("[DATABASE] Punteggi di fine partita salvati con successo!");
-                    } catch (Exception e) {
-                        LOGGER.warning("[DATABASE] Errore salvataggio punteggi: " + e.getMessage());
+            new Thread(() -> {
+                try {
+                    for (Player p : game.getPlayers()) {
+                        int finalScore = game.calculatePlayerScore(p);
+                        dbManager.saveMatchResult(p.getNickname(), finalScore, numPlayers);
                     }
-                }).start();
-            }
+                    LOGGER.info("[DATABASE] Punteggi di fine partita salvati con successo!");
+                } catch (Exception e) {
+                    LOGGER.warning("[DATABASE] Errore salvataggio punteggi: " + e.getMessage());
+                }
+            }).start();
             return;
         }
 

@@ -103,10 +103,8 @@ public class DisconnectionMessageFlowTest {
         game.addObserver(vvBob);
         game.addObserver(vvCharlie);
 
-        // Imposta il controller sulle VirtualView
-        vvAlice.setController(controller);
-        vvBob.setController(controller);
-        vvCharlie.setController(controller);
+        // Controller impostato tramite VirtualView — non piu' necessario
+        // (setController rimosso perche' VirtualView non usa piu' il controller)
 
         // Il costruttore del Controller aggiunge TUTTI i giocatori a disconnectedPlayers
         // (per gestire il recupero da persistenza). In un setup di test fresco,

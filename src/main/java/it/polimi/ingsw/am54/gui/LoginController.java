@@ -2,6 +2,7 @@ package it.polimi.ingsw.am54.gui;
 
 import it.polimi.ingsw.am54.database.DatabaseConfig;
 import it.polimi.ingsw.am54.database.DatabaseManager;
+import it.polimi.ingsw.am54.gui.states.ClientStateRegistry;
 import it.polimi.ingsw.am54.network.client.*;
 import it.polimi.ingsw.am54.network.messages.LeaderboardEntry;
 import it.polimi.ingsw.am54.network.rmi.RMIGameServer;
@@ -295,9 +296,7 @@ public class LoginController {
             try {
                 String currentState = Client.getInstance().getModel().getCurrentState();
                 boolean isReconnectingMidGame = currentState != null &&
-                        (currentState.toUpperCase().contains("STARTTURN") ||
-                                currentState.toUpperCase().contains("PICKING") ||
-                                currentState.toUpperCase().contains("EVENT"));
+                        !ClientStateRegistry.getHandler(currentState).isLobbyState();
 
                 if (isReconnectingMidGame) {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Board.fxml"));

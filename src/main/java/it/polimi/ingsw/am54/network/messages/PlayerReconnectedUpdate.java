@@ -1,10 +1,12 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
+
 /**
  * Notifica broadcast a tutti i client che un giocatore si e' riconnesso.
  * SERVER -> CLIENT
  */
-public class PlayerReconnectedUpdate implements Update {
+public final class PlayerReconnectedUpdate implements Update {
     private final String nickname;
 
     public PlayerReconnectedUpdate(String nickname) {
@@ -15,6 +17,8 @@ public class PlayerReconnectedUpdate implements Update {
         return nickname;
     }
 
-    public static final String TYPE = "player_reconnected";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updatePlayerReconnected(this.nickname);
+    }
 }

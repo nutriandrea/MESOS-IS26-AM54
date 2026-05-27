@@ -2,6 +2,7 @@ package it.polimi.ingsw.am54.gui.managers;
 
 import it.polimi.ingsw.am54.network.client.Client;
 import it.polimi.ingsw.am54.network.client.ClientModel;
+import it.polimi.ingsw.am54.gui.states.ClientStateRegistry;
 import it.polimi.ingsw.am54.model.TotemColors;
 import javafx.scene.Group;
 import javafx.scene.Cursor;
@@ -221,7 +222,7 @@ public class TotemManager {
                 String myName = Client.getInstance().getNickname();
                 String state = model.getCurrentState();
                 if (myName != null && myName.equals(model.getCurrentPlayer()) && state != null &&
-                        (state.equalsIgnoreCase("STARTTURNSTATE") || state.equalsIgnoreCase("STARTTURN") || state.equalsIgnoreCase("BIDDINGSTATE"))) {
+                        ClientStateRegistry.getHandler(state).canInteractWithTiles()) {
                     tileGroup.setTranslateY(-10);
                     tileGroup.setCursor(Cursor.HAND);
                 }
@@ -238,7 +239,7 @@ public class TotemManager {
                 String state = model.getCurrentState();
 
                 if (myName != null && myName.equals(model.getCurrentPlayer()) && state != null &&
-                        (state.equalsIgnoreCase("STARTTURNSTATE") || state.equalsIgnoreCase("STARTTURN") || state.equalsIgnoreCase("BIDDINGSTATE"))) {
+                        ClientStateRegistry.getHandler(state).canInteractWithTiles()) {
                     if (Client.getInstance().getConnection() != null) {
                         try {
                             Client.getInstance().getConnection().placeTotem(tileIndex);
@@ -284,25 +285,27 @@ public class TotemManager {
         double startYOriginal = 0;
         double stepOriginal = 0;
 
-        switch (totalPlayers) {
-            case 2: startYOriginal = 222.0; stepOriginal = 170.0; break;
-            case 3: startYOriginal = 175.0; stepOriginal = 173.0; break;
-            case 4: startYOriginal = 133.0; stepOriginal = 173.0; break;
-            case 5: startYOriginal = 64.0;  stepOriginal = 174.0; break;
-            default: startYOriginal = 222.0; stepOriginal = 170.0; break;
-        }
+        Map<Integer, double[]> config = Map.of(
+            2, new double[]{222.0, 170.0},
+            3, new double[]{175.0, 173.0},
+            4, new double[]{133.0, 173.0},
+            5, new double[]{64.0, 174.0}
+        );
+        double[] coords = config.getOrDefault(totalPlayers, new double[]{222.0, 170.0});
+        startYOriginal = coords[0];
+        stepOriginal = coords[1];
 
         double centerYOriginal = startYOriginal + (positionIndex * stepOriginal) + (boxHeight / 2.0);
         return (centerYOriginal * oldScaleFactor) - (TOTEM_FACE_SIZE / 2.0) + (8.0 * scaleFactor);
     }
 
     private List<String> getExpectedOfferingTiles(int numPlayers) {
-        switch (numPlayers) {
-            case 2: return List.of("B", "C", "E", "F");
-            case 3: return List.of("B", "C", "D", "E", "F");
-            case 4: return List.of("B", "C", "D", "E", "F", "G");
-            case 5: return List.of("A", "B", "C", "D", "E", "F", "G");
-            default: return List.of("B", "C", "D", "E", "F");
-        }
+        Map<Integer, List<String>> tiles = Map.of(
+            2, List.of("B", "C", "E", "F"),
+            3, List.of("B", "C", "D", "E", "F"),
+            4, List.of("B", "C", "D", "E", "F", "G"),
+            5, List.of("A", "B", "C", "D", "E", "F", "G")
+        );
+        return tiles.getOrDefault(numPlayers, List.of("B", "C", "D", "E", "F"));
     }
 }

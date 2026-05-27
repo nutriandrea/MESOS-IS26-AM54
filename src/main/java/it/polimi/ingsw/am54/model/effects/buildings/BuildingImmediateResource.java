@@ -1,14 +1,14 @@
 package it.polimi.ingsw.am54.model.effects.buildings;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonObject;
 import it.polimi.ingsw.am54.model.*;
 
 public class BuildingImmediateResource implements IEffect<BuildingCard> {
     private final int auraBonus;
     private final int magicBonus;
 
-    public BuildingImmediateResource(JsonNode params) {
-        this.auraBonus = params != null && params.has("aura") ? params.get("aura").asInt() : 0;
-        this.magicBonus = params != null && params.has("magic") ? params.get("magic").asInt() : 0;
+    public BuildingImmediateResource(JsonObject params) {
+        this.auraBonus = params != null && params.has("aura") ? params.get("aura").getAsInt() : 0;
+        this.magicBonus = params != null && params.has("magic") ? params.get("magic").getAsInt() : 0;
     }
 
     @Override

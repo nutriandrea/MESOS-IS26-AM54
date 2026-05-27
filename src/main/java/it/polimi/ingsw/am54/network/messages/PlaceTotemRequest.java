@@ -1,12 +1,14 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.controller.Controller;
+import it.polimi.ingsw.am54.network.server.ClientConnection;
+
 /**
  * Richiesta inviata dal Client per piazzare il proprio Totem su un'offerta.
  * Sicura al 100%: il server dedurrà il mittente dal Socket associato.
  */
-public class PlaceTotemRequest implements Request {
+public final class PlaceTotemRequest implements Request {
 
-    // Rimosso il nickname per sicurezza e rimosso @Override!
     private final int offerPosition;
 
     public PlaceTotemRequest(int offerPosition) {
@@ -17,6 +19,8 @@ public class PlaceTotemRequest implements Request {
         return offerPosition;
     }
 
-    public static final String TYPE = "place_totem";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void execute(Controller controller, String playerNickname, ClientConnection connection) {
+        controller.handlePlaceTotem(playerNickname, this.offerPosition);
+    }
 }

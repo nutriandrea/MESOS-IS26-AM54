@@ -17,12 +17,14 @@ This is a multiplayer board game where 2-5 players compete to collect the most p
 
 | Member | Role |
 |--------|------|
-| Andrea Carbone | Development |
 | Andrea Cacioppo | Development |
+| Andrea Carbone | Development |
 | Gabriele Buca | Development |
 | Francesco Botton | Development |
 
 **Professor**: Alessandro Margara
+**Honorable Mention**: Carlo Arnone
+
 
 ---
 
@@ -36,10 +38,11 @@ This is a multiplayer board game where 2-5 players compete to collect the most p
 | RMI communication      | ✅ Implemented |
 | GUI (JavaFX)           | ✅ Implemented |
 | CLI                    | ✅ Implemented |
-| Multiple games support | 🔄 To implement |
+| Leaderboard (mySQL)    | ✅ Implemented |
+| Client handling        | ✅ Implemented |
+| Server handling        | ✅ Implemented |
 | ML Bots                | 🔄 To implement |
-| Leaderboard (H2 DB)     | ✅ Implemented |
-| Disconnection handling | ✅ Implemented |
+
 
 ---
 
@@ -105,15 +108,15 @@ Tutte le azioni di gioco (`pickCard`, `endTurn`, ecc.) passano da `executeComman
 
 ## Technology Stack
 
-| Technology | Usage |
-|------------|-------|
-| **Java 25** | Programming language |
-| **Maven** | Build and dependency management |
-| **JavaFX** | GUI framework |
-| **Jackson** | JSON parsing for card setup |
-| **H2 Database** | Embedded SQL database for leaderboard persistence |
-| **JUnit 5** | Unit testing |
-| **IntelliJ IDEA** | Development IDE |
+| Technology         | Usage                                      |
+|--------------------|--------------------------------------------|
+| **Java 25**        | Programming language                       |
+| **Maven**          | Build and dependency management            |
+| **JavaFX**         | GUI framework                              |
+| **Jackson**        | JSON parsing for card setup                |
+| **MySql Database** | MySQL database for leaderboard persistence |
+| **JUnit 5**        | Unit testing                               |
+| **IntelliJ IDEA**  | Development IDE                            |
 
 ---
 
@@ -147,8 +150,6 @@ Porta default: `12345`. Per usare altra porta:
 ./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server" -Dexec.args="8080"
 ```
 
-Il database per la classifica (**H2 embedded**) si avvia automaticamente.
-Il file `am54.mv.db` viene creato nella directory di lavoro. Nessuna configurazione necessaria.
 
 Per usare un nome file personalizzato:
 ```bash
@@ -201,7 +202,6 @@ src/
 │       ├── controller/
 │       │   └── Controller.java
 │       ├── database/
-│       │   ├── DatabaseConfig.java     ← H2 configuration
 │       │   └── DatabaseManager.java    ← JDBC persistence layer
 │       ├── model/
 │       │   ├── Game.java
@@ -264,7 +264,6 @@ src/
 4. End Game
    └── Calculate scores
    └── Declare winner(s)
-   └── Save results to H2 database (leaderboard)
    └── Send LeaderboardUpdate to all clients
 ```
 
@@ -272,7 +271,7 @@ src/
 
 ## Leaderboard (Classifica)
 
-Alla fine di ogni partita, il server salva su un database **H2 embedded** i risultati di tutti i giocatori:
+Alla fine di ogni partita, il server salva su un database **MySQL** i risultati di tutti i giocatori:
 - nickname, punteggio finale, data, numero di giocatori
 
 Subito dopo il calcolo dei vincitori, ogni client riceve un `LeaderboardUpdate` contenente:
@@ -286,11 +285,8 @@ Subito dopo il calcolo dei vincitori, ogni client riceve un `LeaderboardUpdate` 
 
 ### Database
 
-Il database è **H2 in embedded mode**:
-- File `am54.mv.db` creato automaticamente nella directory di lavoro del server
-- Nessuna installazione esterna richiesta
+Il database è **MySQL**:
 - I dati persistono tra riavvii del server
-- Per usare un nome file diverso: `-Ddb.file=myfile`
 
 ### Schema
 

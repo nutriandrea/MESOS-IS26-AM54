@@ -1,10 +1,12 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
+
 /**
  * Heartbeat inviato dal Server al Client per verificare la connessione attiva.
  * SERVER -> CLIENT
  */
-public class PingRequest implements Update {
+public final class PingRequest implements Update {
     private final long timestamp;
 
     public PingRequest(long timestamp) {
@@ -15,6 +17,9 @@ public class PingRequest implements Update {
         return timestamp;
     }
 
-    public static final String TYPE = "ping";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        // PingRequest e' gestita a livello socket prima del dispatch;
+        // questo metodo non viene mai chiamato per questo tipo.
+    }
 }

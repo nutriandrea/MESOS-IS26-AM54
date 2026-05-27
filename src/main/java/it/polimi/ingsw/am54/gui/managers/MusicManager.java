@@ -5,6 +5,7 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 
 import java.net.URL;
+import java.util.Map;
 
 /**
  * Gestisce la riproduzione audio di sottofondo (MP3) tramite JavaFX MediaPlayer.
@@ -24,12 +25,13 @@ public class MusicManager {
     private MediaPlayer currentPlayer;
     private boolean isPlaying = false;
 
-    private Media lobbyMedia;
-    private Media boardMedia;
+    private final Map<String, Media> trackMedia;
 
     private MusicManager() {
-        lobbyMedia  = loadMedia("/audio/lobby.mp3");
-        boardMedia  = loadMedia("/audio/board.mp3");
+        this.trackMedia = Map.of(
+            "lobby", loadMedia("/audio/lobby.mp3"),
+            "board", loadMedia("/audio/board.mp3")
+        );
     }
 
     public static synchronized MusicManager getInstance() {
@@ -58,11 +60,7 @@ public class MusicManager {
      * @param button il pulsante su cui cambiare icona (🎵 / 🔊)
      */
     public void toggle(String track, Button button) {
-        Media target = switch (track) {
-            case "lobby" -> lobbyMedia;
-            case "board" -> boardMedia;
-            default -> null;
-        };
+        Media target = trackMedia.get(track);
 
         if (target == null) return;
 

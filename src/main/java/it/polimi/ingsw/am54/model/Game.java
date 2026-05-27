@@ -1,9 +1,11 @@
 package it.polimi.ingsw.am54.model;
 
 import it.polimi.ingsw.am54.model.states.SetUpGameState;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.FileReader;
 import it.polimi.ingsw.am54.model.states.StartTurnState;
 
 import java.util.*;
@@ -142,12 +144,11 @@ public class Game implements IGame{
 
         // Leggiamo la configurazione JSON degli edifici dall'interno del Model, non dalla Board
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
-            JsonNode buildingCounts = countsRoot.get("buildingCounts").get(String.valueOf(numPlayers));
+            JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
+            JsonArray buildingCounts = countsRoot.getAsJsonObject("buildingCounts").getAsJsonArray(String.valueOf(numPlayers));
 
-            if (buildingCounts != null && buildingCounts.isArray()) {
-                cardsToDraw = buildingCounts.get(currentEra - 1).asInt();
+            if (buildingCounts != null) {
+                cardsToDraw = buildingCounts.get(currentEra - 1).getAsInt();
             } else {
                 throw new IllegalStateException("Nodo 'buildingCounts' mancante o non valido.");
             }
@@ -267,12 +268,11 @@ public class Game implements IGame{
     public void refillUpperBuildings() {
         int cardsToDraw = 0;
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
-            JsonNode buildingCounts = countsRoot.get("buildingCounts").get(String.valueOf(players.size()));
+            JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
+            JsonArray buildingCounts = countsRoot.getAsJsonObject("buildingCounts").getAsJsonArray(String.valueOf(players.size()));
 
-            if (buildingCounts != null && buildingCounts.isArray()) {
-                cardsToDraw = buildingCounts.get(currentEra - 1).asInt();
+            if (buildingCounts != null) {
+                cardsToDraw = buildingCounts.get(currentEra - 1).getAsInt();
             }
         } catch (Exception e) {
             System.err.println("Errore lettura EraCounts: " + e.getMessage());
@@ -342,7 +342,7 @@ public class Game implements IGame{
         players.removeIf(p -> p.getNickname().equalsIgnoreCase(nickname));
 
         // 2. Se tutti abbandonano a fine partita, riporta il server allo stato di Setup iniziale
-        if (players.isEmpty() && currentState.getStateName().equals("EndGameState")) {
+        if (players.isEmpty() && currentState.shouldResetToSetupOnEmpty()) {
             this.setState(new SetUpGameState());
         }
     }

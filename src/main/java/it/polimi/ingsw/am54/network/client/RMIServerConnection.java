@@ -145,14 +145,12 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
 
         String newState = clientModel.getCurrentState();
 
-        if (oldState != null && newState != null) {
-            if (("SetUpGameState".equals(oldState) || "Lobby".equals(oldState)) &&
-                    (!"SetUpGameState".equals(newState) && !"Lobby".equals(newState))) {
-                try {
-                    it.polimi.ingsw.am54.gui.GUIApp.loadBoardScene();
-                } catch (Exception | NoClassDefFoundError e) {
-                    // Modalità CLI attiva, transizione GUI ignorata
-                }
+        if (oldState != null && newState != null &&
+                it.polimi.ingsw.am54.gui.states.ClientStateRegistry.getHandler(oldState).isLobbyState() &&
+                !it.polimi.ingsw.am54.gui.states.ClientStateRegistry.getHandler(newState).isLobbyState()) {
+            try {
+                it.polimi.ingsw.am54.gui.GUIApp.loadBoardScene();
+            } catch (Exception | NoClassDefFoundError e) {
             }
         }
     }

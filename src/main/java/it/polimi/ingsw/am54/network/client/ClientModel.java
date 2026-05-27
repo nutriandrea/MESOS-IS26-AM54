@@ -480,7 +480,7 @@ public class ClientModel {
         List<String> tribe = this.playerTribe.getOrDefault(pName, new ArrayList<>());
         for (String card : tribe) {
             String[] parts = card.split("\\|");
-            if (parts.length > 3 && parts[3].toUpperCase().contains("ARTIST")) {
+            if (parts.length > 3 && parts[3].equalsIgnoreCase("ARTIST")) {
                 artistCount++;
             }
         }
@@ -493,7 +493,7 @@ public class ClientModel {
         List<String> tribe = this.playerTribe.getOrDefault(pName, new ArrayList<>());
         for (String card : tribe) {
             String[] parts = card.split("\\|");
-            if (parts.length > 4 && parts[3].toUpperCase().contains("INVENTOR")) {
+            if (parts.length > 4 && parts[3].equalsIgnoreCase("INVENTOR")) {
                 inventorCount++;
                 try { uniqueInventions.add(Integer.parseInt(parts[4])); } catch (Exception ignored) {}
             }
@@ -506,7 +506,7 @@ public class ClientModel {
         List<String> tribe = this.playerTribe.getOrDefault(pName, new ArrayList<>());
         for (String card : tribe) {
             String[] parts = card.split("\\|");
-            if (parts.length > 5 && parts[3].toUpperCase().contains("CONSTRUCTOR")) {
+            if (parts.length > 5 && parts[3].equalsIgnoreCase("CONSTRUCTOR")) {
                 try { constructorAura += Integer.parseInt(parts[5]); } catch (Exception ignored) {}
             }
         }

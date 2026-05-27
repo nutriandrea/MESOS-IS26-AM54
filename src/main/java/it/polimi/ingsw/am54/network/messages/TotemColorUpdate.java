@@ -1,8 +1,9 @@
 package it.polimi.ingsw.am54.network.messages;
 
-import it.polimi.ingsw.am54.model.TotemColors; // Ricordati l'import!
+import it.polimi.ingsw.am54.model.TotemColors;
+import it.polimi.ingsw.am54.network.client.ClientModel;
 
-public class TotemColorUpdate implements Update {
+public final class TotemColorUpdate implements Update {
 
     private final String nickname;
     private final TotemColors color;
@@ -15,6 +16,8 @@ public class TotemColorUpdate implements Update {
     public String getNickname() { return nickname; }
     public TotemColors getColor() { return color; }
 
-    public static final String TYPE = "totem_color";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updateTotemColor(this.nickname, this.color);
+    }
 }

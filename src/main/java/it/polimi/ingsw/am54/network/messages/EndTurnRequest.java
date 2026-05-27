@@ -1,11 +1,15 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.controller.Controller;
+import it.polimi.ingsw.am54.network.server.ClientConnection;
+
 /**
  * Richiesta inviata dal Client per terminare volontariamente il turno.
  */
-public class EndTurnRequest implements Request {
-    // Vuota: il server deduce il mittente dal Socket/RMI
+public final class EndTurnRequest implements Request {
 
-    public static final String TYPE = "end_turn";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void execute(Controller controller, String playerNickname, ClientConnection connection) {
+        controller.handleEndTurn(playerNickname);
+    }
 }

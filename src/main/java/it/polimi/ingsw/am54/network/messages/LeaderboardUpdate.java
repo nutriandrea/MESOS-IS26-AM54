@@ -1,5 +1,6 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
 import java.util.List;
 
 /**
@@ -7,7 +8,7 @@ import java.util.List;
  * Contains the position of the requesting player and the full ranking list
  * for matches with a given number of players.
  */
-public class LeaderboardUpdate implements Update {
+public final class LeaderboardUpdate implements Update {
 
     /** Position of the player in this leaderboard (1-based, -1 = not ranked). */
     private final int playerPosition;
@@ -28,6 +29,8 @@ public class LeaderboardUpdate implements Update {
     public List<LeaderboardEntry> getEntries() { return entries; }
     public int getNumPlayers()                { return numPlayers; }
 
-    public static final String TYPE = "leaderboard";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updateLeaderboard(this.playerPosition, this.entries, this.numPlayers);
+    }
 }

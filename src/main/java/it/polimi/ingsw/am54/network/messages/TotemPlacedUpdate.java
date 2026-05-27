@@ -1,7 +1,8 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
 
-public class TotemPlacedUpdate implements Update {
+public final class TotemPlacedUpdate implements Update {
 
     private final String nickname;
     private final int offerPosition;
@@ -14,6 +15,8 @@ public class TotemPlacedUpdate implements Update {
     public String getNickname() { return nickname; }
     public int getOfferPosition() { return offerPosition; }
 
-    public static final String TYPE = "totem_placed";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updateTotemPlacement(this.nickname, this.offerPosition);
+    }
 }

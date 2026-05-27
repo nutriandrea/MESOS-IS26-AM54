@@ -1,18 +1,21 @@
 package it.polimi.ingsw.am54.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import it.polimi.ingsw.am54.model.effects.buildings.*;
 import it.polimi.ingsw.am54.model.effects.characters.*;
 import it.polimi.ingsw.am54.model.effects.events.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 
 public class DeckFactory {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
 
 
     // crea il mazzo BUILDINGS
@@ -26,14 +29,13 @@ public class DeckFactory {
 
         // leggiamo il setup delle quantità da EraCounts.json
         try {
-            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
-            JsonNode buildingCounts = countsRoot.get("buildingCounts").get(String.valueOf(numPlayers));
+            JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
+            JsonArray buildingCounts = countsRoot.getAsJsonObject("buildingCounts").getAsJsonArray(String.valueOf(numPlayers));
 
-            if (buildingCounts != null && buildingCounts.isArray()) {
-                // L'array nel JSON è [era1, era2, era3]
-                countE1 = buildingCounts.get(0).asInt();
-                countE2 = buildingCounts.get(1).asInt();
-                countE3 = buildingCounts.get(2).asInt();
+            if (buildingCounts != null) {
+                countE1 = buildingCounts.get(0).getAsInt();
+                countE2 = buildingCounts.get(1).getAsInt();
+                countE3 = buildingCounts.get(2).getAsInt();
             }
         } catch (Exception e) {
             throw new IllegalStateException("Errore critico durante la lettura del file EraCounts.json", e);
@@ -44,19 +46,21 @@ public class DeckFactory {
         List<BuildingCard> e3 = new ArrayList<>();
 
         try {
-            JsonNode root = mapper.readTree(new File(filePath));
+            JsonArray root = JsonParser.parseReader(new FileReader(filePath)).getAsJsonArray();
 
-            for (JsonNode node : root) {
-                JobType type = JobType.valueOf(node.get("JobType").asText());
-                Phases phase = Phases.valueOf(node.get("phase").asText());
-                int cost = node.get("cost").asInt();
-                int finalAura = node.get("finalAura").asInt();
-                String nomeLambda = node.get("nomeLambda").asText();
-                int era = node.get("era").asInt();
-                JsonNode params = node.get("effectParams");
+            for (JsonElement elem : root) {
+                JsonObject node = elem.getAsJsonObject();
+                JobType type = JobType.valueOf(node.get("JobType").getAsString());
+                Phases phase = Phases.valueOf(node.get("phase").getAsString());
+                int cost = node.get("cost").getAsInt();
+                int finalAura = node.get("finalAura").getAsInt();
+                String nomeLambda = node.get("nomeLambda").getAsString();
+                int era = node.get("era").getAsInt();
+                JsonElement paramsElem = node.get("effectParams");
+                JsonObject params = paramsElem != null ? paramsElem.getAsJsonObject() : null;
 
                 List<IEffect<BuildingCard>> effects = new ArrayList<>();
-                IEffect<BuildingCard> effect = createBuildingEffect(node.get("phase").asText(), nomeLambda, params);
+                IEffect<BuildingCard> effect = createBuildingEffect(node.get("phase").getAsString(), nomeLambda, params);
                 if (effect != null) {
                     effects.add(effect);
                 }
@@ -66,7 +70,7 @@ public class DeckFactory {
                 card.setName(nomeLambda);
 
                 if (node.has("imageId")) {
-                    card.setImageId(node.get("imageId").asText());
+                    card.setImageId(node.get("imageId").getAsString());
                 }
 
                 if (era == 1) e1.add(card);
@@ -110,13 +114,13 @@ public class DeckFactory {
 
         // Leggiamo il numero di personaggi da pescare per Era
         try {
-            JsonNode countsRoot = mapper.readTree(new File("data/EraCounts.json"));
-            JsonNode charCounts = countsRoot.get("characterCounts").get(String.valueOf(numPlayers));
+            JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
+            JsonObject charCounts = countsRoot.getAsJsonObject("characterCounts").getAsJsonObject(String.valueOf(numPlayers));
 
             if (charCounts != null) {
-                countE1 = charCounts.get("era1").asInt();
-                countE2 = charCounts.get("era2").asInt();
-                countE3 = charCounts.get("era3").asInt();
+                countE1 = charCounts.get("era1").getAsInt();
+                countE2 = charCounts.get("era2").getAsInt();
+                countE3 = charCounts.get("era3").getAsInt();
             }
         } catch (Exception e) {
             throw new IllegalStateException("Errore critico durante la lettura del file EraCounts.json", e);
@@ -134,16 +138,17 @@ public class DeckFactory {
 
         // caricamento Personaggi (inseriti in charE)
         try {
-            JsonNode root = mapper.readTree(new File(charPath));
-            for (JsonNode node : root) {
-                int minPlayers = node.get("minPlayers").asInt();
+            JsonArray root = JsonParser.parseReader(new FileReader(charPath)).getAsJsonArray();
+            for (JsonElement elem : root) {
+                JsonObject node = elem.getAsJsonObject();
+                int minPlayers = node.get("minPlayers").getAsInt();
                 if (numPlayers >= minPlayers) {
-                    String characterType = node.get("characterType").asText();
+                    String characterType = node.get("characterType").getAsString();
                     JobType type = JobType.valueOf(characterType);
-                    Phases phase = Phases.valueOf(node.get("phase").asText());
-                    int level = node.get("level").asInt();
-                    int aura = node.get("aura").asInt();
-                    int era = node.get("era").asInt();
+                    Phases phase = Phases.valueOf(node.get("phase").getAsString());
+                    int level = node.get("level").getAsInt();
+                    int aura = node.get("aura").getAsInt();
+                    int era = node.get("era").getAsInt();
 
                     List<IEffect<CharacterCard>> effects = new ArrayList<>();
                     effects.add(createCharacterEffect(characterType));
@@ -151,7 +156,7 @@ public class DeckFactory {
                     CharacterCard card = new CharacterCard(level, type, aura, phase, effects, era);
                     card.setMinPlayers(minPlayers);
                     if (node.has("imageId")) {
-                        card.setImageId(node.get("imageId").asText());
+                        card.setImageId(node.get("imageId").getAsString());
                     }
                     if (era == 1) charE1.add(card);
                     else if (era == 2) charE2.add(card);
@@ -167,11 +172,12 @@ public class DeckFactory {
 
         // caricamento Eventi (inseriti in eventE)
         try {
-            JsonNode root = mapper.readTree(new File(eventPath));
-            for (JsonNode node : root) {
-                String etichetta = node.get("etichettaSottoclasse").asText();
-                int era = node.get("era").asInt();
-                boolean finalEvent = node.get("finalEvent").asBoolean();
+            JsonArray root = JsonParser.parseReader(new FileReader(eventPath)).getAsJsonArray();
+            for (JsonElement elem : root) {
+                JsonObject node = elem.getAsJsonObject();
+                String etichetta = node.get("etichettaSottoclasse").getAsString();
+                int era = node.get("era").getAsInt();
+                boolean finalEvent = node.get("finalEvent").getAsBoolean();
 
                 List<IEffect<EventCard>> effects = new ArrayList<>();
                 effects.add(createEventEffect(etichetta));
@@ -180,19 +186,19 @@ public class DeckFactory {
                         era,
                         finalEvent,
                         effects,
-                        node.has("baseFood") ? node.get("baseFood").asInt() : 0,
-                        node.has("auraPerCharacter") ? node.get("auraPerCharacter").asInt() : 0,
-                        node.has("threshold") ? node.get("threshold").asInt() : 0,
-                        node.has("bonusMultiplier") ? node.get("bonusMultiplier").asInt() : 0,
-                        node.has("penalty") ? node.get("penalty").asInt() : 0,
-                        node.has("bonus") ? node.get("bonus").asInt() : 0,
-                        node.has("malus") ? node.get("malus").asInt() : 0
+                        node.has("baseFood") ? node.get("baseFood").getAsInt() : 0,
+                        node.has("auraPerCharacter") ? node.get("auraPerCharacter").getAsInt() : 0,
+                        node.has("threshold") ? node.get("threshold").getAsInt() : 0,
+                        node.has("bonusMultiplier") ? node.get("bonusMultiplier").getAsInt() : 0,
+                        node.has("penalty") ? node.get("penalty").getAsInt() : 0,
+                        node.has("bonus") ? node.get("bonus").getAsInt() : 0,
+                        node.has("malus") ? node.get("malus").getAsInt() : 0
                 );
 
                 event.setName(etichetta);
 
                 if (node.has("imageId")) {
-                    event.setImageId(node.get("imageId").asText());
+                    event.setImageId(node.get("imageId").getAsString());
                 }
 
                 if (finalEvent) {
@@ -238,43 +244,52 @@ public class DeckFactory {
         return new Deck<>(finalDeck);
     }
 
+    private static final Map<String, Function<JsonObject, IEffect<BuildingCard>>> BUILDING_EFFECTS = Map.ofEntries(
+        Map.entry("SHAMAN_PASSIVE", BuildingShamanPassive::new),
+        Map.entry("EVENT_COST_MODIFIER", BuildingEventCostModifier::new),
+        Map.entry("JOB_AURA_BONUS", BuildingJobAuraBonus::new),
+        Map.entry("IMMEDIATE_RESOURCE", BuildingImmediateResource::new),
+        Map.entry("EXTRA_PICK", BuildingExtraPick::new),
+        Map.entry("ENDGAME_AURA", BuildingEndgameAura::new),
+        Map.entry("BONUS_FOOD", p -> new BuildingTurnOrderBonus()),
+        Map.entry("SIX_DIFFERENT_AURA", p -> new BuildingSixDifferentAura()),
+        Map.entry("SIX_OF_TYPE", p -> new BuildingSixOfType()),
+        Map.entry("DOUBLE_INVENTOR", p -> new BuildingDoubleInventor())
+    );
+
     // crea l'effetto giusto per gli edifici
-    private static IEffect<BuildingCard> createBuildingEffect(String phase, String nomeLambda, JsonNode params) {
+    private static IEffect<BuildingCard> createBuildingEffect(String phase, String nomeLambda, JsonObject params) {
         if (nomeLambda == null || nomeLambda.isEmpty() || nomeLambda.equals("null")) return null;
-
-        return switch (nomeLambda) {
-            case "SHAMAN_PASSIVE"      -> new BuildingShamanPassive(params);
-            case "EVENT_COST_MODIFIER" -> new BuildingEventCostModifier(params);
-            case "JOB_AURA_BONUS"      -> new BuildingJobAuraBonus(params);
-            case "IMMEDIATE_RESOURCE"  -> new BuildingImmediateResource(params);
-            case "EXTRA_PICK"          -> new BuildingExtraPick(params);
-            case "ENDGAME_AURA"        -> new BuildingEndgameAura(params);
-            case "BONUS_FOOD"          -> new BuildingTurnOrderBonus();
-            case "SIX_DIFFERENT_AURA"  -> new BuildingSixDifferentAura();
-            case "SIX_OF_TYPE"         -> new BuildingSixOfType();
-            case "DOUBLE_INVENTOR"     -> new BuildingDoubleInventor();
-
-            default -> throw new IllegalArgumentException("Effetto edificio non gestito dal JSON: " + nomeLambda);
-        };
+        return BUILDING_EFFECTS.getOrDefault(nomeLambda, p -> {
+            throw new IllegalArgumentException("Effetto edificio non gestito dal JSON: " + nomeLambda);
+        }).apply(params);
     }
+
+    private static final Map<String, Supplier<IEffect<CharacterCard>>> CHARACTER_EFFECTS = Map.of(
+        "HUNTER", CharacterHunter::new,
+        "CONSTRUCTOR", CharacterConstructor::new,
+        "SHAMAN", CharacterShaman::new,
+        "ARTIST", CharacterPassive::new,
+        "INVENTOR", CharacterPassive::new,
+        "FARMER", CharacterPassive::new
+    );
 
     private static IEffect<CharacterCard> createCharacterEffect(String effectName) {
-        return switch (effectName) {
-            case "HUNTER" -> new CharacterHunter();
-            case "CONSTRUCTOR" -> new CharacterConstructor();
-            case "SHAMAN" -> new CharacterShaman();
-            case "ARTIST", "INVENTOR", "FARMER" -> new CharacterPassive();
-            default -> throw new IllegalArgumentException("Effetto personaggio sconosciuto: " + effectName);
-        };
+        return CHARACTER_EFFECTS.getOrDefault(effectName, () -> {
+            throw new IllegalArgumentException("Effetto personaggio sconosciuto: " + effectName);
+        }).get();
     }
 
+    private static final Map<String, Supplier<IEffect<EventCard>>> EVENT_EFFECTS = Map.of(
+        "HUNTER", EventHunter::new,
+        "FARMER", EventFarmer::new,
+        "ARTIST", EventArtist::new,
+        "SHAMAN", EventShaman::new
+    );
+
     private static IEffect<EventCard> createEventEffect(String effectName) {
-        return switch (effectName) {
-            case "HUNTER" -> new EventHunter();
-            case "FARMER" -> new EventFarmer();
-            case "ARTIST" -> new EventArtist();
-            case "SHAMAN" -> new EventShaman();
-            default -> throw new IllegalArgumentException("Effetto evento sconosciuto: " + effectName);
-        };
+        return EVENT_EFFECTS.getOrDefault(effectName, () -> {
+            throw new IllegalArgumentException("Effetto evento sconosciuto: " + effectName);
+        }).get();
     }
 }

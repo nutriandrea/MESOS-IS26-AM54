@@ -50,6 +50,14 @@ public class EventCard extends TribeCard {
     public int getBonus() { return bonus; }
     public int getMalus() { return malus; }
 
+    public boolean isSustenanceEvent() {
+        return "FARMER".equals(name);
+    }
+
+    public boolean matchesJobType(JobType jobType) {
+        return jobType != null && jobType.name().equals(this.name);
+    }
+
     // ==========================================
     // RISOLUZIONE DELL'EVENTO AGGIORNATA
     // ==========================================
@@ -61,6 +69,11 @@ public class EventCard extends TribeCard {
             // Passiamo 'this' sia come carta proprietaria dell'effetto, sia come evento corrente.
             effect.applyOnEvent(null, g, this, this);
         }
+    }
+
+    @Override
+    public String toClientString() {
+        return getImageId() + "|" + getEra() + "|0|EVENT|" + getName();
     }
 
     @Override

@@ -1,12 +1,16 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
+
 /**
  * Notifica broadcast a tutti i client che il gioco e' stato sospeso
  * perche' e' rimasto un solo giocatore attivo.
  * SERVER -> CLIENT
  */
-public class GameSuspendedUpdate implements Update {
+public final class GameSuspendedUpdate implements Update {
 
-    public static final String TYPE = "game_suspended";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updateGameSuspended();
+    }
 }

@@ -50,4 +50,13 @@ public class Card {
     public void setImageId(String imageId) {
         this.imageId = imageId;
     }
+
+    /**
+     * Restituisce una rappresentazione testuale della carta per il Client.
+     * Ogni sottoclasse produce un formato specifico con i propri campi.
+     * I dati sono separati da '|' per facilitare il parsing lato client.
+     */
+    public String toClientString() {
+        throw new UnsupportedOperationException("Formato client non definito per questa carta");
+    }
 }

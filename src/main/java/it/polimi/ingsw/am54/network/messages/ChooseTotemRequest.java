@@ -1,13 +1,14 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.model.TotemColors;
+import it.polimi.ingsw.am54.network.server.ClientConnection;
 
 /**
  * Richiesta inviata dal Client per scegliere il colore del proprio Totem.
  */
-public class ChooseTotemRequest implements Request {
+public final class ChooseTotemRequest implements Request {
 
-    // Niente nickname! Solo la scelta nuda e cruda.
     private final TotemColors color;
 
     public ChooseTotemRequest(TotemColors color) {
@@ -18,6 +19,8 @@ public class ChooseTotemRequest implements Request {
         return color;
     }
 
-    public static final String TYPE = "choose_totem";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void execute(Controller controller, String playerNickname, ClientConnection connection) {
+        controller.handleChooseTotemColor(playerNickname, this.color.name());
+    }
 }

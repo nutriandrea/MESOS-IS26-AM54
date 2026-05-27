@@ -69,11 +69,7 @@ public class ServerHandler implements Runnable {
             try {
                 Object message = in.readObject();
                 if (message instanceof Update update) {
-                    if (PingRequest.TYPE.equals(update.getType())) {
-                        handlePing((PingRequest) update);
-                    } else {
-                        handleUpdate(update);
-                    }
+                    handleUpdate(update);
                 }
             } catch (Exception e) {
                 // SE IL SERVER CADE, ENTRA QUI:
@@ -113,92 +109,34 @@ public class ServerHandler implements Runnable {
     /**
      * Smista gli Update ricevuti dal server al ClientModel.
      *
-     * Ogni tipo di Update chiama un metodo specifico del ClientModel:
-     * - PlayerJoinedUpdate -> updatePlayerJoined()
-     * - PlayerDisconnectedUpdate -> updatePlayerDisconnected()
-     * - PlayerReconnectedUpdate -> updatePlayerReconnected()
-     * - TotemPlacedUpdate -> updateTotemPlacement()
-     * - CardPickedUpdate -> updateCardPicked()
-     * - TurnChangedUpdate -> updateTurn()
-     * - StateChangedUpdate -> updateState() [ora contiene stato completo]
-     * - TotemColorUpdate -> updateTotemColor()
-     * - EndGameUpdate -> updateEndGame()
-     * - ErrorMessageUpdate -> updateError()
+     * DISPATCH POLIMORFICO: message.applyTo(clientModel) delega a ogni sottotipo
+     * la propria logica di aggiornamento, senza switch o reflection.
+     *
+     * ECCEZIONI (gestite prima del dispatch):
+     * - PingRequest: risposta automatica a livello socket (trasparente per il client)
+     * - StateChangedUpdate: dopo applyTo(), verifica se la GUI deve passare
+     *   dalla scena lobby alla scena partita (responsabilita' UI separata dal model)
      */
     private void handleUpdate(Update message) {
-        switch (message.getType()) {
-            case StateChangedUpdate.TYPE -> {
-                StateChangedUpdate stateUpdate = (StateChangedUpdate) message;
-                String oldState = clientModel.getCurrentState();
-                clientModel.updateState(stateUpdate);
-                String newState = clientModel.getCurrentState();
+        if (message instanceof PingRequest ping) {
+            handlePing(ping);
+            return;
+        }
 
-                if (oldState != null && newState != null) {
-                    if (("SetUpGameState".equals(oldState) || "Lobby".equals(oldState)) &&
-                            (!"SetUpGameState".equals(newState) && !"Lobby".equals(newState))) {
+        String oldState = (message instanceof StateChangedUpdate)
+                ? clientModel.getCurrentState() : null;
 
-                        try {
-                            it.polimi.ingsw.am54.gui.GUIApp.loadBoardScene();
-                        } catch (Exception | NoClassDefFoundError e) {
-                            // Modalità CLI attiva, transizione GUI ignorata
-                        }
-                    }
+        message.applyTo(clientModel);
+
+        if (oldState != null) {
+            String newState = clientModel.getCurrentState();
+            if (it.polimi.ingsw.am54.gui.states.ClientStateRegistry.getHandler(oldState).isLobbyState() &&
+                    !it.polimi.ingsw.am54.gui.states.ClientStateRegistry.getHandler(newState).isLobbyState()) {
+                try {
+                    it.polimi.ingsw.am54.gui.GUIApp.loadBoardScene();
+                } catch (Exception | NoClassDefFoundError e) {
                 }
             }
-            case PlayerJoinedUpdate.TYPE -> {
-                PlayerJoinedUpdate msg = (PlayerJoinedUpdate) message;
-                clientModel.updatePlayerJoined(msg.getNickname());
-            }
-            case PlayerDisconnectedUpdate.TYPE -> {
-                PlayerDisconnectedUpdate msg = (PlayerDisconnectedUpdate) message;
-                clientModel.updatePlayerDisconnected(msg.getNickname());
-            }
-            case PlayerReconnectedUpdate.TYPE -> {
-                PlayerReconnectedUpdate msg = (PlayerReconnectedUpdate) message;
-                clientModel.updatePlayerReconnected(msg.getNickname());
-            }
-            case TotemPlacedUpdate.TYPE -> {
-                TotemPlacedUpdate msg = (TotemPlacedUpdate) message;
-                clientModel.updateTotemPlacement(msg.getNickname(), msg.getOfferPosition());
-            }
-            case CardPickedUpdate.TYPE -> {
-                CardPickedUpdate msg = (CardPickedUpdate) message;
-                clientModel.updateCardPicked(msg.getNickname(), msg.getRow(), msg.getCardIndex(), msg.getNewFoodBalance(), msg.getNewMagicBalance(), msg.getUpdatedOfferingTrack());
-            }
-            case TurnChangedUpdate.TYPE -> {
-                TurnChangedUpdate msg = (TurnChangedUpdate) message;
-                clientModel.updateTurn(msg.getNickname());
-            }
-            case TotemReturnedUpdate.TYPE -> {
-                TotemReturnedUpdate msg = (TotemReturnedUpdate) message;
-                clientModel.updateTotemReturned(msg.getNickname(), msg.getNewFoodBalance(), msg.getNewAuraBalance());
-            }
-            case TotemColorUpdate.TYPE -> {
-                TotemColorUpdate msg = (TotemColorUpdate) message;
-                clientModel.updateTotemColor(msg.getNickname(), msg.getColor());
-            }
-            case EndGameUpdate.TYPE -> {
-                EndGameUpdate update = (EndGameUpdate) message;
-                clientModel.updateEndGame(
-                        update.getWinners(),
-                        update.getAllScores(),
-                        update.getNumPlayers()
-                );
-            }
-            case LeaderboardUpdate.TYPE -> {
-                LeaderboardUpdate msg = (LeaderboardUpdate) message;
-                clientModel.updateLeaderboard(msg.getPlayerPosition(), msg.getEntries(), msg.getNumPlayers());
-            }
-            case ErrorMessageUpdate.TYPE -> {
-                ErrorMessageUpdate msg = (ErrorMessageUpdate) message;
-                clientModel.updateError(msg.getMessage());
-            }
-            case EventUpdate.TYPE -> {
-                EventUpdate msg = (EventUpdate) message;
-                clientModel.updateEventSnapshot(msg);
-            }
-            case GameSuspendedUpdate.TYPE -> clientModel.updateGameSuspended();
-            case GameResumedUpdate.TYPE -> clientModel.updateGameResumed();
         }
     }
 }

@@ -1,7 +1,8 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
 
-public class TurnChangedUpdate implements Update {
+public final class TurnChangedUpdate implements Update {
 
     private final String nickname;
 
@@ -11,6 +12,8 @@ public class TurnChangedUpdate implements Update {
 
     public String getNickname() { return nickname; }
 
-    public static final String TYPE = "turn_changed";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updateTurn(this.nickname);
+    }
 }

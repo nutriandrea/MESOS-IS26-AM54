@@ -1,9 +1,9 @@
 package it.polimi.ingsw.am54.model.effects.buildings;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonObject;
 import it.polimi.ingsw.am54.model.*;
 
 public class BuildingExtraPick implements IEffect<BuildingCard> {
-    public BuildingExtraPick(JsonNode params) {
+    public BuildingExtraPick(JsonObject params) {
         // Non serve leggere parametri, questa carta fa solo una cosa!
     }
 

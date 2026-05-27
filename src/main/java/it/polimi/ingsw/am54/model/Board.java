@@ -1,13 +1,13 @@
 package it.polimi.ingsw.am54.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.io.*;
 import java.util.*;
 
 public class Board {
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     private List<CharacterCard> characterUpperRow;
     private List<CharacterCard> characterLowerRow;
@@ -47,25 +47,26 @@ public class Board {
         List<Character> neededTiles = new ArrayList<>();
 
         try {
-            JsonNode rootNode = mapper.readTree(new File("data/OfferingTilesSetup.json"));
+            JsonObject rootNode = JsonParser.parseReader(new FileReader("data/OfferingTilesSetup.json")).getAsJsonObject();
             String playerKey = String.valueOf(numPlayers);
-            JsonNode arrayTessere = rootNode.get("requiredTiles").get(playerKey);
+            JsonArray arrayTessere = rootNode.getAsJsonObject("requiredTiles").getAsJsonArray(playerKey);
 
-            if (arrayTessere != null && arrayTessere.isArray()) {
-                for (JsonNode nodoLettera : arrayTessere) {
-                    neededTiles.add(nodoLettera.asText().charAt(0));
+            if (arrayTessere != null) {
+                for (JsonElement elem : arrayTessere) {
+                    neededTiles.add(elem.getAsString().charAt(0));
                 }
             }
 
-            JsonNode arrayTiles = rootNode.get("tiles");
+            JsonArray arrayTiles = rootNode.getAsJsonArray("tiles");
 
-            if (arrayTiles != null && arrayTiles.isArray()) {
-                for (JsonNode node : arrayTiles) {
-                    char idLetto = node.get("id").asText().charAt(0);
+            if (arrayTiles != null) {
+                for (JsonElement elem : arrayTiles) {
+                    JsonObject node = elem.getAsJsonObject();
+                    char idLetto = node.get("id").getAsString().charAt(0);
                     if (neededTiles.contains(idLetto)) {
-                        int upper = node.get("cardsFromUpper").asInt();
-                        int lower = node.get("cardsFromLower").asInt();
-                        int food  = node.get("foodBonus").asInt();
+                        int upper = node.get("cardsFromUpper").getAsInt();
+                        int lower = node.get("cardsFromLower").getAsInt();
+                        int food  = node.get("foodBonus").getAsInt();
 
                         OfferingTile tile = new OfferingTile(idLetto, upper, lower, food);
                         offeringTrack.add(tile);
@@ -106,15 +107,15 @@ public class Board {
         try {
 
             //legge il file
-            JsonNode rootNode = mapper.readTree(new File("data/TurnOrderConfig.json"));
-            JsonNode bonusArray = rootNode.get("bonusFood").get(String.valueOf(numPlayers));
+            JsonObject rootNode = JsonParser.parseReader(new FileReader("data/TurnOrderConfig.json")).getAsJsonObject();
+            JsonArray bonusArray = rootNode.getAsJsonObject("bonusFood").getAsJsonArray(String.valueOf(numPlayers));
 
             // se l'array esiste, crea gli slot
-            if (bonusArray != null && bonusArray.isArray()) {
+            if (bonusArray != null) {
 
                 for (int i = 0; i < bonusArray.size(); i++) {
                     int position = i + 1; // la posizione "umana" parte da 1
-                    int bonus = bonusArray.get(i).asInt(); // Il cibo da dare (-1, 0, 1, 2...)
+                    int bonus = bonusArray.get(i).getAsInt(); // Il cibo da dare (-1, 0, 1, 2...)
 
                     // fabbrica lo slot passandogli i dati già pronti
                     TurnOrderSlot slot = new TurnOrderSlot(position, bonus);
@@ -259,8 +260,8 @@ public class Board {
         // Sostentamento alla fine, a parità di quello l'Era più bassa
         EventCard nextEvent = eventLowerRow.stream()
                 .min((a, b) -> {
-                    boolean aIsFarmer = a.getName() != null && a.getName().toUpperCase().contains("FARMER");
-                    boolean bIsFarmer = b.getName() != null && b.getName().toUpperCase().contains("FARMER");
+                    boolean aIsFarmer = a.isSustenanceEvent();
+                    boolean bIsFarmer = b.isSustenanceEvent();
 
                     if (aIsFarmer != bIsFarmer) {
                         return aIsFarmer ? 1 : -1; // Il Farmer va in fondo

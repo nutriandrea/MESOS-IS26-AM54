@@ -7,8 +7,6 @@ package it.polimi.ingsw.am54.model;
  */
 public abstract class GameState {
 
-    public abstract String getStateName();
-
     public void joinGame(Game game, String nickname) throws Exception {
         throw new IllegalStateException("Non puoi unirti alla partita in questa fase");
     }
@@ -37,15 +35,34 @@ public abstract class GameState {
         throw new IllegalStateException("Non puoi risolvere la fase in questo momento");
     }
 
-    /**
-     * Salta il turno del giocatore disconnesso.
-     * Il comportamento dipende dallo stato corrente:
-     * - StartTurnState: marca hasPlacedTotem=true e avanza
-     * - PickingState: termina automaticamente il turno di pesca
-     * - Altri stati: non permesso (eccezione)
-     */
     public void skipTurn(Game game, String nickname) throws Exception {
         throw new IllegalStateException("Non puoi saltare il turno in questa fase");
     }
 
+    public boolean isDisconnectBlocked() {
+        return false;
+    }
+
+    public boolean isRemovePermanent() {
+        return false;
+    }
+
+    public boolean isAutoResolvable() {
+        return false;
+    }
+
+    public boolean isGameOver() {
+        return false;
+    }
+
+    public boolean shouldResetToSetupOnEmpty() {
+        return false;
+    }
+
+    public Player recoverActivePlayer(Game game) {
+        return null;
+    }
+
+    public void handleDisconnection(Game game, Player p, boolean isCurrentPlayer) throws Exception {
+    }
 }

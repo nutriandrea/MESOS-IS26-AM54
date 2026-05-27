@@ -1,10 +1,13 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.controller.Controller;
+import it.polimi.ingsw.am54.network.server.ClientConnection;
+
 /**
  * Risposta del Client al PingRequest del Server.
  * CLIENT -> SERVER
  */
-public class PongResponse implements Request {
+public final class PongResponse implements Request {
     private final long timestamp;
 
     public PongResponse(long timestamp) {
@@ -15,6 +18,9 @@ public class PongResponse implements Request {
         return timestamp;
     }
 
-    public static final String TYPE = "pong";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void execute(Controller controller, String playerNickname, ClientConnection connection) {
+        // PongResponse e' gestita a livello socket prima del dispatch;
+        // questo metodo non viene mai chiamato per questo tipo.
+    }
 }

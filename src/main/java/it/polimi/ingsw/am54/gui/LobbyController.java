@@ -66,6 +66,7 @@ public class LobbyController {
 
     private Map<String, ImageView> totemMap;
     private Map<String, Label> labelMap;
+    private final Map<TotemColors, VBox> colorBoxMap = new HashMap<>();
 
     private int currentLeftPageIndex = 0;
     private final int TOTAL_PAGES = 8;
@@ -121,6 +122,12 @@ public class LobbyController {
         labelMap.put("blue", nameBlue);
         labelMap.put("black", nameBlack);
         labelMap.put("white", nameWhite);
+
+        colorBoxMap.put(TotemColors.RED, redBox);
+        colorBoxMap.put(TotemColors.YELLOW, yellowBox);
+        colorBoxMap.put(TotemColors.BLUE, blueBox);
+        colorBoxMap.put(TotemColors.BLACK, blackBox);
+        colorBoxMap.put(TotemColors.WHITE, whiteBox);
 
         loadImage(totemRed, "/images/totem_red_3d_160x270.png");
         loadImage(totemYellow, "/images/totem_yellow_3d_160x270.png");
@@ -329,13 +336,8 @@ public class LobbyController {
         if (model != null && model.getPlayerColors() != null && myNickname != null) {
             TotemColors myColor = model.getPlayerColors().get(myNickname);
             if (myColor != null) {
-                switch (myColor.name().toLowerCase()) {
-                    case "red": redBox.toFront(); break;
-                    case "yellow": yellowBox.toFront(); break;
-                    case "blue": blueBox.toFront(); break;
-                    case "black": blackBox.toFront(); break;
-                    case "white": whiteBox.toFront(); break;
-                }
+                VBox box = colorBoxMap.get(myColor);
+                if (box != null) box.toFront();
             }
         }
     }

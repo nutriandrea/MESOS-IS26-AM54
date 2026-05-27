@@ -1,6 +1,8 @@
 package it.polimi.ingsw.am54.network.messages;
 
-public class CardPickedUpdate implements Update {
+import it.polimi.ingsw.am54.network.client.ClientModel;
+
+public final class CardPickedUpdate implements Update {
     private final String nickname;
     private final String row;
     private final int cardIndex;
@@ -24,6 +26,9 @@ public class CardPickedUpdate implements Update {
     public int getNewMagicBalance() { return newMagicBalance; }
     public java.util.Map<Integer, String> getUpdatedOfferingTrack() { return updatedOfferingTrack; }
 
-    public static final String TYPE = "card_picked";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updateCardPicked(this.nickname, this.row, this.cardIndex,
+                this.newFoodBalance, this.newMagicBalance, this.updatedOfferingTrack);
+    }
 }

@@ -15,6 +15,8 @@ import javafx.scene.layout.VBox;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 public class DashboardManager {
 
@@ -175,29 +177,31 @@ public class DashboardManager {
         return allCards;
     }
 
+    /** Ordine di visualizzazione delle carte nella mano (strategy map, non dispatch su stringa). */
+    private static final Map<String, Integer> TYPE_WEIGHTS = Map.of(
+            "HUNTER", 1,
+            "FARMER", 2,
+            "ARTIST", 3,
+            "SHAMAN", 4,
+            "CONSTRUCTOR", 5,
+            "INVENTOR", 6
+    );
+
     private int getCardLevel(String cardStr) {
         String[] parts = cardStr.split("\\|");
-        // Estraiamo il Livello che si trova all'indice 4
         try { return parts.length > 4 ? Integer.parseInt(parts[4]) : 0; }
         catch (Exception e) { return 0; }
     }
 
     private int getSortWeight(String cardStrWithType) {
         String[] parts = cardStrWithType.split("\\|");
-        String type = parts[parts.length - 1];
+        String category = parts[parts.length - 1]; // "building" o "character" (suffisso aggiunto da sortPlayerCards)
         int era = getEra(cardStrWithType);
 
-        if (type.equals("building")) return 100 + era;
+        if ("building".equals(category)) return 100 + era;
 
-        String str = cardStrWithType.toLowerCase();
-        if (str.contains("hunter")) return 1;
-        if (str.contains("farmer")) return 2;
-        if (str.contains("artist")) return 3;
-        if (str.contains("shaman")) return 4;
-        if (str.contains("builder")) return 5;
-        if (str.contains("inventor")) return 6;
-
-        return 50;
+        String type = parts.length > 3 ? parts[3] : "";
+        return TYPE_WEIGHTS.getOrDefault(type.toUpperCase(), 50);
     }
 
     private int getEra(String cardStr) {
@@ -219,28 +223,45 @@ public class DashboardManager {
         }
 
         String[] split = cardStrWithType.split("\\|");
-        String type = split[split.length - 1];
+        String category = split[split.length - 1]; // "building" o "character" (suffisso)
 
         String imageId = split[0];
         String eraStr = split.length > 1 ? split[1] : "1";
-        String cardName = split.length > 3 ? split[3] : "Carta";
-        if (type.equals("building") && split.length > 6) cardName = split[6];
+        String cardType = split.length > 3 ? split[3] : "";
+        String cardName = cardType;
 
-        String path = "";
-        if (type.equals("building")) {
-            path = "/images/cards/buildings/era " + eraStr + "/front/" + imageId + ".jpg";
-        } else {
-            int minP = 2;
-            try { minP = Integer.parseInt(split.length > 2 ? split[2] : "0"); } catch (Exception e) {}
-            path = "/images/cards/characters/" + (minP >= 5 ? "5_players" : minP + "+_players") + "/era" + eraStr + "/front/" + imageId + ".jpg";
+        if ("building".equals(category)) {
+            if (split.length > 6) cardName = split[6];
         }
+
+        String path = buildCardImagePath(category, imageId, eraStr, split);
 
         try { view.setImage(new Image(getClass().getResourceAsStream(path))); } catch (Exception e) {}
 
         view.setFitHeight(desiredHeight);
-        view.setPreserveRatio(true);
-        view.getStyleClass().add("hand-card");
-        Tooltip.install(view, new Tooltip(cardName));
+        view.setFitWidth(desiredHeight * CARD_ASPECT_RATIO);
+        view.setPreserveRatio(false);
+        view.setSmooth(true);
+
+        if (cardName != null && !cardName.isEmpty()) {
+            view.setUserData(cardName);
+            String finalCardName = cardName;
+            view.setOnMouseEntered(ev -> {
+                if (view.getUserData() instanceof Integer) return;
+                Tooltip t = new Tooltip(finalCardName);
+                Tooltip.install(view, t);
+            });
+        }
+
         return view;
+    }
+
+    private String buildCardImagePath(String category, String imageId, String eraStr, String[] split) {
+        if ("building".equals(category)) {
+            return "/images/cards/buildings/era " + eraStr + "/front/" + imageId + ".jpg";
+        }
+        int minP = 2;
+        try { minP = Integer.parseInt(split.length > 2 ? split[2] : "0"); } catch (Exception e) {}
+        return "/images/cards/characters/" + (minP >= 5 ? "5_players" : minP + "+_players") + "/era" + eraStr + "/front/" + imageId + ".jpg";
     }
 }

@@ -6,6 +6,8 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import java.util.Map;
+import java.util.function.Function;
 
 public class MarketManager {
 
@@ -13,6 +15,22 @@ public class MarketManager {
     private final HBox lowerMarket;
     private final ImageView tribeDeckView;
     private final ImageView buildingsDeckView;
+
+    private static final Function<String[], String> CHARACTER_PATH = parts -> {
+        int minP = 2;
+        try { minP = Integer.parseInt(parts[2]); } catch (Exception ignored) {}
+        return "/images/cards/characters/" + ((minP >= 5) ? "5_players" : minP + "+_players") + "/era" + parts[1] + "/front/" + parts[0] + ".jpg";
+    };
+
+    private static final Map<String, Function<String[], String>> CARD_PATH_RESOLVERS = Map.of(
+        "BUILDING", parts -> "/images/cards/buildings/era " + parts[1] + "/front/" + parts[0] + ".jpg",
+        "EVENT", parts -> "/images/cards/events/era" + parts[1] + "/front/" + parts[0] + ".jpg"
+    );
+
+    private static final Map<String, Function<String[], String>> NAME_EXTRACTORS = Map.of(
+        "BUILDING", parts -> parts.length > 6 ? parts[6] : "Edificio",
+        "EVENT", parts -> parts.length > 4 ? parts[4] : "Evento"
+    );
 
     public MarketManager(HBox upperMarket, HBox lowerMarket, ImageView tribeDeckView, ImageView buildingsDeckView) {
         this.upperMarket = upperMarket;
@@ -27,32 +45,32 @@ public class MarketManager {
 
         // --- UPPER ROW ---
         for (String cardStr : model.getEventUpperRow()) {
-            upperMarket.getChildren().add(createCardView(cardStr, "event", "upper", -1, false));
+            upperMarket.getChildren().add(createCardView(cardStr, "upper", -1, false));
         }
         int characterUpperSize = model.getCharacterUpperRow().size();
         for (int i = 0; i < characterUpperSize; i++) {
             String cardStr = model.getCharacterUpperRow().get(i);
-            upperMarket.getChildren().add(createCardView(cardStr, "character", "upper", i, true));
+            upperMarket.getChildren().add(createCardView(cardStr, "upper", i, true));
         }
         int buildingUpperSize = model.getUpperBuildingRow().size();
         for (int i = 0; i < buildingUpperSize; i++) {
             String cardStr = model.getUpperBuildingRow().get(i);
-            upperMarket.getChildren().add(createCardView(cardStr, "building", "upper", characterUpperSize + i, true));
+            upperMarket.getChildren().add(createCardView(cardStr, "upper", characterUpperSize + i, true));
         }
 
         // --- LOWER ROW ---
         for (String cardStr : model.getEventLowerRow()) {
-            lowerMarket.getChildren().add(createCardView(cardStr, "event", "lower", -1, false));
+            lowerMarket.getChildren().add(createCardView(cardStr, "lower", -1, false));
         }
         int characterLowerSize = model.getCharacterLowerRow().size();
         for (int i = 0; i < characterLowerSize; i++) {
             String cardStr = model.getCharacterLowerRow().get(i);
-            lowerMarket.getChildren().add(createCardView(cardStr, "character", "lower", i, true));
+            lowerMarket.getChildren().add(createCardView(cardStr, "lower", i, true));
         }
         int buildingLowerSize = model.getLowerBuildingRow().size();
         for (int i = 0; i < buildingLowerSize; i++) {
             String cardStr = model.getLowerBuildingRow().get(i);
-            lowerMarket.getChildren().add(createCardView(cardStr, "building", "lower", characterLowerSize + i, true));
+            lowerMarket.getChildren().add(createCardView(cardStr, "lower", characterLowerSize + i, true));
         }
     }
 
@@ -126,7 +144,7 @@ public class MarketManager {
         }
     }
 
-    private ImageView createCardView(String cardString, String type, String row, int index, boolean isPickable) {
+    private ImageView createCardView(String cardString, String row, int index, boolean isPickable) {
         ImageView view = new ImageView();
         if (cardString == null || cardString.equals("null") || cardString.isEmpty()) {
             view.setFitHeight(190);
@@ -138,23 +156,11 @@ public class MarketManager {
         String imageId = parts[0];
         String eraStr = parts.length > 1 ? parts[1] : "1";
         String minPStr = parts.length > 2 ? parts[2] : "0";
-        String cardName = (type.equals("building") && parts.length > 6) ? parts[6] : (parts.length > 3 ? parts[3] : "Carta");
+        String code = parts.length > 3 ? parts[3] : "";
+        String cardName = NAME_EXTRACTORS.getOrDefault(code, p -> p.length > 3 ? p[3] : "Carta").apply(parts);
         final String finalCardName = cardName;
 
-        String path = "";
-        switch(type) {
-            case "building":
-                path = "/images/cards/buildings/era " + eraStr + "/front/" + imageId + ".jpg";
-                break;
-            case "character":
-                int minP = 2;
-                try { minP = Integer.parseInt(minPStr); } catch (Exception ignored) {}
-                path = "/images/cards/characters/" + ((minP >= 5) ? "5_players" : minP + "+_players") + "/era" + eraStr + "/front/" + imageId + ".jpg";
-                break;
-            case "event":
-                path = "/images/cards/events/era" + eraStr + "/front/" + imageId + ".jpg";
-                break;
-        }
+        String path = CARD_PATH_RESOLVERS.getOrDefault(code, CHARACTER_PATH).apply(parts);
 
         try { view.setImage(new Image(getClass().getResourceAsStream(path))); } catch (Exception e) {}
 

@@ -1,10 +1,12 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
+
 /**
  * Messaggio inviato dal Server al Client per segnalare un errore
  * (es. mossa non valida o parametri errati).
  */
-public class ErrorMessageUpdate implements Update {
+public final class ErrorMessageUpdate implements Update {
 
     private final String message;
 
@@ -16,6 +18,8 @@ public class ErrorMessageUpdate implements Update {
         return message;
     }
 
-    public static final String TYPE = "error_message";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updateError(this.message);
+    }
 }

@@ -66,8 +66,19 @@ public class SocketClientHandler implements Runnable, ClientConnection {
 
             while (connected) {
                 Object input = in.readObject();
-                if (input instanceof Request) {
-                    handleRequest((Request) input);
+                /*
+                 * DISPATCH A DUE LIVELLI:
+                 * 1. PongResponse e JoinGameRequest come early instanceof
+                 *    (operazioni a livello socket / necessitano contesto prima del dispatch)
+                 * 2. Tutte le altre Request tramite execute() polimorfico
+                 */
+                if (input instanceof PongResponse) {
+                    lastPongTime = System.currentTimeMillis();
+                } else if (input instanceof JoinGameRequest r) {
+                    this.playerNickname = r.getNickname();
+                    controller.handleJoinGame(this.playerNickname, this);
+                } else if (input instanceof Request request) {
+                    request.execute(controller, playerNickname, this);
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
@@ -76,35 +87,6 @@ public class SocketClientHandler implements Runnable, ClientConnection {
             }
         } finally {
             disconnect();
-        }
-    }
-
-    private void handleRequest(Request request) {
-        switch (request.getType()) {
-            case JoinGameRequest.TYPE -> {
-                JoinGameRequest req = (JoinGameRequest) request;
-                this.playerNickname = req.getNickname();
-                controller.handleJoinGame(this.playerNickname, this);
-            }
-            case SetupGameRequest.TYPE -> controller.handleSetupGame(this.playerNickname);
-            case ChooseTotemRequest.TYPE -> {
-                ChooseTotemRequest req = (ChooseTotemRequest) request;
-                controller.handleChooseTotemColor(this.playerNickname, req.getColor().name());
-            }
-            case PlaceTotemRequest.TYPE -> {
-                PlaceTotemRequest req = (PlaceTotemRequest) request;
-                controller.handlePlaceTotem(this.playerNickname, req.getOfferPosition());
-            }
-            case PickCardRequest.TYPE -> {
-                PickCardRequest req = (PickCardRequest) request;
-                controller.handlePickCard(this.playerNickname, req.getRow(), req.getCardIndex());
-            }
-            case PongResponse.TYPE -> lastPongTime = System.currentTimeMillis();
-            case EndTurnRequest.TYPE -> controller.handleEndTurn(this.playerNickname);
-            case GetLeaderboardRequest.TYPE -> {
-                GetLeaderboardRequest req = (GetLeaderboardRequest) request;
-                controller.handleGetLeaderboard(this, req.getNumPlayers());
-            }
         }
     }
 

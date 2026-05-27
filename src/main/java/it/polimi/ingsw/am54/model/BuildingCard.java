@@ -87,4 +87,9 @@ public class BuildingCard extends Card {
         board.addBuildingCard(this, row);
     }
 
+    @Override
+    public String toClientString() {
+        String nomeEdificio = getName() != null ? getName() : "Edificio Speciale";
+        return getImageId() + "|" + getEra() + "|0|BUILDING|" + getCost() + "|" + getFinalAura() + "|" + nomeEdificio;
+    }
 }

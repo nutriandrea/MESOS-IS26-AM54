@@ -1,10 +1,8 @@
 package it.polimi.ingsw.am54.network.server;
 
-import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.model.*;
 import it.polimi.ingsw.am54.network.messages.*;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,29 +13,29 @@ import java.util.stream.Collectors;
  * ============================================================================
  * VirtualView — Pattern Proxy tra Model e rete
  * ============================================================================
- *
+ *---
  * RUOLO:
  * Il Game (Model) non sa nulla della rete. Ha una lista di observer (IGameObserver)
  * e notifica un evento chiamando un metodo (es. onCardPicked) su ogni observer.
- *
+ *---
  * La VirtualView si registra come observer del Game. Quando il Game la notifica,
  * la VirtualView traduce la chiamata in un messaggio di rete e lo invia
  * sulla sua ClientConnection (Socket o RMI, non importa).
- *
+ *---
  * COME AVVIENE IL BROADCAST:
  * Il broadcast NON e' responsabilita' della VirtualView. Ogni VirtualView ha
  * UNA SOLA ClientConnection e manda SOLO al proprio client.
  * Il broadcast avviene nel Game: quando il Game notifica un evento, lo fa
  * su TUTTI gli observer registrati (un for-loop). Quindi:
- *
+ *---
  *   Game.pickCard("Alice") -> notifyCardPicked() ->
  *     for (IGameObserver obs : observers) obs.onCardPicked()
  *       -> VV_Alice.connection.sendUpdate(CardPickedUpdate("Alice"))
  *       -> VV_Bob.connection.sendUpdate(CardPickedUpdate("Alice"))
  *       -> VV_Carlo.connection.sendUpdate(CardPickedUpdate("Alice"))
- *
+ *---
  * Tutti i client ricevono l'aggiornamento, tutti vedono la board aggiornata.
- *
+ *---
  * DIFF vs FULL STATE:
  * Gli update sono gia' "diff" perche' contengono SOLO i dati cambiati:
  *   - CardPickedUpdate: nickname, row, cardIndex, newFoodBalance
@@ -45,7 +43,7 @@ import java.util.stream.Collectors;
  *   - TurnChangedUpdate: nickname
  *   ecc.
  * Non viene mai inviato l'intero stato del gioco, solo la delta.
- *
+ *---
  * FLUSSO COMPLETO:
  *   Client Request -> SocketClientHandler/RMIClientHandler -> Controller -> Game
  *                                                                             |
@@ -68,12 +66,6 @@ public class VirtualView implements IGameObserver {
     /** Nickname del giocatore proprietario di questa connessione */
     private final String nickname;
 
-    /** Riferimento al Controller per comunicazioni inverse */
-    private Controller controller;
-
-    public void setController(Controller controller) {
-        this.controller = controller;
-    }
 
     /**
      * Costruttore: crea la VirtualView quando un giocatore entra in partita.
@@ -191,20 +183,20 @@ public class VirtualView implements IGameObserver {
         // 1. Mappatura statistiche giocatori
         Map<String, EventUpdate.PlayerSnapshot> stats = new HashMap<>();
         for (Player p : game.getPlayers()) {
-            List<String> tribeStr = p.getMyTribe().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-            List<String> buildStr = p.getBuildings().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+            List<String> tribeStr = p.getMyTribe().stream().map(Card::toClientString).collect(Collectors.toList());
+            List<String> buildStr = p.getBuildings().stream().map(Card::toClientString).collect(Collectors.toList());
             stats.put(p.getNickname(), new EventUpdate.PlayerSnapshot(
                     p.getFood(), p.getAuraPoints(), p.getMagicPoints(), tribeStr, buildStr
             ));
         }
 
         // 2. Trasformazione delle carte in Stringhe
-        List<String> charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-        List<String> charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-        List<String> eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
-        List<String> eventLow = b.getEventLowerRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
-        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
-        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+        List<String> charUp = b.getCharacterUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
+        List<String> charLow = b.getCharacterLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
+        List<String> eventUp = b.getEventUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
+        List<String> eventLow = b.getEventLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
+        List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
+        List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
 
         // 3. Spedisci lo Snapshot completo aggiungendo il nome in cima!
         connection.notifyEventResolved(eventName, stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
@@ -226,8 +218,8 @@ public class VirtualView implements IGameObserver {
         // 1. Statistiche e Carte Giocatori (sempre valide)
         Map<String, StateChangedUpdate.PlayerSnapshot> stats = new java.util.LinkedHashMap<>();
         for (Player p : game.getPlayers()) {
-            List<String> tribeStr = p.getMyTribe().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-            List<String> buildStr = p.getBuildings().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+            List<String> tribeStr = p.getMyTribe().stream().map(Card::toClientString).collect(Collectors.toList());
+            List<String> buildStr = p.getBuildings().stream().map(Card::toClientString).collect(Collectors.toList());
             stats.put(p.getNickname(), new StateChangedUpdate.PlayerSnapshot(
                     p.getFood(), p.getAuraPoints(), p.getMagicPoints(), p.getTotemColors(), tribeStr, buildStr
             ));
@@ -266,12 +258,12 @@ public class VirtualView implements IGameObserver {
                 offering.put(i, "[Tessera " + tile.getId() + " | Pick Su:" + tile.getRemainingUpperPicks() + " Giù:" + tile.getRemainingLowerPicks() + " | Bonus 🍖:+" + tile.getFoodBonus() + "] -> " + occName);
             }
 
-            charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-            charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-            eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
-            eventLow = b.getEventLowerRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
-            buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
-            buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+            charUp = b.getCharacterUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
+            charLow = b.getCharacterLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
+            eventUp = b.getEventUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
+            eventLow = b.getEventLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
+            buildUp = b.getBuildingCardsUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
+            buildLow = b.getBuildingCardsLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
         }
 
         // Spedisci il pacchetto (sicuro!)
@@ -305,8 +297,8 @@ public class VirtualView implements IGameObserver {
         // 1. Statistiche e Carte Giocatori
         Map<String, StateChangedUpdate.PlayerSnapshot> stats = new LinkedHashMap<>();
         for (Player p : game.getPlayers()) {
-            List<String> tribeStr = p.getMyTribe().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-            List<String> buildStr = p.getBuildings().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+            List<String> tribeStr = p.getMyTribe().stream().map(Card::toClientString).collect(Collectors.toList());
+            List<String> buildStr = p.getBuildings().stream().map(Card::toClientString).collect(Collectors.toList());
             stats.put(p.getNickname(), new StateChangedUpdate.PlayerSnapshot(
                     p.getFood(), p.getAuraPoints(), p.getMagicPoints(), p.getTotemColors(), tribeStr, buildStr
             ));
@@ -339,12 +331,12 @@ public class VirtualView implements IGameObserver {
                 offering.put(i, "[Tessera " + tile.getId() + " | Pick Su:" + tile.getRemainingUpperPicks() + " Giù:" + tile.getRemainingLowerPicks() + " | Bonus 🍖:+" + tile.getFoodBonus() + "] -> " + occName);
             }
 
-            charUp = b.getCharacterUpperRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-            charLow = b.getCharacterLowerRow().stream().map(this::formatCharacterForClient).collect(Collectors.toList());
-            eventUp = b.getEventUpperRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
-            eventLow = b.getEventLowerRow().stream().map(this::formatEventForClient).collect(Collectors.toList());
-            buildUp = b.getBuildingCardsUpperRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
-            buildLow = b.getBuildingCardsLowerRow().stream().map(this::formatBuildingForClient).collect(Collectors.toList());
+            charUp = b.getCharacterUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
+            charLow = b.getCharacterLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
+            eventUp = b.getEventUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
+            eventLow = b.getEventLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
+            buildUp = b.getBuildingCardsUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
+            buildLow = b.getBuildingCardsLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
         }
 
         // Manda il pacchetto solo a QUESTA connessione
@@ -356,24 +348,6 @@ public class VirtualView implements IGameObserver {
         );
     }
 
-    private String formatCharacterForClient(CharacterCard c) {
-        if (c == null) return null;
-        // Esempio formato standard unificato: "8|1|2|HUNTER|0|1" (ID|Era|MinGiocatori|Nome|Livello|Aura)
-        return c.getImageId() + "|" + c.getEra() + "|" + c.getMinPlayers() + "|" + c.getName() + "|" + c.getLevel() + "|" + c.getAura();
-    }
-
-    private String formatBuildingForClient(BuildingCard b) {
-        if (b == null) return null;
-        String nomeEdificio = b.getName() != null ? b.getName() : "Edificio Speciale";
-        // Esempio formato standard unificato: "115|3|0|BUILDING|3|2|NomeEdificio"
-        return b.getImageId() + "|" + b.getEra() + "|0|BUILDING|" + b.getCost() + "|" + b.getFinalAura() + "|" + nomeEdificio;
-    }
-
-    private String formatEventForClient(EventCard e) {
-        if (e == null) return null;
-        // Esempio formato standard unificato: "84|1|0|EVENT|NomeEvento"
-        return e.getImageId() + "|" + e.getEra() + "|0|EVENT|" + e.getName();
-    }
     /**
      * Invia notifica di sospensione SOLO a questo giocatore.
      * Usata dal Controller per broadcast.

@@ -1,12 +1,14 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.controller.Controller;
+import it.polimi.ingsw.am54.network.server.ClientConnection;
+
 /**
  * Richiesta inviata dal Client per pescare una carta.
  * Sicura al 100%: il server dedurrà il mittente dal Socket associato.
  */
-public class PickCardRequest implements Request {
+public final class PickCardRequest implements Request {
 
-    // Niente nickname!
     private final String row;
     private final int cardIndex;
 
@@ -23,6 +25,8 @@ public class PickCardRequest implements Request {
         return cardIndex;
     }
 
-    public static final String TYPE = "pick_card";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void execute(Controller controller, String playerNickname, ClientConnection connection) {
+        controller.handlePickCard(playerNickname, this.row, this.cardIndex);
+    }
 }

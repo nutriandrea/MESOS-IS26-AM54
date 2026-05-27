@@ -1,10 +1,12 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
+
 /**
  * Notifica broadcast a tutti i client che un giocatore e' stato marcato come disconnesso.
  * SERVER -> CLIENT
  */
-public class PlayerDisconnectedUpdate implements Update {
+public final class PlayerDisconnectedUpdate implements Update {
     private final String nickname;
 
     public PlayerDisconnectedUpdate(String nickname) {
@@ -15,6 +17,8 @@ public class PlayerDisconnectedUpdate implements Update {
         return nickname;
     }
 
-    public static final String TYPE = "player_disconnected";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updatePlayerDisconnected(this.nickname);
+    }
 }

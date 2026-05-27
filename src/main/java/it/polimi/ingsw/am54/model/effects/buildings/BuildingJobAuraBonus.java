@@ -1,5 +1,5 @@
 package it.polimi.ingsw.am54.model.effects.buildings;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonObject;
 import it.polimi.ingsw.am54.model.*;
 
 // Gestisce le 6 carte di Era 3 che danno punti prestigio a fine partita in base al tipo di personaggio
@@ -9,10 +9,10 @@ public class BuildingJobAuraBonus implements IEffect<BuildingCard> {
     private final int multiplier;
     private final boolean useCardBaseAura;
 
-    public BuildingJobAuraBonus(JsonNode params) {
-        this.jobType = params != null && params.has("jobType") ? JobType.valueOf(params.get("jobType").asText()) : null;
-        this.multiplier = params != null && params.has("multiplier") ? params.get("multiplier").asInt() : 0;
-        this.useCardBaseAura = params != null && params.has("useCardBaseAura") && params.get("useCardBaseAura").asBoolean();
+    public BuildingJobAuraBonus(JsonObject params) {
+        this.jobType = params != null && params.has("jobType") ? JobType.valueOf(params.get("jobType").getAsString()) : null;
+        this.multiplier = params != null && params.has("multiplier") ? params.get("multiplier").getAsInt() : 0;
+        this.useCardBaseAura = params != null && params.has("useCardBaseAura") && params.get("useCardBaseAura").getAsBoolean();
     }
 
     // FIRMA AGGIORNATA PER LA FASE FINE PARTITA

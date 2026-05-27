@@ -1,15 +1,16 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.controller.Controller;
+import it.polimi.ingsw.am54.network.server.ClientConnection;
+
 /**
  * Richiesta inviata dal Client per segnalare di essere pronto per il Setup.
  * Essendo un "Trigger", non ha bisogno di parametri: basta il suo arrivo!
  */
-public class SetupGameRequest implements Request {
+public final class SetupGameRequest implements Request {
 
-    // Classe volutamente vuota.
-    // Nessun parametro necessario, nessun costruttore speciale richiesto.
-
-
-    public static final String TYPE = "setup_game";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void execute(Controller controller, String playerNickname, ClientConnection connection) {
+        controller.handleSetupGame(playerNickname);
+    }
 }

@@ -1,7 +1,8 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
 
-public class PlayerJoinedUpdate implements Update {
+public final class PlayerJoinedUpdate implements Update {
 
     private final String nickname;
 
@@ -13,6 +14,8 @@ public class PlayerJoinedUpdate implements Update {
         return nickname;
     }
 
-    public static final String TYPE = "player_joined";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updatePlayerJoined(this.nickname);
+    }
 }

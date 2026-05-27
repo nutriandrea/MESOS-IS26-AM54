@@ -59,6 +59,11 @@ public class CharacterCard extends TribeCard implements IDrawable {
     }
 
     @Override
+    public String toClientString() {
+        return getImageId() + "|" + getEra() + "|" + getMinPlayers() + "|" + getName() + "|" + getLevel() + "|" + getAura();
+    }
+
+    @Override
     public void pick(Player player, Game game) throws Exception {
         player.modifyMyTribe(this);
         this.resolveEffects(player, game);

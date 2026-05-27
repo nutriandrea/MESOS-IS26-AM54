@@ -1,12 +1,12 @@
 package it.polimi.ingsw.am54.model.effects.buildings;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonObject;
 import it.polimi.ingsw.am54.model.*;
 
 public class BuildingEndgameAura implements IEffect<BuildingCard> {
     private final int auraBonus;
 
-    public BuildingEndgameAura(JsonNode params) {
-        this.auraBonus = params != null && params.has("aura") ? params.get("aura").asInt() : 0;
+    public BuildingEndgameAura(JsonObject params) {
+        this.auraBonus = params != null && params.has("aura") ? params.get("aura").getAsInt() : 0;
     }
 
     @Override

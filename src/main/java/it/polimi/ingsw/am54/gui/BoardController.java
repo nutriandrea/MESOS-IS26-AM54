@@ -20,9 +20,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
-import java.util.Map;
+import it.polimi.ingsw.am54.gui.states.ClientStateRegistry;
 
 public class BoardController {
+
+    
 
     @FXML private StackPane rootPane;
 
@@ -392,54 +394,17 @@ public class BoardController {
         if (activePlayer == null || state == null) return;
 
         boolean isMyTurn = activePlayer.equals(myName);
-        boolean isPicking = state.equalsIgnoreCase("PICKINGSTATE") || state.equalsIgnoreCase("PICKING");
+        it.polimi.ingsw.am54.gui.states.ClientStateHandler handler =
+                ClientStateRegistry.getHandler(state);
 
-        if (isMyTurn && isPicking) {
-            endTurnButton.setVisible(true);
-        } else {
-            endTurnButton.setVisible(false);
-        }
+        endTurnButton.setVisible(isMyTurn && handler.showsEndTurnButton());
 
         if (!isMyTurn) {
             actionInstructionLabel.setText("In attesa della mossa di " + activePlayer.toUpperCase() + currentDots);
             return;
         }
 
-        switch (state.toUpperCase()) {
-            case "STARTTURNSTATE":
-            case "STARTTURN":
-            case "BIDDINGSTATE":
-                actionInstructionLabel.setText("Scegli dove piazzare il tuo totem!");
-                break;
-
-            case "PICKINGSTATE":
-            case "PICKING":
-                int myPosition = -1;
-                for (Map.Entry<Integer, String> entry : model.getOfferingTrack().entrySet()) {
-                    if (entry.getValue() != null && entry.getValue().contains(myName)) {
-                        myPosition = entry.getKey();
-                        break;
-                    }
-                }
-
-                // LA TUA LOGICA: Se sei in fase Picking ma NON sei sulle tessere offerta (posizione -1),
-                // significa che sei nel "Turno Bonus" (currentTile == null nel server)!
-                if (myPosition == -1) {
-                    actionInstructionLabel.setText("Extra pick! Pesca una carta dalla fila sopra o termina il turno!");
-                } else {
-                    actionInstructionLabel.setText("Scegli che carta prendere!");
-                }
-                break;
-
-            case "SETUPGAMESTATE":
-            case "SETUP":
-                actionInstructionLabel.setText("Fase di setup: prepara la tua tribù di partenza.");
-                break;
-
-            default:
-                actionInstructionLabel.setText("Tocca a te! Fai la tua mossa.");
-                break;
-        }
+        actionInstructionLabel.setText(handler.getInstruction(model, myName));
     }
 
     @FXML

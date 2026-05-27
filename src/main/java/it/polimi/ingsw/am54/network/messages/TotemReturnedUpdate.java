@@ -1,11 +1,13 @@
 package it.polimi.ingsw.am54.network.messages;
 
+import it.polimi.ingsw.am54.network.client.ClientModel;
+
 /**
  * Messaggio di update inviato dal Server quando un giocatore finisce
  * il suo turno di Pick. Notifica ai Client di togliere il Totem
  * dalla Offering Track e rimetterlo nella Turn Order Track.
  */
-public class TotemReturnedUpdate implements Update {
+public final class TotemReturnedUpdate implements Update {
 
     private final String nickname;
     private final int position;
@@ -24,6 +26,8 @@ public class TotemReturnedUpdate implements Update {
     public int getNewFoodBalance() { return newFoodBalance; }
     public int getNewAuraBalance() { return newAuraBalance; }
 
-    public static final String TYPE = "totem_returned";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updateTotemReturned(this.nickname, this.newFoodBalance, this.newAuraBalance);
+    }
 }

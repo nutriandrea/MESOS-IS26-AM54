@@ -1,12 +1,13 @@
 package it.polimi.ingsw.am54.network.messages;
 
 import it.polimi.ingsw.am54.model.TotemColors;
+import it.polimi.ingsw.am54.network.client.ClientModel;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-public class StateChangedUpdate implements Update {
+public final class StateChangedUpdate implements Update {
 
     // DTO per le statistiche del giocatore
     public static class PlayerSnapshot implements Serializable {
@@ -106,6 +107,8 @@ public class StateChangedUpdate implements Update {
         return currentRound;
     }
 
-    public static final String TYPE = "state_changed";
-    @Override public String getType() { return TYPE; }
+    @Override
+    public void applyTo(ClientModel model) {
+        model.updateState(this);
+    }
 }

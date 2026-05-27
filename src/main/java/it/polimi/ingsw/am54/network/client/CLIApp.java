@@ -2,17 +2,61 @@ package it.polimi.ingsw.am54.network.client;
 
 import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.messages.LeaderboardEntry;
+import it.polimi.ingsw.am54.gui.states.CLIAbstract;
+import it.polimi.ingsw.am54.gui.states.ClientStateRegistry;
+import it.polimi.ingsw.am54.gui.states.ClientStateHandler;
 import java.util.Scanner;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CLIApp {
+public class CLIApp implements CLIAbstract {
     private final VirtualServer server;
     private final ClientModel model;
     private final Scanner scanner;
     private final String myNickname;
 
     private Consumer<String> currentInputHandler = null;
+    private final AtomicBoolean running = new AtomicBoolean(true);
+    private final Map<String, Function<String[], String>> cardRenderers = Map.ofEntries(
+        Map.entry("SHAMAN", parts -> {
+            int v1 = Integer.parseInt(parts[4]);
+            return "SHAMAN " + (v1 > 0 ? "★".repeat(v1) : "");
+        }),
+        Map.entry("HUNTER", parts -> {
+            int v1 = Integer.parseInt(parts[4]);
+            return "HUNTER " + (v1 > 0 ? "🍖".repeat(v1) : "");
+        }),
+        Map.entry("CONSTRUCTOR", parts -> {
+            int v1 = Integer.parseInt(parts[4]);
+            int v2 = Integer.parseInt(parts[5]);
+            StringBuilder sb = new StringBuilder("CONSTRUCTOR ");
+            if (v1 > 0) sb.append("🧱-").append(v1);
+            if (v2 > 0) sb.append(" ✨").append(v2);
+            return sb.toString();
+        }),
+        Map.entry("FARMER", parts -> {
+            int v1 = Integer.parseInt(parts[4]);
+            return "FARMER " + (v1 >= 0 ? "🌾-" + v1 : "");
+        }),
+        Map.entry("INVENTOR", parts -> {
+            int v1 = Integer.parseInt(parts[4]);
+            return "INVENTOR " + (v1 >= 0 ? "⚙️ Liv." + v1 : "");
+        }),
+        Map.entry("ARTIST", parts -> "ARTIST 🎨"),
+        Map.entry("BUILDING", parts -> {
+            int v1 = Integer.parseInt(parts[4]);
+            int v2 = Integer.parseInt(parts[5]);
+            String nome = parts.length > 6 ? parts[6] : "Speciale";
+            return "🏛️ " + nome + " (Cost:🍖" + v1 + " Aura:✨" + v2 + ")";
+        }),
+        Map.entry("EVENT", parts -> {
+            String nomeEvento = parts.length > 4 ? parts[4] : "Sconosciuto";
+            return "📜 " + nomeEvento;
+        })
+    );
 
     public CLIApp(VirtualServer server, ClientModel model, String nickname, Scanner scanner) {
         this.server = server;
@@ -27,7 +71,7 @@ public class CLIApp {
 
     private void startInputListener() {
         Thread inputThread = new Thread(() -> {
-            while (true) {
+            while (running.get()) {
                 if (scanner.hasNextLine()) {
                     String input = scanner.nextLine();
 
@@ -46,40 +90,16 @@ public class CLIApp {
     public synchronized void render() {
         String currentState = model.getCurrentState();
 
-        //per capire cosa fare, guardo dal ClientModel
         boolean isMyTurn = myNickname.equals(model.getCurrentPlayer());
         boolean hasSystemAlert = model.getLastSystemMessage() != null;
-        boolean isEndGame = currentState.equals("EndGameState");
+        ClientStateHandler handler = ClientStateRegistry.getHandler(currentState);
 
-        // REGOLA D'ORO: Togliamo la tastiera all'utente SE:
-        // A) C'è un allarme di sistema (es. crash di un giocatore, sospensione)
-        // B) La partita è finita (Vittoria a tavolino)
-        // C) Siamo in gioco (StartTurn o Picking) ma NON è il nostro turno
-
-        if (hasSystemAlert || isEndGame ||
-                (!isMyTurn && (currentState.equals("StartTurnState") || currentState.equals("PickingState")))) {
-
-            currentInputHandler = null; // Strappiamo il controllo!
+        if (handler.shouldBlockInput(isMyTurn)) {
+            currentInputHandler = null;
         }
 
-        // 2. RIDISEGNAMO SEMPRE LO SCHERMO
         clearConsole();
-
-
-        // 3. DISEGNO DELLA FASE CORRENTE
-        if (currentState.equals("Lobby") || currentState.equals("SetUpGameState")) {
-            renderSetup();
-        } else if (currentState.equals("StartTurnState")) {
-            renderStartTurn();
-        } else if (currentState.equals("PickingState")) {
-            renderPicking();
-        } else if (currentState.equals("EventState")) {
-            System.out.println("Fase Eventi in corso... Attendi la risoluzione automatica...");
-        } else if (currentState.equals("EndGameState")) {
-            renderEndGame();
-        } else {
-            System.out.println("Stato sconosciuto: " + currentState);
-        }
+        handler.renderCLI(this);
 
         // 4. STAMPA DIROMPENTE DEGLI ALLARMI
         if (hasSystemAlert) {
@@ -95,7 +115,7 @@ public class CLIApp {
         }
     }
 
-    private void renderSetup() {
+    public void renderSetup() {
         System.out.println("=== MESOS - BENVENUTO " + myNickname.toUpperCase() + " ===");
         System.out.println("\n--- LOBBY E SETUP ---");
         System.out.println("Giocatori connessi: " + model.getPlayers());
@@ -114,7 +134,7 @@ public class CLIApp {
         }
     }
 
-    private void renderStartTurn() {
+    public void renderStartTurn() {
         stampaTabellone();
 
         System.out.println("\n--- FASE PIAZZAMENTO TOTEM ---");
@@ -129,7 +149,7 @@ public class CLIApp {
         }
     }
 
-    private void renderPicking() {
+    public void renderPicking() {
         stampaTabellone();
 
         System.out.println("\n--- FASE DI PESCA ---");
@@ -217,54 +237,11 @@ public class CLIApp {
         // L'ID è parts[0], l'Era è parts[1], i MinPlayers sono parts[2] e il tipo/nome è parts[3]
         String tipo = parts[3];
 
-        if (tipo.equals("EVENT")) {
-            String nomeEvento = parts.length > 4 ? parts[4] : "Sconosciuto";
-            return "[ 📜 " + nomeEvento + " ]";
-        }
-
-        // Se è un personaggio, il livello e l'aura sono in parts[4] e parts[5]
-        // Se è un edificio, il costo e l'aura sono in parts[4] e parts[5]
-        int val1 = Integer.parseInt(parts[4]);
-        int val2 = Integer.parseInt(parts[5]);
-
         StringBuilder visual = new StringBuilder();
         visual.append("[ ");
 
-        switch (tipo) {
-            case "SHAMAN":
-                visual.append("SHAMAN ");
-                if (val1 > 0) visual.append("★".repeat(val1));
-                break;
-            case "HUNTER":
-                visual.append("HUNTER ");
-                if (val1 > 0) visual.append("🍖".repeat(val1));
-                break;
-            case "CONSTRUCTOR":
-                visual.append("CONSTRUCTOR ");
-                if (val1 > 0) visual.append("🧱-").append(val1);
-                if (val2 > 0) visual.append(" ✨").append(val2);
-                break;
-            case "FARMER":
-                visual.append("FARMER ");
-                if (val1 >= 0) visual.append("🌾-").append(val1);
-                break;
-            case "INVENTOR":
-                visual.append("INVENTOR ");
-                if (val1 >= 0) visual.append("⚙️ Liv.").append(val1);
-                break;
-            case "ARTIST":
-                visual.append("ARTIST 🎨");
-                break;
-            case "BUILDING":
-                String nome = parts.length > 6 ? parts[6] : "Speciale";
-                visual.append("🏛️ ").append(nome)
-                        .append(" (Cost:🍖").append(val1)
-                        .append(" Aura:✨").append(val2).append(")");
-                break;
-            default:
-                visual.append(tipo);
-                break;
-        }
+        String rendered = cardRenderers.getOrDefault(tipo, p -> tipo).apply(parts);
+        visual.append(rendered);
 
         visual.append(" ]");
         return visual.toString();
@@ -321,7 +298,7 @@ public class CLIApp {
         System.out.println("Edifici:    " + formattaRiga(model.getLowerBuildingRow()));
     }
 
-    private void renderEndGame() {
+    public void renderEndGame() {
         System.out.println("\n!!! PARTITA TERMINATA !!!");
         System.out.println("Vincitori: " + model.getWinners());
 
@@ -334,6 +311,15 @@ public class CLIApp {
 
         stampaClassifica();
         stampaPromptLeaderboard();
+    }
+
+    public void renderEvent() {
+        System.out.println("Fase Eventi in corso... Attendi la risoluzione automatica...");
+    }
+
+    public void renderDefault() {
+        String currentState = model.getCurrentState();
+        System.out.println("Stato sconosciuto: " + currentState);
     }
 
     private void stampaClassifica() {

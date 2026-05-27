@@ -1,15 +1,31 @@
-# IS26-AM54 - Codex Naturalis
-## Software Engineering Final Project
+# IS26-AM54 — Codex Naturalis (Mesos)
 
-**Grade: x/30**
+[![Java](https://img.shields.io/badge/Java-25-%23ED8B00)](https://openjdk.org/projects/jdk/25/)
+[![Maven](https://img.shields.io/badge/Maven-3.9+-C71A36)](https://maven.apache.org/)
+[![JavaFX](https://img.shields.io/badge/JavaFX-23-007396)](https://openjfx.io/)
+
+Distributed multiplayer implementation of the board game **Mesos** (Codice Naturalis, Cranio Creations). 2–5 players, real-time network, Socket/RMI, dual interface (GUI + CLI).
+
+**Software Engineering Final Project** — Politecnico di Milano, AY 2025–2026  
+**Professor**: Alessandro Margara
 
 ---
 
-## Introduction
+## Quick Start
 
-The project involves the development of a distributed software version of the board game **Mesos**. The game rules are described in the [RULES.md](./RULES.md) file.
+```bash
+# Build
+mvn clean compile
 
-This is a multiplayer board game where 2-5 players compete to collect the most prestige points by strategically placing totems on offering tiles and collecting character/building cards.
+# Run server (port 12345)
+./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server"
+
+# Run client (TCP)
+./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.client.Client" -Dexec.args="TCP"
+
+# Run client (RMI)
+./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.client.Client" -Dexec.args="RMI"
+```
 
 ---
 
@@ -22,296 +38,208 @@ This is a multiplayer board game where 2-5 players compete to collect the most p
 | Gabriele Buca | Development |
 | Francesco Botton | Development |
 
-**Professor**: Alessandro Margara
-**Honorable Mention**: Carlo Arnone
-
-
 ---
 
-## Project Progress
+## Features
 
-| Feature                | Status |
-|------------------------|--------|
-| Basic rules            | ✅ Complete |
-| Complete rules         | ✅ Complete |
-| Socket communication   | ✅ Implemented |
-| RMI communication      | ✅ Implemented |
-| GUI (JavaFX)           | ✅ Implemented |
-| CLI                    | ✅ Implemented |
-| Leaderboard (mySQL)    | ✅ Implemented |
-| Client handling        | ✅ Implemented |
-| Server handling        | ✅ Implemented |
-| ML Bots                | 🔄 To implement |
-
+| Feature | Status |
+|---------|--------|
+| Complete game rules (3 Eras, all cards) | ✅ |
+| Turn-based state machine | ✅ |
+| Socket TCP communication | ✅ |
+| RMI communication | ✅ |
+| GUI (JavaFX) — board, cards, totems, events | ✅ |
+| CLI — full terminal interface | ✅ |
+| Client disconnection + auto-reconnect | ✅ |
+| Server crash handling + suspended game | ✅ |
+| Persistence (JSON backup) for reconnect | ✅ |
+| Leaderboard (MySQL database) | ✅ |
+| Polymorphic State pattern (refactored) | ✅ |
+| Heartbeat / ping-pong disconnection detection | ✅ |
+| AI / ML bots | 🔄 |
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENT                                  │
-│  ┌─────────────┐    ┌──────────────┐    ┌───────────────────┐   │
-│  │    View     │───▶│ ClientNetwork│───▶│ ObjectInputStream │   │
-│  └─────────────┘    └──────────────┘    └───────────────────┘   │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ Socket TCP
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                         SERVER                                  │
-│                                                                 │
-│  ┌─────────────────┐         ┌───────────────────────────────┐  │
-│  │  ServerSocket   │────────▶│    SocketClientHandler        │  │
-│  │  (port 1234)    │         │    (Thread per client)        │  │
-│  └─────────────────┘         └───────────────┬───────────────┘  │
-│                                              │                  │
-│                                              ▼                  │
-│                              ┌───────────────────────────────┐  │
-│                              │       Controller              │  │
-│                              │  (synchronized access)        │  │
-│                              └───────────────┬───────────────┘  │
-│                                              │                  │
-│                                              ▼                  │
-│  ┌──────────────────┐           ┌───────────────────────────┐   │
-│  │  VirtualView     │◀───────── ┤       Game (Model)        │   │
-│  │  (Observer)      │           │    (State Machine)        │   │
-│  └──────────────────┘           └───────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                         CLIENT                                      │
+│  ┌─────────────┐   ┌──────────────┐   ┌────────────────────────┐   │
+│  │  GUI/CLI    │──▶│ ClientModel  │──▶│ ServerConnection       │   │
+│  │  (View)     │   │  (State)     │   │  (TCP or RMI)          │   │
+│  └──────┬──────┘   └──────────────┘   └───────────┬────────────┘   │
+│         │                                          │                 │
+│         ▼                                          ▼                 │
+│  ┌──────────────┐                        ┌───────────────────┐      │
+│  │ClientState   │                        │ ServerHandler     │      │
+│  │Registry      │                        │ RMIListener       │      │
+│  └──────────────┘                        └───────────────────┘      │
+└────────────────────────────────┬─────────────────────────────────────┘
+                                 │ TCP / RMI
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                         SERVER                                      │
+│  ┌──────────────────┐    ┌──────────────┐    ┌───────────────────┐  │
+│  │ ServerSocket     │───▶│ ClientHandler│───▶│   VirtualView     │  │
+│  │ RMI Registry     │    │ (per client) │    │   (Observer)      │  │
+│  └──────────────────┘    └──────────────┘    └─────────┬─────────┘  │
+│                                                         │            │
+│  ┌──────────────────────────────────────────────────────┘            │
+│  │  ┌──────────────────┐    ┌────────────────────────────────┐       │
+│  │  │   Controller     │───▶│   Game (Model)                │       │
+│  │  │   (synchronized) │    │   ┌────────────────────────┐   │       │
+│  │  └──────────────────┘    │   │  GameState (State P.)  │   │       │
+│  │                          │   │  ├─ SetUpGameState     │   │       │
+│  │  ┌──────────────────┐    │   │  ├─ StartTurnState     │   │       │
+│  │  │ DatabaseManager  │    │   │  ├─ PickingState       │   │       │
+│  │  │ PersistenceMgr   │    │   │  ├─ EventState         │   │       │
+│  │  └──────────────────┘    │   │  └─ EndGameState       │   │       │
+│  │                          │   └────────────────────────┘   │       │
+│  │                          └────────────────────────────────┘       │
+│  └───────────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Components
+### Key Design Decisions
 
-| Layer | Classes |
-|-------|---------|
-| **Model** | `Game`, `Player`, `Board`, `Card`, `Deck`, `OfferingTile`, States |
-| **Controller** | `Controller` |
-| **Network** | `Server`, `SocketClientHandler`, `VirtualView`, `ClientHandler` |
-| **Messages** | `*Request`, `*Update`, `ErrorMessage` |
+**State Pattern** — The game flow is modelled as a finite state machine. Each state (`GameState` subclass) implements only the methods it allows and throws `IllegalStateException` for everything else. This eliminates if-else chains and makes it impossible to call invalid actions.
 
-### Thread Safety Design
+**Polymorphic Client Dispatch** — The client uses `ClientStateRegistry` to map server-side state names to `ClientStateHandler` implementations. This replaces switch/if-else chains on the client for:
+- CLI rendering (`CLIAbstract` interface)
+- GUI action banners and button visibility
+- Input blocking (whose turn is it)
+- Tile interaction permission
 
-Il server usa un thread per ogni client connesso: più thread possono chiamare metodi del Controller contemporaneamente.
+**Dual Transport** — Socket TCP and RMI share the same message protocol (`*Request` / `*Update` objects) and the same `VirtualView` observer interface. The transport layer is abstracted behind `ClientConnection`.
 
-La sincronizzazione è **minimale** perché il gioco è turn-based — il Model (`Game`) valida il turno e rifiuta mosse di chi non è di turno. Solo 3 punti richiedono `synchronized`:
-
-| Metodo | Lock | Perché |
-|---|---|---|
-| `handleJoinGame` | `synchronized (game.getPlayers())` | Impedisce a due client di fare join nello stesso istante (race su `Game.observers`) |
-| `handleReconnect` | `synchronized (game.getPlayers())` | Protegge `addObserver`/`removeObserver` durante la riconnessione |
-| `removeClient` | `synchronized (game.getPlayers())` | Protegge `removeObserver` alla chiusura del socket |
-
-Le strutture dati di supporto (`virtualViews`, `disconnectedPlayers`) usano **`ConcurrentHashMap`** invece di `HashMap`/`HashSet`, eliminando ogni bisogno di sincronizzazione manuale su di esse.
-
-Tutte le azioni di gioco (`pickCard`, `endTurn`, ecc.) passano da `executeCommand()` **senza sincronizzazione**: il turn-check nel Model è sufficiente a prevenire conflitti.
+**Thread Safety** — Server uses per-client threads. Synchronization is minimal thanks to turn-based validation in the Model. Three critical sections use `synchronized(game.getPlayers())`: `handleJoinGame`, `handleReconnect`, `removeClient`.
 
 ---
 
-## Technology Stack
+## Protocol
 
-| Technology         | Usage                                      |
-|--------------------|--------------------------------------------|
-| **Java 25**        | Programming language                       |
-| **Maven**          | Build and dependency management            |
-| **JavaFX**         | GUI framework                              |
-| **Jackson**        | JSON parsing for card setup                |
-| **MySql Database** | MySQL database for leaderboard persistence |
-| **JUnit 5**        | Unit testing                               |
-| **IntelliJ IDEA**  | Development IDE                            |
+### Client → Server (Requests)
 
----
-
-## Setup
-
-### Prerequisites
-
-- Java 25 or higher
-- Maven 3.9+
-
-### Build
-
-```bash
-mvn clean compile
-```
-
-### Run Tests
-
-```bash
-mvn test
-```
-
-### Run Server
-
-```bash
-./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server"
-```
-
-Porta default: `12345`. Per usare altra porta:
-```bash
-./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server" -Dexec.args="8080"
-```
-
-
-Per usare un nome file personalizzato:
-```bash
-./mvnw compile exec:java -Dexec.mainClass="..." -Ddb.file=codex_naturalis
-```
-
-### Run Client
-
-```bash
-java -jar target/Client.jar
-```
-
----
-
-## Network Protocol
-
-### Request Messages (Client → Server)
-
-| Message | Parameters |
-|---------|------------|
+| Message | Payload |
+|---------|---------|
 | `JoinGameRequest` | `nickname` |
 | `ChooseTotemRequest` | `nickname, color` |
 | `SetupGameRequest` | `nickname` |
 | `PlaceTotemRequest` | `nickname, offerPosition` |
 | `PickCardRequest` | `nickname, row, cardIndex` |
+| `EndTurnRequest` | `nickname` |
 | `GetLeaderboardRequest` | `numPlayers` |
+| `PingRequest` | — |
 
-### Update Messages (Server → Client)
+### Server → Client (Updates)
 
-| Message | Parameters |
-|---------|------------|
+| Message | Payload |
+|---------|---------|
 | `PlayerJoinedUpdate` | `nickname` |
 | `TotemColorUpdate` | `nickname, color` |
-| `TotemPlacedUpdate` | `nickname, offerPosition` |
-| `CardPickedUpdate` | `nickname, row, cardIndex, food, offering` |
-| `TurnChangedUpdate` | `newCurrentPlayer` |
 | `StateChangedUpdate` | `full state snapshot` |
+| `TurnChangedUpdate` | `newCurrentPlayer` |
 | `EndGameUpdate` | `winners, allScores, numPlayers` |
 | `LeaderboardUpdate` | `playerPosition, entries[], numPlayers` |
 | `ErrorMessage` | `message` |
-
----
-
-## Project Structure
-
-```
-src/
-├── main/
-│   └── java/it/polimi/ingsw/am54/
-│       ├── controller/
-│       │   └── Controller.java
-│       ├── database/
-│       │   └── DatabaseManager.java    ← JDBC persistence layer
-│       ├── model/
-│       │   ├── Game.java
-│       │   ├── Player.java
-│       │   ├── Board.java
-│       │   ├── states/
-│       │   ├── effects/
-│       │   └── cards/
-│       ├── network/
-│       │   ├── server/
-│       │   │   ├── Server.java
-│       │   │   ├── SocketClientHandler.java
-│       │   │   ├── RMIClientHandler.java
-│       │   │   ├── VirtualView.java
-│       │   │   └── ClientConnection.java
-│       │   ├── client/
-│       │   │   ├── Client.java
-│       │   │   ├── ClientModel.java
-│       │   │   ├── ServerConnection.java
-│       │   │   ├── VirtualServer.java
-│       │   │   ├── ServerHandler.java
-│       │   │   ├── SocketServerConnection.java
-│       │   │   ├── RMIServerConnection.java
-│       │   │   └── CLIApp.java
-│       │   └── messages/
-│       │       ├── *Request.java
-│       │       ├── *Update.java
-│       │       ├── LeaderboardEntry.java
-│       │       └── LeaderboardUpdate.java
-│       └── gui/
-│           └── BoardController.java
-└── test/
-    └── java/...
-```
+| `PlayerDisconnectedUpdate` / `PlayerReconnectedUpdate` | `nickname` |
 
 ---
 
 ## Game Flow
 
 ```
-1. Lobby Phase
-   └── Players join with nickname
-
-2. Setup Phase
-   └── Players choose totem color (RED, YELLOW, WHITE, BLACK)
-   └── One player calls setupGame()
-
-3. Turn Loop (3 Eras)
-   ├── Start Turn State
-   │   └── Place totem on offering tile
-   ├── Picking State
-   │   └── Pick cards from upper/lower rows
-   ├── Action Phase
-   │   └── Play cards, collect resources
-   ├── Event Phase
-   │   └── Resolve event cards
-   └── End Turn
-       └── Next player
-
-4. End Game
-   └── Calculate scores
-   └── Declare winner(s)
-   └── Send LeaderboardUpdate to all clients
+Lobby ──▶ SetUpGameState ──▶ [StartTurnState ⇄ PickingState]ⁿ ──▶ EndGameState
+                                        │
+                                        ▼
+                                   EventState
+                                (auto-resolved)
 ```
+
+Each round:
+1. **StartTurn** — Players place totems on offering tiles (in turn order)
+2. **Picking** — Active player picks cards from upper/lower row
+3. **Event** — Event cards resolve automatically (no player input)
+4. Repeat until 3 Eras complete → **EndGame** scoring
 
 ---
 
-## Leaderboard (Classifica)
+## Project Structure
 
-Alla fine di ogni partita, il server salva su un database **MySQL** i risultati di tutti i giocatori:
-- nickname, punteggio finale, data, numero di giocatori
-
-Subito dopo il calcolo dei vincitori, ogni client riceve un `LeaderboardUpdate` contenente:
-- **posizione del giocatore** nella classifica per il numero di giocatori della partita appena conclusa
-- **classifica completa** (tutti i risultati ordinati per punteggio decrescente)
-
-### Visualizzazione
-
-- **CLI**: la classifica viene stampata subito dopo i vincitori. Si può richiedere manualmente digitando `CLASSIFICA N` (es. `CLASSIFICA 4` per vedere la classifica delle partite da 4 giocatori).
-- **GUI**: la classifica appare in un pannello laterale (riquadro blu "CLASSIFICA") dopo la fine della partita.
-
-### Database
-
-Il database è **MySQL**:
-- I dati persistono tra riavvii del server
-
-### Schema
-
-```sql
-CREATE TABLE IF NOT EXISTS match_results (
-    id          INT AUTO_INCREMENT PRIMARY KEY,
-    nickname    VARCHAR(50)  NOT NULL,
-    score       INTEGER      NOT NULL,
-    match_date  TIMESTAMP    NOT NULL DEFAULT NOW(),
-    num_players INTEGER      NOT NULL
-);
 ```
-
-Le query di classifica usano `RANK() OVER (ORDER BY score DESC)` per calcolare la posizione.
-
----
-
-## License
-
-Mesos is property of **Cranio Creations** and all of the copyrighted graphical assets used in this project were supplied by **Politecnico di Milano** in collaboration with their rights' holders.
+src/main/java/it/polimi/ingsw/am54/
+├── controller/Controller.java       # Server-side coordinator
+├── database/                         # MySQL leaderboard + JSON persistence
+├── gui/
+│   ├── BoardController.java         # Main game board (JavaFX)
+│   ├── LoginController.java
+│   ├── LobbyController.java
+│   ├── managers/                    # Market, Totem, Dashboard, Music
+│   └── states/                      # ★ Polymorphic client-side handlers
+│       ├── ClientStateHandler.java  #   Interface
+│       ├── ClientStateRegistry.java #   Registry (Strategy Pattern)
+│       └── CLIAbstract.java         #   CLI rendering contract
+├── model/
+│   ├── Game.java / Board.java / Player.java
+│   ├── Card.java + subclasses
+│   ├── GameState.java              # State pattern base
+│   ├── states/                     # Concrete states
+│   │   ├── SetUpGameState.java
+│   │   ├── StartTurnState.java
+│   │   ├── PickingState.java
+│   │   ├── EventState.java
+│   │   └── EndGameState.java
+│   └── effects/                    # Card effect system
+└── network/
+    ├── server/                      # Server, handlers, VirtualView
+    ├── client/                      # Client, ClientModel, CLIApp
+    └── messages/                    # Request / Update DTOs
+```
 
 ---
 
 ## Documentation
 
-- [Game Rules](./RULES.md)
-- [Network Architecture](./NETWORK_README.md)
-- [Test Coverage Summary](./TEST_COVERAGE_SUMMARY.md)
+| Document | Description |
+|----------|-------------|
+| [`docs/architecture.md`](./docs/architecture.md) | Polymorphic state pattern, client dispatch |
+| [`docs/network-architecture.md`](./docs/network-architecture.md) | TCP/RMI protocol, message flow, heartbeat |
+| [`docs/advanced-features.md`](./docs/advanced-features.md) | Disconnection, reconnect, leaderboard, persistence |
+| [`RULES.md`](./RULES.md) | Complete game rules |
+| [`SPEC.md`](./SPEC.md) | Original Italian specification |
+| [`DOCUMENTATION.md`](./DOCUMENTATION.md) | Comprehensive Italian documentation |
+
+---
+
+## Configuration
+
+Copy `.env.example` to `.env` and configure:
+
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=codex_naturalis
+```
+
+Without a `.env` file, the leaderboard is gracefully disabled (MySQL not required).
+
+---
+
+## Build Artifacts
+
+```bash
+# Build JARs
+mvn package
+
+# Run server JAR
+java -jar target/Server.jar
+
+# Run client JAR (GUI)
+java -jar target/Client.jar
+
+# Run client JAR (CLI)
+java -jar target/Client.jar CLI
+```

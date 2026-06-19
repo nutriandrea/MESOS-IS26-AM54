@@ -2,6 +2,7 @@ package it.polimi.ingsw.am54.model.states;
 
 import it.polimi.ingsw.am54.model.EventCard;
 import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.GameException;
 import it.polimi.ingsw.am54.model.GameState;
 import it.polimi.ingsw.am54.model.Player;
 import it.polimi.ingsw.am54.model.BuildingCard;
@@ -53,7 +54,7 @@ public class EndGameState extends GameState {
     }
 
     @Override
-    public void joinGame(Game game, String nickname) throws Exception {
+    public void joinGame(Game game, String nickname) throws GameException {
         System.out.println("[SERVER] Riavvio della partita richiesto dal client: " + nickname);
 
         game.getPlayers().clear();

@@ -11,13 +11,18 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Interfaccia RMI per le callback dal Server al Client.
+ * Il server chiama questi metodi sullo stub del client remoto
+ * per notificare eventi di gioco, aggiornamenti di stato, heartbeat, ecc.
+ */
 public interface RMIClientInterface extends Remote {
     // Il server usa questo metodo per inviare Update al client
     // SEVER -> CLIENT
     void onPlayerJoined(String nickname) throws RemoteException;
     void onTotemColorChosen(String nickname, TotemColors color) throws RemoteException;
     void onTotemPlaced(String nickname, int position) throws RemoteException;
-    void onTotemReturned(String nickname, int food, int aura) throws RemoteException;
+    void onTotemReturned(String nickname, int position, int food, int aura) throws RemoteException;
     void onEventResolved(String name, Map<String, EventUpdate.PlayerSnapshot> stats,
                          List<String> charUp, List<String> charLow, List<String> eventUp, List<String> eventLow,
                          List<String> buildUp, List<String> buildLow)  throws RemoteException;

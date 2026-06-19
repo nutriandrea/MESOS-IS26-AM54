@@ -14,6 +14,7 @@ package "it.polimi.ingsw.am54.model" {
         +chooseTotemColor(String, String) : void
         +placeTotem(String, int) : void
         +pickCard(String, String, int) : void
+        +endTurn(String) : void
         +setupGame() : void
         +addObserver(IGameObserver) : void
         +removeObserver(IGameObserver) : void
@@ -23,9 +24,11 @@ package "it.polimi.ingsw.am54.model" {
         +onPlayerJoined(Game, Player) : void
         +onTotemColorChosen(Game, Player, TotemColors) : void
         +onTotemPlaced(Game, Player, int) : void
-        +onCardPicked(Game, Player, String, int, int) : void
+        +onCardPicked(Game, Player, String, int, int, int) : void
         +onTurnChanged(Game, Player) : void
         +onStateChanged(Game, GameState) : void
+        +onTotemReturned(Game, Player, int, int) : void
+        +onEventResolved(EventCard) : void
         +onEndGame(Game, List<Player>) : void
     }
 
@@ -62,7 +65,7 @@ package "it.polimi.ingsw.am54.model" {
         -List<Player> players
         -Player currentPlayer
         -GameState currentState
-        -List<IGameObserver> observers
+        -CopyOnWriteArrayList<IGameObserver> observers
         -int currentEra
         -int roundCount
         +joinGame(String) : void
@@ -70,6 +73,7 @@ package "it.polimi.ingsw.am54.model" {
         +placeTotem(String, int) : void
         +pickCard(String, String, int) : void
         +setupGame() : void
+        +endTurn(String) : void
         +nextPlayer() : void
         +advanceEra() : void
         +advanceRound() : void
@@ -83,7 +87,6 @@ package "it.polimi.ingsw.am54.model" {
         +getRoundCount() : int
         +getCurrentPlayer() : Player
         +setCurrentPlayer(Player) : void
-        +getCurrentPicker() : Player
         +assignPickerToTurnOrder(Player) : TurnOrderSlot
         +isPickingComplete() : boolean
         +isTribeDeckEmpty() : boolean
@@ -96,6 +99,11 @@ package "it.polimi.ingsw.am54.model" {
         +notifyEndGame(List<Player>) : void
         +addObserver(IGameObserver) : void
         +removeObserver(IGameObserver) : void
+        +setActivePlayerCount(int) : void
+        +notifyTotemPlaced(Player, int) : void
+        +notifyCardPicked(Player, String, int, int, int) : void
+        +notifyTotemReturned(Player, int) : void
+        +notifyEventResolved(EventCard) : void
     }
 
     class Player {
@@ -235,6 +243,10 @@ package "it.polimi.ingsw.am54.model" {
         +resolveEffects(Player, Game) : void
     }
 
+    class GameException extends Exception {
+        +GameException(String)
+    }
+
     abstract class GameState {
         +joinGame(Game, String) : void
         +chooseTotemColor(Game, String, String) : void
@@ -243,6 +255,14 @@ package "it.polimi.ingsw.am54.model" {
         +pickCard(Game, String, String, int) : void
         +endTurn(Game, String) : void
         +resolvePhase(Game) : void
+        +skipTurn(Game, String) : void
+        +handleDisconnection(Game, Player, boolean) : void
+        +isDisconnectBlocked() : boolean
+        +isRemovePermanent() : boolean
+        +isAutoResolvable() : boolean
+        +isGameOver() : boolean
+        +shouldResetToSetupOnEmpty() : boolean
+        +recoverActivePlayer(Game) : Player
     }
 
     class SetUpGameState extends GameState

@@ -3,6 +3,11 @@ package it.polimi.ingsw.am54.network.rmi;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
+/**
+ * Interfaccia RMI per le richieste del Client al Server.
+ * Ogni azione di gioco ha un metodo dedicato (non un generico sendRequest).
+ * L'implementazione lato server (RMIClientHandler) inoltra al Controller.
+ */
 public interface RMIClientHandlerInterface extends Remote {
     // RMI sfruttato al massimo non funziona come socket,
     // ma ha un metodo specifico per ogni azione che il client può chiamare

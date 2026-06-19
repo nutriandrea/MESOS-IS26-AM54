@@ -7,6 +7,12 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Notifica broadcast inviata dal server per sincronizzare completamente
+ * lo stato del gioco su tutti i client. Contiene lo stato di ogni giocatore,
+ * l'ordine di turno, le offerte e tutte le carte sul tabellone.
+ * Usata anche per la riconnessione (sendFullStateOnReconnect).
+ */
 public final class StateChangedUpdate implements Update {
 
     // DTO per le statistiche del giocatore

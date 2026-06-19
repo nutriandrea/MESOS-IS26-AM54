@@ -4,8 +4,10 @@ import it.polimi.ingsw.am54.network.messages.*;
 import it.polimi.ingsw.am54.model.TotemColors;
 
 /**
- * Offre alla View i metodi per interagire con il gioco.
- * Trasforma le chiamate ai metodi in oggetti Request inviati sulla rete.
+ * Facciata lato client per inviare azioni al server.
+ * Trasforma ogni chiamata in un oggetto Request (Socket) o in
+ * una chiamata RMI diretta tramite ServerConnection.
+ * Usata dalla GUI e dalla CLI per disaccoppiare la view dalla rete.
  */
 public class VirtualServer {
     private final ServerConnection connection;

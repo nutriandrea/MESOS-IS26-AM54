@@ -6,6 +6,7 @@ import it.polimi.ingsw.am54.network.messages.Request;
 /**
  * Interfaccia generica per la connessione verso il Server.
  * Nasconde se stiamo usando Socket o RMI.
+ * Implementazioni: SocketServerConnection (TCP), RMIServerConnection (RMI).
  */
 public interface ServerConnection {
     // Invia messaggi al server, un metodo per tipo, in stile RMI

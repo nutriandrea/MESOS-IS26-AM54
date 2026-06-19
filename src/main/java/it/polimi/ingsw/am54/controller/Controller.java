@@ -37,6 +37,8 @@ import java.util.logging.Logger;
  * ============================================================================
  */
 public class Controller {
+    /** Lock dedicato per tutte le mutazioni del Game — più ampio di game.getPlayers() */
+    private final Object gameLock = new Object();
     private final Game game;
     private Server server;
 
@@ -118,7 +120,7 @@ public class Controller {
      * ===================================================================== */
 
     public void handleJoinGame(String nickname, ClientConnection connection) {
-        synchronized (game.getPlayers()) {
+        synchronized (gameLock) {
             // CASO 1: Il giocatore era caduto/disconnesso e sta tornando
             if (disconnectedPlayers.contains(nickname)) {
                 handleReconnect(nickname, connection);
@@ -162,7 +164,7 @@ public class Controller {
     }
 
     public void handleReconnect(String nickname, ClientConnection connection) {
-        synchronized (game.getPlayers()) {
+        synchronized (gameLock) {
             disconnectedPlayers.remove(nickname);
 
             VirtualView oldView = virtualViews.get(nickname);
@@ -209,7 +211,7 @@ public class Controller {
     }
 
     public void validateGameStateAfterRecovery() {
-        synchronized (game.getPlayers()) {
+        synchronized (gameLock) {
 
             // Ripristiniamo il turno in base alla fase attuale della partita
             it.polimi.ingsw.am54.model.Player recovered = game.getCurrentState().recoverActivePlayer(game);
@@ -307,7 +309,7 @@ public class Controller {
             // --- LOGICA DI DISCONNESSIONE TEMPORANEA (Crash in-game) ---
             disconnectedPlayers.add(nickname);
             if (view != null) {
-                synchronized (game.getPlayers()) {
+                synchronized (gameLock) {
                     game.removeObserver(view);
                 }
             }
@@ -382,7 +384,7 @@ public class Controller {
      * poi verifica se sospendere il gioco (1 solo giocatore attivo).
      */
     private void autoHandleDisconnection(String nickname) {
-        synchronized (game.getPlayers()) {
+        synchronized (gameLock) {
             if (game.getCurrentState().isDisconnectBlocked()) return;
 
             game.setActivePlayerCount(activePlayerCount());
@@ -455,7 +457,7 @@ public class Controller {
         broadcastGameSuspended();
 
         timeoutFuture = timeoutScheduler.schedule(() -> {
-            synchronized (game.getPlayers()) {
+            synchronized (gameLock) {
                 if (!suspended) return;
                 Player winner = findSoloActivePlayer();
 
@@ -525,13 +527,15 @@ public class Controller {
             }
             return;
         }
-        game.setActivePlayerCount(activePlayerCount());
-        try {
-            action.execute();
-        } catch (Exception e) {
-            VirtualView view = virtualViews.get(nickname);
-            if (view != null) {
-                view.showError(e.getMessage());
+        synchronized (gameLock) {
+            game.setActivePlayerCount(activePlayerCount());
+            try {
+                action.execute();
+            } catch (Exception e) {
+                VirtualView view = virtualViews.get(nickname);
+                if (view != null) {
+                    view.showError(e.getMessage());
+                }
             }
         }
     }

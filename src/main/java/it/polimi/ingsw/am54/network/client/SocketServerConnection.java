@@ -5,6 +5,11 @@ import it.polimi.ingsw.am54.network.messages.*;
 import java.io.*;
 import java.net.Socket;
 
+/**
+ * Implementazione della connessione client tramite Socket TCP.
+ * Crea un Socket verso il server, apre gli stream, e avvia un
+ * ServerHandler in un thread separato per la ricezione asincrona.
+ */
 public class SocketServerConnection implements ServerConnection {
     private Socket socket;
     private ObjectOutputStream out;

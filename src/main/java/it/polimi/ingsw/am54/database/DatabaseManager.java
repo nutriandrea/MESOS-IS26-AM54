@@ -28,10 +28,12 @@ public class DatabaseManager {
     private static final Logger LOGGER = Logger.getLogger(DatabaseManager.class.getName());
 
     private final DatabaseConfig config;
+    private Connection connection;
     private boolean available;
 
     public DatabaseManager(DatabaseConfig config) {
         this.config = config;
+        this.connection = null;
         this.available = false;
     }
 
@@ -40,22 +42,22 @@ public class DatabaseManager {
      * Call once at server startup.
      */
     public void init() {
-        try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement()) {
-
-            stmt.execute(
-                "CREATE TABLE IF NOT EXISTS match_results (" +
-                "    id          INT AUTO_INCREMENT PRIMARY KEY," +
-                "    nickname    VARCHAR(50)  NOT NULL," +
-                "    score       INTEGER      NOT NULL," +
-                "    match_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-                "    num_players INTEGER      NOT NULL" +
-                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-            );
-            this.available = true;
-            LOGGER.info("Database connesso: " + config.getHost() + ":" + config.getPort() + "/" + config.getDbName());
-
-            seedIfEmpty(conn);
+        try {
+            this.connection = DriverManager.getConnection(config.getJdbcUrl(), config.getUser(), config.getPassword());
+            try (Statement stmt = connection.createStatement()) {
+                stmt.execute(
+                    "CREATE TABLE IF NOT EXISTS match_results (" +
+                    "    id          INT AUTO_INCREMENT PRIMARY KEY," +
+                    "    nickname    VARCHAR(50)  NOT NULL," +
+                    "    score       INTEGER      NOT NULL," +
+                    "    match_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "    num_players INTEGER      NOT NULL" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+                );
+                this.available = true;
+                LOGGER.info("Database connesso: " + config.getHost() + ":" + config.getPort() + "/" + config.getDbName());
+                seedIfEmpty(connection);
+            }
         } catch (SQLException e) {
             LOGGER.warning("Database MySQL non raggiungibile – leaderboard disabilitata: " + e.getMessage());
             this.available = false;
@@ -220,6 +222,9 @@ public class DatabaseManager {
     }
 
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(config.getJdbcUrl(), config.getUser(), config.getPassword());
+        if (connection == null || connection.isClosed()) {
+            connection = DriverManager.getConnection(config.getJdbcUrl(), config.getUser(), config.getPassword());
+        }
+        return connection;
     }
 }

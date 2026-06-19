@@ -4,11 +4,11 @@ import it.polimi.ingsw.am54.model.*;
 
 public class PickingState extends GameState {
     @Override
-    public void pickCard(Game game, String nickname, String row, int cardIndex) throws Exception {
+    public void pickCard(Game game, String nickname, String row, int cardIndex) throws GameException {
         Player player = game.getPlayerByNickname(nickname);
 
         if (!game.getCurrentPlayer().equals(player)) {
-            throw new Exception("Non è il tuo turno per pescare!");
+            throw new GameException("Non è il tuo turno per pescare!");
         }
 
         OfferingTile tile = player.getCurrentTile();
@@ -16,7 +16,7 @@ public class PickingState extends GameState {
         boolean isLower = row.equalsIgnoreCase("lower");
 
         if (!isUpper && !isLower) {
-            throw new Exception("Riga non valida (usa 'upper' o 'lower').");
+            throw new GameException("Riga non valida (usa 'upper' o 'lower').");
         }
 
         boolean usingExtraPick = false;
@@ -25,16 +25,16 @@ public class PickingState extends GameState {
             if (player.hasExtraPick() && isUpper) {
                 usingExtraPick = true;
             } else {
-                throw new Exception("Non hai tessere attive. Puoi usare l'Extra Pick SOLO per la fila upper.");
+                throw new GameException("Non hai tessere attive. Puoi usare l'Extra Pick SOLO per la fila upper.");
             }
         } else {
             if (isUpper) {
                 if (tile.getRemainingUpperPicks() <= 0) {
-                    throw new Exception("Non hai più pick disponibili per la fila upper.");
+                    throw new GameException("Non hai più pick disponibili per la fila upper.");
                 }
             } else {
                 if (tile.getRemainingLowerPicks() <= 0) {
-                    throw new Exception("Non hai più pick disponibili per la fila lower.");
+                    throw new GameException("Non hai più pick disponibili per la fila lower.");
                 }
             }
         }
@@ -50,7 +50,7 @@ public class PickingState extends GameState {
         }
 
         if (card == null) {
-            throw new Exception("Carta non trovata alla posizione specificata.");
+            throw new GameException("Carta non trovata alla posizione specificata.");
         }
 
         if (tile != null) {
@@ -72,11 +72,11 @@ public class PickingState extends GameState {
     }
 
     @Override
-    public void endTurn(Game game, String nickname) throws Exception {
+    public void endTurn(Game game, String nickname) throws GameException {
         Player player = game.getPlayerByNickname(nickname);
 
         if (!game.getCurrentPlayer().equals(player)) {
-            throw new Exception("Non è il tuo turno!");
+            throw new GameException("Non è il tuo turno!");
         }
 
         OfferingTile tile = player.getCurrentTile();
@@ -87,7 +87,7 @@ public class PickingState extends GameState {
                 executeEndTurnLogic(game, player);
                 return;
             } else {
-                throw new Exception("Azione non valida.");
+                throw new GameException("Azione non valida.");
             }
         }
 
@@ -95,7 +95,7 @@ public class PickingState extends GameState {
             if (player.getNickname().equalsIgnoreCase("tester")||player.getNickname().equalsIgnoreCase("tester2")) {
                 System.out.println("[DEV MODE] Il giocatore " + nickname + " ha saltato forzatamente la fase di pick.");
             } else {
-                throw new Exception("Non puoi terminare il turno: ci sono ancora Personaggi disponibili che DEVI pescare!");
+                throw new GameException("Non puoi terminare il turno: ci sono ancora Personaggi disponibili che DEVI pescare!");
             }
         }
 
@@ -111,11 +111,11 @@ public class PickingState extends GameState {
     }
 
     @Override
-    public void skipTurn(Game game, String nickname) throws Exception {
+    public void skipTurn(Game game, String nickname) throws GameException {
         Player player = game.getPlayerByNickname(nickname);
 
         if (!game.getCurrentPlayer().equals(player)) {
-            throw new Exception("Non e' il turno di " + nickname);
+            throw new GameException("Non e' il turno di " + nickname);
         }
 
         if (player.hasExtraPick()) {
@@ -214,7 +214,7 @@ public class PickingState extends GameState {
     }
 
     @Override
-    public void handleDisconnection(Game game, Player p, boolean isCurrentPlayer) throws Exception {
+    public void handleDisconnection(Game game, Player p, boolean isCurrentPlayer) throws GameException {
         if (!isCurrentPlayer && p.getCurrentTile() != null) {
             p.getCurrentTile().freeSlot();
             p.setCurrentTile(null);

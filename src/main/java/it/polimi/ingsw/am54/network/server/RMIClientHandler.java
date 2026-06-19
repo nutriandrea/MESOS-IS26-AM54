@@ -126,7 +126,7 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
 
     @Override
     public void notifyTotemReturned(String nickname, int position, int food, int aura) {
-        try { clientStub.onTotemReturned(nickname,food, aura); }
+        try { clientStub.onTotemReturned(nickname, position, food, aura); }
         catch (RemoteException e) { disconnect(); }
     }
 

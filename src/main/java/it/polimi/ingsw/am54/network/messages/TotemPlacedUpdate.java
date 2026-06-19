@@ -2,6 +2,11 @@ package it.polimi.ingsw.am54.network.messages;
 
 import it.polimi.ingsw.am54.network.client.ClientModel;
 
+/**
+ * Notifica broadcast quando un giocatore piazza il proprio totem
+ * su una tessera offerta. Il client sposta il giocatore dal
+ * turnOrderTrack all'offeringTrack.
+ */
 public final class TotemPlacedUpdate implements Update {
 
     private final String nickname;

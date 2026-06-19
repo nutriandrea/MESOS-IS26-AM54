@@ -12,6 +12,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Interfaccia a riga di comando per il gioco.
+ * Gestisce la visualizzazione del tabellone, l'input utente,
+ * e il dispatch dei comandi verso il VirtualServer.
+ * Si registra come callback su ClientModel per aggiornamenti automatici.
+ */
 public class CLIApp implements CLIAbstract {
     private final VirtualServer server;
     private final ClientModel model;

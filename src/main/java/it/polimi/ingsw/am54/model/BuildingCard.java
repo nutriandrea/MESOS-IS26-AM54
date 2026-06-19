@@ -52,13 +52,13 @@ public class BuildingCard extends Card {
     }
 
     @Override
-    public void pick(Player player, Game game) throws Exception {
+    public void pick(Player player, Game game) throws GameException {
         int finalCost = this.cost - player.getMyBuildingDiscount();
         finalCost = Math.max(0, finalCost);
 
         //controlla se il player può effettivamente acquistare
         if (player.getFood() < finalCost) {
-            throw new Exception("Cibo insufficiente per comprare l'edificio! Hai " + player.getFood() + ", servono " + finalCost);
+            throw new GameException("Cibo insufficiente per comprare l'edificio! Hai " + player.getFood() + ", servono " + finalCost);
         }
 
         player.modifyFood(-finalCost);

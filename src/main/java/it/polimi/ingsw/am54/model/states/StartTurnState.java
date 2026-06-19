@@ -1,29 +1,30 @@
 package it.polimi.ingsw.am54.model.states;
 
 import it.polimi.ingsw.am54.model.Game;
+import it.polimi.ingsw.am54.model.GameException;
 import it.polimi.ingsw.am54.model.GameState;
 import it.polimi.ingsw.am54.model.Player;
 import it.polimi.ingsw.am54.model.OfferingTile;
 
 public class StartTurnState extends GameState {
     @Override
-    public void placeTotem(Game game, String nickname, int offerPosition) throws Exception {
+    public void placeTotem(Game game, String nickname, int offerPosition) throws GameException {
         Player player = game.getPlayerByNickname(nickname);
 
         if (!game.getCurrentPlayer().getNickname().equalsIgnoreCase(player.getNickname())) {
-            throw new Exception("Non è il tuo turno per piazzare il totem!");
+            throw new GameException("Non è il tuo turno per piazzare il totem!");
         }
         if (player.hasPlacedTotem()) {
-            throw new Exception("Hai già piazzato il tuo totem in questo round!");
+            throw new GameException("Hai già piazzato il tuo totem in questo round!");
         }
 
         if (offerPosition < 0 || offerPosition >= game.getBoard().getOfferingTrack().size()) {
-            throw new Exception("Posizione offerta non valida.");
+            throw new GameException("Posizione offerta non valida.");
         }
         OfferingTile targetTile = game.getBoard().getOfferingTrack().get(offerPosition);
 
         if (!targetTile.isAvailable()) {
-            throw new Exception("Questa tessera offerta è già occupata!");
+            throw new GameException("Questa tessera offerta è già occupata!");
         }
 
         game.getBoard().addTotemToPosition(player, targetTile);
@@ -49,13 +50,13 @@ public class StartTurnState extends GameState {
     }
 
     @Override
-    public void skipTurn(Game game, String nickname) throws Exception {
+    public void skipTurn(Game game, String nickname) throws GameException {
         Player player = game.getPlayerByNickname(nickname);
         if (!game.getCurrentPlayer().equals(player)) {
-            throw new Exception("Non e' il turno di " + nickname);
+            throw new GameException("Non e' il turno di " + nickname);
         }
         if (player.hasPlacedTotem()) {
-            throw new Exception(nickname + " ha gia' piazzato il totem");
+            throw new GameException(nickname + " ha gia' piazzato il totem");
         }
         game.moveToLastSlot(player);
         player.setHasPlacedTotem(true);
@@ -74,25 +75,19 @@ public class StartTurnState extends GameState {
     }
 
     @Override
-    public void handleDisconnection(Game game, Player p, boolean isCurrentPlayer) throws Exception {
-        // 1. Se aveva già piazzato (es. crash subito dopo), libera la tessera Offerta
+    public void handleDisconnection(Game game, Player p, boolean isCurrentPlayer) throws GameException {
         if (p.hasPlacedTotem() && p.getCurrentTile() != null) {
             p.getCurrentTile().freeSlot();
             p.setCurrentTile(null);
             game.notifyTotemReturned(p, -1);
         }
 
-        // Non forziamo più p.setHasPlacedTotem(true)! Lasciamo che il gioco prosegua basandosi sugli attivi
-
-        // 2. Rimuove il giocatore dalla Turn Order e fa scalare tutti gli altri verso l'alto (Shift Up)
         game.getBoard().removePlayerFromTurnOrderAndShiftUp(p);
 
-        // 3. Se stava scegliendo lui, passiamo al prossimo
         if (isCurrentPlayer) {
             game.nextPlayer();
         }
 
-        // 4. Verifica immediata: la fase è finita grazie all'abbassamento dei player attivi?
         if (game.getBoard().allTotemsPlaced(game.getActivePlayerCount())) {
             game.setState(new PickingState());
             Player first = game.getBoard().getFirstPlayerFromOfferingTrack();

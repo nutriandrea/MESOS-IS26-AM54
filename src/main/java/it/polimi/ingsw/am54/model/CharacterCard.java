@@ -66,7 +66,7 @@ public class CharacterCard extends TribeCard implements IDrawable {
     }
 
     @Override
-    public void pick(Player player, Game game) throws Exception {
+    public void pick(Player player, Game game) throws GameException {
         player.modifyMyTribe(this);
         this.resolveEffects(player, game);
 

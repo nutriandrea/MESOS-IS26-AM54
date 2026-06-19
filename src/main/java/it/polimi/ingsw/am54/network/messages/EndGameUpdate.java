@@ -4,6 +4,11 @@ import it.polimi.ingsw.am54.network.client.ClientModel;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Notifica broadcast inviata dal server quando la partita termina.
+ * Contiene la lista dei vincitori, la mappa punteggi completi
+ * e il numero di giocatori della partita.
+ */
 public final class EndGameUpdate implements Update {
     private final List<String> winners;
     private final Map<String, Integer> allScores;

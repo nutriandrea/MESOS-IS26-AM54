@@ -9,6 +9,7 @@ import java.io.FileReader;
 import it.polimi.ingsw.am54.model.states.StartTurnState;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 public class Game implements IGame{
@@ -29,11 +30,11 @@ public class Game implements IGame{
 
     private int activePlayerCount = 0;
 
-    private transient List<IGameObserver> observers = new ArrayList<>();
+    private transient List<IGameObserver> observers = new CopyOnWriteArrayList<>();
 
     // I campi offeringTiles, turnOrderSlots, upperRow, lowerRow sono gestiti da Board
     public Game() {
-        this.observers = new ArrayList<>();
+        this.observers = new CopyOnWriteArrayList<>();
         this.players = new ArrayList<>();
         this.currentState = new SetUpGameState();
     }
@@ -43,24 +44,24 @@ public class Game implements IGame{
     // ==========================================
 
     @Override
-    public void joinGame(String nickname) throws Exception {
+    public void joinGame(String nickname) throws GameException {
         currentState.joinGame(this, nickname);
         notifyPlayerJoined(getPlayerByNickname(nickname));
     }
 
     @Override
-    public void chooseTotemColor(String nickname, String color) throws Exception {
+    public void chooseTotemColor(String nickname, String color) throws GameException {
         currentState.chooseTotemColor(this, nickname, color);
         notifyTotemColorChosen(getPlayerByNickname(nickname), TotemColors.valueOf(color.toUpperCase()));
     }
 
     @Override
-    public void placeTotem(String nickname, int offerPosition) throws Exception {
+    public void placeTotem(String nickname, int offerPosition) throws GameException {
         currentState.placeTotem(this, nickname, offerPosition);
     }
 
     @Override
-    public void pickCard(String nickname, String row, int cardIndex) throws Exception {
+    public void pickCard(String nickname, String row, int cardIndex) throws GameException {
         currentState.pickCard(this, nickname, row, cardIndex);
     }
 
@@ -82,7 +83,7 @@ public class Game implements IGame{
 
     public void setBoard(Board board) { this.board = board; } // per i test
 
-    public void setupGame() throws Exception {
+    public void setupGame() throws GameException {
         this.currentEra = 1;
         this.roundCount = 1; // Corretto: il gioco inizia dal Round 1, non da 0
 
@@ -286,11 +287,11 @@ public class Game implements IGame{
         }
     }
 
-    public Player getPlayerByNickname(String nickname) throws Exception {
+    public Player getPlayerByNickname(String nickname) throws GameException {
         return this.players.stream()
                 .filter(p -> p.getNickname().equalsIgnoreCase(nickname))
                 .findFirst()
-                .orElseThrow(() -> new Exception("Errore: Giocatore '" + nickname + "' non trovato."));
+                .orElseThrow(() -> new GameException("Errore: Giocatore '" + nickname + "' non trovato."));
     }
 
     private void notifyPlayerJoined(Player player) {
@@ -333,7 +334,7 @@ public class Game implements IGame{
     }
 
     @Override
-    public void endTurn(String nickname) throws Exception {
+    public void endTurn(String nickname) throws GameException {
         currentState.endTurn(this, nickname);
     }
 
@@ -617,7 +618,7 @@ public class Game implements IGame{
 
     private List<IGameObserver> getSafeObservers() {
         if (observers == null) {
-            observers = new ArrayList<>();
+            observers = new CopyOnWriteArrayList<>();
         }
         return observers;
     }

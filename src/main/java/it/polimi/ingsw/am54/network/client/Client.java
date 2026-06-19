@@ -20,12 +20,12 @@ public class Client {
         this.model.setOnConnectionLostCallback(() -> this.startAutoReconnect());
     }
 
-    public static Client getInstance() {
+    public static synchronized Client getInstance() {
         if (instance == null) instance = new Client();
         return instance;
     }
 
-    public static void resetClient() {
+    public static synchronized void resetClient() {
         if (instance != null && instance.connection != null) {
             try {
                 instance.connection.disconnect();

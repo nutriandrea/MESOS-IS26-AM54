@@ -354,7 +354,7 @@ public class ClientModel {
         notifyUI();
     }
 
-    public synchronized void updateTotemReturned(String nickname, int newFoodBalance, int newAuraBalance) {
+    public synchronized void updateTotemReturned(String nickname, int position, int newFoodBalance, int newAuraBalance) {
         // Rimuove il totem dalle offerte confrontando il nome effettivo
         offeringTrack.entrySet().removeIf(entry -> {
             String occupier = entry.getValue();

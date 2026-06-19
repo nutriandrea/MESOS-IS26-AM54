@@ -29,7 +29,7 @@ public class Card {
         this.owner = p;
     }
 
-    public void pick(Player player, Game game) throws Exception {
+    public void pick(Player player, Game game) throws GameException {
         throw new UnsupportedOperationException("Cannot pick this card type");
     }
 

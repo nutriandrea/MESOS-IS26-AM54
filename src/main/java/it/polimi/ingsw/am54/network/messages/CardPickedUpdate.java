@@ -2,6 +2,11 @@ package it.polimi.ingsw.am54.network.messages;
 
 import it.polimi.ingsw.am54.network.client.ClientModel;
 
+/**
+ * Notifica broadcast quando un giocatore pesca una carta.
+ * Contiene la riga (upper/lower), l'indice e i nuovi saldi
+ * di cibo e magia del giocatore.
+ */
 public final class CardPickedUpdate implements Update {
     private final String nickname;
     private final String row;

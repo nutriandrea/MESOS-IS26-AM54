@@ -12,6 +12,13 @@ import it.polimi.ingsw.am54.model.effects.events.*;
 import it.polimi.ingsw.am54.model.states.*;
 import java.io.*;
 
+/**
+ * Gestore della persistenza del Game su file JSON (crash recovery).
+ * Usa Gson con adapter polimorfici per serializzare/deserializzare
+ * GameState, IEffect e TribeCard nelle loro sottoclassi concrete.
+ * Il file di backup viene creato dal Server all'avvio e cancellato
+ * al termine della partita (clearBackup).
+ */
 public class PersistenceManager {
     private final File backupFile;
     private final Gson gson;

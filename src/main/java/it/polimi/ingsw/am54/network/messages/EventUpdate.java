@@ -6,6 +6,12 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Notifica broadcast inviata dal server dopo la risoluzione di un evento.
+ * Contiene lo snapshot completo delle statistiche di tutti i giocatori
+ * (cibo, aura, magia, tribù, edifici) e lo stato aggiornato del tabellone.
+ * Usata dal client per aggiornare istantaneamente l'interfaccia.
+ */
 public final class EventUpdate implements Update {
 
     // DTO compatto per le statistiche di un singolo giocatore

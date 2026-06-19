@@ -7,6 +7,10 @@ import it.polimi.ingsw.am54.network.rmi.RMIGameServer;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+/**
+ * Implementazione RMI del server esportata nel Registry.
+ * Riceve le connessioni dei client RMI e crea un RMIClientHandler dedicato.
+ */
 public class RMIServerImpl extends UnicastRemoteObject implements RMIGameServer {
 
     private final Server server;

@@ -79,7 +79,7 @@ public class ClientModelDisconnectionTest {
                 "Charlie deve essere sull'offeringTrack dopo placeTotem");
 
         // 3. Simula la disconnessione di Charlie: arriva TotemReturnedUpdate
-        model.updateTotemReturned("Charlie", 5, 3);
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
         // 4. VERIFICA: Alice e Bob devono ANCORA essere sull'offeringTrack
         Map<Integer, String> offeringAfter = model.getOfferingTrack();
@@ -134,7 +134,7 @@ public class ClientModelDisconnectionTest {
         model.updateState(stateUpdate);
 
         // 2. Simula disconnessione di Charlie: arriva TotemReturnedUpdate
-        model.updateTotemReturned("Charlie", 5, 3);
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
         // 3. VERIFICA: Alice e Bob devono ancora essere sull'offeringTrack
         Map<Integer, String> offeringAfter = model.getOfferingTrack();
@@ -191,7 +191,7 @@ public class ClientModelDisconnectionTest {
 
         // 2. PlayerDisconnectedUpdate + TotemReturnedUpdate per Charlie (non-current con tile)
         model.updatePlayerDisconnected("Charlie");
-        model.updateTotemReturned("Charlie", 5, 3);
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
         // 3. VERIFICA: Alice e Bob ancora lì
         Map<Integer, String> offeringAfter = model.getOfferingTrack();
@@ -230,7 +230,7 @@ public class ClientModelDisconnectionTest {
 
         // 2. Simula disconnessione di Charlie
         model.updatePlayerDisconnected("Charlie");
-        model.updateTotemReturned("Charlie", 5, 3);
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
         // 3. Il server ha skippato Charlie → picking completo → transizione a StartTurnState
         // Il server invia un NUOVO StateChangedUpdate con lo stato aggiornato
@@ -299,7 +299,7 @@ public class ClientModelDisconnectionTest {
 
         // Alice è stata rimossa dall'offering da CardPickedUpdate
         // Ora arriva TotemReturnedUpdate per Alice (dal server dopo executeEndTurnLogic)
-        model.updateTotemReturned("Alice", 3, 3);
+        model.updateTotemReturned("Alice", 0, 3, 3);
 
         // 3. VERIFICA: Alice ora è in turnOrderTrack
         List<String> turnOrderAfter = model.getTurnOrderTrack();
@@ -307,7 +307,7 @@ public class ClientModelDisconnectionTest {
         assertTrue(aliceInTurnOrder, "Alice deve essere in turnOrderTrack dopo TotemReturnedUpdate");
 
         // 4. Simula disconnessione di Charlie (che è ancora sull'offeringTrack)
-        model.updateTotemReturned("Charlie", 5, 3);
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
         // 5. VERIFICA: Bob deve ancora essere sull'offeringTrack (Charlie rimosso, Alice già rimossa)
         Map<Integer, String> offeringAfter = model.getOfferingTrack();
@@ -325,7 +325,7 @@ public class ClientModelDisconnectionTest {
      */
     @Test
     public void testTotemReturnedForNonexistentPlayer_noSideEffects() {
-        model.updateTotemReturned("Alice", 5, 3); // la aggiunge al turnOrderTrack
+        model.updateTotemReturned("Alice", 0, 5, 3); // la aggiunge al turnOrderTrack
         Map<String, StateChangedUpdate.PlayerSnapshot> stats = new LinkedHashMap<>();
         stats.put("Alice",   new StateChangedUpdate.PlayerSnapshot(5, 3, 0, TotemColors.RED, List.of(), List.of()));
         stats.put("Bob",     new StateChangedUpdate.PlayerSnapshot(5, 3, 0, TotemColors.YELLOW, List.of(), List.of()));
@@ -346,7 +346,7 @@ public class ClientModelDisconnectionTest {
         model.updateTotemPlacement("Bob", 1);
 
         // Simula TotemReturned per Charlie (che NON è nell'offeringTrack)
-        model.updateTotemReturned("Charlie", 5, 3);
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
         // Alice e Bob devono restare nell'offeringTrack
         Map<Integer, String> track = model.getOfferingTrack();
@@ -369,7 +369,7 @@ public class ClientModelDisconnectionTest {
         model.updateTotemPlacement("Charlie", 2);
 
         // 2. TotemReturned per Charlie (disconnessione)
-        model.updateTotemReturned("Charlie", 5, 3);
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
         // 3. StateChangedUpdate che arriva dopo (tipo giro successivo)
         Map<String, StateChangedUpdate.PlayerSnapshot> stats = new LinkedHashMap<>();

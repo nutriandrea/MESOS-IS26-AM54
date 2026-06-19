@@ -28,6 +28,6 @@ public final class TotemReturnedUpdate implements Update {
 
     @Override
     public void applyTo(ClientModel model) {
-        model.updateTotemReturned(this.nickname, this.newFoodBalance, this.newAuraBalance);
+        model.updateTotemReturned(this.nickname, this.position, this.newFoodBalance, this.newAuraBalance);
     }
 }

@@ -8,6 +8,12 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Implementazione della connessione client tramite RMI.
+ * Si connette al server RMIGameServer, ottiene un handler personale,
+ * e implementa RMIClientInterface per ricevere le callback dal server.
+ * Gestisce heartbeat (ping/pong) e riconnessione automatica.
+ */
 public class RMIServerConnection extends UnicastRemoteObject implements ServerConnection, RMIClientInterface {
 
     /** Stub RMI del server: usato per inviare Request e rispondere ai ping */
@@ -107,8 +113,8 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     }
 
     @Override
-    public void onTotemReturned(String nickname, int food, int aura) throws RemoteException {
-        clientModel.updateTotemReturned(nickname, food, aura);
+    public void onTotemReturned(String nickname, int position, int food, int aura) throws RemoteException {
+        clientModel.updateTotemReturned(nickname, position, food, aura);
     }
 
     @Override

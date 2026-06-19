@@ -40,6 +40,13 @@ public class MarketManager {
     }
 
     public void updateMarkets(ClientModel model) {
+        System.out.println("[DEBUG-MARKET] characterUpperRow size=" + model.getCharacterUpperRow().size()
+                + " data=" + model.getCharacterUpperRow());
+        System.out.println("[DEBUG-MARKET] characterLowerRow size=" + model.getCharacterLowerRow().size()
+                + " data=" + model.getCharacterLowerRow());
+        System.out.println("[DEBUG-MARKET] eventUpperRow size=" + model.getEventUpperRow().size());
+        System.out.println("[DEBUG-MARKET] upperBuildingRow size=" + model.getUpperBuildingRow().size());
+
         upperMarket.getChildren().clear();
         lowerMarket.getChildren().clear();
 
@@ -162,7 +169,10 @@ public class MarketManager {
 
         String path = CARD_PATH_RESOLVERS.getOrDefault(code, CHARACTER_PATH).apply(parts);
 
-        try { view.setImage(new Image(getClass().getResourceAsStream(path))); } catch (Exception e) {}
+        System.out.println("[DEBUG-CARD] path=" + path + " exists=" + (getClass().getResourceAsStream(path) != null) + " for cardString=" + cardString);
+        try { view.setImage(new Image(getClass().getResourceAsStream(path))); } catch (Exception e) {
+            System.err.println("[DEBUG-CARD] ERROR loading image for path=" + path + " cardString=" + cardString + " error=" + e.getMessage());
+        }
 
         view.setFitHeight(190);
         view.setPreserveRatio(true);

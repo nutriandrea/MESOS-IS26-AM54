@@ -60,7 +60,9 @@ public class CharacterCard extends TribeCard implements IDrawable {
 
     @Override
     public String toClientString() {
-        return getImageId() + "|" + getEra() + "|" + getMinPlayers() + "|" + getName() + "|" + getLevel() + "|" + getAura();
+        String result = getImageId() + "|" + getEra() + "|" + getMinPlayers() + "|" + getName() + "|" + getLevel() + "|" + getAura();
+        System.out.println("[DEBUG-CHAR] toClientString() called: imageId=" + getImageId() + " era=" + getEra() + " minP=" + getMinPlayers() + " name=" + getName() + " result=" + result);
+        return result;
     }
 
     @Override

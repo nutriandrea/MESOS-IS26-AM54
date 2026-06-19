@@ -237,11 +237,12 @@ public class VirtualView implements IGameObserver {
 
         Board b = game.getBoard();
 
-        // =========================================================
-        // FIX: Se la Board esiste (siamo in gioco), raccogliamo i dati.
-        // Se è null (siamo in Lobby), skippiamo per evitare il NullPointer!
-        // =========================================================
+        System.out.println("[DEBUG-VV] onStateChanged state=" + newState.getClass().getSimpleName() + " board=" + (b != null));
         if (b != null) {
+            System.out.println("[DEBUG-VV] board charUpperRow size=" + b.getCharacterUpperRow().size()
+                    + " charLowerRow size=" + b.getCharacterLowerRow().size()
+                    + " eventUpperRow size=" + b.getEventUpperRow().size()
+                    + " buildUpperRow size=" + b.getBuildingCardsUpperRow().size());
             turnOrder = b.getTurnOrderTile().stream()
                     .map(slot -> {
                         int bonus = slot.getBonusFood();
@@ -266,6 +267,8 @@ public class VirtualView implements IGameObserver {
             buildLow = b.getBuildingCardsLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
         }
 
+        System.out.println("[DEBUG-VV] sending charUp=" + charUp.size() + " charLow=" + charLow.size()
+                + " eventUp=" + eventUp.size() + " buildUp=" + buildUp.size());
         // Spedisci il pacchetto (sicuro!)
         connection.notifyStateChanged(
                 newState.getClass().getSimpleName(), game.getCurrentEra(), game.getRoundCount(),

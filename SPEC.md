@@ -281,16 +281,17 @@ Vedi `it.polimi.ingsw.am54.network.client.Client` come punto di partenza.
 
 ## 8. Tabella di Valutazione
 
-| Feature | Stato |
-|:--------|:------|
-| Regole complete gioco | ✅ |
-| Socket TCP | ✅ |
-| RMI | ✅ |
+| Feature                            | Stato |
+|:-----------------------------------|:------|
+| Regole complete gioco              | ✅ |
+| Socket TCP                         | ✅ |
+| RMI                                | ✅ |
 | Disconnection handling (ping/pong) | ✅ |
-| Riconnessione (state sync) | ✅ |
-| Persistence (crash recovery) | ✅ |
-| GUI (JavaFX) | ❌ |
-| TUI (CLI) | ❌ | 
+| Riconnessione (state sync)         | ✅ |
+| Leaderboard                        | ✅ |
+| Persistence (crash recovery)       | ✅ |
+| GUI (JavaFX)                       | ✅ |
+| TUI (CLI)                          | ✅ |
 
 ---
 

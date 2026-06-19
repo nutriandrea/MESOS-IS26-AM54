@@ -330,6 +330,53 @@ public class Board {
         return null;
     }
 
+    // =====================================================================
+    // GESTIONE DISCONNESSIONI E SHIFT TURN ORDER
+    // =====================================================================
+
+    /**
+     * Rimuove il giocatore dalla Turn Order e fa "scivolare" verso l'alto (verso lo slot 0)
+     * tutti i totem dei giocatori che si trovavano sotto di lui.
+     */
+    public void removePlayerFromTurnOrderAndShiftUp(Player disconnectedPlayer) {
+        int emptyIndex = -1;
+
+        // 1. Trova il giocatore disconnesso e libera il suo slot
+        for (int i = 0; i < turnOrderTile.size(); i++) {
+            if (turnOrderTile.get(i).getOccupiedBy() != null &&
+                    turnOrderTile.get(i).getOccupiedBy().getNickname().equals(disconnectedPlayer.getNickname())) {
+                turnOrderTile.get(i).freeSlot();
+                emptyIndex = i;
+                break;
+            }
+        }
+
+        // 2. Fa scalare tutti quelli sotto di UNA posizione in su
+        if (emptyIndex != -1) {
+            for (int i = emptyIndex; i < turnOrderTile.size() - 1; i++) {
+                Player nextPlayer = turnOrderTile.get(i + 1).getOccupiedBy();
+                turnOrderTile.get(i).freeSlot(); // Assicura che lo slot corrente sia pulito
+                if (nextPlayer != null) {
+                    turnOrderTile.get(i + 1).freeSlot();
+                    turnOrderTile.get(i).occupy(nextPlayer);
+                }
+            }
+        }
+    }
+
+    /**
+     * Reinserisce il totem di un giocatore appena riconnesso nella prima
+     * posizione libera disponibile partendo dall'alto.
+     */
+    public void addPlayerToFirstAvailableTurnOrderSlot(Player reconnectedPlayer) {
+        for (TurnOrderSlot slot : turnOrderTile) {
+            if (slot.getOccupiedBy() == null) {
+                slot.occupy(reconnectedPlayer);
+                break;
+            }
+        }
+    }
+
     // Regola specifica per l'ingresso nell'Era III
     public void discardLowerRowBuildings() {
         buildingCardsLowerRow.clear();

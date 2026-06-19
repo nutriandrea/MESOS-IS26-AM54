@@ -24,8 +24,6 @@ import it.polimi.ingsw.am54.gui.states.ClientStateRegistry;
 
 public class BoardController {
 
-    
-
     @FXML private StackPane rootPane;
 
     @FXML private Region topSpacer;
@@ -77,6 +75,10 @@ public class BoardController {
 
     @FXML private StackPane reconnectingOverlay;
     @FXML private Label reconnectingLabel;
+
+    @FXML private Button btnDisconnected;
+    @FXML private StackPane disconnectedOverlay;
+    @FXML private HBox disconnectedTotemsContainer;
 
     private boolean isDashboardOpen = false;
     private final double DASHBOARD_OPEN_HEIGHT = 210.0;
@@ -166,11 +168,9 @@ public class BoardController {
         double h = rootPane.getHeight();
         if (w <= 0 || h <= 0) return;
 
-        // Target massimi basati sull'altezza della finestra
         double targetCardHeight = h * 0.22;
         double targetMiddleHeight = h * 0.30;
 
-        // 1. Calcolo esatto per gli elementi superiori (Mercato alto + Mazzi)
         int totalUpperItems = marketManager.getUpperItemsCount() + 2;
         double upperSpacing = 80.0 + 40.0 + 25.0;
         if (totalUpperItems > 3) upperSpacing += (totalUpperItems - 3) * 15.0;
@@ -178,12 +178,10 @@ public class BoardController {
         double maxUpperCardHeightFromWidth = maxUpperCardWidth / (135.0 / 190.0);
         double finalUpperCardHeight = Math.min(targetCardHeight, maxUpperCardHeightFromWidth);
 
-        // 2. Calcolo esatto per il centro (TurnOrder e Offering Track)
         double maxMiddleWidth = (w - 200) / 8.0;
         double maxMiddleHeightFromWidth = maxMiddleWidth / 0.622;
         double finalMiddleHeight = Math.min(targetMiddleHeight, maxMiddleHeightFromWidth);
 
-        // 3. Calcolo iniziale per gli elementi inferiori (SENZA restrizioni dei bottoni)
         int lowerCardsCount = marketManager.getLowerItemsCount();
         double baseLowerSpacing = 80.0;
         if (lowerCardsCount > 1) baseLowerSpacing += (lowerCardsCount - 1) * 15.0;
@@ -192,30 +190,19 @@ public class BoardController {
         double maxLowerCardHeightFromWidth = maxLowerCardWidth / (135.0 / 190.0);
         double initialLowerCardHeight = Math.min(targetCardHeight * 1.15, maxLowerCardHeightFromWidth);
 
-        // --- CONTROLLO DI COLLISIONE DINAMICO PER LE CARTE INFERIORI ---
-        // Sommiamo lo spazio verticale reale occupato da tutto il blocco centrale di gioco
         double actualContentH = 60.0 + finalUpperCardHeight + 20.0 + finalMiddleHeight + initialLowerCardHeight + 70.0;
         double freeSpace = Math.max(0, h - actualContentH);
-
-        // In JavaFX i nostri due VBox.vgrow (topSpacer e bottomSpacer) si dividono lo spazio libero a metà
         double bottomSpacerHeight = freeSpace / 2.0;
-
-        // Calcoliamo la distanza stimata tra il fondo reale delle carte e il fondo dello schermo
         double cardsDistanceFromBottom = bottomSpacerHeight + 70.0;
 
         double finalLowerCardHeight = initialLowerCardHeight;
-
-        // Se la finestra si schiaccia e le carte scendono nella zona calda dei bottoni (meno di 150px dal fondo)
         if (cardsDistanceFromBottom < 150.0) {
-            // Imponiamo i margini laterali per stringerle al centro e non farle finire sotto i pulsanti
             double penalizedLowerSpacing = baseLowerSpacing + 420.0;
             double penalizedMaxLowerWidth = lowerCardsCount > 0 ? (w - penalizedLowerSpacing) / lowerCardsCount : w;
             double penalizedMaxLowerHeight = Math.max(10, penalizedMaxLowerWidth / (135.0 / 190.0));
             finalLowerCardHeight = Math.min(targetCardHeight * 1.15, penalizedMaxLowerHeight);
         }
-        // Se la finestra è più alta che larga, l'if salta e le carte si allargano sfruttando lo spazio sopra i bottoni
 
-        // Applicazione delle altezze definitive ai mercati
         if (upperMarket != null) upperMarket.setMinHeight(finalUpperCardHeight);
         if (lowerMarket != null) lowerMarket.setMinHeight(finalLowerCardHeight);
         marketManager.setCardsHeight(finalUpperCardHeight, finalLowerCardHeight);
@@ -312,9 +299,6 @@ public class BoardController {
 
             if (!isGameOver && (isEndState || hasWinners)) {
                 isGameOver = true;
-
-                // NUOVA LOGICA: Se la partita è finita ma il popup degli eventi NON è aperto
-                // (es. vittoria a tavolino per timeout), apriamo immediatamente il calcolo finale!
                 if (eventSummaryOverlay == null || !eventSummaryOverlay.isVisible()) {
                     openFinalCalculationOverlay();
                 }
@@ -329,6 +313,8 @@ public class BoardController {
 
             dashboardManager.updatePersonalDashboard(model);
             dashboardManager.updateOpponentsView(model);
+
+            updateDisconnectedPlayers(model);
 
             handleTurnChangeNotification(model);
             updateActionBanner(model);
@@ -353,7 +339,6 @@ public class BoardController {
         if (activePlayer == null || activePlayer.isEmpty()) return;
 
         if (!activePlayer.equals(lastKnownPlayer)) {
-            // FIX SOVRAPPOSIZIONE: Se l'overlay eventi è aperto, congeliamo la notifica in coda e usciamo
             if (eventSummaryOverlay != null && eventSummaryOverlay.isVisible()) {
                 pendingNotifyPlayer = activePlayer;
                 return;
@@ -362,10 +347,9 @@ public class BoardController {
         }
     }
 
-    // Estratta la visualizzazione grafica pura della notifica turno per invocarla al momento giusto
     private void showTurnNotification(String activePlayer, String myName) {
         lastKnownPlayer = activePlayer;
-        pendingNotifyPlayer = null; // Svuotiamo la coda del congelamento
+        pendingNotifyPlayer = null;
 
         turnNotificationTitle.getStyleClass().removeAll("turn-title-mine", "turn-title-other");
 
@@ -431,10 +415,7 @@ public class BoardController {
     }
 
     private void openFinalCalculationOverlay() {
-
-        if (!isDashboardOpen) {
-            toggleDashboard();
-        }
+        if (!isDashboardOpen) toggleDashboard();
 
         if (finalCalculationOverlay == null || finalCalculationContainer == null) return;
         finalCalculationContainer.getChildren().clear();
@@ -446,7 +427,6 @@ public class BoardController {
             VBox playerBox = new VBox(10);
             playerBox.getStyleClass().addAll("opponent-box", "final-calc-player-box");
 
-            // --- INIZIO NUOVO HEADER CON TOTEM ---
             HBox headerBox = new HBox(15);
             headerBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
@@ -455,7 +435,6 @@ public class BoardController {
             totemIcon.setFitHeight(35);
             totemIcon.setPreserveRatio(true);
 
-            // Recupera il colore del giocatore per assegnare l'immagine giusta
             TotemColors oppColor = model.getPlayerColors().get(pName);
             if (oppColor != null) {
                 String colorName = oppColor.name().toLowerCase();
@@ -470,31 +449,24 @@ public class BoardController {
             headerBox.getChildren().addAll(totemIcon, nameLbl);
             playerBox.getChildren().add(headerBox);
 
-            // 1. Calcoli statici dal ClientModel
             int artistsBonus = model.getArtistBonus(pName);
             int inventorsBonus = model.getInventorBonus(pName);
             int constructorAura = model.getConstructorBonus(pName);
             int buildingBaseAura = model.getBuildingBaseAura(pName);
 
-            // 2. Dati ufficiali dal Server
-            int clientBaseAura = model.getPlayerAura().getOrDefault(pName, 0); // L'Aura registrata prima del conteggio finale
+            int clientBaseAura = model.getPlayerAura().getOrDefault(pName, 0);
             int leftoverFood = model.getPlayerFood().getOrDefault(pName, 0);
 
-            // Il server ci ha inviato il punteggio totale reale e insindacabile!
             int finalScore = 0;
             if (model.getLastMatchScores() != null && model.getLastMatchScores().containsKey(pName)) {
                 finalScore = model.getLastMatchScores().get(pName);
             } else {
-                finalScore = clientBaseAura + artistsBonus + inventorsBonus + constructorAura + buildingBaseAura; // Fallback di sicurezza
+                finalScore = clientBaseAura + artistsBonus + inventorsBonus + constructorAura + buildingBaseAura;
             }
 
-            // 3. LA DEDUZIONE MATEMATICA DEGLI EFFETTI
-            // Sottraendo i bonus fissi e l'Aura di partenza dal Totale del Server, otteniamo
-            // in modo impeccabile quanto hanno fruttato gli effetti applyOnEndGame degli edifici.
             int staticBonuses = artistsBonus + inventorsBonus + constructorAura + buildingBaseAura;
             int endGameBuildingsBonus = finalScore - clientBaseAura - staticBonuses;
 
-            // 4. Stampa a schermo
             Label lblBase = new Label(String.format("  ✨ Aura a fine Round 10 (post eventi): %+d", clientBaseAura));
             lblBase.getStyleClass().add("final-calc-detail");
 
@@ -531,5 +503,59 @@ public class BoardController {
             finalCalculationOverlay.setVisible(false);
         }
         GUIApp.loadLeaderboardScene();
+    }
+
+    @FXML
+    private void showDisconnectedOverlay() {
+        if (disconnectedOverlay != null) {
+            disconnectedOverlay.setVisible(true);
+            disconnectedOverlay.toFront();
+        }
+    }
+
+    @FXML
+    private void closeDisconnectedOverlay() {
+        if (disconnectedOverlay != null) {
+            disconnectedOverlay.setVisible(false);
+        }
+    }
+
+    private void updateDisconnectedPlayers(ClientModel model) {
+        java.util.Set<String> disconnected = model.getDisconnectedPlayers();
+
+        if (disconnected == null || disconnected.isEmpty()) {
+            if (btnDisconnected != null) btnDisconnected.setVisible(false);
+            if (disconnectedOverlay != null) disconnectedOverlay.setVisible(false);
+            return;
+        }
+
+        if (btnDisconnected != null) btnDisconnected.setVisible(true);
+
+        if (disconnectedTotemsContainer != null) {
+            disconnectedTotemsContainer.getChildren().clear();
+
+            for (String pName : disconnected) {
+                VBox pBox = new VBox(15);
+                pBox.setAlignment(javafx.geometry.Pos.CENTER);
+                Label nameLbl = new Label(pName.toUpperCase());
+                nameLbl.setStyle("-fx-text-fill: white; -fx-font-family: 'Herculanum'; -fx-font-size: 18px;");
+
+                TotemColors color = model.getPlayerColors().get(pName);
+                ImageView totemView = new ImageView();
+                if (color != null) {
+                    String cName = color.name().toLowerCase();
+                    try {
+                        java.io.InputStream is = getClass().getResourceAsStream("/images/totem_" + cName + "_3d_160x270.png");
+                        if (is != null) {
+                            totemView.setImage(new javafx.scene.image.Image(is));
+                            totemView.setFitHeight(140);
+                            totemView.setPreserveRatio(true);
+                        }
+                    } catch (Exception e){}
+                }
+                pBox.getChildren().addAll(nameLbl, totemView);
+                disconnectedTotemsContainer.getChildren().add(pBox);
+            }
+        }
     }
 }

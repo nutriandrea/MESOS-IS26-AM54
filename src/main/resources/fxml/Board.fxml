@@ -72,15 +72,18 @@
         <Region fx:id="bottomSpacer" VBox.vgrow="ALWAYS" />
     </VBox>
 
-
     <StackPane alignment="BOTTOM_LEFT" pickOnBounds="false">
-        <padding><Insets bottom="100.0" left="70.0" /></padding>
-        <Button fx:id="endTurnButton" text="🛑 FINE TURNO" visible="false" styleClass="recap-close-button" onAction="#handleEndTurn" />
+        <padding><Insets bottom="100.0" left="40.0" /></padding>
+
+        <VBox spacing="15.0" alignment="BOTTOM_LEFT" pickOnBounds="false">
+            <Button fx:id="btnDisconnected" text="🔌 DISCONNESSI" visible="false" managed="${btnDisconnected.visible}" styleClass="recap-button" prefWidth="230.0" onAction="#showDisconnectedOverlay" />
+            <Button fx:id="endTurnButton" text="🛑 FINE TURNO" visible="false" managed="${endTurnButton.visible}" styleClass="recap-close-button" prefWidth="230.0" onAction="#handleEndTurn" />
+        </VBox>
     </StackPane>
 
     <StackPane alignment="BOTTOM_RIGHT" pickOnBounds="false">
         <padding><Insets bottom="100.0" right="70.0" /></padding>
-        <Button fx:id="recapButton" text="❓ RIEPILOGO" styleClass="recap-button" onAction="#toggleRecapOverlay" />
+        <Button fx:id="recapButton" text="❓ RIEPILOGO" styleClass="recap-button" prefWidth="230.0" onAction="#toggleRecapOverlay" />
     </StackPane>
 
     <StackPane fx:id="finalCalculationOverlay" visible="false" styleClass="recap-overlay" alignment="TOP_CENTER">
@@ -141,10 +144,17 @@
         <VBox alignment="CENTER" spacing="20">
             <ProgressIndicator style="-fx-progress-color: #d4af37;" />
             <Label text="CONNESSIONE COL SERVER PERSA" style="-fx-text-fill: #ff4444; -fx-font-size: 36px; -fx-font-family: 'Herculanum';" />
-
             <Label fx:id="reconnectingLabel" text="Tentativo di riconnessione automatica in corso" style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-family: 'Herculanum';" />
-
             <Label text="Non chiudere l'applicazione. La partita riprenderà da sola." style="-fx-text-fill: #aaaaaa; -fx-font-size: 16px; -fx-font-family: 'Herculanum';" />
+        </VBox>
+    </StackPane>
+
+    <StackPane fx:id="disconnectedOverlay" visible="false" styleClass="recap-overlay" onMouseClicked="#closeDisconnectedOverlay">
+        <VBox alignment="CENTER" spacing="30.0" maxWidth="600.0" maxHeight="350.0" styleClass="opponents-panel">
+            <padding><Insets top="30.0" right="30.0" bottom="30.0" left="30.0" /></padding>
+            <Label text="GIOCATORI DISCONNESSI" styleClass="opponents-title" />
+            <HBox fx:id="disconnectedTotemsContainer" alignment="CENTER" spacing="40.0" VBox.vgrow="ALWAYS" />
+            <Button text="CHIUDI" onAction="#closeDisconnectedOverlay" styleClass="recap-close-button" />
         </VBox>
     </StackPane>
 

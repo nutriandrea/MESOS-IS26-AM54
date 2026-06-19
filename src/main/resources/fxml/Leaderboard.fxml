@@ -54,7 +54,6 @@
                         <Label text="POS" prefWidth="60" styleClass="ranking-table-header-label" alignment="CENTER_LEFT"/>
                         <Label text="TOTEM" prefWidth="80" styleClass="ranking-table-header-label" alignment="CENTER_LEFT"/>
                         <Label text="NICKNAME" prefWidth="300" styleClass="ranking-table-header-label" alignment="CENTER_LEFT"/>
-
                         <Label text="✨ AURA" prefWidth="120" styleClass="ranking-table-header-label" alignment="CENTER"/>
                         <Label text="🍖 CIBO" prefWidth="120" styleClass="ranking-table-header-label" alignment="CENTER"/>
                         <Label text="🔮 MAGIA" prefWidth="120" styleClass="ranking-table-header-label" alignment="CENTER"/>
@@ -69,9 +68,9 @@
     </AnchorPane>
 
     <Button fx:id="globalLeaderboardButton" text="🏆 RANKING GLOBALE" styleClass="leaderboard-login-button"
-            StackPane.alignment="TOP_RIGHT" onAction="#handleGlobalLeaderboardButton">
+            StackPane.alignment="TOP_RIGHT" onAction="#handleGlobalLeaderboardButton" minWidth="-Infinity">
         <StackPane.margin>
-            <Insets top="30" right="40" />
+            <Insets top="30" right="90" />
         </StackPane.margin>
     </Button>
 

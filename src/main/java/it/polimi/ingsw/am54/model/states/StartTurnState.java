@@ -38,6 +38,7 @@ public class StartTurnState extends GameState {
                 .findFirst()
                 .ifPresent(slot -> slot.freeSlot());
 
+        // FIX: La fase passa quando tutti gli ATTIVI hanno piazzato
         if (game.getBoard().allTotemsPlaced(game.getActivePlayerCount())) {
             game.setState(new PickingState());
             Player firstPicker = game.getBoard().getFirstPlayerFromOfferingTrack();
@@ -50,14 +51,12 @@ public class StartTurnState extends GameState {
     @Override
     public void skipTurn(Game game, String nickname) throws Exception {
         Player player = game.getPlayerByNickname(nickname);
-
         if (!game.getCurrentPlayer().equals(player)) {
             throw new Exception("Non e' il turno di " + nickname);
         }
         if (player.hasPlacedTotem()) {
             throw new Exception(nickname + " ha gia' piazzato il totem");
         }
-
         game.moveToLastSlot(player);
         player.setHasPlacedTotem(true);
         game.nextPlayer();
@@ -76,29 +75,28 @@ public class StartTurnState extends GameState {
 
     @Override
     public void handleDisconnection(Game game, Player p, boolean isCurrentPlayer) throws Exception {
+        // 1. Se aveva già piazzato (es. crash subito dopo), libera la tessera Offerta
+        if (p.hasPlacedTotem() && p.getCurrentTile() != null) {
+            p.getCurrentTile().freeSlot();
+            p.setCurrentTile(null);
+            game.notifyTotemReturned(p, -1);
+        }
+
+        // Non forziamo più p.setHasPlacedTotem(true)! Lasciamo che il gioco prosegua basandosi sugli attivi
+
+        // 2. Rimuove il giocatore dalla Turn Order e fa scalare tutti gli altri verso l'alto (Shift Up)
+        game.getBoard().removePlayerFromTurnOrderAndShiftUp(p);
+
+        // 3. Se stava scegliendo lui, passiamo al prossimo
         if (isCurrentPlayer) {
             game.nextPlayer();
-            if (game.getBoard().allTotemsPlaced(game.getActivePlayerCount())) {
-                game.setState(new PickingState());
-                Player first = game.getBoard().getFirstPlayerFromOfferingTrack();
-                if (first != null) game.setCurrentPlayer(first);
-            }
-        } else if (p.hasPlacedTotem()) {
-            if (p.getCurrentTile() != null) {
-                p.getCurrentTile().freeSlot();
-                p.setCurrentTile(null);
-                game.notifyTotemReturned(p, -1);
-            }
-            game.moveToLastSlot(p);
+        }
 
-            if (game.getBoard().allTotemsPlaced(game.getActivePlayerCount())) {
-                game.setState(new PickingState());
-                Player first = game.getBoard().getFirstPlayerFromOfferingTrack();
-                if (first != null) game.setCurrentPlayer(first);
-            }
-        } else {
-            game.moveToLastSlot(p);
-            p.setHasPlacedTotem(true);
+        // 4. Verifica immediata: la fase è finita grazie all'abbassamento dei player attivi?
+        if (game.getBoard().allTotemsPlaced(game.getActivePlayerCount())) {
+            game.setState(new PickingState());
+            Player first = game.getBoard().getFirstPlayerFromOfferingTrack();
+            if (first != null) game.setCurrentPlayer(first);
         }
     }
 }

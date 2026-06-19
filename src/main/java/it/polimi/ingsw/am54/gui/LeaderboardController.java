@@ -31,7 +31,6 @@ public class LeaderboardController {
 
     @FXML private VBox rankingTable;
 
-    // --- VARIABILI PER L'OVERLAY DELLA CLASSIFICA GLOBALE (Copia dal Login) ---
     @FXML private StackPane leaderboardOverlay;
     @FXML private VBox leaderboardEntriesContainer;
     @FXML private Label leaderboardFooter;
@@ -39,7 +38,6 @@ public class LeaderboardController {
     private final double NATIVE_WIDTH = 1672.0;
     private final double NATIVE_HEIGHT = 941.0;
 
-    // Classe locale per gestire l'ordinamento facilmente
     private class PlayerStats {
         String name; TotemColors color;
         int aura, food, magic, tribeCards, buildCards;
@@ -49,16 +47,10 @@ public class LeaderboardController {
     public void initialize() {
         setupScaling();
 
-        // 1. NON DISCONNETTIAMO LA RETE SUBITO! Ci serve per richiedere la classifica.
-        // Se c'è una connessione, la manteniamo aperta per il pulsante globale.
-
-        // 2. Registriamo il Listener per quando il Server ci manda i dati della Classifica Globale
         if (Client.getInstance().getModel() != null) {
             Client.getInstance().getModel().setOnModelUpdatedCallback(() -> {
                 Platform.runLater(() -> {
-                    // Costruiamo la tabella della partita corrente
                     buildLeaderboard();
-                    // Proviamo ad aggiornare l'overlay globale se ci sono dati
                     updateGlobalLeaderboardUI();
                 });
             });
@@ -92,15 +84,10 @@ public class LeaderboardController {
         mainArea.setTranslateY((screenH - scaledH) / 2.0);
     }
 
-    /* =====================================================================
-     * LOGICA PER LA CLASSIFICA DELLA PARTITA CORRENTE
-     * ===================================================================== */
-
     private void buildLeaderboard() {
         ClientModel model = Client.getInstance().getModel();
         if (model == null || model.getPlayers() == null) return;
 
-        // Evitiamo di ridisegnare la tabella se è già stata popolata
         if (!rankingTable.getChildren().isEmpty()) return;
 
         List<PlayerStats> statsList = new ArrayList<>();
@@ -167,10 +154,10 @@ public class LeaderboardController {
         if (p.color != null) {
             String cName = p.color.name().toLowerCase();
             try {
+                // Utilizza direttamente l'immagine frontale
                 InputStream is = getClass().getResourceAsStream("/images/totem_front_" + cName + ".png");
                 if (is != null) {
                     totemView.setImage(new Image(is));
-                    totemView.getStyleClass().add("totem-selected-" + cName);
                 }
             } catch (Exception e) {}
         }
@@ -192,7 +179,9 @@ public class LeaderboardController {
         iconView.setPreserveRatio(true);
         if (p.color != null) {
             try {
-                InputStream is = getClass().getResourceAsStream("/images/totem_front_" + p.color.name().toLowerCase() + ".png");
+                String cName = p.color.name().toLowerCase();
+                // Utilizza direttamente l'immagine frontale anche per la tabella
+                InputStream is = getClass().getResourceAsStream("/images/totem_front_" + cName + ".png");
                 if (is != null) iconView.setImage(new Image(is));
             } catch (Exception e) {}
         }
@@ -223,20 +212,14 @@ public class LeaderboardController {
         return l;
     }
 
-    /* =====================================================================
-     * LOGICA PER L'OVERLAY DELLA CLASSIFICA GLOBALE
-     * ===================================================================== */
-
     @FXML
     private void handleGlobalLeaderboardButton() {
         if (leaderboardOverlay == null) return;
 
-        // Mostriamo l'overlay con una scritta di attesa
         if (leaderboardFooter != null) leaderboardFooter.setText("CARICAMENTO IN CORSO...");
         leaderboardOverlay.setVisible(true);
         leaderboardOverlay.setManaged(true);
 
-        // Richiediamo al server la classifica filtrata per il numero di giocatori attuale
         if (Client.getInstance().getConnection() != null && Client.getInstance().getModel() != null) {
             int numPlayers = Client.getInstance().getModel().getPlayers().size();
             Client.getInstance().getConnection().requestLeaderboard(numPlayers);
@@ -255,7 +238,6 @@ public class LeaderboardController {
 
     @FXML
     private void handlePanelClick(MouseEvent event) {
-        // Intercetta i click sul pannello interno per non far chiudere l'overlay
         event.consume();
     }
 
@@ -301,9 +283,6 @@ public class LeaderboardController {
             modeLabel.getStyleClass().add("leaderboard-entry-mode");
             modeLabel.setPrefWidth(40);
 
-            // ========================================================
-            // NUOVO: RECUPERO E VISUALIZZAZIONE DATA DELLA PARTITA
-            // ========================================================
             String fullDate = e.getMatchDate();
             String displayDate = (fullDate != null && fullDate.length() >= 10) ? fullDate.substring(0, 10) : "---";
             Label dateLabel = new Label(displayDate);
@@ -316,14 +295,9 @@ public class LeaderboardController {
         }
     }
 
-    /* =====================================================================
-     * RITORNO AL MENU E DISCONNESSIONE
-     * ===================================================================== */
-
     @FXML
     private void handleReturnToMenu() {
         try {
-            // La disconnessione della rete avviene SOLO in questo momento!
             if (Client.getInstance().getConnection() != null) {
                 try {
                     Client.getInstance().getConnection().disconnect();

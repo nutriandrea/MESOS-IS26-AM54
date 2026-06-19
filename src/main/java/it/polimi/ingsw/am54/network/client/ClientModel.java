@@ -268,15 +268,28 @@ public class ClientModel {
      * Aggiornato quando un giocatore piazza il totem su una tessera offerta.
      *
      * COSA FA:
-     * - Rimuove il giocatore dal turnOrderTrack (non e' piu' in ordine di turno)
+     * - Sostituisce il giocatore nel turnOrderTrack con "VUOTO" per non far shiftare gli altri
      * - Aggiunge il giocatore all'offeringTrack alla posizione specificata
      */
     public synchronized void updateTotemPlacement(String nickname, int position) {
-        // Estraiamo il nome pulito (nel caso ci sia " -> ") e controlliamo l'uguaglianza esatta
-        turnOrderTrack.removeIf(s -> {
+        // FIX ANTI-SHIFT DEFINITIVO:
+        // Invece di usare removeIf (che accorcia la lista), cerchiamo il giocatore
+        // e lo rimpiazziamo con "VUOTO", conservando l'indice e la formattazione dello slot.
+        for (int i = 0; i < turnOrderTrack.size(); i++) {
+            String s = turnOrderTrack.get(i);
             String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
-            return name.equalsIgnoreCase(nickname);
-        });
+
+            if (name.equalsIgnoreCase(nickname)) {
+                if (s.contains(" -> ")) {
+                    // Mantiene "[Slot X | Cibo: +Y] -> " e aggiunge "VUOTO"
+                    String prefix = s.substring(0, s.lastIndexOf("->") + 2);
+                    turnOrderTrack.set(i, prefix + " VUOTO");
+                } else {
+                    turnOrderTrack.set(i, "VUOTO");
+                }
+                break;
+            }
+        }
 
         String oldTile = offeringTrack.get(position);
         if (oldTile != null) {
@@ -356,7 +369,28 @@ public class ClientModel {
         });
 
         if (!alreadyInTurnOrder) {
-            turnOrderTrack.add(nickname);
+            boolean placed = false;
+            // FIX RITORNO: Cerchiamo il primo buco "VUOTO" e lo riempiamo col nome,
+            // mantenendo la lista sempre della lunghezza corretta e l'impaginazione fissa!
+            for (int i = 0; i < turnOrderTrack.size(); i++) {
+                String s = turnOrderTrack.get(i);
+                String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
+
+                if (name.equalsIgnoreCase("VUOTO") || name.equalsIgnoreCase("NULL")) {
+                    if (s.contains(" -> ")) {
+                        String prefix = s.substring(0, s.lastIndexOf("->") + 2);
+                        turnOrderTrack.set(i, prefix + " " + nickname);
+                    } else {
+                        turnOrderTrack.set(i, nickname);
+                    }
+                    placed = true;
+                    break;
+                }
+            }
+            // Fallback di sicurezza nel caso rarissimo non ci siano vuoti
+            if (!placed) {
+                turnOrderTrack.add(nickname);
+            }
         }
 
         playerFood.put(nickname, newFoodBalance);

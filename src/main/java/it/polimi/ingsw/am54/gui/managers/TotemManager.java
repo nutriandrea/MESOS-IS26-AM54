@@ -17,6 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Manages the selection and placement of players' totems on the board.
+ * Handles the update of the turn order track, the offering
+ * track and the placement of 3D totems on offering tiles.
+ *
+ * @author AM54
+ */
 public class TotemManager {
 
     private final ImageView turnOrderImage;
@@ -24,12 +31,26 @@ public class TotemManager {
     private final HBox offeringTrack;
     private final double TOTEM_FACE_SIZE = 50.0;
 
+    /**
+     * Constructs the manager with the JavaFX nodes it will control.
+     *
+     * @param turnOrderImage the ImageView displaying the turn-order track image
+     * @param totemArea      the AnchorPane where totem face icons are placed
+     * @param offeringTrack  the HBox containing the offering tiles
+     */
     public TotemManager(ImageView turnOrderImage, AnchorPane totemArea, HBox offeringTrack) {
         this.turnOrderImage = turnOrderImage;
         this.totemArea = totemArea;
         this.offeringTrack = offeringTrack;
     }
 
+    /**
+     * Updates the turn-order track image and places totem face icons for each
+     * player in turn order. Disconnected or empty slots are rendered invisibly
+     * to preserve layout.
+     *
+     * @param model the current client model
+     */
     public void updateTurnOrderTrack(ClientModel model) {
         java.util.List<String> turnOrder = model.getTurnOrderTrack();
         java.util.List<String> players = model.getPlayers();
@@ -51,14 +72,14 @@ public class TotemManager {
             String s = turnOrder.get(i);
             String pName = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
 
-            // Creiamo un'immagine di base per occupare SEMPRE lo spazio fisico
+            // Create a base image to ALWAYS occupy the physical space
             javafx.scene.image.ImageView totemFace = new javafx.scene.image.ImageView();
             totemFace.setFitWidth(TOTEM_FACE_SIZE);
             totemFace.setFitHeight(TOTEM_FACE_SIZE);
             totemFace.setPreserveRatio(true);
 
-            // Se lo slot è VUOTO o di un DISCONNESSO, lo rendiamo invisibile.
-            // Questo mantiene intatta l'impaginazione impedendo lo shift!
+            // If the slot is EMPTY or of a DISCONNECTED player, make it invisible.
+            // This keeps the layout intact, preventing shifting!
             if (pName.equalsIgnoreCase("vuoto") || pName.equalsIgnoreCase("null") || disconnected.contains(pName)) {
                 totemFace.setOpacity(0.0);
             } else {
@@ -87,17 +108,24 @@ public class TotemManager {
         }
     }
 
+    /**
+     * Rebuilds the offering track with tiles and 3D totem markers for each
+     * occupant, wiring up hover and click interactions for the active player.
+     *
+     * @param model              the current client model
+     * @param currentTileHeight  the rendered height of each offering tile
+     */
     public void updateOfferingTrack(ClientModel model, double currentTileHeight) {
         if(offeringTrack == null) return;
         offeringTrack.getChildren().clear();
 
-        // Rimuoviamo il blocco che fermava il disegno se la mappa era vuota.
+        // Remove the block that stopped drawing if the map was empty.
         Map<Integer, String> offeringData = model.getOfferingTrack();
 
         int numPlayers = (model.getPlayers() != null) ? model.getPlayers().size() : 3;
         List<String> expectedTiles = getExpectedOfferingTiles(numPlayers);
 
-        // Iteriamo in modo fisso sul numero di tessere ATTESE in base al numero di giocatori
+        // Iterate fixed on the number of EXPECTED tiles based on the number of players
         for (int position = 0; position < expectedTiles.size(); position++) {
             String tileLetter = expectedTiles.get(position);
             Group tileGroup = new Group();
@@ -111,7 +139,7 @@ public class TotemManager {
             AnchorPane totemPane = new AnchorPane();
             totemPane.setPickOnBounds(false);
 
-            // Controlliamo in modo sicuro se c'è un totem in questa specifica posizione
+            // Safely check if there is a totem at this specific position
             String occupier = (offeringData != null) ? offeringData.get(position) : null;
 
             boolean hasReturned = false;
@@ -208,6 +236,10 @@ public class TotemManager {
             offeringTrack.getChildren().add(tileGroup);
         }
     }
+    /**
+     * Recomputes and repositions all totem face icons on the turn-order track
+     * based on the current layout dimensions.
+     */
     public void refreshTotemsPosition() {
         ClientModel model = Client.getInstance().getModel();
         if (model == null || totemArea == null || totemArea.getChildren().isEmpty()) return;

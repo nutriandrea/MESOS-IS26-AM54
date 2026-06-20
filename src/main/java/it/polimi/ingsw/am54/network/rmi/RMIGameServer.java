@@ -4,11 +4,18 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 /**
- * Interfaccia RMI remota per la connessione iniziale del client.
- * Il client chiama connect() passando il proprio stub per ricevere
- * un RMIClientHandlerInterface personale su cui inviare le richieste.
+ * Remote RMI Interface for the client's initial connection.
+ * The client calls connect() passing its own stub to receive
+ * a personal RMIClientHandlerInterface to send requests on.
  */
 public interface RMIGameServer extends Remote {
-    // Il client si connette, passa se stesso (il suo stub) e riceve in cambio il suo handler personale
+    /**
+     * Accepts a new client connection, registering the client stub and
+     * returning a dedicated handler for sending game requests.
+     *
+     * @param clientStub the remote client stub for server-to-client callbacks
+     * @return a personal {@link RMIClientHandlerInterface} for the client
+     * @throws RemoteException if the RMI call fails
+     */
     RMIClientHandlerInterface connect(RMIClientInterface clientStub) throws RemoteException;
 }

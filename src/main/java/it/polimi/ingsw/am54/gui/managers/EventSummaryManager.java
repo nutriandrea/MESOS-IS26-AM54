@@ -13,14 +13,33 @@ import javafx.scene.layout.VBox;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Manages the creation and display of the event summary at the end of a round.
+ * Shows for each event the resource trends (food, aura, magic) of each
+ * player, comparing the initial situation with the post-event final one.
+ *
+ * @author AM54
+ */
 public class EventSummaryManager {
 
     private final VBox eventSummaryContainer;
 
+    /**
+     * Constructs the manager with the container used to display event summaries.
+     *
+     * @param eventSummaryContainer the VBox that will hold event summary nodes
+     */
     public EventSummaryManager(VBox eventSummaryContainer) {
         this.eventSummaryContainer = eventSummaryContainer;
     }
 
+    /**
+     * Builds the event summary UI from the given round reports, showing each
+     * event's resource changes per player.
+     *
+     * @param pendingReports the list of event reports from the resolved round
+     * @param playerColors   map of player nickname to their totem color
+     */
     public void buildEventSummary(List<EventReport> pendingReports, Map<String, TotemColors> playerColors) {
         if (eventSummaryContainer == null) return;
         eventSummaryContainer.getChildren().clear();
@@ -53,7 +72,7 @@ public class EventSummaryManager {
                 lblName.setPrefWidth(140);
                 lblName.getStyleClass().add("event-player-name");
 
-                // Prima Colonna: Situazione Iniziale
+                // First Column: Initial Situation
                 Label lblActivation = new Label(String.format("Inizio: 🍖%d  ✨%d  🔮%d",
                         data.oldFood, data.oldAura, data.oldMagic));
                 lblActivation.setPrefWidth(220);
@@ -63,7 +82,7 @@ public class EventSummaryManager {
                 String auraSign = data.diffAura >= 0 ? "+" : "";
                 String magicSign = data.diffMagic >= 0 ? "+" : "";
 
-                // Seconda Colonna: Variazione delle Risorse
+                // Second Column: Resource Variation
                 Label lblDiff = new Label(String.format("Variazione: 🍖%s%d  ✨%s%d  🔮%s%d",
                         foodSign, data.diffFood, auraSign, data.diffAura, magicSign, data.diffMagic));
                 lblDiff.setPrefWidth(240);
@@ -76,7 +95,7 @@ public class EventSummaryManager {
                     lblDiff.getStyleClass().add("event-delta-neutral");
                 }
 
-                // Terza Colonna: Situazione Finale Post-Evento
+                // Third Column: Post-Event Final Situation
                 Label lblFinal = new Label(String.format("Fine: 🍖%d  ✨%d  🔮%d",
                         data.oldFood + data.diffFood, data.oldAura + data.diffAura, data.oldMagic + data.diffMagic));
                 lblFinal.setPrefWidth(220);

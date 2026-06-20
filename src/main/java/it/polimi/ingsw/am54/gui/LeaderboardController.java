@@ -20,6 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controller for the leaderboard screen.
+ * Manages the display of final scores with podium,
+ * the detailed player table and the global leaderboard from the server.
+ *
+ * @author AM54
+ */
 public class LeaderboardController {
 
     @FXML private StackPane rootPane;
@@ -43,6 +50,10 @@ public class LeaderboardController {
         int aura, food, magic, tribeCards, buildCards;
     }
 
+    /**
+     * Initializes the leaderboard controller: sets up responsive scaling,
+     * registers the model-update callback and builds the initial leaderboard.
+     */
     @FXML
     public void initialize() {
         setupScaling();
@@ -180,7 +191,7 @@ public class LeaderboardController {
         if (p.color != null) {
             try {
                 String cName = p.color.name().toLowerCase();
-                // Utilizza direttamente l'immagine frontale anche per la tabella
+                // Uses the front image directly for the table as well
                 InputStream is = getClass().getResourceAsStream("/images/totem_front_" + cName + ".png");
                 if (is != null) iconView.setImage(new Image(is));
             } catch (Exception e) {}

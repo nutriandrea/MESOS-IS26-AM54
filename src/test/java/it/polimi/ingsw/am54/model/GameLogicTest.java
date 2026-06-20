@@ -35,7 +35,7 @@ public class GameLogicTest {
     // ==========================================
     @Test
     public void testNextPlayer_SkipsPlacedTotems() {
-        // Setup manuale dell'ordine di turno
+        // Manual turn order setup
         Board board = game.getBoard();
         TurnOrderSlot slot1 = new TurnOrderSlot(1, 0); slot1.occupy(p1);
         TurnOrderSlot slot2 = new TurnOrderSlot(2, 0); slot2.occupy(p2);
@@ -45,14 +45,14 @@ public class GameLogicTest {
         board.getTurnOrderTile().add(slot2);
         board.getTurnOrderTile().add(slot3);
 
-        // Impostiamo il giocatore corrente
+        // Set the current player
         game.setCurrentPlayer(p1);
 
-        // Caso 1: Passaggio normale
+        // Case 1: Normal transition
         game.nextPlayer();
         assertEquals(p2, game.getCurrentPlayer(), "Il turno deve passare a Bob");
 
-        // Caso 2: Charlie ha già piazzato il totem. Deve essere saltato, tornando ad Alice
+        // Case 2: Charlie has already placed the totem. Must be skipped, returning to Alice
         p3.setHasPlacedTotem(true);
         p1.setHasPlacedTotem(false); // Alice deve ancora piazzare il secondo totem
 
@@ -66,13 +66,13 @@ public class GameLogicTest {
     @Test
     public void testRefillUpperTribeRow() {
         Stack<TribeCard> stack = new Stack<>();
-        // Inseriamo 10 carte nel mazzo
+        // Insert 10 carte nel mazzo
         for (int i = 0; i < 10; i++) {
             stack.push(new CharacterCard(1, JobType.FARMER, 0, null, new ArrayList<>(), 1));
         }
         game.setTribeDeck(new Deck<>(stack));
 
-        // Abbiamo 3 giocatori, il target è numPlayers + 4 = 7
+        // We have 3 players, the target is numPlayers + 4 = 7
         game.refillUpperTribeRow();
 
         int currentSize = game.getBoard().getCharacterRowSize("upper") + game.getBoard().getEventRowSize("upper");
@@ -88,8 +88,8 @@ public class GameLogicTest {
         }
         game.setBuildingDeck(new Deck<>(bStack));
 
-        // Il test esegue il metodo. Se il file JSON è letto correttamente, aggiungerà carte.
-        // Copre la logica del try-catch e del ciclo di pescata.
+        // The test runs the method. If the JSON file is read correctly, it will add cards.
+        // Covers the try-catch logic and the draw cycle.
         assertDoesNotThrow(() -> game.refillUpperBuildings());
         assertTrue(game.getBoard().getBuildingRowSize("upper") >= 0, "Deve pescare edifici senza eccezioni");
     }
@@ -102,7 +102,7 @@ public class GameLogicTest {
         game.setCurrentEra(1);
         Stack<TribeCard> stack = new Stack<>();
 
-        // Creiamo una carta forzando esplicitamente l'Era a 2
+        // Create a card by explicitly forcing the Era to 2
         TribeCard era2Card = new CharacterCard(1, JobType.FARMER, 0, null, new ArrayList<>(), 1) {
             @Override
             public int getEra() { return 2; }
@@ -111,10 +111,10 @@ public class GameLogicTest {
         stack.push(era2Card);
         game.setTribeDeck(new Deck<>(stack));
 
-        // Ora la carta restituirà sicuramente Era 2. 2 > 1 -> true.
+        // Now the card will surely return Era 2. 2 > 1 -> true.
         assertTrue(game.isEraTransition(), "Deve restituire true perché la carta in cima è Era 2");
 
-        // Togliamo la carta e mettiamo una di Era 1
+        // Remove the card and put one of Era 1
         stack.pop();
 
         TribeCard era1Card = new CharacterCard(1, JobType.FARMER, 0, null, new ArrayList<>(), 1) {
@@ -127,11 +127,11 @@ public class GameLogicTest {
     }
 
     // ==========================================
-    // 4. TEST EFFETTI EDIFICI FINE PARTITA
+    // 4. TEST ENDGAME BUILDING EFFECTS
     // ==========================================
     @Test
     public void testApplyEndGameBuildingEffects() {
-        // Creiamo un effetto endgame fittizio che dà 100 cibo via applyOnEndGame
+        // Create a fake endgame effect that gives 100 food via applyOnEndGame
         IEffect<BuildingCard> fakeEndGameEffect = new IEffect<>() {
             @Override public void applyOnEndGame(Player p, Game g, BuildingCard card) {
                 p.modifyFood(100);
@@ -142,7 +142,7 @@ public class GameLogicTest {
         p1.getBuildings().add(b);
 
         assertEquals(0, p1.getFood());
-        // Simula la logica di EndGameState.resolvePhase()
+        // Simulates la logica di EndGameState.resolvePhase()
         for (BuildingCard building : p1.getBuildings()) {
             if (building.getEffects() != null) {
                 for (IEffect<BuildingCard> effect : building.getEffects()) {
@@ -154,7 +154,7 @@ public class GameLogicTest {
     }
 
     // ==========================================
-    // 5. TEST CALCOLO PUNTEGGI E VINCITORI
+    // 5. TEST SCORE CALCULATION AND WINNERS
     // ==========================================
     @Test
     public void testCalculatePlayerScore() {
@@ -190,16 +190,16 @@ public class GameLogicTest {
 
     @Test
     public void testDetermineWinners_And_Notify() {
-        // Assegniamo punti aura puri per fare in fretta
+        // Assign pure aura points to do it quickly
         p1.modifyAuraPoints(30); // Alice: 30 punti
         p2.modifyAuraPoints(30); // Bob: 30 punti (Pareggio)
         p3.modifyAuraPoints(15); // Charlie: 15 punti
 
-        // Spareggio sul cibo
+        // Tie-break on food
         p1.modifyFood(5);
         p2.modifyFood(10); // Bob ha più cibo, vince il pareggio
 
-        // Simuliamo l'Observer per testare notifyEndGame
+        // Simulate the Observer to test notifyEndGame
         final boolean[] notified = {false};
         game.addObserver(new IGameObserver() {
             @Override public void onPlayerJoined(Game game, Player player) {}
@@ -211,7 +211,7 @@ public class GameLogicTest {
             @Override public void onTotemReturned(Game game, Player player, int position, int f, int a) {}
             @Override public void onEventResolved(Game game, EventCard eventCard) {}
 
-            // IL METODO CHE CI INTERESSA
+            // THE METHOD WE CARE ABOUT
             @Override public void onEndGame(Game game, List<Player> winnersList) {
                 notified[0] = true;
                 assertEquals(1, winnersList.size());
@@ -224,7 +224,7 @@ public class GameLogicTest {
         assertEquals(1, winners.size(), "Deve esserci un solo vincitore dopo lo spareggio");
         assertEquals(p2, winners.get(0), "Bob deve vincere per lo spareggio del cibo");
 
-        // Verifichiamo il trigger della notifica (metodo notifyEndGame)
+        // Verify the notification trigger (notifyEndGame method)
         game.notifyEndGame(winners);
         assertTrue(notified[0], "Gli Observer devono essere stati notificati della fine partita");
     }

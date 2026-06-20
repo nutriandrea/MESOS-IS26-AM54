@@ -14,20 +14,35 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 
+/**
+ * Factory for creating game decks from JSON files.
+ * @author AM54
+ */
 public class DeckFactory {
 
 
 
-    // crea il mazzo BUILDINGS
+    /**
+     * Creates the building card deck from a JSON configuration file.
+     * Cards are read, grouped by era, shuffled, and stacked with Era 3 at the bottom
+     * and Era 1 on top (drawn first). The number of cards per era is determined by
+     * the player count from {@code data/EraCounts.json}.
+     *
+     * @param filePath   path to the building cards JSON configuration file
+     * @param numPlayers the number of players (2-5)
+     * @return the assembled building deck
+     * @throws IllegalArgumentException if the number of players is not between 2 and 5
+     * @throws IllegalStateException    if the JSON files cannot be read or parsed
+     */
     public static Deck<BuildingCard> createBuildingDeck(String filePath, int numPlayers) {
 
         if (numPlayers < 2 || numPlayers > 5) {
-            throw new IllegalArgumentException("Impossibile creare il mazzo: numero di giocatori (" + numPlayers + ") non valido!");
+            throw new IllegalArgumentException("Unable to create deck: invalid number of players (" + numPlayers + ")!");
         }
 
         int countE1 = 0, countE2 = 0, countE3 = 0;
 
-        // leggiamo il setup delle quantità da EraCounts.json
+        // read the quantity setup from EraCounts.json
         try {
             JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
             JsonArray buildingCounts = countsRoot.getAsJsonObject("buildingCounts").getAsJsonArray(String.valueOf(numPlayers));
@@ -38,7 +53,7 @@ public class DeckFactory {
                 countE3 = buildingCounts.get(2).getAsInt();
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Errore critico durante la lettura del file EraCounts.json", e);
+            throw new IllegalStateException("Critical error while reading file EraCounts.json", e);
         }
 
         List<BuildingCard> e1 = new ArrayList<>();
@@ -54,20 +69,20 @@ public class DeckFactory {
                 Phases phase = Phases.valueOf(node.get("phase").getAsString());
                 int cost = node.get("cost").getAsInt();
                 int finalAura = node.get("finalAura").getAsInt();
-                String nomeLambda = node.get("nomeLambda").getAsString();
+                String lambdaName = node.get("lambdaName").getAsString();
                 int era = node.get("era").getAsInt();
                 JsonElement paramsElem = node.get("effectParams");
                 JsonObject params = paramsElem != null ? paramsElem.getAsJsonObject() : null;
 
                 List<IEffect<BuildingCard>> effects = new ArrayList<>();
-                IEffect<BuildingCard> effect = createBuildingEffect(node.get("phase").getAsString(), nomeLambda, params);
+                IEffect<BuildingCard> effect = createBuildingEffect(node.get("phase").getAsString(), lambdaName, params);
                 if (effect != null) {
                     effects.add(effect);
                 }
 
                 BuildingCard card = new BuildingCard(type, cost, finalAura, phase, effects, era);
 
-                card.setName(nomeLambda);
+                card.setName(lambdaName);
 
                 if (node.has("imageId")) {
                     card.setImageId(node.get("imageId").getAsString());
@@ -78,7 +93,7 @@ public class DeckFactory {
                 else if (era == 3) e3.add(card);
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Errore critico durante la generazione delle carte dal file: " + filePath, e);
+            throw new IllegalStateException("Critical error while generating cards from file: " + filePath, e);
         }
 
         Collections.shuffle(e1);
@@ -87,15 +102,15 @@ public class DeckFactory {
 
         Stack<BuildingCard> finalDeck = new Stack<>();
 
-        // Inseriamo prima l'era 3 (così va in fondo al mazzo)
+        // Insert era 3 first (so it goes to the bottom of the deck)
         for (int i = 0; i < Math.min(countE3, e3.size()); i++) {
             finalDeck.push(e3.get(i));
         }
-        // Poi l'era 2
+        // Then era 2
         for (int i = 0; i < Math.min(countE2, e2.size()); i++) {
             finalDeck.push(e2.get(i));
         }
-        // Infine l'era 1 (così rimane in cima allo stack e viene pescata per prima)
+        // Finally era 1 (so it stays on top of the stack and is drawn first)
         for (int i = 0; i < Math.min(countE1, e1.size()); i++) {
             finalDeck.push(e1.get(i));
         }
@@ -103,16 +118,29 @@ public class DeckFactory {
         return new Deck<>(finalDeck);
     }
 
-   //crea il mazzo tribu coi PERSONAGGI ed EVENTI
+    /**
+     * Creates the tribe card deck containing both character and event cards.
+     * Characters are read from {@code charPath}, events from {@code eventPath}.
+     * Cards are grouped by era, shuffled together, and stacked with final events
+     * at the bottom and Era 1 on top (drawn first). The number of character cards
+     * per era is determined by the player count from {@code data/EraCounts.json}.
+     *
+     * @param charPath   path to the character cards JSON configuration file
+     * @param eventPath  path to the event cards JSON configuration file
+     * @param numPlayers the number of players (2-5)
+     * @return the assembled tribe deck
+     * @throws IllegalArgumentException if the number of players is not between 2 and 5
+     * @throws IllegalStateException    if the JSON files cannot be read or parsed
+     */
     public static Deck<TribeCard> createTribeDeck(String charPath, String eventPath, int numPlayers) {
 
         if (numPlayers < 2 || numPlayers > 5) {
-            throw new IllegalArgumentException("Impossibile creare il mazzo: numero di giocatori (" + numPlayers + ") non valido!");
+            throw new IllegalArgumentException("Unable to create deck: invalid number of players (" + numPlayers + ")!");
         }
 
         int countE1 = 0, countE2 = 0, countE3 = 0;
 
-        // Leggiamo il numero di personaggi da pescare per Era
+        // Read the number of characters to draw per Era
         try {
             JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
             JsonObject charCounts = countsRoot.getAsJsonObject("characterCounts").getAsJsonObject(String.valueOf(numPlayers));
@@ -123,10 +151,10 @@ public class DeckFactory {
                 countE3 = charCounts.get("era3").getAsInt();
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Errore critico durante la lettura del file EraCounts.json", e);
+            throw new IllegalStateException("Critical error while reading file EraCounts.json", e);
         }
 
-        // Liste separate per Personaggi ed Eventi
+        // Separate lists for Characters and Events
         List<TribeCard> charE1 = new ArrayList<>();
         List<TribeCard> charE2 = new ArrayList<>();
         List<TribeCard> charE3 = new ArrayList<>();
@@ -136,7 +164,7 @@ public class DeckFactory {
         List<TribeCard> eventE3 = new ArrayList<>();
         List<TribeCard> finalEvents = new ArrayList<>();
 
-        // caricamento Personaggi (inseriti in charE)
+        // loading Characters (inserted into charE)
         try {
             JsonArray root = JsonParser.parseReader(new FileReader(charPath)).getAsJsonArray();
             for (JsonElement elem : root) {
@@ -164,23 +192,23 @@ public class DeckFactory {
                 }
             }
         } catch (Exception e) {
-            System.err.println("\n\n!!! VERO ERRORE CATTURATO !!!");
-            e.printStackTrace(); // Questo forzerà la console a dirti ESATTAMENTE a che riga è esploso
-            System.err.println("!!! FINE ERRORE !!!\n\n");
-            throw new IllegalStateException("Errore critico durante la lettura del file dei Personaggi: " + charPath, e);
+            System.err.println("\n\n!!! REAL ERROR CAUGHT !!!");
+            e.printStackTrace(); // This will force the console to tell you EXACTLY which line broke
+            System.err.println("!!! END ERROR !!!\n\n");
+            throw new IllegalStateException("Critical error while reading Characters file: " + charPath, e);
         }
 
-        // caricamento Eventi (inseriti in eventE)
+        // loading Events (inserted into eventE)
         try {
             JsonArray root = JsonParser.parseReader(new FileReader(eventPath)).getAsJsonArray();
             for (JsonElement elem : root) {
                 JsonObject node = elem.getAsJsonObject();
-                String etichetta = node.get("etichettaSottoclasse").getAsString();
+                String label = node.get("subclassLabel").getAsString();
                 int era = node.get("era").getAsInt();
                 boolean finalEvent = node.get("finalEvent").getAsBoolean();
 
                 List<IEffect<EventCard>> effects = new ArrayList<>();
-                effects.add(createEventEffect(etichetta));
+                effects.add(createEventEffect(label));
 
                 EventCard event = new EventCard(
                         era,
@@ -195,7 +223,7 @@ public class DeckFactory {
                         node.has("malus") ? node.get("malus").getAsInt() : 0
                 );
 
-                event.setName(etichetta);
+                event.setName(label);
 
                 if (node.has("imageId")) {
                     event.setImageId(node.get("imageId").getAsString());
@@ -210,10 +238,10 @@ public class DeckFactory {
                 }
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Errore critico durante la lettura del file degli Eventi: " + eventPath, e);
+            throw new IllegalStateException("Critical error while reading Events file: " + eventPath, e);
         }
 
-        //mescoliamo solo i personaggi e li "tagliamo" in base al numero del JSON
+        //shuffle only the characters and "cut" them based on the JSON number
         Collections.shuffle(charE1);
         Collections.shuffle(charE2);
         Collections.shuffle(charE3);
@@ -222,25 +250,25 @@ public class DeckFactory {
         List<TribeCard> era2 = new ArrayList<>(charE2.subList(0, Math.min(countE2, charE2.size())));
         List<TribeCard> era3 = new ArrayList<>(charE3.subList(0, Math.min(countE3, charE3.size())));
 
-        // uniamo tutti gli Eventi ai personaggi appena selezionati
+        // merge all Events with the just-selected characters
         era1.addAll(eventE1);
         era2.addAll(eventE2);
         era3.addAll(eventE3);
 
-        // mischiamo il mazzetto completo per ogni Era (così non sai mai quando esce l'evento)
+        // shuffle the complete deck for each Era (so you never know when the event comes out)
         Collections.shuffle(era1);
         Collections.shuffle(era2);
         Collections.shuffle(era3);
-        Collections.shuffle(finalEvents); // mischiamo anche i finali
+        Collections.shuffle(finalEvents); // also shuffle the final events
 
-        // impiliamo tutto nello Stack finale (LIFO)
+        // stack everything into the final Stack (LIFO)
         Stack<TribeCard> finalDeck = new Stack<>();
         for (TribeCard c : finalEvents) finalDeck.push(c);
         for (TribeCard c : era3) finalDeck.push(c);
         for (TribeCard c : era2) finalDeck.push(c);
         for (TribeCard c : era1) finalDeck.push(c);
 
-        //ritorniamo lo Stack finale e completo
+        //return the final complete Stack
         return new Deck<>(finalDeck);
     }
 
@@ -257,11 +285,11 @@ public class DeckFactory {
         Map.entry("DOUBLE_INVENTOR", p -> new BuildingDoubleInventor())
     );
 
-    // crea l'effetto giusto per gli edifici
-    private static IEffect<BuildingCard> createBuildingEffect(String phase, String nomeLambda, JsonObject params) {
-        if (nomeLambda == null || nomeLambda.isEmpty() || nomeLambda.equals("null")) return null;
-        return BUILDING_EFFECTS.getOrDefault(nomeLambda, p -> {
-            throw new IllegalArgumentException("Effetto edificio non gestito dal JSON: " + nomeLambda);
+    // create the right effect for buildings
+    private static IEffect<BuildingCard> createBuildingEffect(String phase, String lambdaName, JsonObject params) {
+        if (lambdaName == null || lambdaName.isEmpty() || lambdaName.equals("null")) return null;
+        return BUILDING_EFFECTS.getOrDefault(lambdaName, p -> {
+            throw new IllegalArgumentException("Building effect not handled by JSON: " + lambdaName);
         }).apply(params);
     }
 
@@ -276,7 +304,7 @@ public class DeckFactory {
 
     private static IEffect<CharacterCard> createCharacterEffect(String effectName) {
         return CHARACTER_EFFECTS.getOrDefault(effectName, () -> {
-            throw new IllegalArgumentException("Effetto personaggio sconosciuto: " + effectName);
+            throw new IllegalArgumentException("Unknown character effect: " + effectName);
         }).get();
     }
 
@@ -289,7 +317,7 @@ public class DeckFactory {
 
     private static IEffect<EventCard> createEventEffect(String effectName) {
         return EVENT_EFFECTS.getOrDefault(effectName, () -> {
-            throw new IllegalArgumentException("Effetto evento sconosciuto: " + effectName);
+            throw new IllegalArgumentException("Unknown event effect: " + effectName);
         }).get();
     }
 }

@@ -17,6 +17,13 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import java.util.List;
 
+/**
+ * Controller for the login screen.
+ * Manages server connection (Socket/RMI), nickname selection,
+ * global leaderboard display and transition to lobby or board.
+ *
+ * @author AM54
+ */
 public class LoginController {
 
     @FXML private StackPane rootPane;
@@ -45,6 +52,11 @@ public class LoginController {
     private List<LeaderboardEntry> loadedEntries = null;
     private boolean leaderboardLoaded = false;
 
+    /**
+     * Initializes the login controller: binds the logo layout to the root pane,
+     * registers the model-update callback and starts loading the global
+     * leaderboard in a background thread.
+     */
     @FXML
     public void initialize() {
         Platform.runLater(() -> {
@@ -118,7 +130,7 @@ public class LoginController {
         leaderboardEntriesContainer.getChildren().clear();
         leaderboardFooter.setText("TOTALE PARTITE ARCHIVIATE: " + loadedEntries.size());
 
-        int shown = Math.min(loadedEntries.size(), 50); // Mostriamo top 50
+        int shown = Math.min(loadedEntries.size(), 50); // Show top 50
         for (int i = 0; i < shown; i++) {
             LeaderboardEntry e = loadedEntries.get(i);
             HBox row = new HBox(15);
@@ -143,7 +155,7 @@ public class LoginController {
             modeLabel.setPrefWidth(40);
 
             // ========================================================
-            // AGGIUNTA DELLA DATA ANCHE NEL LOGIN
+            // ADDED DATE ALSO IN LOGIN
             // ========================================================
             String fullDate = e.getMatchDate();
             String displayDate = (fullDate != null && fullDate.length() >= 10) ? fullDate.substring(0, 10) : "---";
@@ -152,7 +164,7 @@ public class LoginController {
             dateLabel.setPrefWidth(120);
             dateLabel.setAlignment(Pos.CENTER_RIGHT);
 
-            // Aggiungiamo dateLabel alla fine della riga
+            // Add dateLabel at the end of the row
             row.getChildren().addAll(rankLabel, nameLabel, scoreLabel, modeLabel, dateLabel);
             leaderboardEntriesContainer.getChildren().add(row);
         }
@@ -181,7 +193,7 @@ public class LoginController {
             return;
         }
 
-        // SALVATAGGIO DATI PER LA RICONNESSIONE MAGICA (Messo qui, dopo i controlli!)
+        // SAVE DATA FOR MAGIC RECONNECTION (Placed here, after checks!)
         Client.getInstance().setConnectionInfo(ip, socketRadio.isSelected());
 
         if (isConnecting) return;
@@ -241,7 +253,7 @@ public class LoginController {
             errorLabel.setText("");
             isConnecting = false;
 
-            // FONDAMENTALE: Nasconde il pulsante classifica quando si è collegati!
+            // CRUCIAL: Hides the leaderboard button when connected!
             if (leaderboardButton != null) {
                 leaderboardButton.setVisible(false);
                 leaderboardButton.setManaged(false);

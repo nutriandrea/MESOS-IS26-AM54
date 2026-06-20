@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Contenitore per il report di un evento risolto lato client.
- * Usato dalla GUI/CLI per mostrare le variazioni di risorse
- * (cibo, aura, magia) dei giocatori dopo un evento.
+ * Container for the report of an event resolved on the client side.
+ * Used by GUI/CLI to show resource variations
+ * (food, aura, magic) of players after an event.
  */
 public class EventReport {
+    /** Human-readable name of the resolved event */
     public String eventName;
+    /** List of per-player resource deltas produced by the event */
     public List<PlayerDelta> playerDeltas = new ArrayList<>();
 }

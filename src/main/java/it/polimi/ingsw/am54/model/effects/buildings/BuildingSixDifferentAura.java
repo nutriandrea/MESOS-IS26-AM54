@@ -2,10 +2,24 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import it.polimi.ingsw.am54.model.*;
 import java.util.Arrays;
 
-// Gestisce i 6 Punti Prestigio a fine partita per ogni set di 6 personaggi diversi
+/**
+ * Bonus for six different characters: at end of game grants 6 Aura points
+ * for each complete set of characters of all six available types
+ * (Hunter, Builder, Shaman, Farmer, Artist, Inventor).
+ *
+ * @author AM54
+ */
 public class BuildingSixDifferentAura implements IEffect<BuildingCard> {
 
-    // FIRMA AGGIORNATA PER LA FASE DI FINE PARTITA
+    // UPDATED SIGNATURE FOR THE ENDGAME PHASE
+    /**
+     * Grants 6 Aura points for each complete set of characters of all six
+     * job types present in the player's tribe at the end of the game.
+     *
+     * @param p    the player receiving the bonus
+     * @param g    the current game instance
+     * @param card the building card providing this effect
+     */
     @Override
     public void applyOnEndGame(Player p, Game g, BuildingCard card) {
         JobType[] allJobs = { JobType.HUNTER, JobType.CONSTRUCTOR, JobType.SHAMAN, JobType.FARMER, JobType.ARTIST, JobType.INVENTOR };

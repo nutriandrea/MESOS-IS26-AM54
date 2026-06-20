@@ -11,7 +11,7 @@ import java.rmi.registry.Registry;
 
 /**
  * ============================================================================
- * Server — Entry point del server AM54 (single game)
+ * Server — Entry point of the AM54 server (single game)
  * ============================================================================
  */
 public class Server {
@@ -20,21 +20,26 @@ public class Server {
     private final Controller controller;
     private boolean isRunning;
 
+    /**
+     * Constructs the server, attempting to restore a saved game from
+     * backup. If a valid backup exists, the game and controller are
+     * recovered and the state is validated; otherwise a fresh game is created.
+     */
     public Server() {
         PersistenceManager pm = new PersistenceManager("backup.json");
         Game loadedGame = pm.loadGame();
 
-        // Si attiva SOLO se il file di backup esiste ed è valido
+        // Activates ONLY if the backup file exists and is valid
         if (loadedGame != null) {
             this.game = loadedGame;
             this.controller = new Controller(this.game);
 
-            // CHIAMATA QUI: Solo durante il vero ripristino
+            // CALLED HERE: Only during the actual restore
             this.controller.validateGameStateAfterRecovery();
 
             System.out.println("[Server] Crash rilevato: partita ripristinata.");
         } else {
-            // Avvio normale pulito
+            // Normal clean startup
             this.game = new Game();
             this.controller = new Controller(game);
             System.out.println("Server creato con una nuova partita.");
@@ -44,10 +49,17 @@ public class Server {
         this.isRunning = true;
     }
 
+    /** @return the game controller */
     public Controller getController() {
         return controller;
     }
 
+    /**
+     * Starts both the RMI and TCP server engines.
+     *
+     * @param tcpPort the TCP port to listen on
+     * @param rmiPort the RMI registry port
+     */
     public void start(int tcpPort, int rmiPort) {
         startRMI(rmiPort);
         startTCP(tcpPort);
@@ -55,13 +67,13 @@ public class Server {
 
     private void startRMI(int port) {
         try {
-            // L'hostname RMI è già stato settato globalmente nel main!
+            // The RMI hostname has already been set globally in main!
             Registry registry = LocateRegistry.createRegistry(port);
             RMIServerImpl rmiServer = new RMIServerImpl(this);
             registry.rebind("AM54-Server", rmiServer);
             System.out.println("[Server] Motore RMI avviato su porta " + port);
         } catch (Exception e) {
-            System.err.println("[Server] Impossibile avviare RMI: " + e.getMessage());
+            System.err.println("[Server] Unable avviare RMI: " + e.getMessage());
         }
     }
 
@@ -81,20 +93,26 @@ public class Server {
         }
     }
 
+    /**
+     * Entry point: auto-detects the LAN IP, sets the RMI hostname and
+     * starts the server on the default ports (TCP 12345, RMI 1099).
+     *
+     * @param args command-line arguments (unused)
+     */
     public static void main(String[] args) {
         System.out.println("=== Avvio Server AM54 ===");
 
         String serverIp = "127.0.0.1"; // Fallback di sicurezza
 
         try (java.net.DatagramSocket s = new java.net.DatagramSocket()) {
-            // Finge di connettersi all'esterno per scoprire l'IP della scheda Wi-Fi attiva
+            // Pretends to connect externally to discover the active Wi-Fi adapter IP
             s.connect(java.net.InetAddress.getByName("8.8.8.8"), 10002);
             serverIp = s.getLocalAddress().getHostAddress();
         } catch (Exception e) {
             System.err.println("Autodetect IP fallito. Uso localhost.");
         }
 
-        // Imposta l'hostname RMI in modo dinamico
+        // Sets l'hostname RMI in modo dinamico
         System.setProperty("java.rmi.server.hostname", serverIp);
         System.out.println("[Server] RMI Hostname globale impostato a: " + serverIp);
         System.out.println("\n---> COMUNICA QUESTO IP AGLI ALTRI GIOCATORI: " + serverIp + " <--- \n");

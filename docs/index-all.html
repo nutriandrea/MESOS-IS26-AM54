@@ -341,7 +341,7 @@ posizione libera disponibile partendo dall'alto.</div>
 ClientConnection — Astrazione del canale di comunicazione server -&gt; client
 ============================================================================
 
-RUOLO:
+ROLE::
 Interfaccia che astrae il trasporto di rete (Socket TCP o RMI).</div>
 </dd>
 <dt><a href="it/polimi/ingsw/am54/network/messages/ClientMessage.html" class="type-name-link" title="interface in it.polimi.ingsw.am54.network.messages">ClientMessage</a> - Interface in <a href="it/polimi/ingsw/am54/network/messages/package-summary.html">it.polimi.ingsw.am54.network.messages</a></dt>
@@ -354,7 +354,7 @@ Interfaccia che astrae il trasporto di rete (Socket TCP o RMI).</div>
 ClientModel — Modello leggero lato client
 ============================================================================
 
-RUOLO:
+ROLE::
 Mantieni uno stato locale del gioco sincronizzato con il server.</div>
 </dd>
 <dt><a href="it/polimi/ingsw/am54/network/client/ClientModel.html#%3Cinit%3E()" class="member-name-link">ClientModel()</a> - Constructor for class it.polimi.ingsw.am54.network.client.<a href="it/polimi/ingsw/am54/network/client/ClientModel.html" title="class in it.polimi.ingsw.am54.network.client">ClientModel</a></dt>
@@ -1784,7 +1784,7 @@ tutti i totem dei giocatori che si trovavano sotto di lui.</div>
 RMIClientHandler — Gestore di una connessione RMI per un client
 ============================================================================
 
-RUOLO:
+ROLE::
 - Gestisce le richieste RMI da un client
 - Inoltra le richieste al Controller (singola partita)
 - Implementa ClientConnection (sendUpdate via callback RMI)
@@ -1864,7 +1864,7 @@ Server — Entry point del server AM54 (single game)
 ServerHandler — Thread di ascolto asincrono lato client (Socket TCP)
 ============================================================================
 
-RUOLO:
+ROLE::
 Thread indipendente che rimane in ascolto continuo dei messaggi provenienti
 dal server sulla connessione Socket TCP.</div>
 </dd>
@@ -2024,7 +2024,7 @@ dal server sulla connessione Socket TCP.</div>
 SocketClientHandler — Gestore di una connessione TCP per un client
 ============================================================================
 
-RUOLO:
+ROLE::
 - Thread separato per ogni client connesso via Socket TCP
 - Legge le Request dal client e le inoltra al Controller (singola partita)
 - Implementa ClientConnection (sendUpdate) e ClientHandler
@@ -2268,7 +2268,7 @@ the order they are declared.</div>
  VirtualView — Pattern Proxy tra Model e rete
  ============================================================================
 ---
- RUOLO:
+ ROLE::
  Il Game (Model) non sa nulla della rete.</div>
 </dd>
 <dt><a href="it/polimi/ingsw/am54/network/server/VirtualView.html#%3Cinit%3E(it.polimi.ingsw.am54.network.server.ClientConnection,java.lang.String)" class="member-name-link">VirtualView(ClientConnection, String)</a> - Constructor for class it.polimi.ingsw.am54.network.server.<a href="it/polimi/ingsw/am54/network/server/VirtualView.html" title="class in it.polimi.ingsw.am54.network.server">VirtualView</a></dt>

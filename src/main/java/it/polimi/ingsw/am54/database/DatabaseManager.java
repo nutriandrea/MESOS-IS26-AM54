@@ -31,6 +31,11 @@ public class DatabaseManager {
     private Connection connection;
     private boolean available;
 
+    /**
+     * Constructs a DatabaseManager with the given configuration.
+     *
+     * @param config the database configuration to use
+     */
     public DatabaseManager(DatabaseConfig config) {
         this.config = config;
         this.connection = null;
@@ -65,7 +70,7 @@ public class DatabaseManager {
     }
 
     /**
-     * Inserisce nutria 1312 pts per 2-5 players solo se la tabella è vuota (primo avvio).
+     * Inserts nutria 1312 pts for 2-5 players only if the table is empty (first start).
      */
     private void seedIfEmpty(Connection conn) {
         try (Statement countStmt = conn.createStatement();

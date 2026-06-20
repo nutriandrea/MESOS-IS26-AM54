@@ -14,6 +14,13 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
+/**
+ * Main JavaFX application.
+ * Starts and manages scenes, backgrounds, animated transitions,
+ * the audio and global state of the GUI client.
+ *
+ * @author AM54
+ */
 public class GUIApp extends Application {
 
     private static StackPane rootWrapper;
@@ -21,6 +28,13 @@ public class GUIApp extends Application {
     private static StackPane contentLayer;
     private static StackPane transitionLayer;
 
+    /**
+     * Starts the JavaFX application: builds the layered root, loads the login
+     * scene and enters full-screen mode.
+     *
+     * @param primaryStage the primary stage provided by the JavaFX runtime
+     * @throws Exception if FXML or resources cannot be loaded
+     */
     @Override
     public void start(Stage primaryStage) throws Exception {
         rootWrapper = new StackPane();
@@ -50,16 +64,36 @@ public class GUIApp extends Application {
         primaryStage.setFullScreen(true);
     }
 
+    /**
+     * Replaces the current scene content with the given node.
+     *
+     * @param newContent the new root node to display
+     */
     public static void changeSceneContent(Parent newContent) {
         newContent.setStyle("-fx-background-color: transparent;");
         contentLayer.getChildren().setAll(newContent);
     }
 
+    /**
+     * Swaps the background layer's CSS style class.
+     *
+     * @param styleClass the new background style class to apply
+     */
     public static void changeBackground(String styleClass) {
         backgroundLayer.getStyleClass().clear();
         backgroundLayer.getStyleClass().add(styleClass);
     }
 
+    /**
+     * Plays a cinematic zoom-and-pan entrance animation. The background scales
+     * and pans toward a focal point while a black overlay fades in; at full
+     * black the supplied callback runs, then the scene scales back in.
+     *
+     * @param panX         horizontal pan offset applied to the background
+     * @param panY         vertical pan offset applied to the background
+     * @param onPitchBlack callback executed when the screen is fully black,
+     *                     or {@code null} for no action
+     */
     public static void playEntranceAnimation(double panX, double panY, Runnable onPitchBlack) {
         Rectangle blackScreen = new Rectangle();
         blackScreen.setFill(Color.BLACK);
@@ -120,10 +154,14 @@ public class GUIApp extends Application {
         phase1.play();
     }
 
+    /**
+     * Loads and displays the board (game) scene, swapping the background
+     * and content layers. A temporary black overlay masks the initial render.
+     */
     public static void loadBoardScene() {
         Platform.runLater(() -> {
             try {
-                // Inseriamo uno schermo nero temporaneo per coprire il glitch grafico iniziale
+                // Insert a temporary black screen to cover the initial graphical glitch
                 Rectangle blackScreen = new Rectangle();
                 blackScreen.setFill(Color.BLACK);
                 blackScreen.widthProperty().bind(rootWrapper.widthProperty());
@@ -136,7 +174,7 @@ public class GUIApp extends Application {
                 changeBackground("board-background");
                 changeSceneContent(boardRoot);
 
-                // Dissolvenza dello schermo nero dopo un leggero delay per stabilizzare il layout
+                // Fade out the black screen after a slight delay to stabilize the layout
                 FadeTransition ft = new FadeTransition(Duration.millis(300), blackScreen);
                 ft.setFromValue(1.0);
                 ft.setToValue(0.0);
@@ -146,12 +184,15 @@ public class GUIApp extends Application {
 
                 System.out.println("[GUI] Board caricata con successo.");
             } catch (Exception e) {
-                System.err.println("[GUI Errore] Impossibile caricare Board.fxml");
+                System.err.println("[GUI Errore] Unable caricare Board.fxml");
                 e.printStackTrace();
             }
         });
     }
 
+    /**
+     * Loads and displays the final leaderboard scene.
+     */
     public static void loadLeaderboardScene() {
         Platform.runLater(() -> {
             try {
@@ -161,16 +202,19 @@ public class GUIApp extends Application {
                 changeSceneContent(root);
                 System.out.println("[GUI] Classifica Finale caricata con successo.");
             } catch (Exception e) {
-                System.err.println("[GUI Errore] Impossibile caricare Leaderboard.fxml");
+                System.err.println("[GUI Errore] Unable caricare Leaderboard.fxml");
                 e.printStackTrace();
             }
         });
     }
 
+    /**
+     * Loads and displays a fresh login scene, resetting the background.
+     */
     public static void loadLoginScene() {
         Platform.runLater(() -> {
             try {
-                // Ricrea tutto l'environment pulito per il login
+                // Recreates a clean environment for login
                 FXMLLoader loader = new FXMLLoader(GUIApp.class.getResource("/fxml/Login.fxml"));
                 Parent loginRoot = loader.load();
                 changeBackground("login-background");
@@ -181,6 +225,11 @@ public class GUIApp extends Application {
         });
     }
 
+    /**
+     * Launches the JavaFX application.
+     *
+     * @param args command-line arguments forwarded to the JavaFX runtime
+     */
     public static void main(String[] args) {
         launch(args);
     }

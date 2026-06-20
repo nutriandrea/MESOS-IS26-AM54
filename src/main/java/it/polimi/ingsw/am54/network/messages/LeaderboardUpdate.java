@@ -19,16 +19,31 @@ public final class LeaderboardUpdate implements Update {
     /** Number of players filter used for this leaderboard. */
     private final int numPlayers;
 
+    /**
+     * Constructs a leaderboard update.
+     *
+     * @param playerPosition the requesting player's position (1-based, -1 if unranked)
+     * @param entries         the full list of leaderboard entries
+     * @param numPlayers      the number-of-players filter used for this leaderboard
+     */
     public LeaderboardUpdate(int playerPosition, List<LeaderboardEntry> entries, int numPlayers) {
         this.playerPosition = playerPosition;
         this.entries = entries;
         this.numPlayers = numPlayers;
     }
 
+    /** @return the requesting player's position (1-based, -1 if unranked) */
     public int getPlayerPosition()            { return playerPosition; }
+    /** @return the full list of leaderboard entries */
     public List<LeaderboardEntry> getEntries() { return entries; }
+    /** @return the number-of-players filter */
     public int getNumPlayers()                { return numPlayers; }
 
+    /**
+     * Applies this update to the client model, storing the leaderboard data.
+     *
+     * @param model the client-side model to update
+     */
     @Override
     public void applyTo(ClientModel model) {
         model.updateLeaderboard(this.playerPosition, this.entries, this.numPlayers);

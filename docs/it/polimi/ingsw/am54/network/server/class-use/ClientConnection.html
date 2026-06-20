@@ -169,7 +169,7 @@ initTheme();
 RMIClientHandler — Gestore di una connessione RMI per un client
 ============================================================================
 
-RUOLO:
+ROLE::
 - Gestisce le richieste RMI da un client
 - Inoltra le richieste al Controller (singola partita)
 - Implementa ClientConnection (sendUpdate via callback RMI)
@@ -183,7 +183,7 @@ RUOLO:
 SocketClientHandler — Gestore di una connessione TCP per un client
 ============================================================================
 
-RUOLO:
+ROLE::
 - Thread separato per ogni client connesso via Socket TCP
 - Legge le Request dal client e le inoltra al Controller (singola partita)
 - Implementa ClientConnection (sendUpdate) e ClientHandler

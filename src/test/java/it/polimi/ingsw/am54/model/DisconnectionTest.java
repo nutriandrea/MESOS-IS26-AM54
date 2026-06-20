@@ -159,7 +159,7 @@ public class DisconnectionTest {
         p2.setCurrentTile(tile);
         board.getOfferingTrack().add(tile);
 
-        // Simula Controller: freeTile + moveToLastSlot
+        // Simulates Controller: freeTile + moveToLastSlot
         p2.getCurrentTile().freeSlot();
         p2.setCurrentTile(null);
         game.moveToLastSlot(p2);
@@ -212,8 +212,8 @@ public class DisconnectionTest {
 
         game.setCurrentPlayer(p1);
 
-        // p2 (non-current) viene saltato: moveToLastSlot + hasPlacedTotem
-        // moveToLastSlot ora gestisce internamente la free e la compattazione
+        // p2 (non-current) is skipped: moveToLastSlot + hasPlacedTotem
+        // moveToLastSlot now handles free and compaction internally
         game.moveToLastSlot(p2);
         p2.setHasPlacedTotem(true);
 
@@ -226,9 +226,9 @@ public class DisconnectionTest {
 
     @Test
     public void testPickingComplete_DisconnectedPlayerInTurnOrder_DoesNotSkipRemaining() throws Exception {
-        // Scenario: B disconnesso in StartTurnState (moveToLastSlot).
-        // A e C piazzano totem. Transizione a PickingState.
-        // A pesca → isPickingComplete() deve essere FALSE (C deve ancora pescare).
+        // Scenario: B disconnected in StartTurnState (moveToLastSlot).
+        // A and C place totems. Transition to PickingState.
+        // A draws → isPickingComplete() must be FALSE (C still needs to draw).
         game.setState(new PickingState());
 
         board.getTurnOrderTile().clear();
@@ -237,7 +237,7 @@ public class DisconnectionTest {
         board.getTurnOrderTile().add(new TurnOrderSlot(3, -1));
         board.getTurnOrderTile().add(new TurnOrderSlot(4, -2));
 
-        // A e C hanno totem sul tracciato offerte (piazzati in StartTurnState)
+        // A and C have totems on the offering track (placed in StartTurnState)
         OfferingTile tileA = new OfferingTile('A', 1, 1, 0);
         OfferingTile tileC = new OfferingTile('C', 1, 0, 0);
         tileA.occupy(p1); p1.setCurrentTile(tileA);
@@ -246,33 +246,33 @@ public class DisconnectionTest {
         board.getOfferingTrack().add(tileA);
         board.getOfferingTrack().add(tileC);
 
-        // B è disconnesso: già spostato in turn order da moveToLastSlot
+        // B is disconnected: already moved to turn order by moveToLastSlot
         board.getTurnOrderTile().get(1).occupy(p2);
         p2.setHasPlacedTotem(true);
 
-        // A ha appena pescato → assegnato al turn order, tileA non ancora liberato
-        // (executeEndTurnLogic: assignPickerToTurnOrder prima di freeSlot)
+        // A just drew → assigned to turn order, tileA not yet freed
+        // (executeEndTurnLogic: assignPickerToTurnOrder before freeSlot)
         board.getTurnOrderTile().get(0).occupy(p1);
 
         game.setCurrentPlayer(p3); // C è il prossimo picker
 
-        // isPickingComplete DEVE essere false: C è sul tracciato offerte
-        // ma NON è nel turn order (non ha ancora pescato).
+        // isPickingComplete MUST be false: C is on the offering track
+        // but NOT in turn order (hasn't drawn yet).
         assertFalse(game.isPickingComplete(),
                 "isPickingComplete deve essere false: C è ancora sul tracciato offerte");
 
-        // C pesca → assegnato al turn order
+        // C draws → assigned to turn order
         board.getTurnOrderTile().get(2).occupy(p3);
         tileC.freeSlot(); p3.setCurrentTile(null);
 
-        // Ora tutti gli occupanti del tracciato offerte sono nel turn order
+        // Now all occupants of the offering track are in turn order
         assertTrue(game.isPickingComplete(),
                 "isPickingComplete deve essere true: tutti hanno pescato");
     }
 
     @Test
     public void testPickingComplete_NormalFlow_NoDisconnections() throws Exception {
-        // 3 giocatori, nessuna disconnessione: isPickingComplete segue il normale flusso
+        // 3 players, no disconnection: isPickingComplete follows normal flow
         game.setState(new PickingState());
 
         board.getTurnOrderTile().clear();
@@ -292,21 +292,21 @@ public class DisconnectionTest {
 
         game.setCurrentPlayer(p1);
 
-        // Nessuno ha ancora pescato
+        // No one has drawn yet
         assertFalse(game.isPickingComplete(),
                 "Nessuno ha pescato → isPickingComplete = false");
 
-        // A pesca
+        // A draws
         board.getTurnOrderTile().get(0).occupy(p1);
         assertFalse(game.isPickingComplete(),
                 "Solo A ha pescato → false");
 
-        // B pesca
+        // B draws
         board.getTurnOrderTile().get(1).occupy(p2);
         assertFalse(game.isPickingComplete(),
                 "A e B hanno pescato, C ancora no → false");
 
-        // C pesca
+        // C draws
         board.getTurnOrderTile().get(2).occupy(p3);
         tileC.freeSlot(); p3.setCurrentTile(null);
         assertTrue(game.isPickingComplete(),
@@ -334,12 +334,12 @@ public class DisconnectionTest {
         p2.setHasPlacedTotem(true);
         board.getOfferingTrack().add(tileP2);
 
-        // Simula disconnessione non-current con totem piazzato
+        // Simulates non-current disconnection with placed totem
         if (p2.getCurrentTile() != null) {
             p2.getCurrentTile().freeSlot();
             p2.setCurrentTile(null);
         }
-        // moveToLastSlot ora gestisce internamente la free e la compattazione
+        // moveToLastSlot now handles free and compaction internally
         game.moveToLastSlot(p2);
 
         assertNull(p2.getCurrentTile(), "currentTile deve essere null dopo disconnessione");
@@ -363,7 +363,7 @@ public class DisconnectionTest {
         board.getTurnOrderTile().get(1).occupy(p2);
         board.getTurnOrderTile().get(2).occupy(p3);
 
-        // Primo disconnesso: p2 (non-current, senza totem)
+        // First disconnected: p2 (non-current, without totem)
         game.moveToLastSlot(p2);
         p2.setHasPlacedTotem(true);
 
@@ -373,7 +373,7 @@ public class DisconnectionTest {
         assertEquals(p2, board.getTurnOrderTile().get(3).getOccupiedBy(),
                 "p2 deve essere nell'ultimo slot (slot3)");
 
-        // Secondo disconnesso: p1 (current)
+        // Second disconnected: p1 (current)
         game.moveToLastSlot(p1);
         p1.setHasPlacedTotem(true);
 

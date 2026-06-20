@@ -87,7 +87,7 @@ initTheme();
 ClientConnection — Astrazione del canale di comunicazione server -&gt; client
 ============================================================================
 
-RUOLO:
+ROLE::
 Interfaccia che astrae il trasporto di rete (Socket TCP o RMI).</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab2"><a href="PersistenceManager.html" title="class in it.polimi.ingsw.am54.network.server">PersistenceManager</a></div>
@@ -100,7 +100,7 @@ Interfaccia che astrae il trasporto di rete (Socket TCP o RMI).</div>
 RMIClientHandler — Gestore di una connessione RMI per un client
 ============================================================================
 
-RUOLO:
+ROLE::
 - Gestisce le richieste RMI da un client
 - Inoltra le richieste al Controller (singola partita)
 - Implementa ClientConnection (sendUpdate via callback RMI)
@@ -123,7 +123,7 @@ Server — Entry point del server AM54 (single game)
 SocketClientHandler — Gestore di una connessione TCP per un client
 ============================================================================
 
-RUOLO:
+ROLE::
 - Thread separato per ogni client connesso via Socket TCP
 - Legge le Request dal client e le inoltra al Controller (singola partita)
 - Implementa ClientConnection (sendUpdate) e ClientHandler
@@ -140,7 +140,7 @@ PING-PONG PATTERN:
  VirtualView — Pattern Proxy tra Model e rete
  ============================================================================
 ---
- RUOLO:
+ ROLE::
  Il Game (Model) non sa nulla della rete.</div>
 </div>
 </div>

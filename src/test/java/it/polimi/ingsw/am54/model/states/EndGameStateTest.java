@@ -35,7 +35,7 @@ public class EndGameStateTest {
         // ==========================================
         final boolean[] eventResolved = {false};
 
-        // Creiamo un evento che accende la nostra "lampadina di test" quando viene risolto
+        // Create an event that lights up our "test lightbulb" when resolved
         EventCard mockEvent = new EventCard(1, false, new ArrayList<>(), 0, 0, 0, 0, 0, 0, 0) {
             @Override
             public void resolveEvent(Game g) {
@@ -43,12 +43,12 @@ public class EndGameStateTest {
             }
         };
 
-        // Aggiungiamo l'evento alla board.
-        // In EndGameState gli eventi rimasti in UPPER devono essere svuotati!
+        // Add the event to the board.
+        // In EndGameState, remaining events in UPPER must be cleared!
         game.getBoard().addEventCard(mockEvent, "upper");
 
         // ==========================================
-        // 2. SETUP OBSERVER PER LE NOTIFICHE
+        // 2. SETUP OBSERVER FOR NOTIFICATIONS
         // ==========================================
         final boolean[] eventNotified = {false};
         final boolean[] endGameNotified = {false};
@@ -62,7 +62,7 @@ public class EndGameStateTest {
             @Override public void onStateChanged(Game game, GameState newState) {}
             @Override public void onTotemReturned(Game game, Player player, int position, int f, int a) {}
 
-            // INTERCETTIAMO LE DUE NOTIFICHE DELL'ENDGAMESTATE
+            // INTERCEPT THE TWO ENDGAMESTATE NOTIFICATIONS
             @Override
             public void onEventResolved(Game game, EventCard eventCard) {
                 eventNotified[0] = true;
@@ -71,7 +71,7 @@ public class EndGameStateTest {
             @Override
             public void onEndGame(Game game, List<Player> winnersList) {
                 endGameNotified[0] = true;
-                // Alice gioca da sola in questo test, quindi vincerà sicuramente lei
+                // Alice plays alone in this test, so she will definitely win
                 assertEquals(1, winnersList.size());
                 assertEquals(p1, winnersList.get(0));
             }
@@ -86,14 +86,14 @@ public class EndGameStateTest {
         // 4. VERIFICHE
         // ==========================================
 
-        // A. Il ciclo while è stato eseguito correttamente
+        // A. The while loop was executed correctly
         assertTrue(eventResolved[0], "Il metodo resolveEvent della carta deve essere stato chiamato all'interno del while");
         assertTrue(eventNotified[0], "La notifica onEventResolved deve essere scattata");
 
-        // B. La plancia è stata svuotata
+        // B. The board has been cleared
         assertNull(game.getBoard().popNextVisibleEvent(), "Tutti gli eventi devono essere stati rimossi dalla plancia a fine partita");
 
-        // C. Calcolo vincitori e notifica finale
+        // C. Calculate winners and final notification
         assertTrue(endGameNotified[0], "La notifica onEndGame deve essere scattata con successo");
     }
 }

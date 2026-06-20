@@ -125,7 +125,7 @@ initTheme();
 ClientConnection — Astrazione del canale di comunicazione server -&gt; client
 ============================================================================
 
-RUOLO:
+ROLE::
 Interfaccia che astrae il trasporto di rete (Socket TCP o RMI).</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="it/polimi/ingsw/am54/network/messages/ClientMessage.html" title="interface in it.polimi.ingsw.am54.network.messages">ClientMessage</a></div>
@@ -138,7 +138,7 @@ Interfaccia che astrae il trasporto di rete (Socket TCP o RMI).</div>
 ClientModel — Modello leggero lato client
 ============================================================================
 
-RUOLO:
+ROLE::
 Mantieni uno stato locale del gioco sincronizzato con il server.</div>
 </div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="it/polimi/ingsw/am54/gui/states/ClientStateHandler.html" title="interface in it.polimi.ingsw.am54.gui.states">ClientStateHandler</a></div>
@@ -332,7 +332,7 @@ for matches with a specific number of players.</div>
 RMIClientHandler — Gestore di una connessione RMI per un client
 ============================================================================
 
-RUOLO:
+ROLE::
 - Gestisce le richieste RMI da un client
 - Inoltra le richieste al Controller (singola partita)
 - Implementa ClientConnection (sendUpdate via callback RMI)
@@ -375,7 +375,7 @@ Server — Entry point del server AM54 (single game)
 ServerHandler — Thread di ascolto asincrono lato client (Socket TCP)
 ============================================================================
 
-RUOLO:
+ROLE::
 Thread indipendente che rimane in ascolto continuo dei messaggi provenienti
 dal server sulla connessione Socket TCP.</div>
 </div>
@@ -391,7 +391,7 @@ dal server sulla connessione Socket TCP.</div>
 SocketClientHandler — Gestore di una connessione TCP per un client
 ============================================================================
 
-RUOLO:
+ROLE::
 - Thread separato per ogni client connesso via Socket TCP
 - Legge le Request dal client e le inoltra al Controller (singola partita)
 - Implementa ClientConnection (sendUpdate) e ClientHandler
@@ -451,7 +451,7 @@ il suo turno di Pick.</div>
  VirtualView — Pattern Proxy tra Model e rete
  ============================================================================
 ---
- RUOLO:
+ ROLE::
  Il Game (Model) non sa nulla della rete.</div>
 </div>
 </div>

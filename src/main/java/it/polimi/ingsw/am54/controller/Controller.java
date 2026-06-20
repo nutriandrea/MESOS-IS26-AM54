@@ -20,24 +20,61 @@ import java.util.logging.Logger;
 
 /**
  * ============================================================================
- * Controller — Coordinatore lato Server (UNA istanza per partita)
+ * Controller — Server-side Coordinator (ONE instance per game)
  * ============================================================================
  *
- * RESPONSABILITA':
- * - Ricevere le Request dai client (tramite SocketClientHandler/RMIClientHandler)
- * - Inoltrarle al Model (Game) in modo thread-safe (synchronized)
- * - Gestire il ciclo di vita dei giocatori (join, disconnect, reconnect)
- * - Inviare SOLO messaggi di sistema (disconnessione/riconnessione), MAI eventi di gioco
+ * <h2>Main responsibilities</h2>
+ * <ul>
+ *   <li><b>Request reception</b> — receives the {@code Request}s from clients
+ *       via {@code SocketClientHandler} / {@code RMIClientHandler}</li>
+ *   <li><b>Thread-safe forwarding to the Model</b> — every mutation of the {@link Game} occurs
+ *       under the {@link #gameLock} lock (broader than a simple lock on getPlayers())</li>
+ *   <li><b>Player lifecycle</b> — management of join, disconnection
+ *       temporary, reconnection and permanent removal</li>
+   * <li><b>System notifications</b> — sends ONLY system messages
+   *       (disconnection/reconnection suspension), NEVER game events;
+ *       game notifications are delegated to the observing {@link VirtualView}s</li>
+   * <li><b>Game suspension</b> — when only one active player remains,
+ *       a timeout of {@value #SOLO_TIMEOUT_SECONDS} seconds fires; if no one
+ *       reconnects, the survivor wins by default</li>
+ *   <li><b>Persistenza</b> — saves the state to a JSON file after every action
+ *       and records scores in the database at game end</li>
+ * </ul>
  *
- * DISCONNESSIONE VS RIMOZIONE:
- * - markDisconnected(): il ping/pong rileva che un client non risponde.
- * Il giocatore viene marcato come disconnesso ma NON rimosso dal gioco.
- * Gli altri giocatori ricevono PlayerDisconnectedUpdate.
- * - removeClient(): pulizia definitiva. Succede quando il socket si chiude
- * ============================================================================
+ * <h2>Disconnection vs Removal</h2>
+ * <dl>
+ *   <dt>{@link #markDisconnected(String)}</dt>
+ *   <dd>Ping/pong detects that a client is not responding. The player is marked
+ *       as disconnected but NOT removed from the game. Other players receive
+ *       {@code PlayerDisconnectedUpdate}.</dd>
+ *   <dt>{@link #removeClient(String)}</dt>
+ *   <dd>Permanent cleanup. Occurs when the socket closes or the player
+ *       voluntarily leaves. If in the lobby phase, the slot is freed;
+ *       if in a game, the player is only marked as disconnected.</dd>
+ * </dl>
+ *
+ * <h2>Typical flow</h2>
+ * <ol>
+ *   <li>{@link #handleJoinGame(String, ClientConnection)} → join o reconnect</li>
+ *   <li>{@link #handleSetupGame(String)} → game start (host)</li>
+ *   <li>{@link #handleChooseTotemColor(String, String)} → totem color choice</li>
+ *   <li>{@link #handlePlaceTotem(String, int)} → placement on the offering track</li>
+ *   <li>{@link #handlePickCard(String, String, int)} → draft di una carta</li>
+ *   <li>{@link #handleEndTurn(String)} → end turn</li>
+ *   <li>{@link #markDisconnected(String)} / {@link #removeClient(String)} → uscita</li>
+ * </ol>
+ *
+ * <h2>Thread safety</h2>
+ * All methods that modify the {@link Game} acquire {@link #gameLock}.
+ * Messages to clients go out outside the lock to avoid deadlocks.
+ *
+ * @author AM54
+ * @see Game
+ * @see VirtualView
+ * @see Server
  */
 public class Controller {
-    /** Lock dedicato per tutte le mutazioni del Game — più ampio di game.getPlayers() */
+    /** Lock dedicated to all Game mutations — broader than game.getPlayers() */
     private final Object gameLock = new Object();
     private final Game game;
     private Server server;
@@ -45,29 +82,34 @@ public class Controller {
     private final it.polimi.ingsw.am54.network.server.PersistenceManager persistenceManager;
     private boolean scoresSavedToDatabase = false;
 
-    /** Mappa nickname -> VirtualView. Ogni VirtualView e' observer del Game */
+    /** Map nickname -> VirtualView. Each VirtualView is observer of the Game */
     private final Map<String, VirtualView> virtualViews = new ConcurrentHashMap<>();
 
-    /** Set di nickname dei giocatori temporaneamente disconnessi */
+    /** Set of nicknames of temporarily disconnected players */
     private final Set<String> disconnectedPlayers = ConcurrentHashMap.newKeySet();
 
     private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
-    /** Database manager per salvare i risultati delle partite. */
+    /** Database manager to save match results. */
     private final DatabaseManager dbManager;
 
-    /** Flag: true quando un solo giocatore e' attivo e il gioco e' sospeso */
+    /** Flag: true when only one player is active and the game is suspended */
     private volatile boolean suspended = false;
 
-    /** Timeout dopo cui il giocatore rimasto attivo vince (in secondi) */
+    /** Timeout after which the remaining active player wins (in seconds) */
     private static final long SOLO_TIMEOUT_SECONDS = 60;
 
-    /** Scheduler per il timeout di sospensione */
+    /** Scheduler for the suspension timeout */
     private final ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
 
-    /** Riferimento al task di timeout attivo (per cancellarlo in caso di ripresa) */
+    /** Reference to active timeout task (to cancel it if resumed) */
     private ScheduledFuture<?> timeoutFuture;
 
+    /**
+     * Constructs the Controller for a game.
+     *
+     * @param game the Model (Game) instance to control
+     */
     public Controller(Game game) {
         this.game = game;
         this.dbManager = new it.polimi.ingsw.am54.database.DatabaseManager(new it.polimi.ingsw.am54.database.DatabaseConfig());
@@ -82,25 +124,30 @@ public class Controller {
     }
 
     /**
-     * Imposta il riferimento al Server.
-     * Necessario per permettere al Controller di chiamare saveState()
-     * sul PersistenceManager dopo ogni azione di gioco.
+     * Sets the reference to the Server.
+     * Necessary to allow the Controller to call saveState()
+     * on the PersistenceManager after every game action.
      *
-     * @param server l'istanza del Server
+     * @param server the Server instance
      */
     public void setServer(Server server) {
         this.server = server;
     }
 
+    /**
+     * Returns the database manager for historical match access.
+     *
+     * @return the DatabaseManager associated with this Controller
+     */
     public DatabaseManager getDatabaseManager() {
         return dbManager;
     }
 
     /**
-     * Salva lo stato corrente del gioco su file JSON.
-     * Chiamato dal Controller dopo ogni azione di gioco
+     * Saves the current game state to a JSON file.
+     * Called by the Controller after every game action
      * (setup, chooseTotemColor, placeTotem, pickCard).
-     * * Se il server non è inizializzato (server null), non fa nulla.
+     * If the game has ended, deletes the backup instead of saving it.
      */
     private void saveState() {
         if (game.getCurrentState().isGameOver()) {
@@ -119,28 +166,45 @@ public class Controller {
      * JOIN / RECONNECT
      * ===================================================================== */
 
+    /**
+     * Handles a player's request to join the game.
+     * <p>
+     * Tre casi possibili:
+     * <ol>
+     *   <li><b>Reconnection</b> — if the nickname is in the disconnected set,
+     *       delega a {@link #handleReconnect(String, ClientConnection)}</li>
+     *   <li><b>Nickname already active</b> — if the name is already in {@link #virtualViews},
+     *       sends error to the client and rejects the connection</li>
+     *   <li><b>New player</b> — creates a {@link VirtualView}, registers it as
+     *       observer of the {@link Game} and invokes {@link Game#joinGame(String)}</li>
+     * </ol>
+     * On success, also starts the client heartbeat.
+     *
+     * @param nickname  the nickname chosen by the player
+     * @param connection the client connection (Socket or RMI)
+     */
     public void handleJoinGame(String nickname, ClientConnection connection) {
         synchronized (gameLock) {
-            // CASO 1: Il giocatore era caduto/disconnesso e sta tornando
+            // CASE 1: The player had disconnected and is returning
             if (disconnectedPlayers.contains(nickname)) {
                 handleReconnect(nickname, connection);
                 return;
             }
 
-            // CASO 2: Qualcuno sta provando a entrare con un nome GIA' ATTIVO nel server
+            // CASE 2: Someone is trying to enter with an ALREADY ACTIVE name on the server
             if (virtualViews.containsKey(nickname)) {
-                // Creiamo una view temporanea SOLO per poter spedire indietro l'errore
+                // Create a temporary view ONLY to send back the error
                 VirtualView rejectedView = new VirtualView(connection, nickname);
-                rejectedView.showError("Nickname già in uso! Scegline un altro.");
+                rejectedView.showError("Nickname already in use! Choose another one.");
                 return; // Blocchiamo l'entrata e usciamo dal metodo!
             }
 
-            // CASO 3: Il nome è libero, normale procedura di Join
+            // CASE 3: The name is free, normal Join procedure
             VirtualView playerView = new VirtualView(connection, nickname);
             virtualViews.put(nickname, playerView);
             game.addObserver(playerView);
 
-            // Manda al nuovo giocatore lo stato di chi è già nella lobby
+            // Sends the new player the state of who is already in the lobby
             for (Player p : game.getPlayers()) {
                 playerView.onPlayerJoined(game, p);
                 if (p.getTotemColors() != null) {
@@ -149,10 +213,10 @@ public class Controller {
             }
 
             try {
-                // Prova ad aggiungerlo al gioco vero e proprio (che controlla se ci sono troppi giocatori)
+                // Try to add them to the actual game (which checks if there are too many players)
                 game.joinGame(nickname);
             } catch (Exception e) {
-                // Se la partita è piena, rimuove la view e manda l'errore
+                // If the game is full, removes the view and sends the error
                 virtualViews.remove(nickname);
                 game.removeObserver(playerView);
                 playerView.showError(e.getMessage());
@@ -163,6 +227,20 @@ public class Controller {
         connection.startHeartbeat();
     }
 
+    /**
+     * Handles the reconnection of a previously disconnected player.
+     * <p>
+     * Replaces the old {@link VirtualView} of the player with a new one,
+     * reinserts the totem in the turn order if we are still in the
+     * {@code StartTurnState}, sends the complete game state to the client
+     * and notifies all other players.
+     * <p>
+     * If the game was suspended and now there are at least 2 active players,
+     * automatically resumes the game, canceling the timeout.
+     *
+     * @param nickname  the nickname of the reconnecting player
+     * @param connection the new client connection
+     */
     public void handleReconnect(String nickname, ClientConnection connection) {
         synchronized (gameLock) {
             disconnectedPlayers.remove(nickname);
@@ -174,12 +252,12 @@ public class Controller {
             VirtualView newView = new VirtualView(connection, nickname);
             virtualViews.put(nickname, newView);
             game.addObserver(newView);
-            LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
+            LOGGER.info("Player " + nickname + " reconnected.");
 
             // =====================================================================
             // REINSERIMENTO TOTEM IN TURN ORDER
-            // Ritorna nella prima posizione libera SOLO se siamo nella fase di Turn Order.
-            // Se siamo in Picking, il suo totem resterà fuori fino al prossimo round!
+            // Returns to the first free position ONLY if we are in the Turn Order phase.
+            // If we are in Picking, their totem will stay out until the next round!
             // =====================================================================
             String currentStateName = game.getCurrentState().getClass().getSimpleName();
 
@@ -190,7 +268,7 @@ public class Controller {
                         game.getBoard().addPlayerToFirstAvailableTurnOrderSlot(reconnectedPlayer);
                     }
                 } catch (Exception e) {
-                    LOGGER.warning("Impossibile recuperare il giocatore riconnesso per la Turn Order: " + e.getMessage());
+                    LOGGER.warning("Unable to recover reconnected player for Turn Order: " + e.getMessage());
                 }
             }
 
@@ -204,34 +282,44 @@ public class Controller {
         connection.startHeartbeat();
         broadcastPlayerReconnected(nickname);
 
-        // Se il gioco era sospeso e ora ci sono almeno 2 giocatori attivi, riprendi (annulla i 60 secondi)
+        // If the game was suspended and now there are at least 2 active players, resume (cancel the 60 seconds)
         if (suspended && activePlayerCount() >= 2) {
             resumeGame();
         }
     }
 
+    /**
+     * Validates and restores the game state after a persistence recovery.
+     * <p>
+     * Retrieves the player whose turn it is by consulting the current
+     * Model state and sets them as the current player.
+     * Useful after a server restart with a game in progress.
+     */
     public void validateGameStateAfterRecovery() {
-        synchronized (gameLock) {
+        // Restore the turn based on the current game phase
+        it.polimi.ingsw.am54.model.Player recovered = game.getCurrentState().recoverActivePlayer(game);
+        if (recovered != null) {
+            game.setCurrentPlayer(recovered);
+        }
 
-            // Ripristiniamo il turno in base alla fase attuale della partita
-            it.polimi.ingsw.am54.model.Player recovered = game.getCurrentState().recoverActivePlayer(game);
-            if (recovered != null) {
-                game.setCurrentPlayer(recovered);
-            }
-
-            // 2. Log diagnostico sulla console del server per confermare
-            it.polimi.ingsw.am54.model.Player current = game.getCurrentPlayer();
-            if (current != null) {
-                System.out.println("[RECOVERY] Fase della partita: " + game.getCurrentState().getClass().getSimpleName());
-                System.out.println("[RECOVERY] Il Server ha assegnato il turno a: " + current.getNickname());
-            }
+        // 2. Diagnostic log on the server console to confirm
+        it.polimi.ingsw.am54.model.Player current = game.getCurrentPlayer();
+        if (current != null) {
+            System.out.println("[RECOVERY] Game phase: " + game.getCurrentState().getClass().getSimpleName());
+            System.out.println("[RECOVERY] Server assigned turn to: " + current.getNickname());
         }
     }
 
     /* =====================================================================
-     * GESTIONE COMANDI DI GIOCO
+     * GAME COMMAND HANDLING
      * ===================================================================== */
 
+    /**
+     * Starts the game (called by the host from the lobby).
+     * Initializes the board, distributes initial resources and prepares the first round.
+     *
+     * @param nickname the nickname of the host starting the game
+     */
     public void handleSetupGame(String nickname) {
         executeCommand(nickname, () -> {
             game.setupGame();
@@ -239,6 +327,13 @@ public class Controller {
         });
     }
 
+    /**
+     * Handles the choice of totem color by a player.
+     * The color is permanently associated with the player for the entire game.
+     *
+     * @param nickname the player's nickname
+     * @param color    the chosen color (e.g. "RED", "BLUE")
+     */
     public void handleChooseTotemColor(String nickname, String color) {
         executeCommand(nickname, () -> {
             game.chooseTotemColor(nickname, color);
@@ -246,6 +341,12 @@ public class Controller {
         });
     }
 
+    /**
+     * Handles the placement of a player's totem on the offering track.
+     *
+     * @param nickname the player's nickname
+     * @param position the index of the position on the offering track
+     */
     public void handlePlaceTotem(String nickname, int position) {
         executeCommand(nickname, () -> {
             game.placeTotem(nickname, position);
@@ -253,6 +354,15 @@ public class Controller {
         });
     }
 
+    /**
+     * Handles the drawing of a card from the market by a player.
+     * After drawing, checks and automatically resolves the following phases
+     * (es. eventi, fine round) if necessary.
+     *
+     * @param nickname the player's nickname
+     * @param row      the market row ("upper" or "lower")
+     * @param index    the position in the row
+     */
     public void handlePickCard(String nickname, String row, int index) {
         executeCommand(nickname, () -> {
             game.pickCard(nickname, row, index);
@@ -261,6 +371,13 @@ public class Controller {
         });
     }
 
+    /**
+     * Handles a player's end turn command.
+     * After the turn ends, checks and automatically resolves
+     * any subsequent phases (events, round change, etc.).
+     *
+     * @param nickname the player's nickname ending the turn
+     */
     public void handleEndTurn(String nickname) {
         executeCommand(nickname, () -> {
             game.endTurn(nickname);
@@ -270,26 +387,50 @@ public class Controller {
     }
 
     /* =====================================================================
-     * DISCONNESSIONE
+     * DISCONNECTION
      * ===================================================================== */
 
+    /**
+     * Marks a player as disconnected (detected by heartbeat ping/pong).
+     * <p>
+     * The player is added to the {@link #disconnectedPlayers} set but NOT removed
+     * from the game, so they can reconnect. All other players receive
+     * a disconnection notification. If the disconnected player had the turn,
+     * it is automatically skipped.
+     *
+     * @param nickname the disconnected player's nickname
+     */
     public void markDisconnected(String nickname) {
         disconnectedPlayers.add(nickname);
-        LOGGER.warning("Giocatore " + nickname + " marcato come disconnesso.");
+        LOGGER.warning("Player " + nickname + " marked as disconnected.");
         broadcastPlayerDisconnected(nickname);
         autoHandleDisconnection(nickname);
     }
 
+    /**
+     * Permanently removes a client from the game.
+     * <p>
+     * Due comportamenti distinti:
+     * <ul>
+     *   <li><b>In lobby (isRemovePermanent true)</b> — the player is removed
+     *       completely from the Model, their totem color is freed and the spot made
+     *       available. If the room stays empty, the backup is deleted.</li>
+     *   <li><b>In game (isRemovePermanent false)</b> — the player is marked
+     *       as temporarily disconnected, waiting for a possible reconnection.</li>
+     * </ul>
+     *
+     * @param nickname the player's nickname to remove
+     */
     public void removeClient(String nickname) {
         VirtualView view = virtualViews.remove(nickname);
 
         if (game.getCurrentState().isRemovePermanent()) {
-            LOGGER.info("Giocatore " + nickname + " abbandona la lobby. Libero il posto e il Totem.");
+            LOGGER.info("Player " + nickname + " leaves the lobby. Slot and Totem freed.");
 
-            // 1. Rimuove il giocatore dal modello e rimette il colore Totem a disposizione
+            // 1. Removes the player from the model and frees the Totem color
             game.removePlayerEntirely(nickname);
 
-            // Rimuoviamo il nickname dal set dei disconnessi, così è libero di rientrare
+            // Remove the nickname from the disconnected set, so they can re-enter
             disconnectedPlayers.remove(nickname);
 
             if (view != null) game.removeObserver(view);
@@ -298,22 +439,22 @@ public class Controller {
                 persistenceManager.clearBackup();
             } else {
                 // =================================================================
-                // FIX: Notifica forzata agli altri client.
-                // Poiché il ClientModel aggiorna la sua lista interna (e quindi l'indice 0)
-                // in base alla nuova lista che riceve dal server, non serve setGameReady.
-                // Il client riceverà la lista aggiornata e si autogestirà l'Host.
+                // FIX: Force notification to other clients.
+                // Since ClientModel updates its internal list (and therefore index 0)
+                // based on the new list received from the server, setGameReady is not needed.
+                // The client will receive the updated list and handle the Host itself.
                 // =================================================================
                 notifyAllClientsStateChanged();
             }
         } else {
-            // --- LOGICA DI DISCONNESSIONE TEMPORANEA (Crash in-game) ---
+            // --- TEMPORARY DISCONNECTION LOGIC (In-game Crash) ---
             disconnectedPlayers.add(nickname);
             if (view != null) {
                 synchronized (gameLock) {
                     game.removeObserver(view);
                 }
             }
-            LOGGER.info("Giocatore " + nickname + " disconnesso temporaneamente.");
+            LOGGER.info("Player " + nickname + " temporarily disconnected.");
             broadcastPlayerDisconnected(nickname);
             autoHandleDisconnection(nickname);
         }
@@ -321,21 +462,32 @@ public class Controller {
 
     private void notifyAllClientsStateChanged() {
         for (VirtualView view : virtualViews.values()) {
-            // Se la view è ancora valida, mandiamo un aggiornamento
+            // If the view is still valid, send an update
             view.onStateChanged(game, game.getCurrentState());
         }
     }
 
+    /**
+     * Checks if a player is currently marked as disconnected.
+     *
+     * @param nickname the player's nickname
+     * @return {@code true} if the player is in the disconnected set
+     */
     public boolean isDisconnected(String nickname) {
         return disconnectedPlayers.contains(nickname);
     }
 
+    /**
+     * Returns the number of players currently in the game.
+     *
+     * @return the total number of players (including any disconnected ones)
+     */
     public int getPlayerCount() {
         return game.getPlayersNumber();
     }
 
     /* =====================================================================
-     * METODI PRIVATI
+     * PRIVATE METHODS
      * ===================================================================== */
 
     private void broadcastPlayerReconnected(String reconnectedNickname) {
@@ -351,18 +503,18 @@ public class Controller {
     }
 
     /* =====================================================================
-     * GESTIONE SOSPENSIONE GIOCO
+     * GAME SUSPENSION HANDLING
      * ===================================================================== */
 
     /**
-     * Restituisce il numero di giocatori attualmente connessi (non disconnessi).
+     * Returns the number of currently connected players (not disconnected).
      */
     private int activePlayerCount() {
         return game.getPlayersNumber() - disconnectedPlayers.size();
     }
 
     /**
-     * Invia a tutti i giocatori connessi la notifica di sospensione del gioco.
+     * Sends the game suspension notification to all connected players.
      */
     private void broadcastGameSuspended() {
         for (VirtualView vv : virtualViews.values()) {
@@ -371,7 +523,7 @@ public class Controller {
     }
 
     /**
-     * Invia a tutti i giocatori connessi la notifica di ripresa del gioco.
+     * Sends the game resume notification to all connected players.
      */
     private void broadcastGameResumed() {
         for (VirtualView vv : virtualViews.values()) {
@@ -380,8 +532,8 @@ public class Controller {
     }
 
     /**
-     * Salta automaticamente il turno del giocatore disconnesso se e' il suo turno,
-     * poi verifica se sospendere il gioco (1 solo giocatore attivo).
+     * Automatically skips the disconnected player's turn if it is their turn,
+     * then checks whether to suspend the game (only 1 active player).
      */
     private void autoHandleDisconnection(String nickname) {
         synchronized (gameLock) {
@@ -399,7 +551,7 @@ public class Controller {
                     game.getCurrentState().handleDisconnection(game, p, false);
                 }
             } catch (Exception e) {
-                LOGGER.warning("Skip turn fallito per " + nickname + ": " + e.getMessage());
+                LOGGER.warning("Skip turn failed for " + nickname + ": " + e.getMessage());
             }
 
             checkSuspension();
@@ -407,29 +559,29 @@ public class Controller {
     }
 
     /**
-     * Se il numero di giocatori attivi e' sceso a 1, sospende il gioco.
+     * If the number of active players has dropped to 1, suspends the game.
      */
     /**
-     * Se il numero di giocatori attivi e' sceso a 1, sospende il gioco.
-     * Se scende a 0, resetta la stanza e cancella il backup.
+     * If the number of active players has dropped to 1, suspends the game.
+     * If it drops to 0, resets the room and deletes the backup.
      */
     private void checkSuspension() {
         // ========================================================
-        // NUOVA LOGICA: Controllo "Stanza Vuota" a partita in corso
+        // NEW LOGIC: "Empty Room" check during an active game
         // ========================================================
         if (activePlayerCount() == 0) {
-            LOGGER.warning("[SERVER] Tutti i giocatori sono disconnessi. Annullamento partita...");
+            LOGGER.warning("[SERVER] All players disconnected. Cancelling game...");
 
-            // 1. Cancella fisicamente il salvataggio
+            // 1. Physically deletes the save
             persistenceManager.clearBackup();
 
-            // 2. Ferma il timer di vittoria a tavolino (se era partito)
+            // 2. Stops the default victory timer (if it had started)
             if (timeoutFuture != null) {
                 timeoutFuture.cancel(false);
             }
             suspended = false;
 
-            // 3. Pulisce la memoria e riporta il server in Lobby!
+            // 3. Clears memory and brings the server back to Lobby!
             game.getPlayers().clear();
             disconnectedPlayers.clear();
             virtualViews.clear();
@@ -438,7 +590,7 @@ public class Controller {
         }
 
         // ========================================================
-        // Vecchia logica per 1 solo giocatore (Vittoria a tavolino)
+        // Old logic for a single player (Default Victory)
         // ========================================================
         if (suspended) return;
         if (activePlayerCount() == 1) {
@@ -447,13 +599,13 @@ public class Controller {
     }
 
     /**
-     * Sospende il gioco perche' e' rimasto un solo giocatore attivo.
-     * Avvia un timeout: se nessun altro si riconnette, il giocatore superstite vince.
+     * Suspends the game because only one active player is left.
+     * Starts a timeout: if nobody reconnects, the remaining player wins.
      */
     private void suspendGame() {
         if (suspended) return;
         suspended = true;
-        LOGGER.warning("Solo 1 giocatore attivo: gioco sospeso per " + SOLO_TIMEOUT_SECONDS + " secondi.");
+        LOGGER.warning("Only 1 active player: game suspended for " + SOLO_TIMEOUT_SECONDS + " seconds.");
         broadcastGameSuspended();
 
         timeoutFuture = timeoutScheduler.schedule(() -> {
@@ -462,29 +614,29 @@ public class Controller {
                 Player winner = findSoloActivePlayer();
 
                 if (winner != null) {
-                    LOGGER.info("Timeout sospensione scaduto: " + winner.getNickname() + " vince la partita per abbandono!");
+                    LOGGER.info("Suspension timeout expired: " + winner.getNickname() + " wins the game by default!");
 
-                    // 1. Mettiamo il Model nello stato di fine partita
+                    // 1. Put the Model in end-game state
                     game.setState(new it.polimi.ingsw.am54.model.states.EndGameState());
 
-                    // 2. Chiamiamo una risoluzione speciale per la vittoria a tavolino
-                    // Perché non usiamo resolvePhase()? Perché resolvePhase() calcola i punteggi
-                    // e applica l'aura. Qui vogliamo far vincere il giocatore e basta.
+                    // 2. Call a special resolution for the default victory
+                    // Why don't we use resolvePhase()? Because resolvePhase() calculates scores
+                    // and applies aura. Here we want the player to simply win.
                     try {
-                        // Salvataggio nel DB del vincitore a tavolino (come avevi già fatto)
+                        // Save the default winner in the DB (as you already did)
                         if (!scoresSavedToDatabase) {
                             scoresSavedToDatabase = true;
                             int finalScore = game.calculatePlayerScore(winner);
                             int numPlayers = game.getPlayers().size();
                             dbManager.saveMatchResult(winner.getNickname(), finalScore, numPlayers);
-                            LOGGER.info("[DATABASE] Punteggio per abbandono salvato.");
+                            LOGGER.info("[DATABASE] Default victory score saved.");
                         }
 
-                        // Lasciamo che sia il Model a notificare la fine della partita, non il Controller
+                        // Let the Model notify the end of the game, not the Controller
                         game.notifyEndGame(Collections.singletonList(winner));
 
                     } catch (Exception e) {
-                        LOGGER.severe("Errore durante la vittoria a tavolino: " + e.getMessage());
+                        LOGGER.severe("Error during default victory: " + e.getMessage());
                     }
                 }
                 suspended = false;
@@ -493,7 +645,7 @@ public class Controller {
     }
 
     /**
-     * Riprende il gioco dopo che un secondo giocatore si e' riconnesso.
+     * Resumes the game after a second player has reconnected.
      */
     private void resumeGame() {
         if (!suspended) return;
@@ -501,7 +653,7 @@ public class Controller {
         if (timeoutFuture != null) {
             timeoutFuture.cancel(false);
         }
-        LOGGER.info("Gioco ripreso: almeno 2 giocatori attivi.");
+        LOGGER.info("Game resumed: at least 2 active players.");
         broadcastGameResumed();
     }
 
@@ -512,6 +664,14 @@ public class Controller {
                 .orElse(null);
     }
 
+    /**
+     * Retrieves and sends the global leaderboard to the requesting client.
+     * Reads all entries from the database, calculates the player's position
+     * and sends a {@link LeaderboardUpdate} to the client.
+     *
+     * @param connection the connection of the client requesting the leaderboard
+     * @param numPlayers the number of players in the game (for filtering)
+     */
     public void handleGetLeaderboard(ClientConnection connection, int numPlayers) {
         List<it.polimi.ingsw.am54.network.messages.LeaderboardEntry> entries = dbManager.getAllLeaderboardEntries();
         int playerPosition = -1;
@@ -523,7 +683,7 @@ public class Controller {
         if (suspended) {
             VirtualView view = virtualViews.get(nickname);
             if (view != null) {
-                view.showError("Gioco sospeso: in attesa di riconnessioni...");
+                view.showError("Game suspended: waiting for reconnections...");
             }
             return;
         }
@@ -556,9 +716,9 @@ public class Controller {
                         int finalScore = game.calculatePlayerScore(p);
                         dbManager.saveMatchResult(p.getNickname(), finalScore, numPlayers);
                     }
-                    LOGGER.info("[DATABASE] Punteggi di fine partita salvati con successo!");
+                    LOGGER.info("[DATABASE] End-game scores saved successfully!");
                 } catch (Exception e) {
-                    LOGGER.warning("[DATABASE] Errore salvataggio punteggi: " + e.getMessage());
+                    LOGGER.warning("[DATABASE] Error saving scores: " + e.getMessage());
                 }
             }).start();
             return;

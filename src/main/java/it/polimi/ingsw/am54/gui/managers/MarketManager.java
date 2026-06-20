@@ -9,6 +9,13 @@ import javafx.scene.layout.HBox;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * Manages the display of the game market, including the upper and lower rows
+ * of character, building and event cards. Also provides graphical updates
+ * of face-down decks (tribes and buildings) based on era and player count.
+ *
+ * @author AM54
+ */
 public class MarketManager {
 
     private final HBox upperMarket;
@@ -32,6 +39,14 @@ public class MarketManager {
         "EVENT", parts -> parts.length > 4 ? parts[4] : "Evento"
     );
 
+    /**
+     * Constructs the manager with the JavaFX containers it will manage.
+     *
+     * @param upperMarket       the HBox for the upper market row
+     * @param lowerMarket       the HBox for the lower market row
+     * @param tribeDeckView     the ImageView for the face-down tribe deck
+     * @param buildingsDeckView the ImageView for the face-down buildings deck
+     */
     public MarketManager(HBox upperMarket, HBox lowerMarket, ImageView tribeDeckView, ImageView buildingsDeckView) {
         this.upperMarket = upperMarket;
         this.lowerMarket = lowerMarket;
@@ -39,6 +54,12 @@ public class MarketManager {
         this.buildingsDeckView = buildingsDeckView;
     }
 
+    /**
+     * Clears and rebuilds both the upper and lower market rows from the
+     * current model state, adding event, character and building cards.
+     *
+     * @param model the current client model
+     */
     public void updateMarkets(ClientModel model) {
         System.out.println("[DEBUG-MARKET] characterUpperRow size=" + model.getCharacterUpperRow().size()
                 + " data=" + model.getCharacterUpperRow());
@@ -81,11 +102,17 @@ public class MarketManager {
         }
     }
 
+    /**
+     * Updates the face-down tribe and building deck images based on the
+     * current era and player count. Hides the building deck in era 3.
+     *
+     * @param model the current client model
+     */
     public void updateDecksGraphics(ClientModel model) {
         int playerCount = (model.getPlayers() != null && !model.getPlayers().isEmpty()) ? model.getPlayers().size() : 3;
         int era = model.getCurrentEra();
 
-        // --- FIX DECK TRIBÙ: MAPPATURA ORIENTATA AGLI ASSET COMPATIBILI PER EVITARE IL BLOCCO DELLA COMPILAZIONE ---
+        // --- FIX TRIBE DECK: MAPPING ORIENTED TO COMPATIBLE ASSETS TO AVOID COMPILATION BLOCK ---
         String tribeBackId = "8";
         if (playerCount == 2) {
             if (era == 1) tribeBackId = "8";
@@ -194,6 +221,13 @@ public class MarketManager {
         return view;
     }
 
+    /**
+     * Sets the fit height of all card ImageViews and deck views to the
+     * given dimensions.
+     *
+     * @param upperHeight the target height for upper row cards and decks
+     * @param lowerHeight the target height for lower row cards
+     */
     public void setCardsHeight(double upperHeight, double lowerHeight) {
         if (tribeDeckView != null) tribeDeckView.setFitHeight(upperHeight);
         if (buildingsDeckView != null) buildingsDeckView.setFitHeight(upperHeight);
@@ -206,6 +240,17 @@ public class MarketManager {
         }
     }
 
+    /**
+     * Returns the number of items currently displayed in the upper market row.
+     *
+     * @return the child count of the upper market HBox
+     */
     public int getUpperItemsCount() { return upperMarket.getChildren().size(); }
+
+    /**
+     * Returns the number of items currently displayed in the lower market row.
+     *
+     * @return the child count of the lower market HBox
+     */
     public int getLowerItemsCount() { return lowerMarket.getChildren().size(); }
 }

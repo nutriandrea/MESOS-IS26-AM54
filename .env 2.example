@@ -1,0 +1,11 @@
+# Database configuration for AM54 (template)
+# Copy to .env and fill in your database credentials.
+# .env is gitignored — secrets stay local.
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=am54
+DB_USER=root
+DB_PASSWORD=
+DB_SSL_MODE=PREFERRED
+DB_PARAMS=

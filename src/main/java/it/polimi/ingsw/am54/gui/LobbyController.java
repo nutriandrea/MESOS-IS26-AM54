@@ -25,6 +25,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 
+/**
+ * Controller for the lobby screen.
+ * Manages player waiting, totem selection,
+ * rules display and game start by the host.
+ *
+ * @author AM54
+ */
 public class LobbyController {
 
     @FXML private StackPane lobbyRoot;
@@ -77,6 +84,11 @@ public class LobbyController {
     private String baseWaitingText = "";
     private final String[] dotStates = {"", ".", "..", "..."};
 
+    /**
+     * Initializes the lobby controller: binds totem sizes and positions to the
+     * root pane, loads totem images and rule pages, registers model callbacks,
+     * configures the waiting-dots animation and applies responsive font scaling.
+     */
     @FXML
     public void initialize() {
         double totemSizeScale = 0.23;
@@ -155,21 +167,21 @@ public class LobbyController {
             double currentWidth = newVal.doubleValue();
             double factor = currentWidth / 1920.0;
 
-            // 1. Welcome Label (Titolo principale)
+            // 1. Welcome Label (Main Title)
             double targetWelcomeSize = Math.max(18.0, 52.0 * factor);
-            // Inseriamo Font e Colore (da CSS) per evitare il flash Arial/Nero
+            // Insert Font and Color (from CSS) to avoid Arial/Black flash
             welcomeLabel.setStyle("-fx-font-size: " + targetWelcomeSize + "px; -fx-font-family: 'Herculanum'; -fx-text-fill: white;");
 
-            // 2. Etichetta "Regole del gioco"
+            // 2. "Game Rules" Label
             double targetLabelSize = Math.max(16.0, 32.0 * factor);
             if (infoLabel != null) {
                 infoLabel.setStyle("-fx-font-size: " + targetLabelSize + "px; -fx-font-family: 'Herculanum'; -fx-text-fill: white;");
             }
 
-            // 3. Testo interno del pulsante informativo "i"
+            // 3. Inner text of the info button "i"
             double targetButtonSize = Math.max(16.0, 28.0 * factor);
             if (infoButton != null) {
-                // Il bottone usa Arial e gold nel tuo CSS!
+                // The button uses Arial and gold in your CSS!
                 infoButton.setStyle("-fx-font-size: " + targetButtonSize + "px; -fx-font-family: 'Arial'; -fx-text-fill: gold;");
             }
         });
@@ -188,17 +200,10 @@ public class LobbyController {
         ClientModel model = Client.getInstance().getModel();
         String myNickname = Client.getInstance().getNickname();
 
-        // ==========================================================
-        // FIX CRITICO: TRANSIZIONE ALLA BOARD
-        // Se lo stato nel Model non è più "Lobby", significa che
-        // il Server ha avviato la partita. Dobbiamo cambiare scena!
-        // ==========================================================
         String currentState = model.getCurrentState();
         if (currentState != null && !currentState.equalsIgnoreCase("Lobby")) {
-            // "Sganciamo" l'aggiornamento della lobby per evitare chiamate fantasma
             model.setOnModelUpdatedCallback(null);
 
-            // Carichiamo la scena di gioco principale!
             GUIApp.loadBoardScene();
             return;
         }
@@ -220,7 +225,6 @@ public class LobbyController {
         boolean isHost = players != null && !players.isEmpty() && players.get(0).equals(myNickname);
         int playerCount = players != null ? players.size() : 0;
 
-        // Verifica che TUTTI i player loggati abbiano inserito un colore
         boolean everyoneHasChosen = playerColors != null && players != null && playerColors.size() == players.size();
 
         if (!hasChosenTotem) {
@@ -229,7 +233,6 @@ public class LobbyController {
             startButton.setManaged(false);
         } else {
             if (isHost) {
-                // IL PULSANTE APPARE SOLO SE CI SONO ALMENO 2 STRUTTURE E TUTTI HANNO SCELTO
                 if (playerCount > 1 && everyoneHasChosen) {
                     setSubtitleText("Premi Start quando vuoi iniziare la partita!", false);
                     startButton.setVisible(true);

@@ -25,6 +25,10 @@ public class DatabaseConfig {
     private final String sslMode;
     private final String params;
 
+    /**
+     * Constructs a DatabaseConfig, loading values from a {@code .env} file
+     * or falling back to localhost defaults when the file is absent.
+     */
     public DatabaseConfig() {
         Map<String, String> env = loadEnv();
 
@@ -37,6 +41,7 @@ public class DatabaseConfig {
         this.params   = env.getOrDefault("DB_PARAMS", "");
     }
 
+    /** @return the JDBC URL assembled from host, port, database name, SSL mode and extra params */
     public String getJdbcUrl() {
         StringBuilder url = new StringBuilder();
         url.append("jdbc:mysql://").append(host).append(":").append(port).append("/").append(dbName);
@@ -49,10 +54,15 @@ public class DatabaseConfig {
         return url.toString();
     }
 
+    /** @return the database user */
     public String getUser()       { return user; }
+    /** @return the database password */
     public String getPassword()   { return password; }
+    /** @return the database host */
     public String getHost()       { return host; }
+    /** @return the database port */
     public int    getPort()       { return port; }
+    /** @return the database name */
     public String getDbName()     { return dbName; }
 
     /**
@@ -63,7 +73,7 @@ public class DatabaseConfig {
         Map<String, String> map = new HashMap<>();
         Path path = Paths.get(".env");
         if (!Files.exists(path)) {
-            LOGGER.info(".env non trovato — uso impostazioni predefinite (localhost)");
+            LOGGER.info(".env not found — uso impostazioni predefinite (localhost)");
             return map;
         }
         try {

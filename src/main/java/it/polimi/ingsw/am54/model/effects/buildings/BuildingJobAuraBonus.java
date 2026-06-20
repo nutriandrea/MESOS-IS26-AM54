@@ -2,20 +2,42 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import com.google.gson.JsonObject;
 import it.polimi.ingsw.am54.model.*;
 
-// Gestisce le 6 carte di Era 3 che danno punti prestigio a fine partita in base al tipo di personaggio
-// (es. Contadino x4, Cacciatore x3), più la carta di Era 2 che raddoppia i punti base dei Costruttori
+/**
+ * Aura bonus by job type: at end of game grants Aura points based on
+ * to the number of characters of a given type owned by the player.
+ * Handles Era 3 cards (e.g. Farmer x4, Hunter x3) and the
+ * Era 2 card that doubles the base points of Builders.
+ *
+ * @author AM54
+ */
 public class BuildingJobAuraBonus implements IEffect<BuildingCard> {
     private final JobType jobType;
     private final int multiplier;
     private final boolean useCardBaseAura;
 
+    /**
+     * Constructs the effect reading the job type, multiplier, and
+     * base-Aura flag from the JSON parameters.
+     *
+     * @param params JSON object with optional "jobType", "multiplier",
+     *               and "useCardBaseAura" fields, may be {@code null}
+     */
     public BuildingJobAuraBonus(JsonObject params) {
         this.jobType = params != null && params.has("jobType") ? JobType.valueOf(params.get("jobType").getAsString()) : null;
         this.multiplier = params != null && params.has("multiplier") ? params.get("multiplier").getAsInt() : 0;
         this.useCardBaseAura = params != null && params.has("useCardBaseAura") && params.get("useCardBaseAura").getAsBoolean();
     }
 
-    // FIRMA AGGIORNATA PER LA FASE FINE PARTITA
+    // UPDATED SIGNATURE FOR THE ENDGAME PHASE
+    /**
+     * Grants Aura points at the end of the game based on the number of
+     * characters of the configured job type in the player's tribe,
+     * multiplied by the configured multiplier or using each card's base Aura.
+     *
+     * @param p    the player receiving the bonus
+     * @param g    the current game instance
+     * @param card the building card providing this effect
+     */
     @Override
     public void applyOnEndGame(Player p, Game g, BuildingCard card) {
         if (jobType == null) return;

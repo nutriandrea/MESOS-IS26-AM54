@@ -19,9 +19,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test di integrazione: verifica il flusso COMPLETO dei messaggi
  * server → client durante una disconnessione.
  *
- * Setup: 3 giocatori in PickingState con totem piazzati.
+ * Setup: 3 players in PickingState with totems placed.
  * Mock ClientConnection cattura tutti i messaggi inviati.
- * Disconnette un giocatore e verifica i messaggi degli altri.
+ * Disconnects a player and verifies the others' messages.
  */
 public class DisconnectionMessageFlowTest {
 
@@ -40,7 +40,7 @@ public class DisconnectionMessageFlowTest {
         board = new Board();
         game.setBoard(board);
 
-        // --- Giocatori ---
+        // --- Players ---
         alice = new Player(); alice.setNickname("Alice");
         bob   = new Player(); bob.setNickname("Bob");
         charlie = new Player(); charlie.setNickname("Charlie");
@@ -64,12 +64,12 @@ public class DisconnectionMessageFlowTest {
         board.getOfferingTrack().add(tile1);
         board.getOfferingTrack().add(tile2);
 
-        // tutti piazzano i totem
+        // all place the totems
         tile0.occupy(alice); alice.setCurrentTile(tile0); alice.setHasPlacedTotem(true);
         tile1.occupy(bob);   bob.setCurrentTile(tile1);   bob.setHasPlacedTotem(true);
         tile2.occupy(charlie); charlie.setCurrentTile(tile2); charlie.setHasPlacedTotem(true);
 
-        // libera i turn order slot (come in StartTurnState.placeTotem)
+        // frees the turn order slots (like in StartTurnState.placeTotem)
         s1.freeSlot();
         s2.freeSlot();
         s3.freeSlot();
@@ -88,8 +88,8 @@ public class DisconnectionMessageFlowTest {
         vvBob   = new VirtualView(connBob, "Bob");
         vvCharlie = new VirtualView(connCharlie, "Charlie");
 
-        // Registra le VirtualView nel Controller (simula handleJoinGame)
-        // Usiamo reflection per accedere alla mappa private virtualViews
+        // Registers le VirtualView nel Controller (simula handleJoinGame)
+        // Use reflection to access the private virtualViews map
         java.lang.reflect.Field vvField = Controller.class.getDeclaredField("virtualViews");
         vvField.setAccessible(true);
         @SuppressWarnings("unchecked")
@@ -98,17 +98,17 @@ public class DisconnectionMessageFlowTest {
         vvMap.put("Bob", vvBob);
         vvMap.put("Charlie", vvCharlie);
 
-        // Registra VirtualViews come observer del Game
+        // Registers VirtualViews as observers of the Game
         game.addObserver(vvAlice);
         game.addObserver(vvBob);
         game.addObserver(vvCharlie);
 
-        // Controller impostato tramite VirtualView — non piu' necessario
-        // (setController rimosso perche' VirtualView non usa piu' il controller)
+        // Controller set up via VirtualView — no longer needed
+        // (setController removed because VirtualView no longer uses the controller)
 
-        // Il costruttore del Controller aggiunge TUTTI i giocatori a disconnectedPlayers
-        // (per gestire il recupero da persistenza). In un setup di test fresco,
-        // nessuno è disconnesso all'inizio; puliamo il set.
+        // The Controller constructor adds ALL players to disconnectedPlayers
+        // (to handle recovery from persistence). In a fresh test setup,
+        // no one is disconnected at the start; clear the set.
         java.lang.reflect.Field dpField = Controller.class.getDeclaredField("disconnectedPlayers");
         dpField.setAccessible(true);
         @SuppressWarnings("unchecked")
@@ -117,15 +117,15 @@ public class DisconnectionMessageFlowTest {
     }
 
     // ================================================================
-    // TEST 1: NON-current player (Bob) disconnesso in PickingState
+    // TEST 1: NON-current player (Bob) disconnected in PickingState
     // ================================================================
     @Test
     public void testNonCurrentDisconnect_bobDisconnects_aliceAndCharlieStillHaveTile() throws Exception {
-        // Bob NON è di turno (Charlie è il current). Bob ha un tile piazzato.
+        // Bob is NOT the current player (Charlie is). Bob has a tile placed.
         assertNotEquals(bob, game.getCurrentPlayer());
         assertNotNull(bob.getCurrentTile());
 
-        // Simula la disconnessione di Bob
+        // Simulates Bob's disconnection
         controller.removeClient("Bob");
 
         // VERIFICA: Alice e Charlie hanno ANCORA il tile
@@ -136,57 +136,57 @@ public class DisconnectionMessageFlowTest {
         assertNull(bob.getCurrentTile(),
                 "Bob ha perso il suo tile (disconnesso)");
 
-        // VERIFICA: Alice ha ricevuto i messaggi corretti
+        // VERIFY: Alice received the correct messages
         List<Class<?>> aliceMsgs = connAlice.getReceivedMessageTypes();
         assertTrue(aliceMsgs.contains(PlayerDisconnectedUpdate.class),
                 "Alice deve ricevere PlayerDisconnectedUpdate");
         assertTrue(aliceMsgs.contains(TotemReturnedUpdate.class),
                 "Alice deve ricevere TotemReturnedUpdate per Bob");
 
-        // Alice NON deve ricevere TotemReturnedUpdate per se stessa o Charlie
+        // Alice must NOT receive TotemReturnedUpdate for herself or Charlie
         List<String> aliceTotemReturns = connAlice.getTotemReturnedNicknames();
         assertFalse(aliceTotemReturns.contains("Alice"),
                 "Alice NON deve ricevere TotemReturned per se stessa");
         assertFalse(aliceTotemReturns.contains("Charlie"),
                 "Charlie NON deve essere rimosso dall'offering");
 
-        // VERIFICA: Alice ha ricevuto SOLO PlayerDisconnected + TotemReturned
+        // VERIFY: Alice received ONLY PlayerDisconnected + TotemReturned
         // Non deve ricevere StateChangedUpdate (il gioco NON cambia stato)
         assertFalse(aliceMsgs.contains(StateChangedUpdate.class),
                 "Alice NON deve ricevere StateChangedUpdate (nessuna transizione)");
     }
 
     // ================================================================
-    // TEST 2: Current player (Charlie) disconnesso in PickingState
+    // TEST 2: Current player (Charlie) disconnected in PickingState
     // ================================================================
     @Test
     public void testCurrentPlayerDisconnect_charlieDisconnects_aliceAndBobAffected() throws Exception {
-        // Charlie è di turno
+        // Charlie is the current player
         assertEquals(charlie, game.getCurrentPlayer());
 
         controller.removeClient("Charlie");
 
         // Il gioco potrebbe essere passato a StartTurnState (tutti hanno pickato)
-        // o potrebbe aver skippato Charlie e passato il turno
+        // or may have skipped Charlie and passed the turn
         assertNull(charlie.getCurrentTile(),
                 "Charlie ha perso il suo tile");
-        // Alice e Bob hanno ancora il tile se il gioco non è transitato
+        // Alice and Bob still have the tile if the game has not transitioned
         // (dipende da isPickingComplete)
     }
 
     // ================================================================
-    // TEST 3: Player senza tile (già pickato) si disconnette
+    // TEST 3: Player without tile (already picked) disconnects
     // ================================================================
     @Test
     public void testAlreadyPickedPlayerDisconnect() throws Exception {
-        // Alice ha già pickato: setCurrentTile = null, non è in offeringTrack
+        // Alice has already picked: setCurrentTile = null, not in offeringTrack
         alice.setCurrentTile(null);
-        // Mettiamo Alice in un turn order slot (come dopo un pick)
+        // Put Alice in a turn order slot (like after a pick)
         TurnOrderSlot lastSlot = new TurnOrderSlot(4, 0);
         lastSlot.occupy(alice);
         board.getTurnOrderTile().add(lastSlot);
 
-        // Charlie è current, Bob ha tile
+        // Charlie is current, Bob has tile
         game.setCurrentPlayer(charlie);
 
         controller.removeClient("Alice");
@@ -195,17 +195,17 @@ public class DisconnectionMessageFlowTest {
         assertNotNull(bob.getCurrentTile(), "Bob deve ancora avere il suo tile");
         assertNotNull(charlie.getCurrentTile(), "Charlie deve ancora avere il suo tile");
 
-        // Alice (già senza tile) non dovrebbe aver causato modifiche all'offering
+        // Alice (already without a tile) should not have caused offering changes
         List<Class<?>> bobMsgs = connBob.getReceivedMessageTypes();
-        // Alice non aveva tile da freeare → si spera nessun TotemReturnedUpdate sia stato mandato
+        // Alice had no tile to free → hopefully no TotemReturnedUpdate was sent
         // (o al massimo solo PlayerDisconnectedUpdate)
         assertTrue(bobMsgs.contains(PlayerDisconnectedUpdate.class),
                 "Bob deve ricevere PlayerDisconnectedUpdate per Alice");
     }
 
     // ================================================================
-    // TEST 4: Verifica che il messaggio TotemReturnedUpdate contenga
-    //         SOLO il nickname del disconnesso (non altri)
+    // TEST 4: Verify that the TotemReturnedUpdate message contains
+    //         ONLY the disconnected player's nickname (not others)
     // ================================================================
     @Test
     public void testTotemReturnedMessageCarriesOnlyDisconnectedNickname() throws Exception {
@@ -215,7 +215,7 @@ public class DisconnectionMessageFlowTest {
 
         controller.removeClient("Charlie");
 
-        // Alice e Bob devono ricevere TotemReturnedUpdate per Charlie
+        // Alice and Bob must receive TotemReturnedUpdate for Charlie
         List<String> aliceReturns = connAlice.getTotemReturnedNicknames();
         assertEquals(1, aliceReturns.size(),
                 "Alice deve ricevere esattamente 1 TotemReturnedUpdate");
@@ -228,7 +228,7 @@ public class DisconnectionMessageFlowTest {
         assertTrue(bobReturns.contains("Charlie"),
                 "Il TotemReturnedUpdate di Bob deve essere per Charlie");
 
-        // Charlie non riceve nulla (connessione chiusa)
+        // Charlie receives nothing (connection closed)
         assertEquals(0, connCharlie.getReceivedMessages().size(),
                 "Charlie non deve ricevere messaggi (disconnesso)");
     }

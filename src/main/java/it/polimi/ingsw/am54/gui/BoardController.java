@@ -22,6 +22,13 @@ import javafx.scene.layout.*;
 import javafx.util.Duration;
 import it.polimi.ingsw.am54.gui.states.ClientStateRegistry;
 
+/**
+ * Controller for the main game screen.
+ * Manages the board, the market, the personal dashboard, game interactions,
+ * turn management, notifications, summary events and final score calculation.
+ *
+ * @author AM54
+ */
 public class BoardController {
 
     @FXML private StackPane rootPane;
@@ -89,7 +96,7 @@ public class BoardController {
     private boolean isShowingError = false;
     private boolean isGameOver = false;
 
-    // FIX SOVRAPPOSIZIONE: Memorizza il nome del player per ritardare la notifica visiva del turno
+    // FIX OVERLAP: Store the player name to delay the visual turn notification
     private String pendingNotifyPlayer = null;
 
     // --- MANAGERS ---
@@ -98,6 +105,11 @@ public class BoardController {
     private TotemManager totemManager;
     private it.polimi.ingsw.am54.gui.managers.EventSummaryManager eventSummaryManager;
 
+    /**
+     * Initializes the board controller: creates all sub-managers, sets up
+     * layout listeners, loads recap images, registers model callbacks
+     * and performs the first board refresh.
+     */
     @FXML
     public void initialize() {
         marketManager = new MarketManager(upperMarket, lowerMarket, tribeDeckView, buildingsDeckView);
@@ -269,6 +281,12 @@ public class BoardController {
         MusicManager.getInstance().toggle("board", musicButton);
     }
 
+    /**
+     * Displays a temporary error message in the action banner for 3 seconds,
+     * then restores the normal banner text.
+     *
+     * @param errorMessage the error text to show
+     */
     public void showTemporaryError(String errorMessage) {
         Platform.runLater(() -> {
             isShowingError = true;
@@ -288,6 +306,11 @@ public class BoardController {
         });
     }
 
+    /**
+     * Refreshes the entire board UI from the current client model state.
+     * Updates markets, totems, dashboard, opponents, turn notifications,
+     * action banner, round counter and triggers end-game overlay when needed.
+     */
     public void refreshBoard() {
         Platform.runLater(() -> {
             ClientModel model = Client.getInstance().getModel();

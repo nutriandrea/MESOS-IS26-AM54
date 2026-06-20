@@ -14,6 +14,7 @@ package "it.polimi.ingsw.am54.model" {
         +chooseTotemColor(String, String) : void
         +placeTotem(String, int) : void
         +pickCard(String, String, int) : void
+        +endTurn(String) : void
         +setupGame() : void
         +addObserver(IGameObserver) : void
         +removeObserver(IGameObserver) : void
@@ -23,9 +24,11 @@ package "it.polimi.ingsw.am54.model" {
         +onPlayerJoined(Game, Player) : void
         +onTotemColorChosen(Game, Player, TotemColors) : void
         +onTotemPlaced(Game, Player, int) : void
-        +onCardPicked(Game, Player, String, int, int) : void
+        +onCardPicked(Game, Player, String, int, int, int) : void
         +onTurnChanged(Game, Player) : void
         +onStateChanged(Game, GameState) : void
+        +onTotemReturned(Game, Player, int, int) : void
+        +onEventResolved(EventCard) : void
         +onEndGame(Game, List<Player>) : void
     }
 
@@ -62,13 +65,15 @@ package "it.polimi.ingsw.am54.model" {
         -List<Player> players
         -Player currentPlayer
         -GameState currentState
-        -List<IGameObserver> observers
+        -CopyOnWriteArrayList<IGameObserver> observers
+        -int activePlayerCount
         -int currentEra
         -int roundCount
         +joinGame(String) : void
         +chooseTotemColor(String, String) : void
         +placeTotem(String, int) : void
         +pickCard(String, String, int) : void
+        +endTurn(String) : void
         +setupGame() : void
         +nextPlayer() : void
         +advanceEra() : void
@@ -83,7 +88,8 @@ package "it.polimi.ingsw.am54.model" {
         +getRoundCount() : int
         +getCurrentPlayer() : Player
         +setCurrentPlayer(Player) : void
-        +getCurrentPicker() : Player
+        +setActivePlayerCount(int) : void
+        +getActivePlayerCount() : int
         +assignPickerToTurnOrder(Player) : TurnOrderSlot
         +isPickingComplete() : boolean
         +isTribeDeckEmpty() : boolean
@@ -94,6 +100,10 @@ package "it.polimi.ingsw.am54.model" {
         +determineWinners() : List<Player>
         +applyEndGameBuildingEffects() : void
         +notifyEndGame(List<Player>) : void
+        +notifyTotemPlaced(Player, int) : void
+        +notifyCardPicked(Player, String, int, int, int) : void
+        +notifyTotemReturned(Player, int) : void
+        +notifyEventResolved(EventCard) : void
         +addObserver(IGameObserver) : void
         +removeObserver(IGameObserver) : void
     }
@@ -235,6 +245,10 @@ package "it.polimi.ingsw.am54.model" {
         +resolveEffects(Player, Game) : void
     }
 
+    class GameException extends Exception {
+        +GameException(String)
+    }
+
     abstract class GameState {
         +joinGame(Game, String) : void
         +chooseTotemColor(Game, String, String) : void
@@ -243,6 +257,14 @@ package "it.polimi.ingsw.am54.model" {
         +pickCard(Game, String, String, int) : void
         +endTurn(Game, String) : void
         +resolvePhase(Game) : void
+        +skipTurn(Game, String) : void
+        +handleDisconnection(Game, Player, boolean) : void
+        +isDisconnectBlocked() : boolean
+        +isRemovePermanent() : boolean
+        +isAutoResolvable() : boolean
+        +isGameOver() : boolean
+        +shouldResetToSetupOnEmpty() : boolean
+        +recoverActivePlayer(Game) : Player
     }
 
     class SetUpGameState extends GameState
@@ -349,12 +371,37 @@ package "it.polimi.ingsw.am54.network.server" {
     class PersistenceManager {
         -ObjectMapper objectMapper
         -File saveFile
-        -ScheduledExecutorService scheduler
-        +saveState() : boolean
-        +loadState() : GameFullSnapshot
+        +saveGame(Game) : void
+        +loadGame() : Game
         +hasSavedGame() : boolean
-        +startPeriodicSave() : void
-        +stopPeriodicSave() : void
+        +clearBackup() : void
+    }
+
+    class DatabaseManager {
+        -DatabaseConfig config
+        -Connection connection
+        -boolean available
+        +init() : void
+        +isAvailable() : boolean
+        +saveMatchResult(String, int, int) : void
+        +getLeaderboard(int) : List<LeaderboardEntry>
+        +getAllLeaderboardEntries() : List<LeaderboardEntry>
+        +getPlayerPosition(String, int) : int
+    }
+
+    class DatabaseConfig {
+        -String host
+        -int port
+        -String dbName
+        -String user
+        -String password
+        +getJdbcUrl() : String
+        +getHost() : String
+        +getPort() : int
+        +getDbName() : String
+        +getUser() : String
+        +getPassword() : String
+        +loadEnv() : void
     }
 
     class GameFullSnapshot {
@@ -458,10 +505,14 @@ package "it.polimi.ingsw.am54.network.server" {
         +sendUpdate(Update) : void
         +sendError(String) : void
         +disconnect() : void
+        +startHeartbeat() : void
+        +sendFullStateOnReconnect(Game) : void
         +onPlayerJoined(Game, Player) : void
         +onTotemColorChosen(Game, Player, TotemColors) : void
         +onTotemPlaced(Game, Player, int) : void
-        +onCardPicked(Game, Player, String, int, int) : void
+        +onCardPicked(Game, Player, String, int, int, int) : void
+        +onTotemReturned(Game, Player, int, int) : void
+        +onEventResolved(EventCard) : void
         +onTurnChanged(Game, Player) : void
         +onStateChanged(Game, GameState) : void
         +onEndGame(Game, List<Player>) : void
@@ -472,19 +523,39 @@ package "it.polimi.ingsw.am54.network.server" {
         +sendError(String) : void
         +disconnect() : void
         +startHeartbeat() : void
+        +notifyTotemReturned(String, int, int, int) : void
+        +notifyEventResolved(EventCard, Map) : void
+        +sendLeaderboardUpdate(LeaderboardUpdate) : void
+        +showPlayerDisconnected(String) : void
+        +showPlayerReconnected(String) : void
+        +showGameSuspended() : void
+        +showGameResumed() : void
     }
 
     class Controller {
+        -Object gameLock
         -Game game
+        -Server server
+        -PersistenceManager persistenceManager
+        -DatabaseManager dbManager
+        -boolean scoresSavedToDatabase
         -Map<String, VirtualView> virtualViews
         -Set<String> disconnectedPlayers
+        -volatile boolean suspended
+        -ScheduledExecutorService timeoutScheduler
+        -ScheduledFuture timeoutFuture
         +Controller(Game)
+        +setServer(Server) : void
+        +getDatabaseManager() : DatabaseManager
         +handleJoinGame(String, ClientConnection) : void
         +handleReconnect(String, ClientConnection) : void
+        +validateGameStateAfterRecovery() : void
         +handleSetupGame(String) : void
         +handleChooseTotemColor(String, String) : void
         +handlePlaceTotem(String, int) : void
         +handlePickCard(String, String, int) : void
+        +handleEndTurn(String) : void
+        +handleGetLeaderboard(ClientConnection, int) : void
         +markDisconnected(String) : void
         +removeClient(String) : void
         +isDisconnected(String) : boolean
@@ -531,11 +602,23 @@ Controller --> VirtualView
 package "it.polimi.ingsw.am54.network.client" {
 
     class Client {
-        -ClientModel clientModel
+        -static Client instance
         -ServerConnection connection
-        +connect(String, boolean) : void
-        +sendRequest(Request) : void
+        -ClientModel model
+        -String nickname
+        -String savedIp
+        -boolean savedIsSocket
+        -boolean isReconnecting
+        +static synchronized getInstance() : Client
+        +static synchronized resetClient() : void
+        +connect(String, int, boolean) : void
         +disconnect() : void
+        +getConnection() : ServerConnection
+        +getModel() : ClientModel
+        +isSocket() : boolean
+        +getSavedIp() : String
+        +startAutoReconnect() : void
+        +reconnect() : void
     }
 
     class ClientModel {

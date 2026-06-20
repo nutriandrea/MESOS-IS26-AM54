@@ -26,12 +26,22 @@ package "it.polimi.ingsw.am54.network.server" {
     class PersistenceManager {
         -ObjectMapper objectMapper
         -File saveFile
-        -ScheduledExecutorService scheduler
-        +saveState() : boolean
-        +loadState() : GameFullSnapshot
+        +saveGame(Game) : void
+        +loadGame() : Game
         +hasSavedGame() : boolean
-        +startPeriodicSave() : void
-        +stopPeriodicSave() : void
+        +clearBackup() : void
+    }
+
+    class DatabaseManager {
+        -DatabaseConfig config
+        -Connection connection
+        -boolean available
+        +init() : void
+        +isAvailable() : boolean
+        +saveMatchResult(String, int, int) : void
+        +getLeaderboard(int) : List<LeaderboardEntry>
+        +getAllLeaderboardEntries() : List<LeaderboardEntry>
+        +getPlayerPosition(String, int) : int
     }
 
     class GameFullSnapshot {
@@ -135,10 +145,14 @@ package "it.polimi.ingsw.am54.network.server" {
         +sendUpdate(Update) : void
         +sendError(String) : void
         +disconnect() : void
+        +startHeartbeat() : void
+        +sendFullStateOnReconnect(Game) : void
         +onPlayerJoined(Game, Player) : void
         +onTotemColorChosen(Game, Player, TotemColors) : void
         +onTotemPlaced(Game, Player, int) : void
-        +onCardPicked(Game, Player, String, int, int) : void
+        +onCardPicked(Game, Player, String, int, int, int) : void
+        +onTotemReturned(Game, Player, int, int) : void
+        +onEventResolved(EventCard) : void
         +onTurnChanged(Game, Player) : void
         +onStateChanged(Game, GameState) : void
         +onEndGame(Game, List<Player>) : void
@@ -149,21 +163,39 @@ package "it.polimi.ingsw.am54.network.server" {
         +sendError(String) : void
         +disconnect() : void
         +startHeartbeat() : void
+        +notifyTotemReturned(String, int, int, int) : void
+        +notifyEventResolved(EventCard, Map) : void
+        +sendLeaderboardUpdate(LeaderboardUpdate) : void
+        +showPlayerDisconnected(String) : void
+        +showPlayerReconnected(String) : void
+        +showGameSuspended() : void
+        +showGameResumed() : void
     }
 
     class Controller {
+        -Object gameLock
         -Game game
+        -Server server
+        -PersistenceManager persistenceManager
+        -DatabaseManager dbManager
+        -boolean scoresSavedToDatabase
         -Map<String, VirtualView> virtualViews
         -Set<String> disconnectedPlayers
+        -volatile boolean suspended
+        -ScheduledExecutorService timeoutScheduler
+        -ScheduledFuture timeoutFuture
         +Controller(Game)
+        +setServer(Server) : void
+        +getDatabaseManager() : DatabaseManager
         +handleJoinGame(String, ClientConnection) : void
         +handleReconnect(String, ClientConnection) : void
-        +sendFullStateToPlayer(String) : void
-        +broadcastSystemUpdate(Update) : void
+        +validateGameStateAfterRecovery() : void
         +handleSetupGame(String) : void
         +handleChooseTotemColor(String, String) : void
         +handlePlaceTotem(String, int) : void
         +handlePickCard(String, String, int) : void
+        +handleEndTurn(String) : void
+        +handleGetLeaderboard(ClientConnection, int) : void
         +markDisconnected(String) : void
         +removeClient(String) : void
         +isDisconnected(String) : boolean
@@ -210,11 +242,23 @@ Controller --> VirtualView
 package "it.polimi.ingsw.am54.network.client" {
 
     class Client {
-        -ClientModel clientModel
+        -static Client instance
         -ServerConnection connection
-        +connect(String, boolean) : void
-        +sendRequest(Request) : void
+        -ClientModel model
+        -String nickname
+        -String savedIp
+        -boolean savedIsSocket
+        -boolean isReconnecting
+        +static synchronized getInstance() : Client
+        +static synchronized resetClient() : void
+        +connect(String, int, boolean) : void
         +disconnect() : void
+        +getConnection() : ServerConnection
+        +getModel() : ClientModel
+        +isSocket() : boolean
+        +getSavedIp() : String
+        +startAutoReconnect() : void
+        +reconnect() : void
     }
 
     class ClientModel {
@@ -236,20 +280,33 @@ package "it.polimi.ingsw.am54.network.client" {
         -List<String> lowerBuildingRow
         -List<String> winners
         -String lastErrorMessage
+        -Runnable onModelUpdatedCallback
+        -Runnable onConnectionLostCallback
+        -boolean connectionLost
         +updatePlayerJoined(String) : void
         +updatePlayerDisconnected(String) : void
         +updatePlayerReconnected(String) : void
         +updateTotemPlacement(String, int) : void
-        +updateCardPicked(String, String, int, int) : void
+        +updateCardPicked(String, String, int, int, Map) : void
+        +updateTotemReturned(String, int, int, int) : void
         +updateTurn(String) : void
-        +updateState(String) : void
+        +updateState(StateChangedUpdate) : void
         +updateTotemColor(String, TotemColors) : void
-        +updateEndGame(List<String>) : void
+        +updateEndGame(List<String>, Map, int) : void
         +updateError(String) : void
+        +updateLeaderboard(int, List, int) : void
+        +updateEventSnapshot(EventUpdate) : void
+        +updateGameSuspended() : void
+        +updateGameResumed() : void
+        +triggerConnectionLost() : void
+        +setOnModelUpdatedCallback(Runnable) : void
+        +setOnConnectionLostCallback(Runnable) : void
         +getCurrentState() : String
         +getCurrentPlayer() : String
         +getPlayers() : List<String>
         +getPlayerColors() : Map
+        +getOfferingTrack() : Map
+        +getTurnOrderTrack() : List
     }
 
     class ServerHandler implements Runnable {
@@ -307,7 +364,22 @@ package "it.polimi.ingsw.am54.network.rmi" {
     }
 
     interface RMIClientInterface extends Remote {
-        +receiveUpdate(Update) : void
+        +onPlayerJoined(String) : void
+        +onTotemColorChosen(String, TotemColors) : void
+        +onTotemPlaced(String, int) : void
+        +onTotemReturned(String, int, int, int) : void
+        +onEventResolved(String, Map, List, List, List, List, List, List) : void
+        +onCardPicked(String, String, int, int, int, Map) : void
+        +onTurnChanged(String) : void
+        +onStateChanged(String, int, int, Map, List, Map, List, List, List, List, List, List) : void
+        +onEndGame(EndGameUpdate) : void
+        +onErrorMessage(String) : void
+        +onLeaderboardUpdate(LeaderboardUpdate) : void
+        +onPlayerDisconnected(String) : void
+        +onPlayerReconnected(String) : void
+        +onGameSuspended() : void
+        +onGameResumed() : void
+        +ping() : void
     }
 
     interface RMIClientHandlerInterface extends Remote {
@@ -422,6 +494,41 @@ package "it.polimi.ingsw.am54.network.messages" {
         +getTribeCards() : List<String>
         +getBuildingCards() : List<String>
     }
+
+    class TotemReturnedUpdate implements Update {
+        -String nickname
+        -int position
+        -int newFoodBalance
+        -int newAuraBalance
+    }
+
+    class EventUpdate implements Update {
+        -String eventName
+        -Map<String, EventUpdate.PlayerSnapshot> playerStats
+    }
+
+    class EndGameUpdate implements Update {
+        -List<String> winners
+        -Map<String, Integer> allScores
+        -int numPlayers
+    }
+
+    class LeaderboardUpdate implements Update {
+        -int playerPosition
+        -List<LeaderboardEntry> entries
+        -int numPlayers
+    }
+
+    class LeaderboardEntry {
+        -String nickname
+        -int score
+        -int numPlayers
+        -LocalDateTime matchDate
+        -int position
+    }
+
+    class GameSuspendedUpdate implements Update
+    class GameResumedUpdate implements Update
 }
 
 ' MESSAGES RELATIONSHIPS
@@ -448,12 +555,19 @@ Update <|-- PingRequest
 Update <|-- GameListUpdate
 Update <|-- GameCreatedUpdate
 Update <|-- PlayerStatsUpdate
+Update <|-- TotemReturnedUpdate
+Update <|-- EventUpdate
+Update <|-- LeaderboardUpdate
+Update <|-- GameSuspendedUpdate
+Update <|-- GameResumedUpdate
 
 ' ============================================================
 ' CROSS-PACKAGE
 ' ============================================================
 
 Controller ..> Game
+Controller ..> DatabaseManager
+Controller ..> PersistenceManager
 Game -- IGameObserver
 
 @enduml

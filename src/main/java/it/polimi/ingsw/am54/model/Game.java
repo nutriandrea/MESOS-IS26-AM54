@@ -9,61 +9,144 @@ import java.io.FileReader;
 import it.polimi.ingsw.am54.model.states.StartTurnState;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
+/**
+ * Central game class that manages the entire lifecycle of a game:
+ * game states, turns, ages/eras, card effects, observer notifications
+ * and end-game logic with score calculation.
+ * <p>
+ * Coordinates the Board, the decks (tribe and buildings) and the player list,
+ * delegating validation and execution of actions to the current state
+ * via the <b>State</b> pattern. State transitions are managed
+ * by calling {@link #setState(GameState)}.
+ * </p>
+ * <p>
+ * Implements the {@link IGame} interface to expose game actions
+ * to the network/controller layer, and uses the <b>Observer</b> pattern
+ * via {@link IGameObserver} to notify events to the view.
+ * </p>
+ *
+ * @see IGame
+ * @see GameState
+ * @see Board
+ * @see Player
+ * @see IGameObserver
+ * @author AM54
+ */
 public class Game implements IGame{
 
 
-    //ATTRIBUTI:
+    //ATTRIBUTES:
 
+    /** Game board that manages the turn track, offerings and cards on the table. */
     private Board board;
-    private Deck<TribeCard> deckTribu;
+
+    /** Tribe card deck (characters + events) from which cards are drawn to populate the rows. */
+    private Deck<TribeCard> tribeDeck;
+
+    /** Building card deck from which purchasable buildings are drawn. */
     private Deck<BuildingCard> deckBuildings;
+
+    /** List of players participating in the game. */
     private List<Player> players;
 
+    /** Current game era (1-3). Advances when the tribe deck runs out of current era cards. */
     private int currentEra;
+
+    /** Counter of rounds played (1-10). Determines game progression. */
     private int roundCount;
+
+    /** Player currently taking their turn. */
     private Player currentPlayer;
 
+    /** Current game state (State pattern). Determines which actions are allowed. */
     private GameState currentState;
 
+    /** Number of active players in the current round (excludes disconnected players). */
     private int activePlayerCount = 0;
 
-    private transient List<IGameObserver> observers = new ArrayList<>();
+    /** Thread-safe list of observers for asynchronous notifications to view/network. */
+    private transient List<IGameObserver> observers = new CopyOnWriteArrayList<>();
 
-    // I campi offeringTiles, turnOrderSlots, upperRow, lowerRow sono gestiti da Board
+    /**
+     * Constructs a new game with empty lists and initial state {@link SetUpGameState}.
+     * Players can join immediately after creation.
+     */
     public Game() {
-        this.observers = new ArrayList<>();
+        this.observers = new CopyOnWriteArrayList<>();
         this.players = new ArrayList<>();
         this.currentState = new SetUpGameState();
     }
 
     // ==========================================
-    // METODI DELL'INTERFACCIA IGAME
+    // IGAME INTERFACE METHODS
     // ==========================================
 
+    /**
+     * Allows a new player to join the game.
+     * Validation and addition are delegated to the current state.
+     *
+     * @param nickname the name of the player to add
+     * @throws GameException if the nickname is already taken, the game has already started,
+     *                       or the name is not valid according to the current state's rules
+     */
     @Override
-    public void joinGame(String nickname) throws Exception {
+    public void joinGame(String nickname) throws GameException {
         currentState.joinGame(this, nickname);
         notifyPlayerJoined(getPlayerByNickname(nickname));
     }
 
+    /**
+     * Assigns a totem color to the specified player.
+     * The color choice is permanent for the entire game.
+     *
+     * @param nickname the player's name
+     * @param color    the chosen color (e.g. "RED", "BLUE")
+     * @throws GameException if the color is not available or the game phase does not allow it
+     */
     @Override
-    public void chooseTotemColor(String nickname, String color) throws Exception {
+    public void chooseTotemColor(String nickname, String color) throws GameException {
         currentState.chooseTotemColor(this, nickname, color);
         notifyTotemColorChosen(getPlayerByNickname(nickname), TotemColors.valueOf(color.toUpperCase()));
     }
 
+    /**
+     * Places the player's totem on an offering tile on the track.
+     * The placement determines the draw order and bonuses obtainable in the round.
+     *
+     * @param nickname       the player's name
+     * @param offerPosition  the position of the offering tile (numeric index)
+     * @throws GameException if the position is invalid, the tile is already occupied,
+     *                       or the player has already placed the totem
+     */
     @Override
-    public void placeTotem(String nickname, int offerPosition) throws Exception {
+    public void placeTotem(String nickname, int offerPosition) throws GameException {
         currentState.placeTotem(this, nickname, offerPosition);
     }
 
+    /**
+     * Allows the player to draw a card from one of the table rows.
+     * It can be a character, event or building card.
+     *
+     * @param nickname  the player's name
+     * @param row       the row to draw from ("upper" or "lower")
+     * @param cardIndex the index of the card in the row
+     * @throws GameException if the card is not purchasable, food is insufficient,
+     *                       or the player is not allowed to draw at this moment
+     */
     @Override
-    public void pickCard(String nickname, String row, int cardIndex) throws Exception {
+    public void pickCard(String nickname, String row, int cardIndex) throws GameException {
         currentState.pickCard(this, nickname, row, cardIndex);
     }
 
+    /**
+     * Registers an observer to receive updates on the game state.
+     * If the observer is already registered, it is not duplicated.
+     *
+     * @param observer the observer to add
+     */
     @Override
     public void addObserver(IGameObserver observer) {
         if (!getSafeObservers().contains(observer)) {
@@ -71,78 +154,107 @@ public class Game implements IGame{
         }
     }
 
+    /**
+     * Removes an observer from the list, stopping notifications.
+     *
+     * @param observer the observer to remove
+     */
     @Override
     public void removeObserver(IGameObserver observer) {
         getSafeObservers().remove(observer);
     }
 
     // ==========================================
-    // FASE DI SETUP (Rifattorizzata)
+    // SETUP PHASE (Refactored)
     // ==========================================
 
-    public void setBoard(Board board) { this.board = board; } // per i test
+    /**
+     * Sets the game Board (used mainly in tests).
+     *
+     * @param board the Board instance to associate
+     */
+    public void setBoard(Board board) { this.board = board; }
 
-    public void setupGame() throws Exception {
+    /**
+     * Executes the complete initial game setup:
+     * <ol>
+     *   <li>Initializes the decks (tribe and buildings) via {@link DeckFactory}</li>
+     *   <li>Creates and initializes the Board with turn track and offerings</li>
+     *   <li>Populates the initial rows of tribe and building cards</li>
+     *   <li>Calculates random turn order and distributes initial food</li>
+     *   <li>Sets the first player and transitions to {@link StartTurnState}</li>
+     * </ol>
+     *
+     * @throws GameException if an error occurs during setup
+     */
+    public void setupGame() throws GameException {
         this.currentEra = 1;
-        this.roundCount = 1; // Corretto: il gioco inizia dal Round 1, non da 0
+        this.roundCount = 1;
 
-        // 1. Creazione Mazzi (Delegata alla Factory)
-        this.deckTribu = DeckFactory.createTribeDeck(
+        // 1. Deck Creation (Delegated to Factory)
+        this.tribeDeck = DeckFactory.createTribeDeck(
                 "data/CharacterCardsSetup.json",
                 "data/EventCardsSetup.json",
                 players.size()
         );
         this.deckBuildings = DeckFactory.createBuildingDeck("data/BuildingCardsSetup.json", players.size());
 
-        // 2. Inizializzazione Board
+        // 2. Board initialization
         this.board = new Board();
         this.board.initializeLayout(players.size());
 
-        // 3. Popolamento iniziale delle carte (Il Game agisce da Orchestratore)
+        // 3. Initial card population
         fillInitialTribeRows();
         fillInitialBuildingRow();
 
-        // 4. Calcolo ordine di turno casuale e distribuzione Cibo iniziale
+        // 4. Random turn order calculation and initial Food distribution
         List<Player> tempPlayers = new ArrayList<>(this.players);
         Collections.shuffle(tempPlayers);
         this.board.setupInitialTurnOrder(tempPlayers);
         distributeInitialFood(tempPlayers);
 
-        // 5. Imposta esplicitamente il PRIMO giocatore prima di cambiare stato (Risolve il bug di avvio)
+        // 5. Set the first player before changing state
         this.setCurrentPlayer(tempPlayers.get(0));
 
-        // 6. Passaggio allo stato di Inizio Turno
+        // 6. Transition to StartTurn state
         this.setState(new StartTurnState());
     }
 
+    /**
+     * Initially populates the tribe card rows (characters and events).
+     * <ul>
+     *   <li>Lower row: number of players + 1 characters</li>
+     *   <li>Upper row: number of players + 4 characters and events</li>
+     * </ul>
+     */
     private void fillInitialTribeRows() {
         int numPlayers = players.size();
 
-        // REGOLE: Fila in basso = Giocatori + 1
         int requiredCharactersLower = numPlayers + 1;
         while (board.getCharacterRowSize("lower") < requiredCharactersLower) {
-            TribeCard card = deckTribu.drawCard();
+            TribeCard card = tribeDeck.drawCard();
             if (card != null) {
-                // Il metodo reveal manderà automaticamente i Personaggi giù (gli eventi tornano su se pescati, come da tua logica)
                 card.reveal(board, "lower");
             } else break;
         }
 
-        // REGOLE: Fila in alto = Giocatori + 4 (Somma di Personaggi + Eventi)
         int requiredTotalUpper = numPlayers + 4;
         while ((board.getCharacterRowSize("upper") + board.getEventRowSize("upper")) < requiredTotalUpper) {
-            TribeCard card = deckTribu.drawCard();
+            TribeCard card = tribeDeck.drawCard();
             if (card != null) {
                 card.reveal(board, "upper");
             } else break;
         }
     }
 
+    /**
+     * Populates the upper building row by reading the configuration
+     * from the {@code data/EraCounts.json} file based on the number of players and the current era.
+     */
     private void fillInitialBuildingRow() {
         int numPlayers = players.size();
         int cardsToDraw = 0;
 
-        // Leggiamo la configurazione JSON degli edifici dall'interno del Model, non dalla Board
         try {
             JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
             JsonArray buildingCounts = countsRoot.getAsJsonObject("buildingCounts").getAsJsonArray(String.valueOf(numPlayers));
@@ -150,13 +262,12 @@ public class Game implements IGame{
             if (buildingCounts != null) {
                 cardsToDraw = buildingCounts.get(currentEra - 1).getAsInt();
             } else {
-                throw new IllegalStateException("Nodo 'buildingCounts' mancante o non valido.");
+                throw new IllegalStateException("Node 'buildingCounts' missing or invalid.");
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Impossibile leggere il file EraCounts.json: " + e.getMessage(), e);
+            throw new IllegalStateException("Unable to read file EraCounts.json: " + e.getMessage(), e);
         }
 
-        // Pescaggio e posizionamento Edifici
         for (int i = 0; i < cardsToDraw; i++) {
             BuildingCard card = deckBuildings.drawCard();
             if (card != null) {
@@ -166,57 +277,61 @@ public class Game implements IGame{
     }
 
 
+    /**
+     * Distributes initial food to players based on turn order.
+     * <ul>
+     *   <li>1st player: 2 food</li>
+     *   <li>2nd-3rd player: 3 food</li>
+     *   <li>4th-5th player: 4 food</li>
+     * </ul>
+     *
+     * @param orderedPlayers list of players ordered according to the established turn order
+     */
     private void distributeInitialFood(List<Player> orderedPlayers) {
-
-        // 1°: 2 Cibo
-        // 2°-3°: 3 Cibo
-        // 4°-5°: 4 Cibo
         for (int i = 0; i < orderedPlayers.size(); i++) {
             Player player = orderedPlayers.get(i);
-            int foodAmount = 0;
+            int foodAmount;
 
             if (i == 0) {
                 foodAmount = 2;
             } else if (i == 1 || i == 2) {
                 foodAmount = 3;
-            } else if (i == 3 || i == 4) {
+            } else {
                 foodAmount = 4;
             }
 
-            /*// MEME
-            if (player.getNickname().equals("tricheco")|| player.getNickname().equalsIgnoreCase("Tester")|| player.getNickname().equalsIgnoreCase("Tester2")) {
-                foodAmount = 1000;
-            }
-            // FINE MEME*/
-
             player.modifyFood(foodAmount);
         }
-
-
-        /*
-        // Configurazione di sblocco totale per il testing sul campo
-        for (Player player : orderedPlayers) {
-            player.modifyFood(10000);       // Cibo infinito per comprare tutto
-            player.modifyAuraPoints(0);   // Punti Aura per testare la stabilità dei tracciati
-            player.modifyMagicPoints(0);  // Punti Magia pronti all'uso
-        }
-         */
-
     }
 
+    /**
+     * Transitions the game to a new state, notifying all observers.
+     *
+     * @param newState the new game state (e.g. {@link it.polimi.ingsw.am54.model.states.StartTurnState},
+     *                 {@link it.polimi.ingsw.am54.model.states.PickingState}, etc.)
+     */
     public void setState(GameState newState) {
         this.currentState = newState;
         notifyStateChanged(newState);
     }
 
+    /**
+     * Returns the current game state.
+     *
+     * @return the currently active state
+     */
     public GameState getCurrentState() {
         return currentState;
     }
 
+    /**
+     * Advances to the next player on the turn track who has not yet
+     * placed the totem. The search starts from the current player and cycles
+     * through the occupied slots.
+     */
     public void nextPlayer() {
         List<TurnOrderSlot> turnTrack = board.getTurnOrderTile();
 
-        // troviamo in quale slot si trova il giocatore corrente
         int currentIndex = 0;
         boolean foundCurrent = false;
 
@@ -228,43 +343,57 @@ public class Game implements IGame{
             }
         }
 
-        // passiamo al prossimo slot occupato
         int offset = 1;
 
         while (offset <= turnTrack.size()) {
             int nextIndex = (currentIndex + offset) % turnTrack.size();
             Player nextP = turnTrack.get(nextIndex).getOccupiedBy();
 
-            // Se in questo slot c'è seduto qualcuno, e non ha ancora piazzato il totem
             if (nextP != null && !nextP.hasPlacedTotem()) {
                 this.currentPlayer = nextP;
                 notifyTurnChanged(currentPlayer);
-                return; // Abbiamo trovato il prossimo, usciamo dal metodo
+                return;
             } else {
-                offset++; // posto successivo
+                offset++;
             }
         }
     }
 
+    /**
+     * Increments the current era counter.
+     */
     public void advanceEra(){this.currentEra++;}
+
+    /**
+     * Increments the round counter.
+     */
     public void advanceRound(){this.roundCount++;}
 
 
     // ==========================================
-    // METODI DI REFILL FINE ROUND
+    // END OF ROUND REFILL METHODS
     // ==========================================
 
+    /**
+     * Refills the upper tribe card row until reaching
+     * the target of {@code players + 4} cards (characters + events).
+     * Cards are drawn from the tribe deck and revealed in the upper row.
+     */
     public void refillUpperTribeRow() {
         int targetSize = players.size() + 4;
 
-        // Continua a pescare finché la somma di Personaggi + Eventi in alto non raggiunge il target
         while ((board.getCharacterRowSize("upper") + board.getEventRowSize("upper")) < targetSize) {
-            TribeCard card = deckTribu.drawCard();
-            if (card == null) break; // Mazzo finito, ci fermiamo
+            TribeCard card = tribeDeck.drawCard();
+            if (card == null) break;
             card.reveal(board, "upper");
         }
     }
 
+    /**
+     * Refills the upper building row by reading the correct quantity
+     * from the {@code data/EraCounts.json} file based on the era and number of players.
+     * Cards are drawn from the building deck.
+     */
     public void refillUpperBuildings() {
         int cardsToDraw = 0;
         try {
@@ -275,7 +404,7 @@ public class Game implements IGame{
                 cardsToDraw = buildingCounts.get(currentEra - 1).getAsInt();
             }
         } catch (Exception e) {
-            System.err.println("Errore lettura EraCounts: " + e.getMessage());
+            System.err.println("Error reading EraCounts: " + e.getMessage());
         }
 
         for (int i = 0; i < cardsToDraw; i++) {
@@ -286,37 +415,88 @@ public class Game implements IGame{
         }
     }
 
-    public Player getPlayerByNickname(String nickname) throws Exception {
+    /**
+     * Searches for a player in the list by nickname (case-insensitive search).
+     *
+     * @param nickname the name of the player to find
+     * @return the found player
+     * @throws GameException if no player with that nickname is present in the game
+     */
+    public Player getPlayerByNickname(String nickname) throws GameException {
         return this.players.stream()
                 .filter(p -> p.getNickname().equalsIgnoreCase(nickname))
                 .findFirst()
-                .orElseThrow(() -> new Exception("Errore: Giocatore '" + nickname + "' non trovato."));
+                .orElseThrow(() -> new GameException("Error: Player '" + nickname + "' not found."));
     }
 
+    /**
+     * Notifies all observers that a new player has joined.
+     *
+     * @param player the player who joined
+     */
     private void notifyPlayerJoined(Player player) {
         for (IGameObserver obs : getSafeObservers()) obs.onPlayerJoined(this, player);
     }
 
+    /**
+     * Notifies all observers that a player has chosen a totem color.
+     *
+     * @param player the player who chose
+     * @param color  the chosen color
+     */
     private void notifyTotemColorChosen(Player player, TotemColors color) {
         for (IGameObserver obs : getSafeObservers()) obs.onTotemColorChosen(this, player, color);
     }
 
+    /**
+     * Notifies all observers that a player has placed the totem
+     * on an offering tile.
+     *
+     * @param player         the player who placed
+     * @param offerPosition  the tile position
+     */
     public void notifyTotemPlaced(Player player, int offerPosition) {
         for (IGameObserver obs : getSafeObservers()) obs.onTotemPlaced(this, player, offerPosition);
     }
 
+    /**
+     * Notifies all observers that a player has picked a card.
+     *
+     * @param player          the player who picked
+     * @param row             the row from which the card was picked
+     * @param cardIndex       the card index
+     * @param newFoodBalance  the player's new food balance
+     * @param newMagicBalance the new magic points balance
+     */
     public void notifyCardPicked(Player player, String row, int cardIndex, int newFoodBalance, int newMagicBalance) {
         for (IGameObserver obs : getSafeObservers()) obs.onCardPicked(this, player, row, cardIndex, newFoodBalance, newMagicBalance);
     }
 
+    /**
+     * Notifies all observers that the turn has passed to a new player.
+     *
+     * @param player the player now taking their turn
+     */
     private void notifyTurnChanged(Player player) {
         for (IGameObserver obs : getSafeObservers()) obs.onTurnChanged(this, player);
     }
 
+    /**
+     * Notifies all observers that the game state has changed.
+     *
+     * @param newState the new state
+     */
     private void notifyStateChanged(GameState newState) {
         for (IGameObserver obs : getSafeObservers()) obs.onStateChanged(this, newState);
     }
 
+    /**
+     * Notifies all observers that a totem has been returned from the offering track,
+     * including the player's final food and aura balances.
+     *
+     * @param player   the player returning the totem
+     * @param position the position in the turn order
+     */
     public void notifyTotemReturned(Player player, int position) {
         int finalFood = player.getFood();
         int finalAura = player.getAuraPoints();
@@ -326,22 +506,39 @@ public class Game implements IGame{
         }
     }
 
+    /**
+     * Notifies all observers that an event card has been resolved.
+     *
+     * @param eventCard the resolved event card
+     */
     public void notifyEventResolved(EventCard eventCard) {
         for (IGameObserver obs : getSafeObservers()) {
             obs.onEventResolved(this, eventCard);
         }
     }
 
+    /**
+     * Ends the turn of the specified player.
+     * End-of-turn logic is delegated to the current state.
+     *
+     * @param nickname the name of the player ending their turn
+     * @throws GameException if it is not the player's turn or the action is not allowed
+     */
     @Override
-    public void endTurn(String nickname) throws Exception {
+    public void endTurn(String nickname) throws GameException {
         currentState.endTurn(this, nickname);
     }
 
+    /**
+     * Permanently removes a player from the game (e.g. for permanent disconnection).
+     * If all players leave and the current state allows it,
+     * the game is reset to the initial setup state.
+     *
+     * @param nickname the name of the player to remove
+     */
     public synchronized void removePlayerEntirely(String nickname) {
-        // 1. Rimuove fisicamente il giocatore dalla lista
         players.removeIf(p -> p.getNickname().equalsIgnoreCase(nickname));
 
-        // 2. Se tutti abbandonano a fine partita, riporta il server allo stato di Setup iniziale
         if (players.isEmpty() && currentState.shouldResetToSetupOnEmpty()) {
             this.setState(new SetUpGameState());
         }
@@ -352,93 +549,170 @@ public class Game implements IGame{
     // GETTERS & SETTERS ESSENZIALI
     // ==========================================
 
+    /**
+     * Returns the complete list of players in the game.
+     *
+     * @return list of players
+     */
     public List<Player> getPlayers() { return players; }
+
+    /**
+     * Returns the total number of registered players.
+     *
+     * @return number of players
+     */
     public int getPlayersNumber() { return players.size(); }
 
+    /**
+     * Returns the game Board.
+     *
+     * @return the current Board
+     */
     public Board getBoard() { return this.board; }
-    public Deck<TribeCard> getTribeDeck() { return deckTribu; }
+
+    /**
+     * Returns the tribe card deck.
+     *
+     * @return the tribe deck
+     */
+    public Deck<TribeCard> getTribeDeck() { return tribeDeck; }
+
+    /**
+     * Returns the building card deck.
+     *
+     * @return the building deck
+     */
     public Deck<BuildingCard> getBuildingDeck() { return deckBuildings; }
-    public void setTribeDeck(Deck<TribeCard> deck) { this.deckTribu = deck; }
+
+    /**
+     * Sets the tribe card deck (used for testing or restoration).
+     *
+     * @param deck the new tribe deck
+     */
+    public void setTribeDeck(Deck<TribeCard> deck) { this.tribeDeck = deck; }
+
+    /**
+     * Sets the building card deck (used for testing or restoration).
+     *
+     * @param deck the new building deck
+     */
     public void setBuildingDeck(Deck<BuildingCard> deck) { this.deckBuildings = deck; }
 
+    /**
+     * Returns the current era.
+     *
+     * @return the era (1-3)
+     */
     public int getCurrentEra() { return currentEra; }
+
+    /**
+     * Returns the current round number.
+     *
+     * @return the round (1-10)
+     */
     public int getRoundCount() { return roundCount; }
 
     /**
-     * Imposta l'era corrente.
-     * Utilizzato dal Server per ripristinare lo stato del gioco dopo un crash.
+     * Sets the current era.
+     * Used by the Server to restore the game state after a crash.
      *
-     * @param era l'era da impostare (1-6)
+     * @param era the era to set (1-3)
      */
     public void setCurrentEra(int era) { this.currentEra = era; }
 
     /**
-     * Imposta il numero del round corrente.
-     * Utilizzato dal Server per ripristinare lo stato del gioco dopo un crash.
+     * Sets the current round number.
+     * Used by the Server to restore the game state after a crash.
      *
-     * @param round il numero del round da impostare
+     * @param round the round number to set
      */
     public void setRoundCount(int round) { this.roundCount = round; }
 
+    /**
+     * Returns the player currently taking their turn.
+     *
+     * @return the current player
+     */
     public Player getCurrentPlayer() { return currentPlayer; }
+
+    /**
+     * Sets the current player and notifies the turn change to all observers.
+     *
+     * @param player the player who becomes current
+     */
     public void setCurrentPlayer(Player player) {
         this.currentPlayer = player;
         notifyTurnChanged(player);
     }
 
     /**
-     * Risolve il problema dei "Cloni di Gson".
-     * Deserializzando il JSON, Gson crea copie distinte per gli oggetti referenziati più volte.
-     * Questo metodo riallaccia i puntatori (currentPlayer, slot della board)
-     * alle UNICHE istanze ufficiali contenute nella lista 'players'.
+     * Resolves the "Gson Clones" problem.
+     * When deserializing JSON, Gson creates distinct copies for objects referenced multiple times.
+     * This method relinks the pointers (currentPlayer, board slots)
+     * to the ONLY official instances contained in the 'players' list.
      */
     public void restoreReferences() {
-        // 1. Ripristina il currentPlayer
         if (this.currentPlayer != null) {
             try {
                 this.currentPlayer = getPlayerByNickname(this.currentPlayer.getNickname());
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                // Ignored: if the player no longer exists, currentPlayer keeps the old reference
+            }
         }
 
-        // 2. Ripristina gli occupanti degli slot di turno (Turn Order)
         if (this.board != null && this.board.getTurnOrderTile() != null) {
-            for (it.polimi.ingsw.am54.model.TurnOrderSlot slot : this.board.getTurnOrderTile()) {
+            for (TurnOrderSlot slot : this.board.getTurnOrderTile()) {
                 if (slot.getOccupiedBy() != null) {
                     try {
                         slot.occupy(getPlayerByNickname(slot.getOccupiedBy().getNickname()));
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                        // Ignored
+                    }
                 }
             }
         }
 
-        // 3. Ripristina gli occupanti delle offerte e ricollega il riferimento inverso
         if (this.board != null && this.board.getOfferingTrack() != null) {
-            for (it.polimi.ingsw.am54.model.OfferingTile tile : this.board.getOfferingTrack()) {
+            for (OfferingTile tile : this.board.getOfferingTrack()) {
                 if (tile.getOccupiedBy() != null) {
                     try {
                         Player p = getPlayerByNickname(tile.getOccupiedBy().getNickname());
                         tile.occupy(p);
                         p.setCurrentTile(tile);
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                        // Ignored
+                    }
                 }
             }
         }
     }
+
     /**
-     * Imposta il numero di giocatori attivi per il round corrente.
-     * Usato dal Controller per informare il Model di quanti giocatori
-     * stanno effettivamente partecipando (escludendo i disconnessi).
+     * Sets the number of active players for the current round.
+     * Used by the Controller to inform the Model of how many players
+     * are actually participating (excluding disconnected ones).
+     *
+     * @param count the number of active players
      */
     public void setActivePlayerCount(int count) { this.activePlayerCount = count; }
 
     /**
-     * Restituisce il numero di giocatori attivi per il round corrente.
-     * Se non impostato (0), usa il numero totale di giocatori.
+     * Returns the number of active players for the current round.
+     * If not set (0), uses the total number of players.
+     *
+     * @return number of active players
      */
     public int getActivePlayerCount() {
         return (activePlayerCount > 0) ? activePlayerCount : players.size();
     }
 
+    /**
+     * Returns the player currently in the "picking" phase (picker),
+     * i.e. the first player on the offering track who has not
+     * yet been moved to the turn track.
+     *
+     * @return the player who still needs to pick, or {@code null} if everyone has picked
+     */
     public Player getCurrentPicker() {
         List<OfferingTile> tiles = board.getOfferingTrack();
         
@@ -451,6 +725,12 @@ public class Game implements IGame{
         return null;
     }
 
+    /**
+     * Checks if a player is present in the turn track.
+     *
+     * @param p the player to search for
+     * @return {@code true} if the player occupies a turn track slot
+     */
     private boolean isInTurnOrder(Player p) {
         for (TurnOrderSlot slot : board.getTurnOrderTile()) {
             if (p.equals(slot.getOccupiedBy())) {
@@ -460,6 +740,13 @@ public class Game implements IGame{
         return false;
     }
 
+    /**
+     * Assigns a player to the first free slot in the turn track.
+     * Used when a player completes picking and returns to the turn order.
+     *
+     * @param p the player to assign
+     * @return the assigned slot, or {@code null} if there are no free slots
+     */
     public TurnOrderSlot assignPickerToTurnOrder(Player p) {
         for (TurnOrderSlot slot : board.getTurnOrderTile()) {
             if (slot.getOccupiedBy() == null) {
@@ -470,10 +757,18 @@ public class Game implements IGame{
         return null;
     }
 
+    /**
+     * Moves a player to the last slot of the turn track,
+     * compacting the intermediate slots to the left.
+     * Used to handle disconnected players or pickers
+     * that need to be repositioned at the end of the order.
+     *
+     * @param p the player to move
+     * @return the slot where the player was placed, or {@code null} if the last slot is occupied
+     */
     public TurnOrderSlot moveToLastSlot(Player p) {
         List<TurnOrderSlot> slots = board.getTurnOrderTile();
 
-        // libera il giocatore dallo slot corrente
         int freedIndex = -1;
         for (int i = 0; i < slots.size(); i++) {
             if (p.equals(slots.get(i).getOccupiedBy())) {
@@ -483,7 +778,6 @@ public class Game implements IGame{
             }
         }
 
-        // compatta spostando a sinistra gli occupanti dopo freedIndex
         if (freedIndex >= 0) {
             for (int i = freedIndex; i < slots.size() - 1; i++) {
                 Player occupant = slots.get(i + 1).getOccupiedBy();
@@ -504,15 +798,15 @@ public class Game implements IGame{
         return null;
     }
 
+    /**
+     * Checks if all players who placed their totem on the offering
+     * track have completed the picking phase.
+     * The condition is satisfied when every occupied tile has its
+     * player moved to the turn track.
+     *
+     * @return {@code true} if all pickers have picked
+     */
     public boolean isPickingComplete() {
-        // Il conteggio basato su activePlayerCount fallisce quando un giocatore
-        // disconnesso viene spostato nel turn order da moveToLastSlot (in
-        // autoHandleDisconnection): viene conteggiato come "aver pescato",
-        // saltando i giocatori ancora sul tracciato offerte.
-        //
-        // La condizione corretta: tutti i giocatori che hanno piazzato un totem
-        // sul tracciato offerte hanno completato la pesca, cioè il loro occupante
-        // è stato spostato nel turn order (o la tessera è stata liberata).
         for (OfferingTile tile : board.getOfferingTrack()) {
             Player occupant = tile.getOccupiedBy();
             if (occupant != null && !isInTurnOrder(occupant)) {
@@ -522,64 +816,119 @@ public class Game implements IGame{
         return true;
     }
 
+    /**
+     * Checks if the tribe card deck is empty.
+     *
+     * @return {@code true} if there are no more cards to draw
+     */
     public boolean isTribeDeckEmpty() {
-        return deckTribu.isEmpty();
+        return tribeDeck.isEmpty();
     }
 
-    // True se la prossima carta del deck è di un'era successiva
+    /**
+     * Checks if the next card in the tribe deck belongs to an era
+     * after the current one, indicating that an era advancement is needed.
+     *
+     * @return {@code true} if the next card is from a higher era
+     */
     public boolean isEraTransition() {
-        TribeCard nextCard = deckTribu.peek();
+        TribeCard nextCard = tribeDeck.peek();
         if (nextCard == null) return false;
         return nextCard.getEra() > currentEra;
     }
 
+    /**
+     * Calculates the inventor bonus for the specified player.
+     * The bonus is the product of the number of inventors in the tribe
+     * and the number of distinct levels among the owned inventors.
+     *
+     * @param p the player whose bonus to calculate
+     * @return the inventor bonus score
+     */
     public int getPlayerInventorsBonus(Player p) {
         long inventors = p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.INVENTOR).count();
         long uniqueInventions = p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.INVENTOR)
-                .mapToInt(c -> c.getLevel())
+                .mapToInt(CharacterCard::getLevel)
                 .distinct().count();
         return (int) (inventors * uniqueInventions);
     }
 
+    /**
+     * Calculates the artist bonus for the specified player.
+     * Each pair of artists in the tribe is worth 10 points.
+     *
+     * @param p the player whose bonus to calculate
+     * @return the artist bonus score (every 2 artists = 10 points)
+     */
     public int getPlayerArtistsBonus(Player p) {
         long artists = p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.ARTIST).count();
         return (int) (artists / 2) * 10;
     }
 
+    /**
+     * Calculates the constructor bonus for the specified player.
+     * The bonus is equal to the sum of aura points of all constructors in the tribe.
+     *
+     * @param p the player whose bonus to calculate
+     * @return the constructor bonus score
+     */
     public int getPlayerConstructorsBonus(Player p) {
         return p.getMyTribe().stream()
                 .filter(c -> c.getJobType() == JobType.CONSTRUCTOR)
                 .mapToInt(CharacterCard::getAura).sum();
     }
 
+    /**
+     * Calculates the player's base building score,
+     * summing the {@code finalAura} value of each owned building.
+     *
+     * @param p the player whose score to calculate
+     * @return the sum of the buildings' base aura points
+     */
     public int getPlayerBuildingsBaseAura(Player p) {
         return p.getBuildings().stream()
                 .mapToInt(BuildingCard::getFinalAura).sum();
     }
 
+    /**
+     * Calculates a player's total score by summing:
+     * <ol>
+     *   <li>Personal aura points (including end-game modifiers)</li>
+     *   <li>Inventor bonus</li>
+     *   <li>Artist bonus</li>
+     *   <li>Constructor bonus</li>
+     *   <li>Base points of building cards</li>
+     * </ol>
+     *
+     * @param p the player whose score to calculate
+     * @return the calculated total score
+     */
     public int calculatePlayerScore(Player p) {
         int score = 0;
-        // 1. Punti Aura comprensivi di modifiche EndGameState
         score += p.getAuraPoints();
-        // 2. Bonus Inventori
         score += getPlayerInventorsBonus(p);
-        // 3. Bonus Artisti
         score += getPlayerArtistsBonus(p);
-        // 4. Bonus Costruttori
         score += getPlayerConstructorsBonus(p);
-        // 5. Punti base stampati sulle carte Edificio
         score += getPlayerBuildingsBaseAura(p);
 
         return score;
     }
 
+    /**
+     * Determines the list of winners of the game.
+     * The winner is the player with the highest score.
+     * In case of a tie, the tiebreaker is based on remaining food.
+     * <p>
+     * <b>Note:</b> This method assumes that {@code EndGameState} has already
+     * applied all end-game effects before being called.
+     * </p>
+     *
+     * @return list of winners (may contain multiple players in case of unresolved tie)
+     */
     public List<Player> determineWinners() {
-        // NESSUN EFFETTO CHIAMATO QUI.
-        // EndGameState ha già provveduto a chiamare applyOnEndGame prima di invocare questo metodo!
-
         List<Player> winners = new ArrayList<>();
         int maxScore = -999;
 
@@ -594,7 +943,6 @@ public class Game implements IGame{
             }
         }
 
-        // Spareggio sul cibo
         if (winners.size() > 1) {
             int maxFood = 0;
             for (Player p : winners) {
@@ -609,15 +957,26 @@ public class Game implements IGame{
         return winners;
     }
 
+    /**
+     * Notifies all observers of the end of the game and the winners.
+     *
+     * @param winners the list of winning players
+     */
     public void notifyEndGame(List<Player> winners) {
         for (IGameObserver obs : getSafeObservers()) {
             obs.onEndGame(this, winners);
         }
     }
 
+    /**
+     * Returns the list of observers safely,
+     * initializing it if necessary (prevents NullPointerException after Gson deserialization).
+     *
+     * @return the thread-safe list of observers
+     */
     private List<IGameObserver> getSafeObservers() {
         if (observers == null) {
-            observers = new ArrayList<>();
+            observers = new CopyOnWriteArrayList<>();
         }
         return observers;
     }

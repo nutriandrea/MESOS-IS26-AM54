@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.*;
 
 /**
- * Test che simula la sequenza di messaggi che il client riceve
+ * Test that simulates the sequence of messages the client receives
  * durante una disconnessione, e verifica che lo stato del ClientModel
- * sia corretto: il totem del giocatore disconnesso viene rimosso
+ * is correct: the disconnected player's totem is removed
  * dall'offeringTrack, quelli degli altri rimangono.
  */
 public class ClientModelDisconnectionTest {
@@ -23,7 +23,7 @@ public class ClientModelDisconnectionTest {
         model = new ClientModel();
         model.setOnModelUpdatedCallback(() -> { /* no-op */ });
 
-        // Simula l'inizializzazione: tutti e 3 in Lobby
+        // Simulates initialization: all 3 in Lobby
         model.updatePlayerJoined("Alice");
         model.updatePlayerJoined("Bob");
         model.updatePlayerJoined("Charlie");
@@ -35,8 +35,8 @@ public class ClientModelDisconnectionTest {
     }
 
     /**
-     * Test: Ha ricevuto uno StateChangedUpdate che inizializza l'offeringTrack.
-     * Poi: Charlie disconnesso → arriva TotemReturnedUpdate.
+     * Test: Received a StateChangedUpdate that initializes the offeringTrack.
+     * Then: Charlie disconnected → TotemReturnedUpdate arrives.
      * Verifica: Alice e Bob restano nell'offeringTrack.
      */
     @Test
@@ -48,7 +48,7 @@ public class ClientModelDisconnectionTest {
         stats.put("Charlie", new StateChangedUpdate.PlayerSnapshot(5, 3, 0, TotemColors.BLUE, List.of(), List.of()));
 
         List<String> turnOrder = new ArrayList<>();
-        // Turn order: Alice, Bob, Charlie (tutti inizialmente in turno)
+        // Turn order: Alice, Bob, Charlie (all initially in turn)
         turnOrder.add("[Slot 1 | Cibo: +0] -> Alice");
         turnOrder.add("[Slot 2 | Cibo: +0] -> Bob");
         turnOrder.add("[Slot 3 | Cibo: +0] -> Charlie");
@@ -64,12 +64,12 @@ public class ClientModelDisconnectionTest {
         );
         model.updateState(stateUpdate);
 
-        // 2. Simula i placeTotem: ogni giocatore piazza il totem su una tessera
+        // 2. Simulate placeTotem: each player places the totem on a tile
         model.updateTotemPlacement("Alice", 0);
         model.updateTotemPlacement("Bob", 1);
         model.updateTotemPlacement("Charlie", 2);
 
-        // Dopo i placeTotem, offeringTrack dovrebbe avere tutti e 3
+        // After placeTotem, offeringTrack should have all 3
         Map<Integer, String> offeringBefore = model.getOfferingTrack();
         assertTrue(offeringBefore.get(0).contains("Alice"),
                 "Alice deve essere sull'offeringTrack dopo placeTotem");
@@ -78,22 +78,22 @@ public class ClientModelDisconnectionTest {
         assertTrue(offeringBefore.get(2).contains("Charlie"),
                 "Charlie deve essere sull'offeringTrack dopo placeTotem");
 
-        // 3. Simula la disconnessione di Charlie: arriva TotemReturnedUpdate
-        model.updateTotemReturned("Charlie", 5, 3);
+        // 3. Simulate Charlie's disconnection: TotemReturnedUpdate arrives
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
-        // 4. VERIFICA: Alice e Bob devono ANCORA essere sull'offeringTrack
+        // 4. VERIFY: Alice and Bob must STILL be on the offeringTrack
         Map<Integer, String> offeringAfter = model.getOfferingTrack();
         assertTrue(offeringAfter.get(0).contains("Alice"),
                 "Alice deve ANCORA essere sull'offeringTrack DOPO la disconnessione di Charlie!");
         assertTrue(offeringAfter.get(1).contains("Bob"),
                 "Bob deve ANCORA essere sull'offeringTrack DOPO la disconnessione di Charlie!");
-        // Charlie potrebbe non esserci più (rimosso)
+        // Charlie may no longer be there (removed)
         if (offeringAfter.containsKey(2)) {
             assertFalse(offeringAfter.get(2).contains("Charlie"),
                     "Charlie NON deve essere sull'offeringTrack (disconnesso)");
         }
 
-        // 5. Verifica il turnOrderTrack: Charlie deve esserci (è tornato in turno)
+        // 5. Verify turnOrderTrack: Charlie must be there (back in turn)
         List<String> turnOrderAfter = model.getTurnOrderTrack();
         boolean charlieInTurnOrder = turnOrderAfter.stream()
                 .anyMatch(s -> s.contains("Charlie"));
@@ -102,9 +102,9 @@ public class ClientModelDisconnectionTest {
     }
 
     /**
-     * Test REALISTICO: StateChangedUpdate con tutti i giocatori già
-     * sull'offeringTrack (come nel passaggio StartTurn → PickingState),
-     * poi arriva TotemReturnedUpdate per un giocatore disconnesso.
+     * Realistic Test: StateChangedUpdate with all players already
+     * on the offeringTrack (as in the StartTurn → PickingState transition),
+     * then TotemReturnedUpdate arrives for a disconnected player.
      * Verifica che gli altri NON vengano rimossi.
      */
     @Test
@@ -115,7 +115,7 @@ public class ClientModelDisconnectionTest {
         stats.put("Bob",     new StateChangedUpdate.PlayerSnapshot(5, 3, 0, TotemColors.YELLOW, List.of(), List.of()));
         stats.put("Charlie", new StateChangedUpdate.PlayerSnapshot(5, 3, 0, TotemColors.BLUE, List.of(), List.of()));
 
-        // Turn order: TUTTI VUOTO (sono tutti sull'offeringTrack)
+        // Turn order: ALL EMPTY (they are all on the offeringTrack)
         List<String> turnOrder = new ArrayList<>();
         turnOrder.add("[Slot 1 | Cibo: +0] -> VUOTO");
         turnOrder.add("[Slot 2 | Cibo: +0] -> VUOTO");
@@ -133,10 +133,10 @@ public class ClientModelDisconnectionTest {
         );
         model.updateState(stateUpdate);
 
-        // 2. Simula disconnessione di Charlie: arriva TotemReturnedUpdate
-        model.updateTotemReturned("Charlie", 5, 3);
+        // 2. Simulate Charlie's disconnection: TotemReturnedUpdate arrives
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
-        // 3. VERIFICA: Alice e Bob devono ancora essere sull'offeringTrack
+        // 3. VERIFY: Alice and Bob must still be on the offeringTrack
         Map<Integer, String> offeringAfter = model.getOfferingTrack();
         assertTrue(offeringAfter.get(0).contains("Alice"),
                 "Alice deve ANCORA essere sull'offeringTrack DOPO disconnessione di Charlie!");
@@ -147,14 +147,14 @@ public class ClientModelDisconnectionTest {
                     "Charlie NON deve essere sull'offeringTrack (disconnesso)");
         }
 
-        // 4. Verifica turnOrderTrack: Charlie deve esserci (è tornato in coda)
+        // 4. Verify turnOrderTrack: Charlie must be there (back in queue)
         List<String> turnOrderAfter = model.getTurnOrderTrack();
         boolean charlieInTurnOrder = turnOrderAfter.stream()
                 .anyMatch(s -> s.contains("Charlie"));
         assertTrue(charlieInTurnOrder,
                 "Charlie deve essere nel turnOrderTrack dopo TotemReturnedUpdate");
 
-        // Alice e Bob NON devono essere nel turnOrderTrack (hanno ancora totem sull'offering)
+        // Alice and Bob must NOT be in turnOrderTrack (they still have totems on offering)
         boolean aliceInTurnOrder = turnOrderAfter.stream()
                 .anyMatch(s -> s.contains("Alice"));
         boolean bobInTurnOrder = turnOrderAfter.stream()
@@ -164,15 +164,15 @@ public class ClientModelDisconnectionTest {
     }
 
     /**
-     * Test SEQUENZA COMPLETA: PlayerDisconnectedUpdate + TotemReturnedUpdate +
+     * Test FULL SEQUENCE: PlayerDisconnectedUpdate + TotemReturnedUpdate +
      * StateChangedUpdate (dovuto a transizione di stato dopo skip turn).
      * Simula: non-current player con tile si disconnette →
-     * la partita NON cambia stato → arriva SOLO TotemReturnedUpdate.
+     * the match does NOT change state → only TotemReturnedUpdate arrives.
      * Verifica: altri totem preservati.
      */
     @Test
     public void testDisconnectNonCurrentNoStateChange_othersPreserved() {
-        // 1. StateChangedUpdate: PickingState, tutti con totem
+        // 1. StateChangedUpdate: PickingState, all with totems
         Map<String, StateChangedUpdate.PlayerSnapshot> stats = new LinkedHashMap<>();
         stats.put("Alice",   new StateChangedUpdate.PlayerSnapshot(5, 3, 0, TotemColors.RED, List.of(), List.of()));
         stats.put("Bob",     new StateChangedUpdate.PlayerSnapshot(5, 3, 0, TotemColors.YELLOW, List.of(), List.of()));
@@ -189,11 +189,11 @@ public class ClientModelDisconnectionTest {
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of()
         ));
 
-        // 2. PlayerDisconnectedUpdate + TotemReturnedUpdate per Charlie (non-current con tile)
+        // 2. PlayerDisconnectedUpdate + TotemReturnedUpdate for Charlie (non-current with tile)
         model.updatePlayerDisconnected("Charlie");
-        model.updateTotemReturned("Charlie", 5, 3);
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
-        // 3. VERIFICA: Alice e Bob ancora lì
+        // 3. VERIFY: Alice and Bob still there
         Map<Integer, String> offeringAfter = model.getOfferingTrack();
         assertTrue(offeringAfter.get(0).contains("Alice"),
                 "Alice deve ANCORA essere sull'offeringTrack!");
@@ -202,7 +202,7 @@ public class ClientModelDisconnectionTest {
     }
 
     /**
-     * Test SEQUENZA: PlayerDisconnectedUpdate + TotemReturnedUpdate +
+     * Test SEQUENCE: PlayerDisconnectedUpdate + TotemReturnedUpdate +
      * StateChangedUpdate (transizione a StartTurnState).
      * Simula: ultimo picker si disconnette → picking completo →
      * game.setState(new StartTurnState()) → arriva StateChangedUpdate.
@@ -228,13 +228,13 @@ public class ClientModelDisconnectionTest {
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of()
         ));
 
-        // 2. Simula disconnessione di Charlie
+        // 2. Simulate Charlie's disconnection
         model.updatePlayerDisconnected("Charlie");
-        model.updateTotemReturned("Charlie", 5, 3);
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
-        // 3. Il server ha skippato Charlie → picking completo → transizione a StartTurnState
-        // Il server invia un NUOVO StateChangedUpdate con lo stato aggiornato
-        // (tutti in turnOrder, offering VUOTO)
+        // 3. The server skipped Charlie → picking complete → transition to StartTurnState
+        // The server sends a NEW StateChangedUpdate with the updated state
+        // (all in turnOrder, offering EMPTY)
         List<String> newTurnOrder = new ArrayList<>();
         newTurnOrder.add("[Slot 1 | Cibo: +3] -> Alice");
         newTurnOrder.add("[Slot 2 | Cibo: +2] -> Bob");
@@ -258,7 +258,7 @@ public class ClientModelDisconnectionTest {
                     "Tessera " + i + " deve essere VUOTA dopo nuovo StateChangedUpdate, invece: " + val);
         }
 
-        // 5. VERIFICA: turnOrderTrack DEVE contenere tutti e 3
+        // 5. VERIFY: turnOrderTrack MUST contain all 3
         List<String> turnOrderAfter = model.getTurnOrderTrack();
         assertEquals(3, turnOrderAfter.size(),
                 "turnOrderTrack deve avere 3 giocatori dopo nuovo StateChangedUpdate");
@@ -267,9 +267,9 @@ public class ClientModelDisconnectionTest {
     }
 
     /**
-     * Test: TotemReturnedUpdate per un giocatore che ha GIA' PESCATO
-     * (non è più nell'offeringTrack, è già in turnOrderTrack).
-     * Verifica: nessun altro viene rimosso dall'offeringTrack.
+     * Test: TotemReturnedUpdate for a player who has ALREADY PICKED
+     * (no longer in offeringTrack, already in turnOrderTrack).
+     * Verify: no one else is removed from the offeringTrack.
      */
     @Test
     public void testTotemReturnedForAlreadyPickedPlayer() {
@@ -290,42 +290,42 @@ public class ClientModelDisconnectionTest {
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of()
         ));
 
-        // 2. Alice pesca: arriva CardPickedUpdate con offering aggiornato (Alice rimossa)
+        // 2. Alice draws: CardPickedUpdate arrives with updated offering (Alice removed)
         Map<Integer, String> afterPick = new TreeMap<>();
         afterPick.put(1, "[Tessera B | ...] -> Bob");
         afterPick.put(2, "[Tessera C | ...] -> Charlie");
 
         model.updateCardPicked("Alice", "upper", 0, 3, 0, afterPick);
 
-        // Alice è stata rimossa dall'offering da CardPickedUpdate
-        // Ora arriva TotemReturnedUpdate per Alice (dal server dopo executeEndTurnLogic)
-        model.updateTotemReturned("Alice", 3, 3);
+        // Alice was removed from offering by CardPickedUpdate
+        // Now TotemReturnedUpdate arrives for Alice (from server after executeEndTurnLogic)
+        model.updateTotemReturned("Alice", 0, 3, 3);
 
-        // 3. VERIFICA: Alice ora è in turnOrderTrack
+        // 3. VERIFY: Alice is now in turnOrderTrack
         List<String> turnOrderAfter = model.getTurnOrderTrack();
         boolean aliceInTurnOrder = turnOrderAfter.stream().anyMatch(s -> s.contains("Alice"));
         assertTrue(aliceInTurnOrder, "Alice deve essere in turnOrderTrack dopo TotemReturnedUpdate");
 
-        // 4. Simula disconnessione di Charlie (che è ancora sull'offeringTrack)
-        model.updateTotemReturned("Charlie", 5, 3);
+        // 4. Simulate Charlie's disconnection (who is still on offeringTrack)
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
-        // 5. VERIFICA: Bob deve ancora essere sull'offeringTrack (Charlie rimosso, Alice già rimossa)
+        // 5. VERIFY: Bob must still be on offeringTrack (Charlie removed, Alice already removed)
         Map<Integer, String> offeringAfter = model.getOfferingTrack();
         assertTrue(offeringAfter.get(1).contains("Bob"),
                 "Bob deve ANCORA essere sull'offeringTrack!");
         assertTrue(offeringAfter.get(1) != null && !offeringAfter.get(1).contains("Charlie"),
                 "Charlie NON deve essere sull'offeringTrack");
-        // Alice non c'è più (già rimossa da CardPickedUpdate), posizione 0 potrebbe non esistere
+        // Alice is no longer there (already removed by CardPickedUpdate), position 0 may not exist
     }
 
     /**
      * Test: TotemReturnedUpdate per Alice che GIA' nel turnOrderTrack.
-     * Simula: arriva updateTotemReturned per un giocatore che non è nell'offeringTrack.
-     * Non deve rimuovere altri giocatori dall'offeringTrack.
+     * Simulates: updateTotemReturned arrives for a player not in the offeringTrack.
+     * Must not remove other players from the offeringTrack.
      */
     @Test
     public void testTotemReturnedForNonexistentPlayer_noSideEffects() {
-        model.updateTotemReturned("Alice", 5, 3); // la aggiunge al turnOrderTrack
+        model.updateTotemReturned("Alice", 0, 5, 3); // la aggiunge al turnOrderTrack
         Map<String, StateChangedUpdate.PlayerSnapshot> stats = new LinkedHashMap<>();
         stats.put("Alice",   new StateChangedUpdate.PlayerSnapshot(5, 3, 0, TotemColors.RED, List.of(), List.of()));
         stats.put("Bob",     new StateChangedUpdate.PlayerSnapshot(5, 3, 0, TotemColors.YELLOW, List.of(), List.of()));
@@ -340,15 +340,15 @@ public class ClientModelDisconnectionTest {
         model.updateState(new StateChangedUpdate("PickingState", 1, 1, stats, turnOrder, offering,
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of()));
 
-        // Alice piazza il totem
+        // Alice places the totem
         model.updateTotemPlacement("Alice", 0);
-        // Bob piazza il totem
+        // Bob places the totem
         model.updateTotemPlacement("Bob", 1);
 
-        // Simula TotemReturned per Charlie (che NON è nell'offeringTrack)
-        model.updateTotemReturned("Charlie", 5, 3);
+        // Simulates TotemReturned for Charlie (NOT in the offeringTrack)
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
-        // Alice e Bob devono restare nell'offeringTrack
+        // Alice and Bob must remain in the offeringTrack
         Map<Integer, String> track = model.getOfferingTrack();
         assertTrue(track.get(0).contains("Alice"),
                 "Alice deve restare nell'offeringTrack");
@@ -357,21 +357,21 @@ public class ClientModelDisconnectionTest {
     }
 
     /**
-     * Test: Sequenza reale — StateChangedUpdate poi TotemReturnedUpdate.
+     * Test: Real sequence — StateChangedUpdate then TotemReturnedUpdate.
      * Simula il caso in cui un StateChangedUpdate arriva DOPO il
      * TotemReturnedUpdate (sovrascrive tutto).
      */
     @Test
     public void testStateChangedAfterTotemReturned_preservesCorrectState() {
-        // 1. Place totem per tutti
+        // 1. Place totem for all
         model.updateTotemPlacement("Alice", 0);
         model.updateTotemPlacement("Bob", 1);
         model.updateTotemPlacement("Charlie", 2);
 
-        // 2. TotemReturned per Charlie (disconnessione)
-        model.updateTotemReturned("Charlie", 5, 3);
+        // 2. TotemReturned for Charlie (disconnection)
+        model.updateTotemReturned("Charlie", 2, 5, 3);
 
-        // 3. StateChangedUpdate che arriva dopo (tipo giro successivo)
+        // 3. StateChangedUpdate that arrives later (like next round)
         Map<String, StateChangedUpdate.PlayerSnapshot> stats = new LinkedHashMap<>();
         stats.put("Alice",   new StateChangedUpdate.PlayerSnapshot(6, 3, 1, TotemColors.RED, List.of(), List.of()));
         stats.put("Bob",     new StateChangedUpdate.PlayerSnapshot(5, 4, 0, TotemColors.YELLOW, List.of(), List.of()));
@@ -393,19 +393,19 @@ public class ClientModelDisconnectionTest {
         );
         model.updateState(stateUpdate);
 
-        // 4. Place totem di nuovo per Alice e Bob (nuovo round)
+        // 4. Place totem again for Alice and Bob (new round)
         model.updateTotemPlacement("Alice", 0);
         model.updateTotemPlacement("Bob", 1);
 
-        // Charlie è disconnesso quindi non placeTotem.
-        // Dopo i placeTotem: Alice e Bob devono essere sull'offeringTrack
+        // Charlie is disconnected so no placeTotem.
+        // After placeTotem: Alice and Bob must be on offeringTrack
         Map<Integer, String> offeringAfter = model.getOfferingTrack();
         assertTrue(offeringAfter.get(0).contains("Alice"),
                 "Alice deve essere sull'offeringTrack nel nuovo round");
         assertTrue(offeringAfter.get(1).contains("Bob"),
                 "Bob deve essere sull'offeringTrack nel nuovo round");
 
-        // Charlie NON deve essere sull'offeringTrack (non ha piazzato)
+        // Charlie must NOT be on offeringTrack (he didn't place)
         if (offeringAfter.containsKey(2)) {
             assertFalse(offeringAfter.get(2).contains("Charlie"),
                     "Charlie NON deve essere sull'offeringTrack nel nuovo round");

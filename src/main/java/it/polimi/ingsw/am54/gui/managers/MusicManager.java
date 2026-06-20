@@ -8,15 +8,17 @@ import java.net.URL;
 import java.util.Map;
 
 /**
- * Gestisce la riproduzione audio di sottofondo (MP3) tramite JavaFX MediaPlayer.
+ * Manages background audio playback (MP3) via JavaFX MediaPlayer.
  * <p>
- * Singleton — unico player per tutta l'applicazione.
+ * Singleton — unique player for the entire application.
  * <p>
  * Mette i file MP3 in {@code src/main/resources/audio/}:
  * <ul>
- *   <li>{@code lobby.mp3} — musica nella schermata lobby</li>
- *   <li>{@code board.mp3} — musica durante la partita</li>
+ *   <li>{@code lobby.mp3} — music on the lobby screen</li>
+ *   <li>{@code board.mp3} — music during the game</li>
  * </ul>
+ *
+ * @author AM54
  */
 public class MusicManager {
 
@@ -34,6 +36,11 @@ public class MusicManager {
         );
     }
 
+    /**
+     * Returns the singleton instance of this manager, creating it on first access.
+     *
+     * @return the shared {@code MusicManager} instance
+     */
     public static synchronized MusicManager getInstance() {
         if (instance == null) {
             instance = new MusicManager();
@@ -42,22 +49,22 @@ public class MusicManager {
     }
 
     /**
-     * Carica un file MP3 dalle risorse. Se il file non esiste, restituisce null.
+     * Loads an MP3 file from resources. If the file does not exist, returns null.
      */
     private Media loadMedia(String resourcePath) {
         URL url = getClass().getResource(resourcePath);
         if (url == null) {
-            System.err.println("[MusicManager] File non trovato: " + resourcePath);
+            System.err.println("[MusicManager] File not found: " + resourcePath);
             return null;
         }
         return new Media(url.toString());
     }
 
     /**
-     * Avvia o ferma la musica.
+     * Starts or stops the music.
      *
      * @param track  "lobby" o "board" — quale traccia riprodurre
-     * @param button il pulsante su cui cambiare icona (🎵 / 🔊)
+     * @param button the button whose icon to change (🎵 / 🔊)
      */
     public void toggle(String track, Button button) {
         Media target = trackMedia.get(track);
@@ -72,7 +79,7 @@ public class MusicManager {
             return;
         }
 
-        // Se è un cambio traccia o primo avvio
+        // If it is a track change or first start
         if (currentPlayer == null || !currentPlayer.getMedia().getSource().equals(target.getSource())) {
             if (currentPlayer != null) currentPlayer.dispose();
             currentPlayer = new MediaPlayer(target);
@@ -85,13 +92,17 @@ public class MusicManager {
         button.setText("🔊"); // Cambiato emoji
     }
 
-    // Aggiungi questo metodo per sapere lo stato all'apertura delle scene
+    /**
+     * Returns the icon string representing the current playback state.
+     *
+     * @return "🔊" if music is playing, "🔇" otherwise
+     */
     public String getCurrentIcon() {
         return isPlaying ? "🔊" : "🔇";
     }
 
     /**
-     * Ferma la musica e rilascia il player.
+     * Stops the music and releases the player.
      */
     public void stop() {
         if (currentPlayer != null) {

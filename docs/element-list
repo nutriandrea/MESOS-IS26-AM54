@@ -1,0 +1,15 @@
+it.polimi.ingsw.am54
+it.polimi.ingsw.am54.controller
+it.polimi.ingsw.am54.database
+it.polimi.ingsw.am54.gui
+it.polimi.ingsw.am54.gui.managers
+it.polimi.ingsw.am54.gui.states
+it.polimi.ingsw.am54.model
+it.polimi.ingsw.am54.model.effects.buildings
+it.polimi.ingsw.am54.model.effects.characters
+it.polimi.ingsw.am54.model.effects.events
+it.polimi.ingsw.am54.model.states
+it.polimi.ingsw.am54.network.client
+it.polimi.ingsw.am54.network.messages
+it.polimi.ingsw.am54.network.rmi
+it.polimi.ingsw.am54.network.server

@@ -5,6 +5,14 @@ import it.polimi.ingsw.am54.network.client.ClientModel;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Registry of client states for the client's finite state machine.
+ * Associates each state name (e.g. "STARTTURNSTATE", "PICKINGSTATE") to the corresponding
+ * handler {@link ClientStateHandler}, used to determine instructions,
+ * input blocks and specific rendering for the current game phase.
+ *
+ * @author AM54
+ */
 public final class ClientStateRegistry {
     private static final Map<String, ClientStateHandler> HANDLERS = new HashMap<>();
 
@@ -22,6 +30,13 @@ public final class ClientStateRegistry {
 
     private ClientStateRegistry() {}
 
+    /**
+     * Returns the handler registered for the given state name.
+     * If no handler is registered, a default handler is returned.
+     *
+     * @param stateName the state name to look up (case-insensitive)
+     * @return the matching handler, or a {@code DefaultHandler} if unknown
+     */
     public static ClientStateHandler getHandler(String stateName) {
         ClientStateHandler handler = HANDLERS.get(stateName.toUpperCase());
         return handler != null ? handler : new DefaultHandler();

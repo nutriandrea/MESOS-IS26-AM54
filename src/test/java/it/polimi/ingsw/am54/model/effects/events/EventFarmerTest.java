@@ -21,7 +21,7 @@ public class EventFarmerTest {
         player = new Player();
         player.setNickname("TestPlayer");
 
-        // Diamo al giocatore un po' di risorse iniziali
+        // Give the player some initial resources
         player.modifyFood(10);
         player.modifyAuraPoints(20);
 
@@ -29,19 +29,19 @@ public class EventFarmerTest {
 
         eventFarmer = new EventFarmer();
 
-        // Creiamo una EventCard fittizia.
-        // Il 5° parametro (2) è l'auraPerCharacter, che l'EventFarmer usa come moltiplicatore per il malus.
+        // Create a fake EventCard.
+        // The 5th parameter (2) is auraPerCharacter, which EventFarmer uses as multiplier for the penalty.
         mockEventCard = new EventCard(1, false, new ArrayList<>(), 0, 2, 0, 0, 0, 0, 0);
     }
 
-    // Metodo helper per creare velocemente personaggi fittizi
+    // Helper method to quickly create characters fittizi
     private CharacterCard createCharacter(JobType type) {
         return new CharacterCard(1, type, 0, Phases.ENDGAME, new ArrayList<>(), 1);
     }
 
     @Test
     public void testTribuMista_ContaTuttoScontaSoloFarmer() {
-        // Aggiungiamo 4 personaggi diversi: 1 Farmer, 1 Hunter, 1 Artist, 1 Constructor
+        // Add 4 different characters: 1 Farmer, 1 Hunter, 1 Artist, 1 Constructor
         player.modifyMyTribe(createCharacter(JobType.FARMER));
         player.modifyMyTribe(createCharacter(JobType.HUNTER));
         player.modifyMyTribe(createCharacter(JobType.ARTIST));
@@ -63,7 +63,7 @@ public class EventFarmerTest {
 
     @Test
     public void testSoloContadini_NessunCosto() {
-        // Aggiungiamo 2 Farmer
+        // Add 2 Farmer
         player.modifyMyTribe(createCharacter(JobType.FARMER));
         player.modifyMyTribe(createCharacter(JobType.FARMER));
 
@@ -81,10 +81,10 @@ public class EventFarmerTest {
 
     @Test
     public void testMalusAura_CiboInsufficiente() {
-        // Resettiamo il cibo a 1
+        // Reset il cibo a 1
         player.modifyFood(-9); // Ora ha 1 cibo
 
-        // Aggiungiamo 3 personaggi (Nessun Farmer)
+        // Add 3 characters (No Farmer)
         player.modifyMyTribe(createCharacter(JobType.HUNTER));
         player.modifyMyTribe(createCharacter(JobType.ARTIST));
         player.modifyMyTribe(createCharacter(JobType.CONSTRUCTOR));
@@ -107,11 +107,11 @@ public class EventFarmerTest {
 
     @Test
     public void testScontoEdifici() {
-        // Aggiungiamo 2 personaggi (Nessun Farmer) -> Costo = 2
+        // Add 2 characters (No Farmer) -> Cost = 2
         player.modifyMyTribe(createCharacter(JobType.HUNTER));
         player.modifyMyTribe(createCharacter(JobType.ARTIST));
 
-        // Simuliamo un edificio che riduce il costo degli eventi di 1
+        // Simulate a building that reduces event cost by 1
         // L'edificio ha impostato eventCostFood a -1
         player.setEventCostFood(-1);
 

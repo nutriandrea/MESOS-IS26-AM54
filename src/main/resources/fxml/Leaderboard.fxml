@@ -49,7 +49,7 @@
         <VBox alignment="TOP_CENTER" layoutX="286" layoutY="520" prefWidth="1100" prefHeight="280" spacing="10">
             <Label text="Classifica generale:" textFill="WHITE" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
             <ScrollPane styleClass="dashboard-scroll-pane" fitToWidth="true" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
-                <VBox fx:id="rankingTable" spacing="5" styleClass="ranking-table-container">
+                <VBox spacing="5" styleClass="ranking-table-container">
                     <HBox alignment="CENTER_LEFT" spacing="20" styleClass="ranking-table-header-row">
                         <Label text="POS" prefWidth="60" styleClass="ranking-table-header-label" alignment="CENTER_LEFT"/>
                         <Label text="TOTEM" prefWidth="80" styleClass="ranking-table-header-label" alignment="CENTER_LEFT"/>
@@ -60,19 +60,17 @@
                         <Label text="👥 TRIBÙ" prefWidth="120" styleClass="ranking-table-header-label" alignment="CENTER"/>
                         <Label text="🏛️ EDIFICI" prefWidth="120" styleClass="ranking-table-header-label" alignment="CENTER"/>
                     </HBox>
+                    <VBox fx:id="rankingTable" spacing="5" />
                 </VBox>
             </ScrollPane>
         </VBox>
 
         <Button text="TORNA AL MENU" styleClass="recap-button" layoutX="736" layoutY="820" onAction="#handleReturnToMenu"/>
-    </AnchorPane>
 
-    <Button fx:id="globalLeaderboardButton" text="🏆 RANKING GLOBALE" styleClass="leaderboard-login-button"
-            StackPane.alignment="TOP_RIGHT" onAction="#handleGlobalLeaderboardButton" minWidth="-Infinity">
-        <StackPane.margin>
-            <Insets top="30" right="90" />
-        </StackPane.margin>
-    </Button>
+        <Button fx:id="globalLeaderboardButton" text="🏆 RANKING GLOBALE" styleClass="leaderboard-login-button"
+                layoutX="1330" layoutY="30" onAction="#handleGlobalLeaderboardButton" />
+
+    </AnchorPane>
 
     <StackPane fx:id="leaderboardOverlay" visible="false" managed="false" styleClass="leaderboard-overlay-bg" onMouseClicked="#handleOverlayClose">
         <VBox styleClass="leaderboard-modal-panel" maxWidth="750" maxHeight="600" spacing="15" alignment="CENTER" onMouseClicked="#handlePanelClick">

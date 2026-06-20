@@ -188,6 +188,21 @@ public class LobbyController {
         ClientModel model = Client.getInstance().getModel();
         String myNickname = Client.getInstance().getNickname();
 
+        // ==========================================================
+        // FIX CRITICO: TRANSIZIONE ALLA BOARD
+        // Se lo stato nel Model non è più "Lobby", significa che
+        // il Server ha avviato la partita. Dobbiamo cambiare scena!
+        // ==========================================================
+        String currentState = model.getCurrentState();
+        if (currentState != null && !currentState.equalsIgnoreCase("Lobby")) {
+            // "Sganciamo" l'aggiornamento della lobby per evitare chiamate fantasma
+            model.setOnModelUpdatedCallback(null);
+
+            // Carichiamo la scena di gioco principale!
+            GUIApp.loadBoardScene();
+            return;
+        }
+
         for (String colorKey : labelMap.keySet()) {
             labelMap.get(colorKey).setText("");
         }
@@ -205,7 +220,7 @@ public class LobbyController {
         boolean isHost = players != null && !players.isEmpty() && players.get(0).equals(myNickname);
         int playerCount = players != null ? players.size() : 0;
 
-        // LA CORREZIONE DEL BUG: Verifica che TUTTI i player loggati abbiano inserito un colore
+        // Verifica che TUTTI i player loggati abbiano inserito un colore
         boolean everyoneHasChosen = playerColors != null && players != null && playerColors.size() == players.size();
 
         if (!hasChosenTotem) {

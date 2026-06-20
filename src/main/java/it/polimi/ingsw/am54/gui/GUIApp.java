@@ -13,6 +13,9 @@ import javafx.animation.*;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
+import java.awt.Taskbar;
+import javax.imageio.ImageIO;
+import java.io.InputStream;
 
 public class GUIApp extends Application {
 
@@ -43,6 +46,25 @@ public class GUIApp extends Application {
 
         Scene scene = new Scene(rootWrapper);
         primaryStage.setScene(scene);
+
+        try {
+            primaryStage.getIcons().add(new javafx.scene.image.Image(getClass().getResourceAsStream("/images/logo_mesos.png")));
+
+            // FORZATURA MAC DOCK
+            if (Taskbar.isTaskbarSupported()) {
+                Taskbar taskbar = Taskbar.getTaskbar();
+                if (taskbar.isSupported(Taskbar.Feature.ICON_IMAGE)) {
+                    InputStream is = getClass().getResourceAsStream("/images/logo_mesos.png");
+                    if (is != null) {
+                        java.awt.Image dockIcon = ImageIO.read(is);
+                        taskbar.setIconImage(dockIcon);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[GUI] Impossibile caricare il logo: /images/logo_mesos.png");
+        }
+        primaryStage.setTitle("Mesos");
 
         primaryStage.setFullScreenExitHint("");
         primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);

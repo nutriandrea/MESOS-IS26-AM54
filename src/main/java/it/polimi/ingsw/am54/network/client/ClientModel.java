@@ -355,30 +355,46 @@ public class ClientModel {
     }
 
     public synchronized void updateTotemReturned(String nickname, int newFoodBalance, int newAuraBalance) {
-        // Rimuove il totem dalle offerte confrontando il nome effettivo
-        offeringTrack.entrySet().removeIf(entry -> {
-            String occupier = entry.getValue();
-            String name = occupier.contains(" -> ") ? occupier.split(" -> ")[occupier.split(" -> ").length - 1].trim() : occupier;
-            return name.equalsIgnoreCase(nickname);
-        });
 
-        // Controlla l'uguaglianza esatta prima di rimetterlo nell'ordine di turno
+        // 1. GESTIONE OFFERTE (Rimpiazza con VUOTO mantenendo il testo -> tolto vecchio removeIf)
+        for (Map.Entry<Integer, String> entry : offeringTrack.entrySet()) {
+            String occupier = entry.getValue();
+            int arrowIdx = occupier.lastIndexOf("->"); // Trova dove sta la freccia (se c'è)
+
+            // Estrae il nome
+            String name = (arrowIdx != -1) ? occupier.substring(arrowIdx + 2).trim() : occupier.trim();
+
+            if (name.equalsIgnoreCase(nickname)) {
+                if (arrowIdx != -1) {
+                    // Prende tutto il prefisso originale inclusa la freccia: "[Tessera B | ...] ->"
+                    String prefix = occupier.substring(0, arrowIdx + 2);
+                    offeringTrack.put(entry.getKey(), prefix + " VUOTO");
+                } else {
+                    offeringTrack.put(entry.getKey(), "VUOTO");
+                }
+                break; // Aggiornato correttamente, usciamo
+            }
+        }
+
+        // 2. GESTIONE ORDINE DI TURNO
         boolean alreadyInTurnOrder = turnOrderTrack.stream().anyMatch(s -> {
-            String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
+            int arrowIdx = s.lastIndexOf("->");
+            String name = (arrowIdx != -1) ? s.substring(arrowIdx + 2).trim() : s.trim();
             return name.equalsIgnoreCase(nickname);
         });
 
         if (!alreadyInTurnOrder) {
             boolean placed = false;
-            // FIX RITORNO: Cerchiamo il primo buco "VUOTO" e lo riempiamo col nome,
-            // mantenendo la lista sempre della lunghezza corretta e l'impaginazione fissa!
+            // Cerca il primo buco "VUOTO" per mantenere l'impaginazione fissa
             for (int i = 0; i < turnOrderTrack.size(); i++) {
                 String s = turnOrderTrack.get(i);
-                String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
+                int arrowIdx = s.lastIndexOf("->");
+                String name = (arrowIdx != -1) ? s.substring(arrowIdx + 2).trim() : s.trim();
 
                 if (name.equalsIgnoreCase("VUOTO") || name.equalsIgnoreCase("NULL")) {
-                    if (s.contains(" -> ")) {
-                        String prefix = s.substring(0, s.lastIndexOf("->") + 2);
+                    if (arrowIdx != -1) {
+                        // Ricicliamo la tua ottima idea!
+                        String prefix = s.substring(0, arrowIdx + 2);
                         turnOrderTrack.set(i, prefix + " " + nickname);
                     } else {
                         turnOrderTrack.set(i, nickname);
@@ -387,12 +403,13 @@ public class ClientModel {
                     break;
                 }
             }
-            // Fallback di sicurezza nel caso rarissimo non ci siano vuoti
+            // Fallback di sicurezza
             if (!placed) {
                 turnOrderTrack.add(nickname);
             }
         }
 
+        // 3. AGGIORNAMENTO RISORSE
         playerFood.put(nickname, newFoodBalance);
         playerAura.put(nickname, newAuraBalance);
         notifyUI();
@@ -492,15 +509,18 @@ public class ClientModel {
 
     /** Aggiornato quando la partita finisce */
     public synchronized void updateEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers) {
-        if (!pendingEventReports.isEmpty()) {
+        // FIX ASSOLUTO: Assegnazione immediata e incondizionata dei risultati.
+        // Così model.getWinners() non sarà MAI vuoto quando la CLI andrà a stamparlo.
+        this.winners = winners;
+        this.lastMatchScores = allScores;
+        this.lastMatchNumPlayers = numPlayers;
+
+        if (!pendingEventReports.isEmpty() && onEventResolvedCallback != null) {
             this.isEndGamePending = true;
             this.pendingWinners = winners;
             this.pendingLastMatchScores = allScores;
             this.pendingLastMatchNumPlayers = numPlayers;
         } else {
-            this.winners = winners;
-            this.lastMatchScores = allScores;
-            this.lastMatchNumPlayers = numPlayers;
             notifyUI();
         }
     }

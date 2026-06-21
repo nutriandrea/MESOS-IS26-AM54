@@ -12,14 +12,27 @@ import it.polimi.ingsw.am54.model.effects.events.*;
 import it.polimi.ingsw.am54.model.states.*;
 import java.io.*;
 
+/**
+ * Handles Game persistence to JSON file (crash recovery).
+ * Usa Gson con adapter polimorfici per serializzare/deserializzare
+ * GameState, IEffect and TribeCard in their concrete subclasses.
+ * The backup file is created by the Server at startup and deleted
+ * at the end of the game (clearBackup).
+ */
 public class PersistenceManager {
     private final File backupFile;
     private final Gson gson;
 
+    /**
+     * Constructs a PersistenceManager that reads from and writes to the
+     * given file, configuring Gson with polymorphic type adapters.
+     *
+     * @param filename the backup file name
+     */
     public PersistenceManager(String filename) {
         this.backupFile = new File(filename);
 
-        // Factory per GameState (già presente)
+        // Factory for GameState (already present)
         RuntimeTypeAdapterFactory<GameState> stateAdapter = RuntimeTypeAdapterFactory
                 .of(GameState.class, "type")
                 .registerSubtype(SetUpGameState.class, "SetUpGameState")
@@ -28,7 +41,7 @@ public class PersistenceManager {
                 .registerSubtype(EventState.class, "EventState")
                 .registerSubtype(EndGameState.class, "EndGameState");
 
-        // Factory per IEffect
+        // Factory for IEffect
         RuntimeTypeAdapterFactory<IEffect> effectAdapter = RuntimeTypeAdapterFactory
                 .of(IEffect.class, "effectType")
                 // Edifici
@@ -42,7 +55,7 @@ public class PersistenceManager {
                 .registerSubtype(BuildingDoubleInventor.class, "BuildingDoubleInventor")
                 .registerSubtype(BuildingSixOfType.class, "BuildingSixOfType")
                 .registerSubtype(BuildingEndgameAura.class, "BuildingEndgameAura")
-                // Personaggi
+                // Characters
                 .registerSubtype(CharacterPassive.class, "CharacterPassive")
                 .registerSubtype(CharacterHunter.class, "CharacterHunter")
                 .registerSubtype(CharacterShaman.class, "CharacterShaman")
@@ -53,7 +66,7 @@ public class PersistenceManager {
                 .registerSubtype(EventArtist.class, "EventArtist")
                 .registerSubtype(EventHunter.class, "EventHunter");
 
-        // Factory per TribeCard
+        // Factory for TribeCard
         RuntimeTypeAdapterFactory<it.polimi.ingsw.am54.model.TribeCard> tribeCardAdapter = RuntimeTypeAdapterFactory
                 .of(it.polimi.ingsw.am54.model.TribeCard.class, "tribeCardType")
                 .registerSubtype(it.polimi.ingsw.am54.model.CharacterCard.class, "CharacterCard")
@@ -66,12 +79,18 @@ public class PersistenceManager {
                 .create();
     }
 
+    /**
+     * Serializes the given game to the backup file atomically (write to
+     * a temp file then rename).
+     *
+     * @param game the game to save
+     */
     public synchronized void saveGame(Game game) {
         File tempFile = new File(backupFile.getAbsolutePath() + ".tmp");
         try (FileWriter writer = new FileWriter(tempFile)) {
             gson.toJson(game, writer);
             if (backupFile.exists() && !backupFile.delete()) {
-                System.err.println("[PERSISTENZA] Impossibile rimuovere il vecchio backup.");
+                System.err.println("[PERSISTENZA] Unable rimuovere il vecchio backup.");
             }
             tempFile.renameTo(backupFile);
         } catch (IOException e) {
@@ -79,6 +98,11 @@ public class PersistenceManager {
         }
     }
 
+    /**
+     * Loads and deserializes the game from the backup file.
+     *
+     * @return the restored game, or {@code null} if no backup exists or loading fails
+     */
     public synchronized Game loadGame() {
         if (!backupFile.exists()) return null;
         try (FileReader reader = new FileReader(backupFile)) {
@@ -94,6 +118,7 @@ public class PersistenceManager {
         }
     }
 
+    /** Deletes the backup file if it exists, signalling the game is over. */
     public synchronized void clearBackup() {
         if (backupFile.exists()) {
             backupFile.delete();

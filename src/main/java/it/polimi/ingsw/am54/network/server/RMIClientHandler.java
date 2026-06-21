@@ -15,14 +15,14 @@ import java.util.concurrent.*;
 
 /**
  * ============================================================================
- * RMIClientHandler — Gestore di una connessione RMI per un client
+ * RMIClientHandler — Handler for an RMI connection for a client
  * ============================================================================
  *
- * RUOLO:
- * - Gestisce le richieste RMI da un client
- * - Inoltra le richieste al Controller (singola partita)
- * - Implementa ClientConnection (sendUpdate via callback RMI)
- * - Gestisce heartbeat (ping/pong)
+ * ROLE::
+ * - Handles RMI requests from a client
+ * - Forwards requests to the Controller (single game)
+ * - Implements ClientConnection (sendUpdate via RMI callback)
+ * - Manages heartbeat (ping/pong)
  * ============================================================================
  */
 public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHandlerInterface, ClientConnection {
@@ -37,6 +37,14 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     private volatile long lastPongTime;
     private ScheduledExecutorService pingScheduler;
 
+    /**
+     * Constructs an RMI client handler, storing the client stub and server
+     * reference, then starting the ping scheduler.
+     *
+     * @param clientStub the remote client stub for callbacks
+     * @param server     the game server instance
+     * @throws RemoteException if the remote object cannot be exported
+     */
     public RMIClientHandler(RMIClientInterface clientStub, Server server) throws RemoteException {
         super();
         this.clientStub = clientStub;
@@ -46,40 +54,52 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         startPingScheduler();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void joinGameRequest(String nickname) throws RemoteException {
         this.playerNickname = nickname;
         controller.handleJoinGame(this.playerNickname, this);
     }
+    /** {@inheritDoc} */
     @Override
     public void setupGameRequest() throws RemoteException {
         controller.handleSetupGame(this.playerNickname);
     }
+    /** {@inheritDoc} */
     @Override
     public void chooseTotemColorRequest(String color) throws RemoteException {
         controller.handleChooseTotemColor(this.playerNickname, color);
     }
+    /** {@inheritDoc} */
     @Override
     public void placeTotemRequest(int offerPosition) throws RemoteException {
         controller.handlePlaceTotem(this.playerNickname, offerPosition);
     }
+    /** {@inheritDoc} */
     @Override
     public void pickCardRequest(String row, int cardIndex) throws RemoteException {
         controller.handlePickCard(this.playerNickname, row, cardIndex);
     }
+    /** {@inheritDoc} */
     @Override
     public void endTurnRequest() throws RemoteException {
         controller.handleEndTurn(this.playerNickname);
     }
+    /** {@inheritDoc} */
     @Override
     public void getLeaderboardRequest(int numPlayers) throws RemoteException {
         controller.handleGetLeaderboard(this, numPlayers);
     }
+    /** {@inheritDoc} */
     @Override
     public void pong() throws RemoteException {
         lastPongTime = System.currentTimeMillis();
     }
 
+    /**
+     * Starts a scheduled executor that sends pings every 5 seconds and
+     * disconnects the client if no pong is received within 15 seconds.
+     */
     public void startPingScheduler() {
         this.lastPongTime = System.currentTimeMillis();
         this.pingScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -99,24 +119,28 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         }, PING_INTERVAL_MS, PING_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyPlayerJoined(String nickname) {
         try { clientStub.onPlayerJoined(nickname); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyTotemColor(String nickname, TotemColors color) {
         try { clientStub.onTotemColorChosen(nickname, color); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyTotemPlaced(String nickname, int position) {
         try { clientStub.onTotemPlaced(nickname, position); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyCardPicked(String nickname, String row, int index, int food, int magic,
                                  Map<Integer, String> offering) {
@@ -124,12 +148,14 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyTotemReturned(String nickname, int position, int food, int aura) {
-        try { clientStub.onTotemReturned(nickname,food, aura); }
+        try { clientStub.onTotemReturned(nickname, position, food, aura); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyEventResolved(String name, Map<String, EventUpdate.PlayerSnapshot> stats,
                                     List<String> charUp, List<String> charLow,
@@ -139,12 +165,14 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyTurnChanged(String nickname) {
         try { clientStub.onTurnChanged(nickname); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyStateChanged(String stateName, int currentEra, int currentRound,
                                    Map<String, StateChangedUpdate.PlayerSnapshot> playersStats,
@@ -157,58 +185,67 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers) {
         try {
-            // clientStub rappresenta l'interfaccia remota del client (RMIClientInterface)
+            // clientStub represents the remote client interface (RMIClientInterface)
             clientStub.onEndGame(new EndGameUpdate(winners, allScores, numPlayers));
         } catch (RemoteException e) {
             disconnect();
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyError(String message) {
         try { clientStub.onErrorMessage(message); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyPlayerDisconnected(String nickname) {
         try { clientStub.onPlayerDisconnected(nickname); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyPlayerReconnected(String nickname) {
         try { clientStub.onPlayerReconnected(nickname); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyGameSuspended() {
         try { clientStub.onGameSuspended(); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyGameResumed() {
         try { clientStub.onGameResumed(); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void sendPing() {
         try { clientStub.ping(); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void sendLeaderboardUpdate(LeaderboardUpdate update) {
         try { clientStub.onLeaderboardUpdate(update); }
         catch (RemoteException e) { disconnect(); }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void disconnect() {
         if (!connected) return;
@@ -220,11 +257,11 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
 
         // --- FIX MEMORY LEAK ---
         try {
-            // "Scollega" questo handler dalla rete RMI -> sennò non venivano mai effettivamente chiuse
+            // "Disconnect" this handler from the RMI network -> otherwise they were never actually closed
             UnicastRemoteObject.unexportObject(this, true);
-            // true = forza la disconnessione anche se ci sono chiamate in corso.
+            // true = force disconnect even if calls are in progress.
         } catch (NoSuchObjectException e) {
-            // Già de-esportato, possiamo ignorarlo
+            // Already unexported, we can ignore it
         }
     }
 

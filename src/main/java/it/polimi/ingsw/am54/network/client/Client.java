@@ -1,8 +1,8 @@
 package it.polimi.ingsw.am54.network.client;
 
 /**
- * Hub centrale del lato Client.
- * Tiene insieme la rete, il modello locale e le info dell'utente.
+ * Central hub of the Client side.
+ * Brings together the network, local model, and user info.
  */
 public class Client {
     private static Client instance;
@@ -20,12 +20,21 @@ public class Client {
         this.model.setOnConnectionLostCallback(() -> this.startAutoReconnect());
     }
 
-    public static Client getInstance() {
+    /**
+     * Returns the singleton client instance, creating it if necessary.
+     *
+     * @return the shared {@code Client} instance
+     */
+    public static synchronized Client getInstance() {
         if (instance == null) instance = new Client();
         return instance;
     }
 
-    public static void resetClient() {
+    /**
+     * Discards the current client instance, disconnecting it first, and
+     * replaces it with a fresh one.
+     */
+    public static synchronized void resetClient() {
         if (instance != null && instance.connection != null) {
             try {
                 instance.connection.disconnect();
@@ -34,16 +43,31 @@ public class Client {
         instance = new Client();
     }
 
-    // Metodo per "accendere" il client dopo la scelta RMI/Socket
+    /**
+     * Sets the active server connection (Socket or RMI).
+     *
+     * @param connection the connection to use
+     */
     public void setConnection(ServerConnection connection) {
         this.connection = connection;
     }
 
+    /**
+     * Stores the connection parameters needed for automatic reconnection.
+     *
+     * @param ip       the server IP address
+     * @param isSocket {@code true} if using Socket, {@code false} for RMI
+     */
     public void setConnectionInfo(String ip, boolean isSocket) {
         this.savedIp = ip;
         this.savedIsSocket = isSocket;
     }
 
+    /**
+     * Starts a background thread that periodically attempts to reconnect
+     * to the server using the saved connection info. Stops once the
+     * connection is re-established.
+     */
     public void startAutoReconnect() {
         if (isReconnecting) return;
         isReconnecting = true;
@@ -71,14 +95,22 @@ public class Client {
                     javafx.application.Platform.runLater(() -> model.setReconnectingStatus(false));
                     System.out.println("[CLIENT] Riconnesso con successo!");
                 } catch (Exception e) {
-                    // Riprova
+                    // Retry
                 }
             }
         }).start();
     }
 
+    /** @return the current server connection, or {@code null} if none is set */
     public ServerConnection getConnection() { return connection; }
+    /** @return the local client model */
     public ClientModel getModel() { return model; }
+    /** @return the player's nickname */
     public String getNickname() { return nickname; }
+    /**
+     * Sets the player's nickname.
+     *
+     * @param nickname the nickname to use
+     */
     public void setNickname(String nickname) { this.nickname = nickname; }
 }

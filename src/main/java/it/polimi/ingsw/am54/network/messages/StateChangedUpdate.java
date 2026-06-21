@@ -7,9 +7,15 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Broadcast notification sent by the server to fully synchronize
+ * the game state to all clients. Contains every player's state,
+ * the turn order, offerings and all cards on the board.
+ * Also used for reconnection (sendFullStateOnReconnect).
+ */
 public final class StateChangedUpdate implements Update {
 
-    // DTO per le statistiche del giocatore
+    // DTO for player stats
     public static class PlayerSnapshot implements Serializable {
         public final int food;
         public final int aura;
@@ -18,6 +24,16 @@ public final class StateChangedUpdate implements Update {
         public final List<String> tribe;
         public final List<String> buildings;
 
+        /**
+         * Constructs a player snapshot.
+         *
+         * @param food        the player's food
+         * @param aura        the player's aura points
+         * @param magicPoints the player's magic points
+         * @param color       the player's totem color
+         * @param tribe       the list of tribe card strings
+         * @param buildings   the list of building card strings
+         */
         public PlayerSnapshot(int food, int aura, int magicPoints, TotemColors color, List<String> tribe, List<String> buildings) {
             this.food = food;
             this.aura = aura;
@@ -36,6 +52,22 @@ public final class StateChangedUpdate implements Update {
     private final Map<Integer, String> offeringTrack;
     private final List<String> charUpper, charLower, eventUpper, eventLower, buildUpper, buildLower;
 
+    /**
+     * Constructs a full state-changed update.
+     *
+     * @param stateName       the new state name
+     * @param currentEra      the current era
+     * @param currentRound    the current round
+     * @param playersStats    a map of nickname to player snapshot
+     * @param turnOrderTrack  the turn order track entries
+     * @param offeringTrack   the offering track entries
+     * @param charUpper       the upper row character cards
+     * @param charLower       the lower row character cards
+     * @param eventUpper      the upper row event cards
+     * @param eventLower      the lower row event cards
+     * @param buildUpper      the upper row building cards
+     * @param buildLower      the lower row building cards
+     */
     public StateChangedUpdate(String stateName,
                               int currentEra,
                               int currentRound,
@@ -59,54 +91,71 @@ public final class StateChangedUpdate implements Update {
         this.currentRound = currentRound;
     }
 
+    /** @return the new state name */
     public String getStateName() {
         return stateName;
     }
 
+    /** @return a map of nickname to player snapshot */
     public Map<String, PlayerSnapshot> getPlayersStats() {
         return playersStats;
     }
 
+    /** @return the turn order track entries */
     public List<String> getTurnOrderTrack() {
         return turnOrderTrack;
     }
 
+    /** @return the offering track entries */
     public Map<Integer, String> getOfferingTrack() {
         return offeringTrack;
     }
 
+    /** @return the upper row character cards */
     public List<String> getCharUpper() {
         return charUpper;
     }
 
+    /** @return the lower row character cards */
     public List<String> getCharLower() {
         return charLower;
     }
 
+    /** @return the upper row event cards */
     public List<String> getEventUpper() {
         return eventUpper;
     }
 
+    /** @return the lower row event cards */
     public List<String> getEventLower() {
         return eventLower;
     }
 
+    /** @return the upper row building cards */
     public List<String> getBuildUpper() {
         return buildUpper;
     }
 
+    /** @return the lower row building cards */
     public List<String> getBuildLower() {
         return buildLower;
     }
 
+    /** @return the current era */
     public int getCurrentEra() {
         return currentEra;
     }
 
+    /** @return the current round */
     public int getCurrentRound() {
         return currentRound;
     }
 
+    /**
+     * Applies this update to the client model, replacing the full game state.
+     *
+     * @param model the client-side model to update
+     */
     @Override
     public void applyTo(ClientModel model) {
         model.updateState(this);

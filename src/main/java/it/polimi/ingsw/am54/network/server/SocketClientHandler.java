@@ -14,20 +14,20 @@ import java.util.concurrent.*;
 
 /**
  * ============================================================================
- * SocketClientHandler — Gestore di una connessione TCP per un client
+ * SocketClientHandler — Handler for a TCP connection for a client
  * ============================================================================
  *
- * RUOLO:
- * - Thread separato per ogni client connesso via Socket TCP
- * - Legge le Request dal client e le inoltra al Controller (singola partita)
- * - Implementa ClientConnection (sendUpdate) e ClientHandler
- * - Gestisce il sistema di heartbeat (ping/pong) per rilevare disconnessioni
+ * ROLE::
+ * - Separate thread for each client connected via TCP Socket
+ * - Reads Requests from the client and forwards them to the Controller (single game)
+ * - Implements ClientConnection (sendUpdate) and ClientHandler
+ * - Manages the heartbeat (ping/pong) system to detect disconnections
  *
  * PING-PONG PATTERN:
- * - Ping ogni 5 secondi (PING_INTERVAL_MS)
- * - Se nessun Pong ricevuto entro 15 secondi (PING_TIMEOUT_MS):
- *   1. Chiama controller.markDisconnected() -> notifica gli altri giocatori
- *   2. Chiama disconnect() -> chiude il socket e pulisce
+ * - Ping every 5 seconds (PING_INTERVAL_MS)
+ * - If no Pong received within 15 seconds (PING_TIMEOUT_MS):
+ *   1. Calls controller.markDisconnected() -> notifies other players
+ * 2. Calls disconnect() -> closes the socket and cleans up
  * ============================================================================
  */
 public class SocketClientHandler implements Runnable, ClientConnection {
@@ -45,6 +45,12 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     private volatile long lastPongTime;
     private ScheduledExecutorService pingScheduler;
 
+    /**
+     * Constructs a socket client handler for the given connection.
+     *
+     * @param socket the client TCP socket
+     * @param server the game server instance
+     */
     public SocketClientHandler(Socket socket, Server server) {
         this.socket = socket;
         this.server = server;
@@ -55,6 +61,10 @@ public class SocketClientHandler implements Runnable, ClientConnection {
         startPingScheduler();
     }
 
+    /**
+     * Main loop: reads objects from the socket, dispatching pongs,
+     * join requests and other game requests to the controller.
+     */
     @Override
     public void run() {
         try {
@@ -67,10 +77,10 @@ public class SocketClientHandler implements Runnable, ClientConnection {
             while (connected) {
                 Object input = in.readObject();
                 /*
-                 * DISPATCH A DUE LIVELLI:
+                 * TWO-LEVEL DISPATCH:
                  * 1. PongResponse e JoinGameRequest come early instanceof
-                 *    (operazioni a livello socket / necessitano contesto prima del dispatch)
-                 * 2. Tutte le altre Request tramite execute() polimorfico
+                 *    (socket-level operations / need context before dispatch)
+                 * 2. All other Requests via polymorphic execute()
                  */
                 if (input instanceof PongResponse) {
                     lastPongTime = System.currentTimeMillis();
@@ -90,6 +100,10 @@ public class SocketClientHandler implements Runnable, ClientConnection {
         }
     }
 
+    /**
+     * Starts a scheduled executor that sends pings every 5 seconds and
+     * disconnects the client if no pong is received within 15 seconds.
+     */
     public void startPingScheduler() {
         this.lastPongTime = System.currentTimeMillis();
         this.pingScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -109,7 +123,7 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     /**
-     * Helper privato per scrivere sul flusso di rete in modo sicuro.
+     * Private helper to write on the network stream safely.
      */
     private synchronized void writeToStream(Update update) {
         if (!connected) return;
@@ -123,50 +137,59 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     /* =====================================================================
-     * IMPLEMENTAZIONE ClientConnection
-     * Il Socket "impacchetta" i parametri ricevuti in un DTO.
+     * IMPLEMENTATION ClientConnection
+     * Socket "packages" the received parameters into a DTO.
      * ===================================================================== */
 
+    /** {@inheritDoc} */
     @Override
     public void notifyPlayerJoined(String nickname) {
         writeToStream(new PlayerJoinedUpdate(nickname));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyTotemColor(String nickname, TotemColors color) {
         writeToStream(new TotemColorUpdate(nickname, color));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyTotemPlaced(String nickname, int position) {
         writeToStream(new TotemPlacedUpdate(nickname, position));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyCardPicked(String nickname, String row, int index, int food, int magic, Map<Integer, String> offering) {
         writeToStream(new CardPickedUpdate(nickname, row, index, food, magic, offering));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyTotemReturned(String nickname, int position, int food, int aura) {
         writeToStream(new TotemReturnedUpdate(nickname, position, food, aura));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyEventResolved(String name, Map<String, EventUpdate.PlayerSnapshot> stats, List<String> charUp, List<String> charLow, List<String> eventUp, List<String> eventLow, List<String> buildUp, List<String> buildLow) {
         writeToStream(new EventUpdate(name, stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyTurnChanged(String nickname) {
         writeToStream(new TurnChangedUpdate(nickname));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyStateChanged(String stateName, int currentEra, int currentRound, Map<String, StateChangedUpdate.PlayerSnapshot> playersStats, List<String> turnOrderTrack, Map<Integer, String> offeringTrack, List<String> charUpper, List<String> charLower, List<String> eventUpper, List<String> eventLower, List<String> buildUpper, List<String> buildLower) {
         writeToStream(new StateChangedUpdate(stateName, currentEra, currentRound, playersStats, turnOrderTrack, offeringTrack, charUpper, charLower, eventUpper, eventLower, buildUpper, buildLower));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers) {
         EndGameUpdate updateMessage = new EndGameUpdate(winners, allScores, numPlayers);
@@ -174,41 +197,49 @@ public class SocketClientHandler implements Runnable, ClientConnection {
         writeToStream(updateMessage);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyError(String message) {
         writeToStream(new ErrorMessageUpdate(message));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void sendLeaderboardUpdate(LeaderboardUpdate update) {
         writeToStream(update);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyPlayerDisconnected(String nickname) {
         writeToStream(new PlayerDisconnectedUpdate(nickname));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyPlayerReconnected(String nickname) {
         writeToStream(new PlayerReconnectedUpdate(nickname));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyGameSuspended() {
         writeToStream(new GameSuspendedUpdate());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void notifyGameResumed() {
         writeToStream(new GameResumedUpdate());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void sendPing() {
         writeToStream(new PingRequest(System.currentTimeMillis()));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void disconnect() {
         if (!connected) return;

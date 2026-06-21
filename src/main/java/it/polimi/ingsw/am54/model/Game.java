@@ -5,14 +5,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.FileReader;
 import it.polimi.ingsw.am54.model.states.StartTurnState;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 
-
 public class Game implements IGame{
-
 
     //ATTRIBUTI:
 
@@ -88,11 +87,11 @@ public class Game implements IGame{
 
         // 1. Creazione Mazzi (Delegata alla Factory)
         this.deckTribu = DeckFactory.createTribeDeck(
-                "data/CharacterCardsSetup.json",
-                "data/EventCardsSetup.json",
+                "/data/CharacterCardsSetup.json",
+                "/data/EventCardsSetup.json",
                 players.size()
         );
-        this.deckBuildings = DeckFactory.createBuildingDeck("data/BuildingCardsSetup.json", players.size());
+        this.deckBuildings = DeckFactory.createBuildingDeck("/data/BuildingCardsSetup.json", players.size());
 
         // 2. Inizializzazione Board
         this.board = new Board();
@@ -144,7 +143,8 @@ public class Game implements IGame{
 
         // Leggiamo la configurazione JSON degli edifici dall'interno del Model, non dalla Board
         try {
-            JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
+            InputStream is = getClass().getResourceAsStream("/data/EraCounts.json");
+            JsonObject countsRoot = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonObject();
             JsonArray buildingCounts = countsRoot.getAsJsonObject("buildingCounts").getAsJsonArray(String.valueOf(numPlayers));
 
             if (buildingCounts != null) {
@@ -183,25 +183,8 @@ public class Game implements IGame{
                 foodAmount = 4;
             }
 
-            /*// MEME
-            if (player.getNickname().equals("tricheco")|| player.getNickname().equalsIgnoreCase("Tester")|| player.getNickname().equalsIgnoreCase("Tester2")) {
-                foodAmount = 1000;
-            }
-            // FINE MEME*/
-
             player.modifyFood(foodAmount);
         }
-
-
-        /*
-        // Configurazione di sblocco totale per il testing sul campo
-        for (Player player : orderedPlayers) {
-            player.modifyFood(10000);       // Cibo infinito per comprare tutto
-            player.modifyAuraPoints(0);   // Punti Aura per testare la stabilità dei tracciati
-            player.modifyMagicPoints(0);  // Punti Magia pronti all'uso
-        }
-         */
-
     }
 
     public void setState(GameState newState) {
@@ -268,7 +251,8 @@ public class Game implements IGame{
     public void refillUpperBuildings() {
         int cardsToDraw = 0;
         try {
-            JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
+            InputStream is = getClass().getResourceAsStream("/data/EraCounts.json");
+            JsonObject countsRoot = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonObject();
             JsonArray buildingCounts = countsRoot.getAsJsonObject("buildingCounts").getAsJsonArray(String.valueOf(players.size()));
 
             if (buildingCounts != null) {
@@ -364,20 +348,7 @@ public class Game implements IGame{
     public int getCurrentEra() { return currentEra; }
     public int getRoundCount() { return roundCount; }
 
-    /**
-     * Imposta l'era corrente.
-     * Utilizzato dal Server per ripristinare lo stato del gioco dopo un crash.
-     *
-     * @param era l'era da impostare (1-6)
-     */
     public void setCurrentEra(int era) { this.currentEra = era; }
-
-    /**
-     * Imposta il numero del round corrente.
-     * Utilizzato dal Server per ripristinare lo stato del gioco dopo un crash.
-     *
-     * @param round il numero del round da impostare
-     */
     public void setRoundCount(int round) { this.roundCount = round; }
 
     public Player getCurrentPlayer() { return currentPlayer; }
@@ -386,21 +357,13 @@ public class Game implements IGame{
         notifyTurnChanged(player);
     }
 
-    /**
-     * Risolve il problema dei "Cloni di Gson".
-     * Deserializzando il JSON, Gson crea copie distinte per gli oggetti referenziati più volte.
-     * Questo metodo riallaccia i puntatori (currentPlayer, slot della board)
-     * alle UNICHE istanze ufficiali contenute nella lista 'players'.
-     */
     public void restoreReferences() {
-        // 1. Ripristina il currentPlayer
         if (this.currentPlayer != null) {
             try {
                 this.currentPlayer = getPlayerByNickname(this.currentPlayer.getNickname());
             } catch (Exception e) {}
         }
 
-        // 2. Ripristina gli occupanti degli slot di turno (Turn Order)
         if (this.board != null && this.board.getTurnOrderTile() != null) {
             for (it.polimi.ingsw.am54.model.TurnOrderSlot slot : this.board.getTurnOrderTile()) {
                 if (slot.getOccupiedBy() != null) {
@@ -411,7 +374,6 @@ public class Game implements IGame{
             }
         }
 
-        // 3. Ripristina gli occupanti delle offerte e ricollega il riferimento inverso
         if (this.board != null && this.board.getOfferingTrack() != null) {
             for (it.polimi.ingsw.am54.model.OfferingTile tile : this.board.getOfferingTrack()) {
                 if (tile.getOccupiedBy() != null) {
@@ -424,24 +386,16 @@ public class Game implements IGame{
             }
         }
     }
-    /**
-     * Imposta il numero di giocatori attivi per il round corrente.
-     * Usato dal Controller per informare il Model di quanti giocatori
-     * stanno effettivamente partecipando (escludendo i disconnessi).
-     */
+
     public void setActivePlayerCount(int count) { this.activePlayerCount = count; }
 
-    /**
-     * Restituisce il numero di giocatori attivi per il round corrente.
-     * Se non impostato (0), usa il numero totale di giocatori.
-     */
     public int getActivePlayerCount() {
         return (activePlayerCount > 0) ? activePlayerCount : players.size();
     }
 
     public Player getCurrentPicker() {
         List<OfferingTile> tiles = board.getOfferingTrack();
-        
+
         for (OfferingTile tile : tiles) {
             Player occupant = tile.getOccupiedBy();
             if (occupant != null && !isInTurnOrder(occupant)) {
@@ -473,7 +427,6 @@ public class Game implements IGame{
     public TurnOrderSlot moveToLastSlot(Player p) {
         List<TurnOrderSlot> slots = board.getTurnOrderTile();
 
-        // libera il giocatore dallo slot corrente
         int freedIndex = -1;
         for (int i = 0; i < slots.size(); i++) {
             if (p.equals(slots.get(i).getOccupiedBy())) {
@@ -483,7 +436,6 @@ public class Game implements IGame{
             }
         }
 
-        // compatta spostando a sinistra gli occupanti dopo freedIndex
         if (freedIndex >= 0) {
             for (int i = freedIndex; i < slots.size() - 1; i++) {
                 Player occupant = slots.get(i + 1).getOccupiedBy();
@@ -505,14 +457,6 @@ public class Game implements IGame{
     }
 
     public boolean isPickingComplete() {
-        // Il conteggio basato su activePlayerCount fallisce quando un giocatore
-        // disconnesso viene spostato nel turn order da moveToLastSlot (in
-        // autoHandleDisconnection): viene conteggiato come "aver pescato",
-        // saltando i giocatori ancora sul tracciato offerte.
-        //
-        // La condizione corretta: tutti i giocatori che hanno piazzato un totem
-        // sul tracciato offerte hanno completato la pesca, cioè il loro occupante
-        // è stato spostato nel turn order (o la tessera è stata liberata).
         for (OfferingTile tile : board.getOfferingTrack()) {
             Player occupant = tile.getOccupiedBy();
             if (occupant != null && !isInTurnOrder(occupant)) {
@@ -526,7 +470,6 @@ public class Game implements IGame{
         return deckTribu.isEmpty();
     }
 
-    // True se la prossima carta del deck è di un'era successiva
     public boolean isEraTransition() {
         TribeCard nextCard = deckTribu.peek();
         if (nextCard == null) return false;
@@ -562,23 +505,16 @@ public class Game implements IGame{
 
     public int calculatePlayerScore(Player p) {
         int score = 0;
-        // 1. Punti Aura comprensivi di modifiche EndGameState
         score += p.getAuraPoints();
-        // 2. Bonus Inventori
         score += getPlayerInventorsBonus(p);
-        // 3. Bonus Artisti
         score += getPlayerArtistsBonus(p);
-        // 4. Bonus Costruttori
         score += getPlayerConstructorsBonus(p);
-        // 5. Punti base stampati sulle carte Edificio
         score += getPlayerBuildingsBaseAura(p);
 
         return score;
     }
 
     public List<Player> determineWinners() {
-        // NESSUN EFFETTO CHIAMATO QUI.
-        // EndGameState ha già provveduto a chiamare applyOnEndGame prima di invocare questo metodo!
 
         List<Player> winners = new ArrayList<>();
         int maxScore = -999;
@@ -594,7 +530,6 @@ public class Game implements IGame{
             }
         }
 
-        // Spareggio sul cibo
         if (winners.size() > 1) {
             int maxFood = 0;
             for (Player p : winners) {

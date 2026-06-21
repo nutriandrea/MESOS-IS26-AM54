@@ -9,7 +9,6 @@ public class EventShaman implements IEffect<EventCard> {
         int max = g.getPlayers().stream().mapToInt(Player::getMagicPoints).max().orElse(0);
         int min = g.getPlayers().stream().mapToInt(Player::getMagicPoints).min().orElse(0);
 
-        // IL FIX: Contiamo quanti giocatori hanno il punteggio massimo per gestire i pareggi
         long maxPlayersCount = g.getPlayers().stream().filter(pl -> pl.getMagicPoints() == max).count();
 
         g.getPlayers().forEach(pl -> {

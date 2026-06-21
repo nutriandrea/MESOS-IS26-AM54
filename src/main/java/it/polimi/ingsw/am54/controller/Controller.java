@@ -295,12 +295,7 @@ public class Controller {
             if (game.getPlayers().isEmpty()) {
                 persistenceManager.clearBackup();
             } else {
-                // =================================================================
-                // FIX: Notifica forzata agli altri client.
-                // Poiché il ClientModel aggiorna la sua lista interna (e quindi l'indice 0)
-                // in base alla nuova lista che riceve dal server, non serve setGameReady.
-                // Il client riceverà la lista aggiornata e si autogestirà l'Host.
-                // =================================================================
+
                 notifyAllClientsStateChanged();
             }
         } else {

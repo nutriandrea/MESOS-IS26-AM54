@@ -85,7 +85,6 @@ public class MarketManager {
         int playerCount = (model.getPlayers() != null && !model.getPlayers().isEmpty()) ? model.getPlayers().size() : 3;
         int era = model.getCurrentEra();
 
-        // --- FIX DECK TRIBÙ: MAPPATURA ORIENTATA AGLI ASSET COMPATIBILI PER EVITARE IL BLOCCO DELLA COMPILAZIONE ---
         String tribeBackId = "8";
         if (playerCount == 2) {
             if (era == 1) tribeBackId = "8";

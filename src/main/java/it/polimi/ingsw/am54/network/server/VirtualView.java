@@ -236,13 +236,7 @@ public class VirtualView implements IGameObserver {
         List<String> buildLow = new java.util.ArrayList<>();
 
         Board b = game.getBoard();
-
-        System.out.println("[DEBUG-VV] onStateChanged state=" + newState.getClass().getSimpleName() + " board=" + (b != null));
         if (b != null) {
-            System.out.println("[DEBUG-VV] board charUpperRow size=" + b.getCharacterUpperRow().size()
-                    + " charLowerRow size=" + b.getCharacterLowerRow().size()
-                    + " eventUpperRow size=" + b.getEventUpperRow().size()
-                    + " buildUpperRow size=" + b.getBuildingCardsUpperRow().size());
             turnOrder = b.getTurnOrderTile().stream()
                     .map(slot -> {
                         int bonus = slot.getBonusFood();
@@ -267,8 +261,6 @@ public class VirtualView implements IGameObserver {
             buildLow = b.getBuildingCardsLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
         }
 
-        System.out.println("[DEBUG-VV] sending charUp=" + charUp.size() + " charLow=" + charLow.size()
-                + " eventUp=" + eventUp.size() + " buildUp=" + buildUp.size());
         // Spedisci il pacchetto (sicuro!)
         connection.notifyStateChanged(
                 newState.getClass().getSimpleName(), game.getCurrentEra(), game.getRoundCount(),

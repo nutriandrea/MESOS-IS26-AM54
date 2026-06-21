@@ -8,15 +8,14 @@ import it.polimi.ingsw.am54.model.effects.buildings.*;
 import it.polimi.ingsw.am54.model.effects.characters.*;
 import it.polimi.ingsw.am54.model.effects.events.*;
 
-import java.io.*;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 
 public class DeckFactory {
-
-
 
     // crea il mazzo BUILDINGS
     public static Deck<BuildingCard> createBuildingDeck(String filePath, int numPlayers) {
@@ -29,7 +28,8 @@ public class DeckFactory {
 
         // leggiamo il setup delle quantità da EraCounts.json
         try {
-            JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
+            InputStream is = DeckFactory.class.getResourceAsStream("/data/EraCounts.json");
+            JsonObject countsRoot = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonObject();
             JsonArray buildingCounts = countsRoot.getAsJsonObject("buildingCounts").getAsJsonArray(String.valueOf(numPlayers));
 
             if (buildingCounts != null) {
@@ -46,7 +46,8 @@ public class DeckFactory {
         List<BuildingCard> e3 = new ArrayList<>();
 
         try {
-            JsonArray root = JsonParser.parseReader(new FileReader(filePath)).getAsJsonArray();
+            InputStream is = DeckFactory.class.getResourceAsStream(filePath);
+            JsonArray root = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonArray();
 
             for (JsonElement elem : root) {
                 JsonObject node = elem.getAsJsonObject();
@@ -103,7 +104,7 @@ public class DeckFactory {
         return new Deck<>(finalDeck);
     }
 
-   //crea il mazzo tribu coi PERSONAGGI ed EVENTI
+    //crea il mazzo tribu coi PERSONAGGI ed EVENTI
     public static Deck<TribeCard> createTribeDeck(String charPath, String eventPath, int numPlayers) {
 
         if (numPlayers < 2 || numPlayers > 5) {
@@ -114,7 +115,8 @@ public class DeckFactory {
 
         // Leggiamo il numero di personaggi da pescare per Era
         try {
-            JsonObject countsRoot = JsonParser.parseReader(new FileReader("data/EraCounts.json")).getAsJsonObject();
+            InputStream is = DeckFactory.class.getResourceAsStream("/data/EraCounts.json");
+            JsonObject countsRoot = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonObject();
             JsonObject charCounts = countsRoot.getAsJsonObject("characterCounts").getAsJsonObject(String.valueOf(numPlayers));
 
             if (charCounts != null) {
@@ -138,7 +140,8 @@ public class DeckFactory {
 
         // caricamento Personaggi (inseriti in charE)
         try {
-            JsonArray root = JsonParser.parseReader(new FileReader(charPath)).getAsJsonArray();
+            InputStream is = DeckFactory.class.getResourceAsStream(charPath);
+            JsonArray root = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonArray();
             for (JsonElement elem : root) {
                 JsonObject node = elem.getAsJsonObject();
                 int minPlayers = node.get("minPlayers").getAsInt();
@@ -172,7 +175,8 @@ public class DeckFactory {
 
         // caricamento Eventi (inseriti in eventE)
         try {
-            JsonArray root = JsonParser.parseReader(new FileReader(eventPath)).getAsJsonArray();
+            InputStream is = DeckFactory.class.getResourceAsStream(eventPath);
+            JsonArray root = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonArray();
             for (JsonElement elem : root) {
                 JsonObject node = elem.getAsJsonObject();
                 String etichetta = node.get("etichettaSottoclasse").getAsString();
@@ -245,16 +249,16 @@ public class DeckFactory {
     }
 
     private static final Map<String, Function<JsonObject, IEffect<BuildingCard>>> BUILDING_EFFECTS = Map.ofEntries(
-        Map.entry("SHAMAN_PASSIVE", BuildingShamanPassive::new),
-        Map.entry("EVENT_COST_MODIFIER", BuildingEventCostModifier::new),
-        Map.entry("JOB_AURA_BONUS", BuildingJobAuraBonus::new),
-        Map.entry("IMMEDIATE_RESOURCE", BuildingImmediateResource::new),
-        Map.entry("EXTRA_PICK", BuildingExtraPick::new),
-        Map.entry("ENDGAME_AURA", BuildingEndgameAura::new),
-        Map.entry("BONUS_FOOD", p -> new BuildingTurnOrderBonus()),
-        Map.entry("SIX_DIFFERENT_AURA", p -> new BuildingSixDifferentAura()),
-        Map.entry("SIX_OF_TYPE", p -> new BuildingSixOfType()),
-        Map.entry("DOUBLE_INVENTOR", p -> new BuildingDoubleInventor())
+            Map.entry("SHAMAN_PASSIVE", BuildingShamanPassive::new),
+            Map.entry("EVENT_COST_MODIFIER", BuildingEventCostModifier::new),
+            Map.entry("JOB_AURA_BONUS", BuildingJobAuraBonus::new),
+            Map.entry("IMMEDIATE_RESOURCE", BuildingImmediateResource::new),
+            Map.entry("EXTRA_PICK", BuildingExtraPick::new),
+            Map.entry("ENDGAME_AURA", BuildingEndgameAura::new),
+            Map.entry("BONUS_FOOD", p -> new BuildingTurnOrderBonus()),
+            Map.entry("SIX_DIFFERENT_AURA", p -> new BuildingSixDifferentAura()),
+            Map.entry("SIX_OF_TYPE", p -> new BuildingSixOfType()),
+            Map.entry("DOUBLE_INVENTOR", p -> new BuildingDoubleInventor())
     );
 
     // crea l'effetto giusto per gli edifici
@@ -266,12 +270,12 @@ public class DeckFactory {
     }
 
     private static final Map<String, Supplier<IEffect<CharacterCard>>> CHARACTER_EFFECTS = Map.of(
-        "HUNTER", CharacterHunter::new,
-        "CONSTRUCTOR", CharacterConstructor::new,
-        "SHAMAN", CharacterShaman::new,
-        "ARTIST", CharacterPassive::new,
-        "INVENTOR", CharacterPassive::new,
-        "FARMER", CharacterPassive::new
+            "HUNTER", CharacterHunter::new,
+            "CONSTRUCTOR", CharacterConstructor::new,
+            "SHAMAN", CharacterShaman::new,
+            "ARTIST", CharacterPassive::new,
+            "INVENTOR", CharacterPassive::new,
+            "FARMER", CharacterPassive::new
     );
 
     private static IEffect<CharacterCard> createCharacterEffect(String effectName) {
@@ -281,10 +285,10 @@ public class DeckFactory {
     }
 
     private static final Map<String, Supplier<IEffect<EventCard>>> EVENT_EFFECTS = Map.of(
-        "HUNTER", EventHunter::new,
-        "FARMER", EventFarmer::new,
-        "ARTIST", EventArtist::new,
-        "SHAMAN", EventShaman::new
+            "HUNTER", EventHunter::new,
+            "FARMER", EventFarmer::new,
+            "ARTIST", EventArtist::new,
+            "SHAMAN", EventShaman::new
     );
 
     private static IEffect<EventCard> createEventEffect(String effectName) {

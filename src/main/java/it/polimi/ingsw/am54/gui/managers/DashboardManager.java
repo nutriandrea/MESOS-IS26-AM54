@@ -104,7 +104,6 @@ public class DashboardManager {
 
             headerBox.getChildren().addAll(totemIcon, nameLabel);
 
-            // --- FIX SCROLL: Blindiamo in orizzontale e blocchiamo il verticale ---
             ScrollPane cardsScroll = new ScrollPane();
             cardsScroll.setFitToHeight(true);
             cardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);

@@ -42,34 +42,36 @@ public class GUIApp extends Application {
         transitionLayer = new StackPane();
         transitionLayer.setMouseTransparent(true);
 
+
+        Rectangle blackScreen = new Rectangle();
+        blackScreen.setFill(Color.BLACK);
+        blackScreen.widthProperty().bind(rootWrapper.widthProperty());
+        blackScreen.heightProperty().bind(rootWrapper.heightProperty());
+        transitionLayer.getChildren().add(blackScreen);
+
         rootWrapper.getChildren().addAll(backgroundLayer, contentLayer, transitionLayer);
 
         Scene scene = new Scene(rootWrapper);
         primaryStage.setScene(scene);
 
-        try {
-            primaryStage.getIcons().add(new javafx.scene.image.Image(getClass().getResourceAsStream("/images/logo_mesos.png")));
-
-            // FORZATURA MAC DOCK
-            if (Taskbar.isTaskbarSupported()) {
-                Taskbar taskbar = Taskbar.getTaskbar();
-                if (taskbar.isSupported(Taskbar.Feature.ICON_IMAGE)) {
-                    InputStream is = getClass().getResourceAsStream("/images/logo_mesos.png");
-                    if (is != null) {
-                        java.awt.Image dockIcon = ImageIO.read(is);
-                        taskbar.setIconImage(dockIcon);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("[GUI] Impossibile caricare il logo: /images/logo_mesos.png");
-        }
-        primaryStage.setTitle("Mesos");
-
         primaryStage.setFullScreenExitHint("");
         primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
-        primaryStage.show();
+
+        // Impostiamo il fullscreen PRIMA di chiamare il metodo show()
         primaryStage.setFullScreen(true);
+        primaryStage.show();
+
+        // ==========================================================
+        // EFFETTO "FADE IN" DA VIDEOGIOCO
+        // Aspettiamo mezzo secondo che il Mac finisca l'animazione
+        // del Fullscreen, poi dissolviamo il nero!
+        // ==========================================================
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(800), blackScreen);
+        fadeIn.setFromValue(1.0);
+        fadeIn.setToValue(0.0);
+        fadeIn.setDelay(Duration.millis(600)); // Tempo di attesa per la stabilizzazione
+        fadeIn.setOnFinished(e -> transitionLayer.getChildren().remove(blackScreen));
+        fadeIn.play();
     }
 
     public static void changeSceneContent(Parent newContent) {
@@ -145,20 +147,24 @@ public class GUIApp extends Application {
     public static void loadBoardScene() {
         Platform.runLater(() -> {
             try {
-                // Inseriamo uno schermo nero temporaneo per coprire il glitch grafico iniziale
+                // Schermo nero temporaneo per transizione fluida
                 Rectangle blackScreen = new Rectangle();
                 blackScreen.setFill(Color.BLACK);
                 blackScreen.widthProperty().bind(rootWrapper.widthProperty());
                 blackScreen.heightProperty().bind(rootWrapper.heightProperty());
                 transitionLayer.getChildren().add(blackScreen);
 
-                FXMLLoader loader = new FXMLLoader(GUIApp.class.getResource("/fxml/Board.fxml"));
+                java.net.URL fxmlUrl = GUIApp.class.getResource("/fxml/Board.fxml");
+                if (fxmlUrl == null) {
+                    throw new RuntimeException("File /fxml/Board.fxml non trovato nel JAR! Controlla i percorsi.");
+                }
+
+                FXMLLoader loader = new FXMLLoader(fxmlUrl);
                 Parent boardRoot = loader.load();
 
                 changeBackground("board-background");
                 changeSceneContent(boardRoot);
 
-                // Dissolvenza dello schermo nero dopo un leggero delay per stabilizzare il layout
                 FadeTransition ft = new FadeTransition(Duration.millis(300), blackScreen);
                 ft.setFromValue(1.0);
                 ft.setToValue(0.0);
@@ -167,9 +173,19 @@ public class GUIApp extends Application {
                 ft.play();
 
                 System.out.println("[GUI] Board caricata con successo.");
-            } catch (Exception e) {
-                System.err.println("[GUI Errore] Impossibile caricare Board.fxml");
-                e.printStackTrace();
+            } catch (Throwable e) {
+                // SE CRASHA, ORA TI APPARE UN POP-UP VISIBILE CHE TI DICE IL PERCHÉ!
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                alert.setTitle("Crash del Client");
+                alert.setHeaderText("Impossibile caricare la Plancia (Board.fxml)");
+                java.io.StringWriter sw = new java.io.StringWriter();
+                e.printStackTrace(new java.io.PrintWriter(sw));
+                javafx.scene.control.TextArea area = new javafx.scene.control.TextArea(sw.toString());
+                area.setEditable(false);
+                area.setWrapText(true);
+                alert.getDialogPane().setExpandableContent(area);
+                alert.getDialogPane().setExpanded(true);
+                alert.showAndWait();
             }
         });
     }

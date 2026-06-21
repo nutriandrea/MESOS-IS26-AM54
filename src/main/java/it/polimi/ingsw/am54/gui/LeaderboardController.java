@@ -88,7 +88,7 @@ public class LeaderboardController {
         ClientModel model = Client.getInstance().getModel();
         if (model == null || model.getPlayers() == null) return;
 
-        // FIX: Rimuoviamo il blocco che impediva l'esecuzione! Ora la tabella è vuota all'inizio.
+
         if (!rankingTable.getChildren().isEmpty()) return;
 
         List<PlayerStats> statsList = new ArrayList<>();

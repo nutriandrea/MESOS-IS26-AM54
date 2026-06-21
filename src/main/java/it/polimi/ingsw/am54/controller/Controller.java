@@ -355,9 +355,20 @@ public class Controller {
      */
     private void autoHandleDisconnection(String nickname) {
         synchronized (game.getPlayers()) {
-            if (game.getCurrentState().isDisconnectBlocked()) return;
-
             game.setActivePlayerCount(activePlayerCount());
+
+            // ====================================================================
+            // FIX EDGE CASE 2: Priorità assoluta alla sospensione!
+            // Se scendiamo a 1 o 0 giocatori, scavalchiamo i blocchi di stato che
+            // impedivano al timer di 60s di partire. La partita si congela SUBITO.
+            // ====================================================================
+            if (activePlayerCount() <= 1) {
+                checkSuspension();
+                return;
+            }
+
+            // Se ci sono ancora giocatori attivi, applichiamo i normali blocchi di sicurezza
+            if (game.getCurrentState().isDisconnectBlocked()) return;
 
             try {
                 Player p = game.getPlayerByNickname(nickname);
@@ -375,7 +386,6 @@ public class Controller {
             checkSuspension();
         }
     }
-
     /**
      * Se il numero di giocatori attivi e' sceso a 1, sospende il gioco.
      */
@@ -385,7 +395,7 @@ public class Controller {
      */
     private void checkSuspension() {
         // ========================================================
-        // NUOVA LOGICA: Controllo "Stanza Vuota" a partita in corso
+        // FIX EDGE CASE 1: Controllo "Stanza Vuota" a partita in corso
         // ========================================================
         if (activePlayerCount() == 0) {
             LOGGER.warning("[SERVER] Tutti i giocatori sono disconnessi. Annullamento partita...");
@@ -399,16 +409,32 @@ public class Controller {
             }
             suspended = false;
 
-            // 3. Pulisce la memoria e riporta il server in Lobby!
+            // 3. Pulisce la memoria e riporta il server in Lobby
             game.getPlayers().clear();
             disconnectedPlayers.clear();
             virtualViews.clear();
             game.setState(new it.polimi.ingsw.am54.model.states.SetUpGameState());
+
+            // 4. PULIZIA ESTREMA: Resettiamo il giocatore corrente e la plancia
+            // in modo che il prossimo che entra trovi una partita immacolata!
+            game.setCurrentPlayer(null);
+            if (game.getBoard() != null) {
+                game.getBoard().getTurnOrderTile().clear();
+                game.getBoard().getOfferingTrack().clear();
+                try {
+                    game.getBoard().getCharacterUpperRow().clear();
+                    game.getBoard().getCharacterLowerRow().clear();
+                    game.getBoard().getEventUpperRow().clear();
+                    game.getBoard().getEventLowerRow().clear();
+                    game.getBoard().getBuildingCardsUpperRow().clear();
+                    game.getBoard().getBuildingCardsLowerRow().clear();
+                } catch (Exception ignored) {}
+            }
             return;
         }
 
         // ========================================================
-        // Vecchia logica per 1 solo giocatore (Vittoria a tavolino)
+        // Logica per 1 solo giocatore (Vittoria a tavolino)
         // ========================================================
         if (suspended) return;
         if (activePlayerCount() == 1) {

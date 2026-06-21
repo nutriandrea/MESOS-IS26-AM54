@@ -175,7 +175,6 @@ public class MarketManager {
             view.setOnMouseEntered(e -> view.setTranslateY(-10));
             view.setOnMouseExited(e -> view.setTranslateY(0));
             view.setOnMouseClicked(e -> {
-                System.out.println("[DRAFT] Cliccata carta ID: " + imageId + " (" + finalCardName + ") alla riga " + row + " indice " + index);
                 if (Client.getInstance().getConnection() != null) {
                     Client.getInstance().getConnection().pickCard(row, index);
                 }

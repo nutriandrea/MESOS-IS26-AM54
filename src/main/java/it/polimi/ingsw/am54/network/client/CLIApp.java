@@ -178,10 +178,16 @@ public class CLIApp implements CLIAbstract {
         currentInputHandler = (input) -> {
             try {
                 TotemColors color = TotemColors.valueOf(input.toUpperCase());
+
+                if (model.getPlayerColors().containsValue(color)) {
+                    System.out.println("❌ Colore già preso da un altro giocatore! Scegline un altro.");
+                    return; // Usciamo dal metodo SENZA resettare l'handler, così il giocatore può riprovare a digitare!
+                }
+
                 server.chooseTotem(color);
                 currentInputHandler = null;
             } catch (Exception e) {
-                System.out.println("Colore non valido. Riprova.");
+                System.out.println("❌ Colore non valido. Usa RED, YELLOW, BLACK, WHITE o BLUE.");
             }
         };
     }
@@ -275,27 +281,70 @@ public class CLIApp implements CLIAbstract {
         System.out.println("\n▶ --- TRACCIATI CENTRALI --- ◀");
         System.out.println("Ordine Turno:");
         for (String slot : model.getTurnOrderTrack()) {
-            System.out.println("  " + slot);
+            String pName = slot.contains(" -> ") ? slot.split(" -> ")[slot.split(" -> ").length - 1].trim() : slot;
+            // Se il giocatore è disconnesso, nascondiamo il nome e mostriamo "VUOTO"
+            if (model.isPlayerDisconnected(pName)) {
+                String prefix = slot.contains(" -> ") ? slot.substring(0, slot.lastIndexOf("->") + 2) : "";
+                System.out.println("  " + prefix + " VUOTO");
+            } else {
+                System.out.println("  " + slot);
+            }
         }
+
         System.out.println("\nOfferte:");
         for (java.util.Map.Entry<Integer, String> entry : model.getOfferingTrack().entrySet()) {
-            System.out.println("  " + entry.getKey() + ") " + entry.getValue());
+            String occupier = entry.getValue();
+            String pName = occupier.contains(" -> ") ? occupier.split(" -> ")[occupier.split(" -> ").length - 1].trim() : occupier;
+            // Anche qui, se è sulle offerte ma è crashato, mostriamo "VUOTO"
+            if (model.isPlayerDisconnected(pName)) {
+                String prefix = occupier.contains(" -> ") ? occupier.substring(0, occupier.lastIndexOf("->") + 2) : "";
+                System.out.println("  " + entry.getKey() + ") " + prefix + " VUOTO");
+            } else {
+                System.out.println("  " + entry.getKey() + ") " + occupier);
+            }
         }
 
         lowerRow();
 
-        System.out.println("\n👥 --- STATISTICHE GIOCATORI --- 👥");
+        // Prepariamo le due liste: Attivi e Disconnessi
+        List<String> activePlayers = new java.util.ArrayList<>();
+        List<String> disconnectedPlayers = new java.util.ArrayList<>();
+
         for (String p : model.getPlayers()) {
+            if (model.isPlayerDisconnected(p)) {
+                disconnectedPlayers.add(p);
+            } else {
+                activePlayers.add(p);
+            }
+        }
+
+        System.out.println("\n👥 --- STATISTICHE GIOCATORI --- 👥");
+        for (String p : activePlayers) {
             Integer food = model.getPlayerFood().get(p);
             Integer aura = model.getPlayerAura().get(p);
 
-            String status = model.isPlayerDisconnected(p) ? " [🔴 OFFLINE]" : "";
-            System.out.println("🔹 " + p.toUpperCase() + status + " | 🍖 Cibo: " + (food != null ? food : 0) + " | ✨ Aura: " + (aura != null ? aura : 0));
+            System.out.println("🔹 " + p.toUpperCase() + " | 🍖 Cibo: " + (food != null ? food : 0) + " | ✨ Aura: " + (aura != null ? aura : 0));
 
             List<String> tribe = model.getPlayerTribe().get(p);
             List<String> bldgs = model.getPlayerBuildings().get(p);
             System.out.println("   Tribù:   " + (tribe != null && !tribe.isEmpty() ? formattaRiga(tribe,0) : "[ VUOTA ]"));
             System.out.println("   Edifici: " + (bldgs != null && !bldgs.isEmpty() ? formattaRiga(bldgs,0) : "[ VUOTI ]"));
+        }
+
+        // Se c'è qualcuno di offline, lo stampiamo nel suo "recinto" dedicato
+        if (!disconnectedPlayers.isEmpty()) {
+            System.out.println("\n🔌 --- GIOCATORI DISCONNESSI --- 🔌");
+            for (String p : disconnectedPlayers) {
+                Integer food = model.getPlayerFood().get(p);
+                Integer aura = model.getPlayerAura().get(p);
+
+                System.out.println("🔴 " + p.toUpperCase() + " [OFFLINE] | 🍖 Cibo: " + (food != null ? food : 0) + " | ✨ Aura: " + (aura != null ? aura : 0));
+
+                List<String> tribe = model.getPlayerTribe().get(p);
+                List<String> bldgs = model.getPlayerBuildings().get(p);
+                System.out.println("   Tribù:   " + (tribe != null && !tribe.isEmpty() ? formattaRiga(tribe,0) : "[ VUOTA ]"));
+                System.out.println("   Edifici: " + (bldgs != null && !bldgs.isEmpty() ? formattaRiga(bldgs,0) : "[ VUOTI ]"));
+            }
         }
         System.out.println("=================================================================");
     }

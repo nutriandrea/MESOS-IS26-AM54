@@ -352,12 +352,29 @@ public class ClientModel {
     }
 
     public synchronized void updateTotemReturned(String nickname, int newFoodBalance, int newAuraBalance) {
-        // 1. Rimuove il totem dalle offerte confrontando il nome effettivo
-        offeringTrack.entrySet().removeIf(entry -> {
+        // 1. FIX: Invece di cancellare fisicamente la tessera dalla mappa (facendola sparire nella CLI),
+        // la cerchiamo e sostituiamo il nome dell'occupante con "VUOTO", mantenendo intatti i bonus e l'ID!
+        int targetKey = -1;
+        String targetPrefix = "";
+
+        for (Map.Entry<Integer, String> entry : offeringTrack.entrySet()) {
             String occupier = entry.getValue();
             String name = occupier.contains(" -> ") ? occupier.split(" -> ")[occupier.split(" -> ").length - 1].trim() : occupier;
-            return name.equalsIgnoreCase(nickname);
-        });
+            if (name.equalsIgnoreCase(nickname)) {
+                targetKey = entry.getKey();
+                targetPrefix = occupier.contains(" -> ") ? occupier.substring(0, occupier.lastIndexOf("->") + 2) : "";
+                break; // Trovato il totem, fermiamo il ciclo
+            }
+        }
+
+        // Se l'abbiamo trovato, aggiorniamo la mappa in modo sicuro
+        if (targetKey != -1) {
+            if (!targetPrefix.isEmpty()) {
+                offeringTrack.put(targetKey, targetPrefix + " VUOTO");
+            } else {
+                offeringTrack.put(targetKey, "VUOTO");
+            }
+        }
 
         // 2. FIX GRAFICO/LOGICO: Rimuoviamo preventivamente il giocatore dalla sua vecchia
         // posizione "fantasma" nell'ordine di turno per forzare il ricalcolo.
@@ -376,7 +393,6 @@ public class ClientModel {
 
         // 3. Inseriamo il giocatore nel PRIMO slot veramente disponibile partendo dall'alto.
         // Uno slot è disponibile se è VUOTO, NULL, oppure se è occupato da un "Fantasma".
-        // (Un fantasma è un giocatore disconnesso o uno il cui totem si trova ancora sulle Offerte).
         boolean placed = false;
         for (int i = 0; i < turnOrderTrack.size(); i++) {
             String s = turnOrderTrack.get(i);

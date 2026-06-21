@@ -174,35 +174,12 @@ public class Controller {
             game.addObserver(newView);
             LOGGER.info("Giocatore " + nickname + " si e' riconnesso.");
 
-            // =====================================================================
-            // REINSERIMENTO TOTEM IN TURN ORDER
-            // Ritorna nella prima posizione libera SOLO se siamo nella fase di Turn Order.
-            // Se siamo in Picking, il suo totem resterà fuori fino al prossimo round!
-            // =====================================================================
-            String currentStateName = game.getCurrentState().getClass().getSimpleName();
-
-            if (currentStateName.equals("StartTurnState")) {
-                try {
-                    Player reconnectedPlayer = game.getPlayerByNickname(nickname);
-                    if (reconnectedPlayer != null && !reconnectedPlayer.hasPlacedTotem()) {
-                        game.getBoard().addPlayerToFirstAvailableTurnOrderSlot(reconnectedPlayer);
-                    }
-                } catch (Exception e) {
-                    LOGGER.warning("Impossibile recuperare il giocatore riconnesso per la Turn Order: " + e.getMessage());
-                }
-            }
-
-            newView.sendFullStateOnReconnect(game);
-
-            if (game.getCurrentPlayer() != null) {
-                newView.onTurnChanged(game, game.getCurrentPlayer());
-            }
+            notifyAllClientsStateChanged();
         }
 
         connection.startHeartbeat();
         broadcastPlayerReconnected(nickname);
 
-        // Se il gioco era sospeso e ora ci sono almeno 2 giocatori attivi, riprendi (annulla i 60 secondi)
         if (suspended && activePlayerCount() >= 2) {
             resumeGame();
         }

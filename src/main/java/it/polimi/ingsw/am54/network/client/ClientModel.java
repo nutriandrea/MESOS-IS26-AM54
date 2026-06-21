@@ -352,41 +352,64 @@ public class ClientModel {
     }
 
     public synchronized void updateTotemReturned(String nickname, int newFoodBalance, int newAuraBalance) {
-        // Rimuove il totem dalle offerte confrontando il nome effettivo
+        // 1. Rimuove il totem dalle offerte confrontando il nome effettivo
         offeringTrack.entrySet().removeIf(entry -> {
             String occupier = entry.getValue();
             String name = occupier.contains(" -> ") ? occupier.split(" -> ")[occupier.split(" -> ").length - 1].trim() : occupier;
             return name.equalsIgnoreCase(nickname);
         });
 
-        // Controlla l'uguaglianza esatta prima di rimetterlo nell'ordine di turno
-        boolean alreadyInTurnOrder = turnOrderTrack.stream().anyMatch(s -> {
+        // 2. FIX GRAFICO/LOGICO: Rimuoviamo preventivamente il giocatore dalla sua vecchia
+        // posizione "fantasma" nell'ordine di turno per forzare il ricalcolo.
+        for (int i = 0; i < turnOrderTrack.size(); i++) {
+            String s = turnOrderTrack.get(i);
             String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
-            return name.equalsIgnoreCase(nickname);
-        });
-
-        if (!alreadyInTurnOrder) {
-            boolean placed = false;
-
-            for (int i = 0; i < turnOrderTrack.size(); i++) {
-                String s = turnOrderTrack.get(i);
-                String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
-
-                if (name.equalsIgnoreCase("VUOTO") || name.equalsIgnoreCase("NULL")) {
-                    if (s.contains(" -> ")) {
-                        String prefix = s.substring(0, s.lastIndexOf("->") + 2);
-                        turnOrderTrack.set(i, prefix + " " + nickname);
-                    } else {
-                        turnOrderTrack.set(i, nickname);
-                    }
-                    placed = true;
-                    break;
+            if (name.equalsIgnoreCase(nickname)) {
+                if (s.contains(" -> ")) {
+                    String prefix = s.substring(0, s.lastIndexOf("->") + 2);
+                    turnOrderTrack.set(i, prefix + " VUOTO");
+                } else {
+                    turnOrderTrack.set(i, "VUOTO");
                 }
             }
-            // Fallback di sicurezza nel caso rarissimo non ci siano vuoti
-            if (!placed) {
-                turnOrderTrack.add(nickname);
+        }
+
+        // 3. Inseriamo il giocatore nel PRIMO slot veramente disponibile partendo dall'alto.
+        // Uno slot è disponibile se è VUOTO, NULL, oppure se è occupato da un "Fantasma".
+        // (Un fantasma è un giocatore disconnesso o uno il cui totem si trova ancora sulle Offerte).
+        boolean placed = false;
+        for (int i = 0; i < turnOrderTrack.size(); i++) {
+            String s = turnOrderTrack.get(i);
+            String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
+
+            // Determiniamo se l'occupante attuale dello slot è in realtà un fantasma
+            boolean isGhost = disconnectedPlayers.contains(name);
+            if (!isGhost && !name.equalsIgnoreCase("VUOTO") && !name.equalsIgnoreCase("NULL")) {
+                for (String occupier : offeringTrack.values()) {
+                    String offName = occupier.contains(" -> ") ? occupier.split(" -> ")[occupier.split(" -> ").length - 1].trim() : occupier;
+                    if (offName.equalsIgnoreCase(name)) {
+                        isGhost = true;
+                        break;
+                    }
+                }
             }
+
+            // Se lo slot è libero o fantasma, lo sovrascriviamo con il giocatore attivo!
+            if (name.equalsIgnoreCase("VUOTO") || name.equalsIgnoreCase("NULL") || isGhost) {
+                if (s.contains(" -> ")) {
+                    String prefix = s.substring(0, s.lastIndexOf("->") + 2);
+                    turnOrderTrack.set(i, prefix + " " + nickname);
+                } else {
+                    turnOrderTrack.set(i, nickname);
+                }
+                placed = true;
+                break;
+            }
+        }
+
+        // Fallback di sicurezza
+        if (!placed) {
+            turnOrderTrack.add(nickname);
         }
 
         playerFood.put(nickname, newFoodBalance);

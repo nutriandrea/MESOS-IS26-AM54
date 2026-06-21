@@ -208,6 +208,13 @@ public class Board {
 
     public void addTotemToPosition(Player player, OfferingTile tile) {
         tile.occupy(player);
+
+        for (TurnOrderSlot slot : turnOrderTile) {
+            if (player.equals(slot.getOccupiedBy())) {
+                slot.freeSlot();
+                break;
+            }
+        }
     }
 
     public CharacterCard takeCharacterCard(String row, int index) {
@@ -316,7 +323,27 @@ public class Board {
                 placedCount++;
             }
         }
-        return placedCount == expectedCount;
+
+        // 1. Se il numero di totem fisici ha raggiunto i giocatori attivi, OK
+        if (placedCount >= expectedCount) {
+            return true;
+        }
+
+        // 2. FIX RICONNESSIONI: Se ci sono meno totem del previsto (es. per colpa
+        // di una disconnessione che ha falsato il conteggio), controlliamo se c'è
+        // EFFETTIVAMENTE ancora qualcuno nell'ordine di turno che deve giocare.
+        boolean someoneStillNeedsToPlace = false;
+        for (TurnOrderSlot slot : turnOrderTile) {
+            Player p = slot.getOccupiedBy();
+            if (p != null && !p.hasPlacedTotem()) {
+                someoneStillNeedsToPlace = true;
+                break;
+            }
+        }
+
+        // Se non c'è più nessuno che deve piazzare (tutti quelli seduti hanno
+        // il flag a true o gli slot sono vuoti), la fase è conclusa con successo!
+        return !someoneStillNeedsToPlace;
     }
 
     // Trova il giocatore più a sinistra sul tracciato delle offerte

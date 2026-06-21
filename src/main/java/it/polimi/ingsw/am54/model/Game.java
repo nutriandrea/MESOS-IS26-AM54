@@ -188,8 +188,63 @@ public class Game implements IGame{
     }
 
     public void setState(GameState newState) {
+        if (newState != null && newState.getClass().getSimpleName().equals("StartTurnState")) {
+
+
+            if (this.board != null) {
+                for (OfferingTile tile : board.getOfferingTrack()) {
+                    Player p = tile.getOccupiedBy();
+                    if (p != null) {
+
+
+                        try {
+                            tile.getClass().getMethod("freeTile").invoke(tile);
+                        } catch (Exception e) {
+                            try { tile.getClass().getMethod("freeSlot").invoke(tile); }
+                            catch (Exception ex) { tile.occupy(null); }
+                        }
+
+                        for (TurnOrderSlot slot : board.getTurnOrderTile()) {
+                            if (slot.getOccupiedBy() == null) {
+                                slot.occupy(p);
+                                p.setHasPlacedTotem(false);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            reintegrateWaitingPlayers();
+        }
+
         this.currentState = newState;
         notifyStateChanged(newState);
+    }
+
+    private void reintegrateWaitingPlayers() {
+        if (this.board == null) return;
+
+        for (Player p : this.players) {
+            boolean isPlaying = false;
+
+            for (TurnOrderSlot slot : board.getTurnOrderTile()) {
+                if (p.equals(slot.getOccupiedBy())) {
+                    isPlaying = true;
+                    break;
+                }
+            }
+
+            if (!isPlaying) {
+                for (TurnOrderSlot slot : board.getTurnOrderTile()) {
+                    if (slot.getOccupiedBy() == null) {
+                        slot.occupy(p);
+                        p.setHasPlacedTotem(false);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     public GameState getCurrentState() {
@@ -415,6 +470,14 @@ public class Game implements IGame{
     }
 
     public TurnOrderSlot assignPickerToTurnOrder(Player p) {
+
+        for (TurnOrderSlot slot : board.getTurnOrderTile()) {
+            if (p.equals(slot.getOccupiedBy())) {
+                return slot;
+            }
+        }
+
+
         for (TurnOrderSlot slot : board.getTurnOrderTile()) {
             if (slot.getOccupiedBy() == null) {
                 slot.occupy(p);
@@ -439,18 +502,17 @@ public class Game implements IGame{
         if (freedIndex >= 0) {
             for (int i = freedIndex; i < slots.size() - 1; i++) {
                 Player occupant = slots.get(i + 1).getOccupiedBy();
+                slots.get(i + 1).freeSlot();
                 if (occupant != null) {
-                    slots.get(i + 1).freeSlot();
                     slots.get(i).occupy(occupant);
                 }
             }
         }
-
-        int lastIdx = slots.size() - 1;
-        TurnOrderSlot lastSlot = slots.get(lastIdx);
-        if (lastSlot.getOccupiedBy() == null) {
-            lastSlot.occupy(p);
-            return lastSlot;
+        for (int i = slots.size() - 1; i >= 0; i--) {
+            if (slots.get(i).getOccupiedBy() == null) {
+                slots.get(i).occupy(p);
+                return slots.get(i);
+            }
         }
 
         return null;

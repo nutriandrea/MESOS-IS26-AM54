@@ -188,11 +188,7 @@ public class LobbyController {
         ClientModel model = Client.getInstance().getModel();
         String myNickname = Client.getInstance().getNickname();
 
-        // ==========================================================
-        // FIX CRITICO: TRANSIZIONE ALLA BOARD
-        // Se lo stato nel Model non è più "Lobby", significa che
-        // il Server ha avviato la partita. Dobbiamo cambiare scena!
-        // ==========================================================
+
         String currentState = model.getCurrentState();
         if (currentState != null && !currentState.equalsIgnoreCase("Lobby")) {
             // "Sganciamo" l'aggiornamento della lobby per evitare chiamate fantasma

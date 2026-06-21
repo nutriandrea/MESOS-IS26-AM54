@@ -89,7 +89,6 @@ public class BoardController {
     private boolean isShowingError = false;
     private boolean isGameOver = false;
 
-    // FIX SOVRAPPOSIZIONE: Memorizza il nome del player per ritardare la notifica visiva del turno
     private String pendingNotifyPlayer = null;
 
     // --- MANAGERS ---

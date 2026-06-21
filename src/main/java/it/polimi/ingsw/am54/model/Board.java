@@ -36,7 +36,6 @@ public class Board {
         initializeTurnOrderTile(numPlayers);
     }
 
-    // Modificato: non prende più "Game", ma solo "numPlayers"
     private void initializeOfferingTiles(int numPlayers) {
         offeringTrack.clear();
 
@@ -47,7 +46,8 @@ public class Board {
         List<Character> neededTiles = new ArrayList<>();
 
         try {
-            JsonObject rootNode = JsonParser.parseReader(new FileReader("data/OfferingTilesSetup.json")).getAsJsonObject();
+            java.io.InputStream is = getClass().getResourceAsStream("/data/OfferingTilesSetup.json");
+            JsonObject rootNode = JsonParser.parseReader(new java.io.InputStreamReader(is)).getAsJsonObject();
             String playerKey = String.valueOf(numPlayers);
             JsonArray arrayTessere = rootNode.getAsJsonObject("requiredTiles").getAsJsonArray(playerKey);
 
@@ -105,14 +105,13 @@ public class Board {
         }
 
         try {
-
-            //legge il file
-            JsonObject rootNode = JsonParser.parseReader(new FileReader("data/TurnOrderConfig.json")).getAsJsonObject();
+            //legge il file estraendolo dalle risorse del JAR
+            java.io.InputStream is = getClass().getResourceAsStream("/data/TurnOrderConfig.json");
+            JsonObject rootNode = JsonParser.parseReader(new java.io.InputStreamReader(is)).getAsJsonObject();
             JsonArray bonusArray = rootNode.getAsJsonObject("bonusFood").getAsJsonArray(String.valueOf(numPlayers));
 
             // se l'array esiste, crea gli slot
             if (bonusArray != null) {
-
                 for (int i = 0; i < bonusArray.size(); i++) {
                     int position = i + 1; // la posizione "umana" parte da 1
                     int bonus = bonusArray.get(i).getAsInt(); // Il cibo da dare (-1, 0, 1, 2...)

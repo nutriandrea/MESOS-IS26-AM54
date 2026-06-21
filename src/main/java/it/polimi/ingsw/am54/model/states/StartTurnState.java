@@ -38,7 +38,6 @@ public class StartTurnState extends GameState {
                 .findFirst()
                 .ifPresent(slot -> slot.freeSlot());
 
-        // FIX: La fase passa quando tutti gli ATTIVI hanno piazzato
         if (game.getBoard().allTotemsPlaced(game.getActivePlayerCount())) {
             game.setState(new PickingState());
             Player firstPicker = game.getBoard().getFirstPlayerFromOfferingTrack();

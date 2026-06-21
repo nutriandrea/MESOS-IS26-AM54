@@ -272,9 +272,6 @@ public class ClientModel {
      * - Aggiunge il giocatore all'offeringTrack alla posizione specificata
      */
     public synchronized void updateTotemPlacement(String nickname, int position) {
-        // FIX ANTI-SHIFT DEFINITIVO:
-        // Invece di usare removeIf (che accorcia la lista), cerchiamo il giocatore
-        // e lo rimpiazziamo con "VUOTO", conservando l'indice e la formattazione dello slot.
         for (int i = 0; i < turnOrderTrack.size(); i++) {
             String s = turnOrderTrack.get(i);
             String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
@@ -370,8 +367,7 @@ public class ClientModel {
 
         if (!alreadyInTurnOrder) {
             boolean placed = false;
-            // FIX RITORNO: Cerchiamo il primo buco "VUOTO" e lo riempiamo col nome,
-            // mantenendo la lista sempre della lunghezza corretta e l'impaginazione fissa!
+
             for (int i = 0; i < turnOrderTrack.size(); i++) {
                 String s = turnOrderTrack.get(i);
                 String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;

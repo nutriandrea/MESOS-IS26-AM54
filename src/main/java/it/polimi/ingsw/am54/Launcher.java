@@ -75,14 +75,37 @@ public class Launcher extends Application {
         });
 
         btnCLI.setOnAction(e -> {
-            root.getChildren().clear();
-            Label cliWarning = new Label("⚠️ MODALITÀ TERMINALE ⚠️\n\nPer giocare in CLI, devi aprire il\nprompt dei comandi (o Terminale) e digitare:\n\njava -jar IS26-AM54-1.0-SNAPSHOT-Client.jar --cli");
-            cliWarning.setStyle("-fx-font-family: 'Herculanum'; -fx-font-size: 18px; -fx-text-fill: #ff4444; -fx-text-alignment: center;");
+            String os = System.getProperty("os.name").toLowerCase();
 
-            Button btnClose = createStyledButton("ESCI");
-            btnClose.setOnAction(ev -> System.exit(0));
+            try {
+                // Trova automaticamente dove si trova il file JAR nel computer
+                String jarPath = new java.io.File(getClass().getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
 
-            root.getChildren().addAll(title, cliWarning, btnClose);
+                if (os.contains("mac")) {
+                    // Magia per Mac: apre l'app Terminale e digita il comando
+                    String[] cmd = {
+                            "osascript",
+                            "-e",
+                            "tell application \"Terminal\" to do script \"java -jar '" + jarPath + "' --cli\""
+                    };
+                    Runtime.getRuntime().exec(cmd);
+                } else {
+                    // Magia per Windows: apre il prompt dei comandi (cmd)
+                    new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", "java -jar \"" + jarPath + "\" --cli").start();
+                }
+
+                // Chiude la finestrella del Launcher grafico, dato che ora si gioca nel terminale
+                System.exit(0);
+
+            } catch (Exception ex) {
+                // Se qualcosa va storto (es. permessi bloccati), fa il fallback al vecchio messaggio
+                root.getChildren().clear();
+                Label cliWarning = new Label("⚠️ ERRORE AVVIO AUTOMATICO ⚠️\n\nApri il Terminale e digita manualmente:\n\njava -jar IS26-AM54-1.0-SNAPSHOT-Client.jar --cli");
+                cliWarning.setStyle("-fx-font-family: 'Herculanum'; -fx-font-size: 18px; -fx-text-fill: #ff4444; -fx-text-alignment: center;");
+                Button btnClose = createStyledButton("ESCI");
+                btnClose.setOnAction(ev -> System.exit(0));
+                root.getChildren().addAll(title, cliWarning, btnClose);
+            }
         });
 
         root.getChildren().addAll(title, subtitle, btnGUI, btnCLI);

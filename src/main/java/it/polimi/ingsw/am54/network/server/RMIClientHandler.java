@@ -218,7 +218,6 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
             controller.removeClient(playerNickname);
         }
 
-        // --- FIX MEMORY LEAK ---
         try {
             // "Scollega" questo handler dalla rete RMI -> sennò non venivano mai effettivamente chiuse
             UnicastRemoteObject.unexportObject(this, true);

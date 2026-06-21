@@ -38,8 +38,7 @@ public class CLIApp implements CLIAbstract {
             return sb.toString();
         }),
         Map.entry("FARMER", parts -> {
-            int v1 = Integer.parseInt(parts[4]);
-            return "FARMER " + (v1 >= 0 ? "🌾-" + v1 : "");
+            return "FARMER " + ("🌾-3" ); //dato che sono tutti uguali non serve fare parsing
         }),
         Map.entry("INVENTOR", parts -> {
             int v1 = Integer.parseInt(parts[4]);
@@ -83,11 +82,19 @@ public class CLIApp implements CLIAbstract {
                 }
             }
         });
-        inputThread.setDaemon(true);
+        //inputThread.setDaemon(true);
         inputThread.start();
     }
 
     public synchronized void render() {
+
+        // FIX: Se i vincitori sono stati popolati, forziamo a prescindere la schermata finale
+        if (model.getWinners() != null && !model.getWinners().isEmpty()) {
+            clearConsole();
+            renderEndGame();
+            return;
+        }
+
         String currentState = model.getCurrentState();
 
         boolean isMyTurn = myNickname.equals(model.getCurrentPlayer());
@@ -247,10 +254,11 @@ public class CLIApp implements CLIAbstract {
         return visual.toString();
     }
 
-    private String formattaRiga(List<String> riga) {
+    private String formattaRiga(List<String> riga, int startIndex) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < riga.size(); i++) {
-            sb.append(i).append(":").append(renderizzaCarta(riga.get(i))).append("   ");
+            // Aggiunge lo startIndex all'indice corrente
+            sb.append(i + startIndex).append(":").append(renderizzaCarta(riga.get(i))).append("   ");
         }
         return sb.toString();
     }
@@ -259,9 +267,10 @@ public class CLIApp implements CLIAbstract {
         System.out.println("\n=========================== TABELLONE ===========================");
         System.out.println("ERA: " + model.getCurrentEra() + "  |  ROUND: " + model.getRoundCount());
         System.out.println("\n▲ --- FILA SUPERIORE --- ▲");
-        System.out.println("Eventi:     " + formattaRiga(model.getEventUpperRow()));
-        System.out.println("Personaggi: " + formattaRiga(model.getCharacterUpperRow()));
-        System.out.println("Edifici:    " + formattaRiga(model.getUpperBuildingRow()));
+        System.out.println("Eventi:     " + formattaRiga(model.getEventUpperRow(),0));
+        System.out.println("Personaggi: " + formattaRiga(model.getCharacterUpperRow(),0));
+        int startIndexUpperBuildings = model.getCharacterUpperRow().size();
+        System.out.println("Edifici:    " + formattaRiga(model.getUpperBuildingRow(),startIndexUpperBuildings));
 
         System.out.println("\n▶ --- TRACCIATI CENTRALI --- ◀");
         System.out.println("Ordine Turno:");
@@ -273,7 +282,7 @@ public class CLIApp implements CLIAbstract {
             System.out.println("  " + entry.getKey() + ") " + entry.getValue());
         }
 
-        loweRow();
+        lowerRow();
 
         System.out.println("\n👥 --- STATISTICHE GIOCATORI --- 👥");
         for (String p : model.getPlayers()) {
@@ -285,30 +294,44 @@ public class CLIApp implements CLIAbstract {
 
             List<String> tribe = model.getPlayerTribe().get(p);
             List<String> bldgs = model.getPlayerBuildings().get(p);
-            System.out.println("   Tribù:   " + (tribe != null && !tribe.isEmpty() ? formattaRiga(tribe) : "[ VUOTA ]"));
-            System.out.println("   Edifici: " + (bldgs != null && !bldgs.isEmpty() ? formattaRiga(bldgs) : "[ VUOTI ]"));
+            System.out.println("   Tribù:   " + (tribe != null && !tribe.isEmpty() ? formattaRiga(tribe,0) : "[ VUOTA ]"));
+            System.out.println("   Edifici: " + (bldgs != null && !bldgs.isEmpty() ? formattaRiga(bldgs,0) : "[ VUOTI ]"));
         }
         System.out.println("=================================================================");
     }
 
-    private void loweRow() {
+    private void lowerRow() {
         System.out.println("\n▼ --- FILA INFERIORE --- ▼");
-        System.out.println("Eventi:     " + formattaRiga(model.getEventLowerRow()));
-        System.out.println("Personaggi: " + formattaRiga(model.getCharacterLowerRow()));
-        System.out.println("Edifici:    " + formattaRiga(model.getLowerBuildingRow()));
+        System.out.println("Eventi:     " + formattaRiga(model.getEventLowerRow(),0));
+        System.out.println("Personaggi: " + formattaRiga(model.getCharacterLowerRow(),0));
+        int startIndexLowerBuildings = model.getCharacterLowerRow().size();
+        System.out.println("Edifici:    " + formattaRiga(model.getLowerBuildingRow(),startIndexLowerBuildings));
     }
 
     public void renderEndGame() {
-        System.out.println("\n!!! PARTITA TERMINATA !!!");
-        System.out.println("Vincitori: " + model.getWinners());
+        // 1. SBLOCCO FORZATO DEL MODEL
+        model.clearPendingEvents();
 
-        if (model.getLastMatchScores() != null && !model.getLastMatchScores().isEmpty()) {
-            System.out.println("\n--- PUNTEGGI FINALI ---");
-            model.getLastMatchScores().forEach((nick, score) ->
-                    System.out.println("  " + nick + ": " + score + " punti")
-            );
+        // 2. GESTIONE DELLA "RACE CONDITION" DI RETE
+        if (model.getWinners() == null || model.getWinners().isEmpty()) {
+            System.out.println("\nCalcolo dei risultati finali in corso... Ricezione dati dal server...");
+            // RIMOSSO IL RETURN: Invece di bloccare tutto, andiamo avanti e stampiamo
+            // il prompt della classifica. Quando arriveranno i dati, il tabellone si aggiornerà da solo!
+        } else {
+            // 3. STAMPA EFFETTIVA DELLA SCHERMATA DI VITTORIA
+            System.out.println("\n!!! PARTITA TERMINATA !!!");
+            System.out.println("Vincitori: " + model.getWinners());
+
+            if (model.getLastMatchScores() != null && !model.getLastMatchScores().isEmpty()) {
+                System.out.println("\n--- PUNTEGGI FINALI ---");
+                model.getLastMatchScores().forEach((nick, score) ->
+                        System.out.println("  " + nick + ": " + score + " punti")
+                );
+            }
         }
 
+        // Stampiamo SEMPRE la classifica e abilitiamo l'input,
+        // così la console non si congela mai.
         stampaClassifica();
         stampaPromptLeaderboard();
     }

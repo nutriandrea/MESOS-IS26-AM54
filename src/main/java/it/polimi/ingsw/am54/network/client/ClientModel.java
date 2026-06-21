@@ -511,15 +511,18 @@ public class ClientModel {
 
     /** Aggiornato quando la partita finisce */
     public synchronized void updateEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers) {
-        if (!pendingEventReports.isEmpty()) {
+        // FIX ASSOLUTO: Assegnazione immediata e incondizionata dei risultati.
+        // Così model.getWinners() non sarà MAI vuoto quando la CLI andrà a stamparlo.
+        this.winners = winners;
+        this.lastMatchScores = allScores;
+        this.lastMatchNumPlayers = numPlayers;
+
+        if (!pendingEventReports.isEmpty() && onEventResolvedCallback != null) {
             this.isEndGamePending = true;
             this.pendingWinners = winners;
             this.pendingLastMatchScores = allScores;
             this.pendingLastMatchNumPlayers = numPlayers;
         } else {
-            this.winners = winners;
-            this.lastMatchScores = allScores;
-            this.lastMatchNumPlayers = numPlayers;
             notifyUI();
         }
     }

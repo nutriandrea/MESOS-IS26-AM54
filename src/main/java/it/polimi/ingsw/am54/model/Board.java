@@ -7,6 +7,10 @@ import com.google.gson.JsonParser;
 import java.io.*;
 import java.util.*;
 
+/**
+ * Represents the physical layout of the game, managing the various card rows,
+ * the offering track, and the turn order tile.
+ */
 public class Board {
 
     private List<CharacterCard> characterUpperRow;
@@ -30,17 +34,24 @@ public class Board {
         this.turnOrderTile = new ArrayList<>();
     }
 
-    // Sostituisce la vecchia generateBoard. Ora la Board riceve solo il numero di giocatori (Dati, non Logica).
+    /**
+     * Initializes the main structural elements of the board.
+     * @param numPlayers The number of players, dictating the board's configuration.
+     */
     public void initializeLayout(int numPlayers) {
         initializeOfferingTiles(numPlayers);
         initializeTurnOrderTile(numPlayers);
     }
 
+    /**
+     * Loads the specific offering tiles required for the current player count
+     * from the JSON configuration.
+     */
     private void initializeOfferingTiles(int numPlayers) {
         offeringTrack.clear();
 
         if (numPlayers < 2 || numPlayers > 5) {
-            throw new IllegalArgumentException("Errore critico: Numero di giocatori non valido (" + numPlayers + ")");
+            throw new IllegalArgumentException("Critical error: Invalid player count (" + numPlayers + ")");
         }
 
         List<Character> neededTiles = new ArrayList<>();
@@ -63,6 +74,7 @@ public class Board {
                 for (JsonElement elem : arrayTiles) {
                     JsonObject node = elem.getAsJsonObject();
                     char idLetto = node.get("id").getAsString().charAt(0);
+
                     if (neededTiles.contains(idLetto)) {
                         int upper = node.get("cardsFromUpper").getAsInt();
                         int lower = node.get("cardsFromLower").getAsInt();
@@ -80,7 +92,6 @@ public class Board {
         offeringTrack.sort(Comparator.comparing(OfferingTile::getId));
     }
 
-    // Aggiungi questo metodo per permettere al Game di inserire gli Edifici in modo pulito
     public void addBuildingCard(BuildingCard card, String row) {
         if (row.equalsIgnoreCase("upper")) {
             buildingCardsUpperRow.add(card);
@@ -89,34 +100,30 @@ public class Board {
         }
     }
 
-    // Aggiungi questo metodo di utilità per contare gli eventi presenti in una fila (serve al Game per il Setup)
     public int getEventRowSize(String row) {
         return row.equalsIgnoreCase("upper") ? eventUpperRow.size() : eventLowerRow.size();
     }
 
-
+    /**
+     * Configures the turn order slots and their associated food bonuses.
+     */
     public void initializeTurnOrderTile(int numPlayers) {
-        // Svuota la lista se c'era già qualcosa
         this.turnOrderTile.clear();
 
-        // controlli di sicurezza
         if (numPlayers < 2 || numPlayers > 5) {
-            throw new IllegalArgumentException("Errore critico: Numero di giocatori non valido (" + numPlayers + ")");
+            throw new IllegalArgumentException("Critical error: Invalid player count (" + numPlayers + ")");
         }
 
         try {
-            //legge il file estraendolo dalle risorse del JAR
             java.io.InputStream is = getClass().getResourceAsStream("/data/TurnOrderConfig.json");
             JsonObject rootNode = JsonParser.parseReader(new java.io.InputStreamReader(is)).getAsJsonObject();
             JsonArray bonusArray = rootNode.getAsJsonObject("bonusFood").getAsJsonArray(String.valueOf(numPlayers));
 
-            // se l'array esiste, crea gli slot
             if (bonusArray != null) {
                 for (int i = 0; i < bonusArray.size(); i++) {
-                    int position = i + 1; // la posizione "umana" parte da 1
-                    int bonus = bonusArray.get(i).getAsInt(); // Il cibo da dare (-1, 0, 1, 2...)
+                    int position = i + 1;
+                    int bonus = bonusArray.get(i).getAsInt();
 
-                    // fabbrica lo slot passandogli i dati già pronti
                     TurnOrderSlot slot = new TurnOrderSlot(position, bonus);
                     this.turnOrderTile.add(slot);
                 }
@@ -125,7 +132,6 @@ public class Board {
             throw new RuntimeException("Fatal error during Turn Order initialization", e);
         }
     }
-
 
     public void addCharacterCard(CharacterCard card, String row) {
         if (row.equalsIgnoreCase("upper")) {
@@ -143,69 +149,35 @@ public class Board {
         for (int i = 0; i < randomPlayers.size(); i++) {
             Player p = randomPlayers.get(i);
             TurnOrderSlot slot = this.turnOrderTile.get(i);
-
-            // Piazzo il giocatore nello slot
             slot.occupy(p);
-
         }
     }
 
+    /**
+     * Shifts remaining characters and events from the upper row to the lower row,
+     * typically performed at the end of a round.
+     */
     public void moveUpperToLower() {
-        // facciamo scivolare giù tutti i personaggi rimasti
         characterLowerRow.addAll(characterUpperRow);
         characterUpperRow.clear();
 
-        // facciamo scivolare giù tutti gli eventi rimasti
         eventLowerRow.addAll(eventUpperRow);
         eventUpperRow.clear();
     }
 
+    /**
+     * Shifts buildings from the upper row to the lower row.
+     */
     public void moveBuildings() {
         buildingCardsLowerRow.clear();
         buildingCardsLowerRow.addAll(buildingCardsUpperRow);
         buildingCardsUpperRow.clear();
     }
 
-    public void refillUpperRow(Game game) {
-        int numPlayers = game.getPlayersNumber();
-        int targetSize = numPlayers + 4;
-
-        Deck<TribeCard> tribeDeck = game.getTribeDeck();
-
-        // Il ciclo controlla la somma di personaggi ed eventi presenti nella riga in alto
-        // Finché non arriviamo a numPlayers + 4, continuiamo a pescare
-        while ((characterUpperRow.size() + eventUpperRow.size()) < targetSize) {
-
-            TribeCard card = tribeDeck.drawCard();
-
-            // Sicurezza: se il mazzo è finito, ci fermiamo
-            if (card == null) { break; }
-
-            // la carta si rivela e andrà in automatico in characterUpperR oppure in eventUpperRow.
-            // In entrambi i casi, la somma totale salirà di 1
-            card.reveal(this, "upper");
-        }
-    }
-
-    public List<Card> getRow(String row) {
-        // Creiamo una nuova lista vuota che conterrà le carte unite
-        List<Card> combinedRow = new ArrayList<>();
-
-        if (row.equalsIgnoreCase("upper")) {
-            // Uniamo i Personaggi e gli Eventi della riga in alto
-            combinedRow.addAll(characterUpperRow);
-            combinedRow.addAll(eventUpperRow);
-        } else if (row.equalsIgnoreCase("lower")) {
-            // Uniamo i Personaggi e gli Eventi della riga in basso
-            combinedRow.addAll(characterLowerRow);
-            combinedRow.addAll(eventLowerRow);
-        }
-
-        // Restituiamo la lista intera
-        return combinedRow;
-    }
-
-
+    /**
+     * Places a player's totem on an offering tile and frees their previous slot
+     * in the turn order track to dynamically recalculate turn order later.
+     */
     public void addTotemToPosition(Player player, OfferingTile tile) {
         tile.occupy(player);
 
@@ -218,92 +190,68 @@ public class Board {
     }
 
     public CharacterCard takeCharacterCard(String row, int index) {
-        List<CharacterCard> targetRow = row.equalsIgnoreCase("upper")
-                ? characterUpperRow
-                : characterLowerRow;
-
-        if (index < 0 || index >= targetRow.size()) {
-            return null;
-        }
-
+        List<CharacterCard> targetRow = row.equalsIgnoreCase("upper") ? characterUpperRow : characterLowerRow;
+        if (index < 0 || index >= targetRow.size()) return null;
         return targetRow.remove(index);
     }
 
     public BuildingCard takeBuildingCard(String row, int index) {
-        List<BuildingCard> targetRow = row.equalsIgnoreCase("upper")
-                ? buildingCardsUpperRow
-                : buildingCardsLowerRow;
-
-        if (index < 0 || index >= targetRow.size()) {
-            return null;
-        }
-
+        List<BuildingCard> targetRow = row.equalsIgnoreCase("upper") ? buildingCardsUpperRow : buildingCardsLowerRow;
+        if (index < 0 || index >= targetRow.size()) return null;
         return targetRow.remove(index);
     }
 
-
-
     public int getCharacterRowSize(String row) {
-        return row.equalsIgnoreCase("upper")
-                ? characterUpperRow.size()
-                : characterLowerRow.size();
+        return row.equalsIgnoreCase("upper") ? characterUpperRow.size() : characterLowerRow.size();
     }
 
     public int getBuildingRowSize(String row) {
-        return row.equalsIgnoreCase("upper")
-                ? buildingCardsUpperRow.size()
-                : buildingCardsLowerRow.size();
+        return row.equalsIgnoreCase("upper") ? buildingCardsUpperRow.size() : buildingCardsLowerRow.size();
     }
 
-
-    // Ordina eventi: sostentamento (FARMER) ultimo
+    /**
+     * Extracts the next event to be resolved from the lower row.
+     * Sustenance events (FARMER) are always resolved last.
+     */
     public EventCard popNextEvent() {
-        if (eventLowerRow.isEmpty()) {
-            return null; // Non ci sono più eventi
-        }
+        if (eventLowerRow.isEmpty()) return null;
 
-        // Troviamo l'evento da risolvere in base alle regole:
-        // Sostentamento alla fine, a parità di quello l'Era più bassa
         EventCard nextEvent = eventLowerRow.stream()
                 .min((a, b) -> {
                     boolean aIsFarmer = a.isSustenanceEvent();
                     boolean bIsFarmer = b.isSustenanceEvent();
 
                     if (aIsFarmer != bIsFarmer) {
-                        return aIsFarmer ? 1 : -1; // Il Farmer va in fondo
+                        return aIsFarmer ? 1 : -1;
                     }
                     return Integer.compare(a.getEra(), b.getEra());
                 })
                 .orElse(null);
 
         if (nextEvent != null) {
-            eventLowerRow.remove(nextEvent); // Rimuove fisicamente la carta dal tavolo
+            eventLowerRow.remove(nextEvent);
         }
 
         return nextEvent;
     }
 
+    /**
+     * Extracts the next visible event from the board, prioritizing the lower row.
+     */
     public EventCard popNextVisibleEvent() {
-        // Prima cerchiamo nella fila inferiore (regola standard)
-        EventCard next = popNextEvent(); // Il metodo creato in precedenza per la fila inferiore
+        EventCard next = popNextEvent();
 
-        // Se la fila inferiore è vuota, cerchiamo in quella superiore
         if (next == null && !eventUpperRow.isEmpty()) {
             next = eventUpperRow.stream()
                     .min((a, b) -> {
                         boolean aIsFarmer = a.getName() != null && a.getName().toUpperCase().contains("FARMER");
                         boolean bIsFarmer = b.getName() != null && b.getName().toUpperCase().contains("FARMER");
 
-                        // Prima priorità: Eventi Sostentamento (vanno in fondo)
-                        if (aIsFarmer != bIsFarmer) {
-                            return aIsFarmer ? 1 : -1;
-                        }
-                        // Seconda priorità: Ordine crescente di Era
+                        if (aIsFarmer != bIsFarmer) return aIsFarmer ? 1 : -1;
                         return Integer.compare(a.getEra(), b.getEra());
                     })
                     .orElse(null);
 
-            // Se abbiamo trovato un evento, rimuoviamolo fisicamente dal tavolo
             if (next != null) {
                 eventUpperRow.remove(next);
             }
@@ -313,25 +261,20 @@ public class Board {
     }
 
     /**
-     * Controlla se tutti i giocatori attivi hanno piazzato il loro totem.
-     * @param expectedCount numero di giocatori che devono piazzare (attivi, non totali)
+     * Verifies if the totem placement phase is complete.
+     * Safely handles edge cases involving disconnected players (ghosts)
+     * by checking the actual turn order physical state.
+     * * @param expectedCount The number of active players.
+     * @return true if all present players have placed their totems.
      */
     public boolean allTotemsPlaced(int expectedCount) {
         int placedCount = 0;
         for (OfferingTile tile : offeringTrack) {
-            if (!tile.isAvailable()) {
-                placedCount++;
-            }
+            if (!tile.isAvailable()) placedCount++;
         }
 
-        // 1. Se il numero di totem fisici ha raggiunto i giocatori attivi, OK
-        if (placedCount >= expectedCount) {
-            return true;
-        }
+        if (placedCount >= expectedCount) return true;
 
-        // 2. FIX RICONNESSIONI: Se ci sono meno totem del previsto (es. per colpa
-        // di una disconnessione che ha falsato il conteggio), controlliamo se c'è
-        // EFFETTIVAMENTE ancora qualcuno nell'ordine di turno che deve giocare.
         boolean someoneStillNeedsToPlace = false;
         for (TurnOrderSlot slot : turnOrderTile) {
             Player p = slot.getOccupiedBy();
@@ -341,12 +284,9 @@ public class Board {
             }
         }
 
-        // Se non c'è più nessuno che deve piazzare (tutti quelli seduti hanno
-        // il flag a true o gli slot sono vuoti), la fase è conclusa con successo!
         return !someoneStillNeedsToPlace;
     }
 
-    // Trova il giocatore più a sinistra sul tracciato delle offerte
     public Player getFirstPlayerFromOfferingTrack() {
         for (OfferingTile tile : offeringTrack) {
             if (!tile.isAvailable()) {
@@ -356,18 +296,13 @@ public class Board {
         return null;
     }
 
-    // =====================================================================
-    // GESTIONE DISCONNESSIONI E SHIFT TURN ORDER
-    // =====================================================================
-
     /**
-     * Rimuove il giocatore dalla Turn Order e fa "scivolare" verso l'alto (verso lo slot 0)
-     * tutti i totem dei giocatori che si trovavano sotto di lui.
+     * Removes a disconnected player from the turn order and shifts all
+     * subsequent players up by one slot to maintain a contiguous queue.
      */
     public void removePlayerFromTurnOrderAndShiftUp(Player disconnectedPlayer) {
         int emptyIndex = -1;
 
-        // 1. Trova il giocatore disconnesso e libera il suo slot
         for (int i = 0; i < turnOrderTile.size(); i++) {
             if (turnOrderTile.get(i).getOccupiedBy() != null &&
                     turnOrderTile.get(i).getOccupiedBy().getNickname().equals(disconnectedPlayer.getNickname())) {
@@ -377,11 +312,10 @@ public class Board {
             }
         }
 
-        // 2. Fa scalare tutti quelli sotto di UNA posizione in su
         if (emptyIndex != -1) {
             for (int i = emptyIndex; i < turnOrderTile.size() - 1; i++) {
                 Player nextPlayer = turnOrderTile.get(i + 1).getOccupiedBy();
-                turnOrderTile.get(i).freeSlot(); // Assicura che lo slot corrente sia pulito
+                turnOrderTile.get(i).freeSlot();
                 if (nextPlayer != null) {
                     turnOrderTile.get(i + 1).freeSlot();
                     turnOrderTile.get(i).occupy(nextPlayer);
@@ -390,39 +324,21 @@ public class Board {
         }
     }
 
-    /**
-     * Reinserisce il totem di un giocatore appena riconnesso nella prima
-     * posizione libera disponibile partendo dall'alto.
-     */
-    public void addPlayerToFirstAvailableTurnOrderSlot(Player reconnectedPlayer) {
-        for (TurnOrderSlot slot : turnOrderTile) {
-            if (slot.getOccupiedBy() == null) {
-                slot.occupy(reconnectedPlayer);
-                break;
-            }
-        }
-    }
-
-    // Regola specifica per l'ingresso nell'Era III
     public void discardLowerRowBuildings() {
         buildingCardsLowerRow.clear();
     }
 
-    // PULISCE E BASTA (solo caratteri, eventi gia' rimossi)
     public void clearLowerRow() {
         characterLowerRow.clear();
     }
 
-
+    // --- GETTERS ---
     public List<OfferingTile> getOfferingTrack() { return offeringTrack; }
     public List<TurnOrderSlot> getTurnOrderTile() { return turnOrderTile;}
     public List<BuildingCard> getBuildingCardsUpperRow() { return buildingCardsUpperRow; }
     public List<BuildingCard> getBuildingCardsLowerRow() { return buildingCardsLowerRow; }
-
-    // Original getters
     public List<CharacterCard> getCharacterUpperRow() { return characterUpperRow; }
     public List<CharacterCard> getCharacterLowerRow() { return characterLowerRow; }
     public List<EventCard> getEventUpperRow() { return eventUpperRow; }
     public List<EventCard> getEventLowerRow() { return eventLowerRow; }
 }
-

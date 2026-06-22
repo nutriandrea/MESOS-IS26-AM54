@@ -61,7 +61,6 @@ public class LobbyController {
     @FXML private Label infoLabel;
     @FXML private Button infoButton;
     @FXML private Button musicButton;
-    @FXML private Label lobbyTitle;
 
 
     private Map<String, ImageView> totemMap;

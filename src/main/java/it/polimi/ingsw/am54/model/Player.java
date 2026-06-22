@@ -2,36 +2,42 @@ package it.polimi.ingsw.am54.model;
 
 import java.util.ArrayList;
 
+/**
+ * Represents a participant in the game.
+ * Holds the player's personal state, including resources, inventory (tribe and buildings),
+ * and temporary modifiers applied during specific game phases (like Event resolution).
+ */
 public class Player {
 
     private String nickname;
     private TotemColors totemColor;
 
-    // Risorse base
+    // Core resources
     private int food;
     private int aura;
     private int magicPoints;
 
-    // Strutture dati
+    // Player inventory
     private ArrayList<CharacterCard> myTribe;
     private ArrayList<BuildingCard> myBuildings;
 
-    // Sconti permanenti (Acquisto carte)
+    // Permanent discounts (applied when acquiring cards)
     private int myBuildingDiscount;
     private int myFoodDiscount;
 
-    // Modificatori temporanei (Fase Eventi)
+    // Temporary modifiers (active only during the Event phase)
     private int eventCostFood;
     private int eventCostAura;
     private boolean shamanNoLoss;
     private boolean shamanDoubleAura;
 
-    // Flag di stato
+    // State flags
     private boolean extraPick;
     private boolean hasPlacedTotem;
     private transient OfferingTile currentTile;
+
     /**
-     * Costruttore di default
+     * Default constructor initializing a fresh player state.
      */
     public Player() {
         this.food = 0;
@@ -44,7 +50,7 @@ public class Player {
         this.shamanDoubleAura = false;
     }
 
-    // --- GETTER E SETTER BASE ---
+    // --- BASIC GETTERS & SETTERS ---
 
     public String getNickname() { return nickname; }
     public void setNickname(String nickname) { this.nickname = nickname; }
@@ -53,7 +59,13 @@ public class Player {
     public void setTotemColor(TotemColors color) { this.totemColor = color; }
 
     public int getFood() { return food; }
-    public int getFoodTokens() { return food; } // Alias mantenuto per compatibilità
+
+    /**
+     * Alias for getFood() maintained for backward compatibility.
+     * @return The current amount of food.
+     */
+    public int getFoodTokens() { return food; }
+
     public int getAuraPoints() { return aura; }
     public int getMagicPoints() { return magicPoints; }
 
@@ -69,8 +81,12 @@ public class Player {
     public boolean hasExtraPick() { return extraPick; }
     public void setExtraPick(boolean extraPick) { this.extraPick = extraPick; }
 
-    // --- MODIFICATORI DELLE RISORSE ---
+    // --- RESOURCE MODIFIERS ---
 
+    /**
+     * Modifies the player's food amount. Ensures food never drops below zero.
+     * @param amount The value to add (positive) or subtract (negative).
+     */
     public void modifyFood(int amount) {
         if (amount > 0) {
             this.food += amount;
@@ -91,15 +107,14 @@ public class Player {
         myTribe.add(c);
     }
 
-    // --- SCONTI PERMANENTI ---
+    // --- PERMANENT DISCOUNTS ---
 
     public int getMyBuildingDiscount() { return myBuildingDiscount; }
     public void modifyMyBuildingDiscount(int amount) { this.myBuildingDiscount += amount; }
 
     public int getMyFoodDiscount() { return myFoodDiscount; }
-    public void modifyMyFoodDiscount(int amount) { this.myFoodDiscount += amount; }
 
-    // --- MODIFICATORI TEMPORANEI (EVENTI) ---
+    // --- TEMPORARY MODIFIERS (EVENTS) ---
 
     public int getEventCostFood() { return eventCostFood; }
     public void setEventCostFood(int eventCost) { this.eventCostFood = eventCost; }
@@ -114,8 +129,8 @@ public class Player {
     public void setShamanDoubleAura(boolean shamanDoubleAura) { this.shamanDoubleAura = shamanDoubleAura; }
 
     /**
-     * Resetta a zero tutti i modificatori temporanei della fase eventi.
-     * Va chiamato alla fine della risoluzione di ogni singolo Evento.
+     * Resets all temporary modifiers used during the Event phase.
+     * Must be called immediately after an Event is fully resolved.
      */
     public void resetEventAttributes() {
         this.eventCostAura = 0;
@@ -124,7 +139,8 @@ public class Player {
         this.shamanDoubleAura = false;
     }
 
-    // Modificatore finale per gli edifici con attivazione onEndGame
+    // --- ENDGAME MODIFIERS ---
+
     private int endGameBuildingsAura = 0;
 
     public int getEndGameBuildingsAura() {
@@ -136,7 +152,8 @@ public class Player {
     }
 
     /**
-     * Ritorna l'Aura accumulata fino alla fine del round 10 prima dell'attivazione degli edifici finali.
+     * Calculates the total Aura accumulated up to the end of the final round,
+     * prior to the activation of end-game scoring buildings.
      */
     public int getBaseAuraBeforeEndGame() {
         return this.aura - this.endGameBuildingsAura;

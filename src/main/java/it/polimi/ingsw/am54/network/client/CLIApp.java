@@ -475,12 +475,4 @@ public class CLIApp implements CLIAbstract {
     public static void clearConsole() {
         for (int i = 0; i < 20; i++) System.out.println();
     }
-
-    private void clearInputBuffer() {
-        try {
-            while (System.in.available() > 0) {
-                System.in.read();
-            }
-        } catch (java.io.IOException e) {}
-    }
 }

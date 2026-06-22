@@ -89,16 +89,4 @@ public class MusicManager {
     public String getCurrentIcon() {
         return isPlaying ? "🔊" : "🔇";
     }
-
-    /**
-     * Ferma la musica e rilascia il player.
-     */
-    public void stop() {
-        if (currentPlayer != null) {
-            currentPlayer.stop();
-            currentPlayer.dispose();
-            currentPlayer = null;
-        }
-        isPlaying = false;
-    }
 }

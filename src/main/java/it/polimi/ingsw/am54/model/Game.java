@@ -11,9 +11,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
-public class Game implements IGame{
-
-    //ATTRIBUTI:
+/**
+ * Core orchestrator of the game logic. Manages the state machine, turn order,
+ * deck handling, and the overarching domain rules.
+ */
+public class Game implements IGame {
 
     private Board board;
     private Deck<TribeCard> deckTribu;
@@ -23,23 +25,16 @@ public class Game implements IGame{
     private int currentEra;
     private int roundCount;
     private Player currentPlayer;
-
     private GameState currentState;
-
     private int activePlayerCount = 0;
 
     private transient List<IGameObserver> observers = new ArrayList<>();
 
-    // I campi offeringTiles, turnOrderSlots, upperRow, lowerRow sono gestiti da Board
     public Game() {
         this.observers = new ArrayList<>();
         this.players = new ArrayList<>();
         this.currentState = new SetUpGameState();
     }
-
-    // ==========================================
-    // METODI DELL'INTERFACCIA IGAME
-    // ==========================================
 
     @Override
     public void joinGame(String nickname) throws Exception {
@@ -75,17 +70,16 @@ public class Game implements IGame{
         getSafeObservers().remove(observer);
     }
 
-    // ==========================================
-    // FASE DI SETUP (Rifattorizzata)
-    // ==========================================
+    public void setBoard(Board board) { this.board = board; }
 
-    public void setBoard(Board board) { this.board = board; } // per i test
-
+    /**
+     * Initializes the entire game pipeline, generating decks, configuring the board,
+     * assigning starting resources, and transitioning to the first turn state.
+     */
     public void setupGame() throws Exception {
         this.currentEra = 1;
-        this.roundCount = 1; // Corretto: il gioco inizia dal Round 1, non da 0
+        this.roundCount = 1;
 
-        // 1. Creazione Mazzi (Delegata alla Factory)
         this.deckTribu = DeckFactory.createTribeDeck(
                 "/data/CharacterCardsSetup.json",
                 "/data/EventCardsSetup.json",
@@ -93,41 +87,35 @@ public class Game implements IGame{
         );
         this.deckBuildings = DeckFactory.createBuildingDeck("/data/BuildingCardsSetup.json", players.size());
 
-        // 2. Inizializzazione Board
         this.board = new Board();
         this.board.initializeLayout(players.size());
 
-        // 3. Popolamento iniziale delle carte (Il Game agisce da Orchestratore)
         fillInitialTribeRows();
         fillInitialBuildingRow();
 
-        // 4. Calcolo ordine di turno casuale e distribuzione Cibo iniziale
         List<Player> tempPlayers = new ArrayList<>(this.players);
         Collections.shuffle(tempPlayers);
         this.board.setupInitialTurnOrder(tempPlayers);
         distributeInitialFood(tempPlayers);
 
-        // 5. Imposta esplicitamente il PRIMO giocatore prima di cambiare stato (Risolve il bug di avvio)
         this.setCurrentPlayer(tempPlayers.get(0));
-
-        // 6. Passaggio allo stato di Inizio Turno
         this.setState(new StartTurnState());
     }
 
+    /**
+     * Populates the upper and lower tribe rows according to the player count rules.
+     */
     private void fillInitialTribeRows() {
         int numPlayers = players.size();
-
-        // REGOLE: Fila in basso = Giocatori + 1
         int requiredCharactersLower = numPlayers + 1;
+
         while (board.getCharacterRowSize("lower") < requiredCharactersLower) {
             TribeCard card = deckTribu.drawCard();
             if (card != null) {
-                // Il metodo reveal manderà automaticamente i Personaggi giù (gli eventi tornano su se pescati, come da tua logica)
                 card.reveal(board, "lower");
             } else break;
         }
 
-        // REGOLE: Fila in alto = Giocatori + 4 (Somma di Personaggi + Eventi)
         int requiredTotalUpper = numPlayers + 4;
         while ((board.getCharacterRowSize("upper") + board.getEventRowSize("upper")) < requiredTotalUpper) {
             TribeCard card = deckTribu.drawCard();
@@ -137,11 +125,13 @@ public class Game implements IGame{
         }
     }
 
+    /**
+     * Populates the building row dynamically based on the current era configuration.
+     */
     private void fillInitialBuildingRow() {
         int numPlayers = players.size();
         int cardsToDraw = 0;
 
-        // Leggiamo la configurazione JSON degli edifici dall'interno del Model, non dalla Board
         try {
             InputStream is = getClass().getResourceAsStream("/data/EraCounts.json");
             JsonObject countsRoot = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonObject();
@@ -150,13 +140,12 @@ public class Game implements IGame{
             if (buildingCounts != null) {
                 cardsToDraw = buildingCounts.get(currentEra - 1).getAsInt();
             } else {
-                throw new IllegalStateException("Nodo 'buildingCounts' mancante o non valido.");
+                throw new IllegalStateException("Missing or invalid 'buildingCounts' node.");
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Impossibile leggere il file EraCounts.json: " + e.getMessage(), e);
+            throw new IllegalStateException("Cannot read EraCounts.json: " + e.getMessage(), e);
         }
 
-        // Pescaggio e posizionamento Edifici
         for (int i = 0; i < cardsToDraw; i++) {
             BuildingCard card = deckBuildings.drawCard();
             if (card != null) {
@@ -165,38 +154,32 @@ public class Game implements IGame{
         }
     }
 
-
+    /**
+     * Distributes starting food resources based on the turn order position to balance the game.
+     */
     private void distributeInitialFood(List<Player> orderedPlayers) {
-
-        // 1°: 2 Cibo
-        // 2°-3°: 3 Cibo
-        // 4°-5°: 4 Cibo
         for (int i = 0; i < orderedPlayers.size(); i++) {
             Player player = orderedPlayers.get(i);
             int foodAmount = 0;
 
-            if (i == 0) {
-                foodAmount = 2;
-            } else if (i == 1 || i == 2) {
-                foodAmount = 3;
-            } else if (i == 3 || i == 4) {
-                foodAmount = 4;
-            }
+            if (i == 0) foodAmount = 2;
+            else if (i == 1 || i == 2) foodAmount = 3;
+            else if (i == 3 || i == 4) foodAmount = 4;
 
             player.modifyFood(foodAmount);
         }
     }
 
+    /**
+     * Transitions the game state. When moving to a new turn, it performs a cleanup
+     * of abandoned totems (e.g., from disconnected players) and reintegrates them securely.
+     */
     public void setState(GameState newState) {
         if (newState != null && newState.getClass().getSimpleName().equals("StartTurnState")) {
-
-
             if (this.board != null) {
                 for (OfferingTile tile : board.getOfferingTrack()) {
                     Player p = tile.getOccupiedBy();
                     if (p != null) {
-
-
                         try {
                             tile.getClass().getMethod("freeTile").invoke(tile);
                         } catch (Exception e) {
@@ -214,7 +197,6 @@ public class Game implements IGame{
                     }
                 }
             }
-
             reintegrateWaitingPlayers();
         }
 
@@ -222,6 +204,10 @@ public class Game implements IGame{
         notifyStateChanged(newState);
     }
 
+    /**
+     * Ensures any player who reconnected while the turn was active is safely
+     * seated back onto the turn order track before the new turn begins.
+     */
     private void reintegrateWaitingPlayers() {
         if (this.board == null) return;
 
@@ -251,10 +237,12 @@ public class Game implements IGame{
         return currentState;
     }
 
+    /**
+     * Identifies and assigns the turn to the next player in the turn order track
+     * who has not yet taken their action.
+     */
     public void nextPlayer() {
         List<TurnOrderSlot> turnTrack = board.getTurnOrderTile();
-
-        // troviamo in quale slot si trova il giocatore corrente
         int currentIndex = 0;
         boolean foundCurrent = false;
 
@@ -266,39 +254,29 @@ public class Game implements IGame{
             }
         }
 
-        // passiamo al prossimo slot occupato
         int offset = 1;
-
         while (offset <= turnTrack.size()) {
             int nextIndex = (currentIndex + offset) % turnTrack.size();
             Player nextP = turnTrack.get(nextIndex).getOccupiedBy();
 
-            // Se in questo slot c'è seduto qualcuno, e non ha ancora piazzato il totem
             if (nextP != null && !nextP.hasPlacedTotem()) {
                 this.currentPlayer = nextP;
                 notifyTurnChanged(currentPlayer);
-                return; // Abbiamo trovato il prossimo, usciamo dal metodo
+                return;
             } else {
-                offset++; // posto successivo
+                offset++;
             }
         }
     }
 
-    public void advanceEra(){this.currentEra++;}
-    public void advanceRound(){this.roundCount++;}
-
-
-    // ==========================================
-    // METODI DI REFILL FINE ROUND
-    // ==========================================
+    public void advanceEra() { this.currentEra++; }
+    public void advanceRound() { this.roundCount++; }
 
     public void refillUpperTribeRow() {
         int targetSize = players.size() + 4;
-
-        // Continua a pescare finché la somma di Personaggi + Eventi in alto non raggiunge il target
         while ((board.getCharacterRowSize("upper") + board.getEventRowSize("upper")) < targetSize) {
             TribeCard card = deckTribu.drawCard();
-            if (card == null) break; // Mazzo finito, ci fermiamo
+            if (card == null) break;
             card.reveal(board, "upper");
         }
     }
@@ -314,7 +292,7 @@ public class Game implements IGame{
                 cardsToDraw = buildingCounts.get(currentEra - 1).getAsInt();
             }
         } catch (Exception e) {
-            System.err.println("Errore lettura EraCounts: " + e.getMessage());
+            System.err.println("Error reading EraCounts: " + e.getMessage());
         }
 
         for (int i = 0; i < cardsToDraw; i++) {
@@ -329,8 +307,10 @@ public class Game implements IGame{
         return this.players.stream()
                 .filter(p -> p.getNickname().equalsIgnoreCase(nickname))
                 .findFirst()
-                .orElseThrow(() -> new Exception("Errore: Giocatore '" + nickname + "' non trovato."));
+                .orElseThrow(() -> new Exception("Error: Player '" + nickname + "' not found."));
     }
+
+    // --- NOTIFICATION METHODS ---
 
     private void notifyPlayerJoined(Player player) {
         for (IGameObserver obs : getSafeObservers()) obs.onPlayerJoined(this, player);
@@ -359,7 +339,6 @@ public class Game implements IGame{
     public void notifyTotemReturned(Player player, int position) {
         int finalFood = player.getFood();
         int finalAura = player.getAuraPoints();
-
         for (IGameObserver obs : getSafeObservers()) {
             obs.onTotemReturned(this, player, position, finalFood, finalAura);
         }
@@ -376,42 +355,23 @@ public class Game implements IGame{
         currentState.endTurn(this, nickname);
     }
 
+    /**
+     * Hard-removes a player from the game memory. If the lobby becomes empty
+     * post-match, the game safely resets to the initial setup state.
+     */
     public synchronized void removePlayerEntirely(String nickname) {
-        // 1. Rimuove fisicamente il giocatore dalla lista
         players.removeIf(p -> p.getNickname().equalsIgnoreCase(nickname));
-
-        // 2. Se tutti abbandonano a fine partita, riporta il server allo stato di Setup iniziale
         if (players.isEmpty() && currentState.shouldResetToSetupOnEmpty()) {
             this.setState(new SetUpGameState());
         }
     }
 
+    // --- STATE RESTORATION ---
 
-    // ==========================================
-    // GETTERS & SETTERS ESSENZIALI
-    // ==========================================
-
-    public List<Player> getPlayers() { return players; }
-    public int getPlayersNumber() { return players.size(); }
-
-    public Board getBoard() { return this.board; }
-    public Deck<TribeCard> getTribeDeck() { return deckTribu; }
-    public Deck<BuildingCard> getBuildingDeck() { return deckBuildings; }
-    public void setTribeDeck(Deck<TribeCard> deck) { this.deckTribu = deck; }
-    public void setBuildingDeck(Deck<BuildingCard> deck) { this.deckBuildings = deck; }
-
-    public int getCurrentEra() { return currentEra; }
-    public int getRoundCount() { return roundCount; }
-
-    public void setCurrentEra(int era) { this.currentEra = era; }
-    public void setRoundCount(int round) { this.roundCount = round; }
-
-    public Player getCurrentPlayer() { return currentPlayer; }
-    public void setCurrentPlayer(Player player) {
-        this.currentPlayer = player;
-        notifyTurnChanged(player);
-    }
-
+    /**
+     * Restores transient object references (like the currentPlayer and board slots)
+     * after the Game state has been deserialized from a persistence file.
+     */
     public void restoreReferences() {
         if (this.currentPlayer != null) {
             try {
@@ -442,15 +402,10 @@ public class Game implements IGame{
         }
     }
 
-    public void setActivePlayerCount(int count) { this.activePlayerCount = count; }
-
-    public int getActivePlayerCount() {
-        return (activePlayerCount > 0) ? activePlayerCount : players.size();
-    }
+    // --- DYNAMIC TURN ORDER MANAGEMENT ---
 
     public Player getCurrentPicker() {
         List<OfferingTile> tiles = board.getOfferingTrack();
-
         for (OfferingTile tile : tiles) {
             Player occupant = tile.getOccupiedBy();
             if (occupant != null && !isInTurnOrder(occupant)) {
@@ -462,21 +417,19 @@ public class Game implements IGame{
 
     private boolean isInTurnOrder(Player p) {
         for (TurnOrderSlot slot : board.getTurnOrderTile()) {
-            if (p.equals(slot.getOccupiedBy())) {
-                return true;
-            }
+            if (p.equals(slot.getOccupiedBy())) return true;
         }
         return false;
     }
 
+    /**
+     * Dynamically assigns a player returning from the offering track to the
+     * first completely clean slot available in the turn order track.
+     */
     public TurnOrderSlot assignPickerToTurnOrder(Player p) {
-
         for (TurnOrderSlot slot : board.getTurnOrderTile()) {
-            if (p.equals(slot.getOccupiedBy())) {
-                return slot;
-            }
+            if (p.equals(slot.getOccupiedBy())) return slot;
         }
-
 
         for (TurnOrderSlot slot : board.getTurnOrderTile()) {
             if (slot.getOccupiedBy() == null) {
@@ -487,6 +440,10 @@ public class Game implements IGame{
         return null;
     }
 
+    /**
+     * Safely moves a disconnected or skipped player to the very end of the
+     * turn queue, ensuring active players retain priority.
+     */
     public TurnOrderSlot moveToLastSlot(Player p) {
         List<TurnOrderSlot> slots = board.getTurnOrderTile();
 
@@ -508,6 +465,7 @@ public class Game implements IGame{
                 }
             }
         }
+
         for (int i = slots.size() - 1; i >= 0; i--) {
             if (slots.get(i).getOccupiedBy() == null) {
                 slots.get(i).occupy(p);
@@ -528,9 +486,9 @@ public class Game implements IGame{
         return true;
     }
 
-    public boolean isTribeDeckEmpty() {
-        return deckTribu.isEmpty();
-    }
+    // --- ENDGAME SCORING & UTILITIES ---
+
+    public boolean isTribeDeckEmpty() { return deckTribu.isEmpty(); }
 
     public boolean isEraTransition() {
         TribeCard nextCard = deckTribu.peek();
@@ -539,45 +497,36 @@ public class Game implements IGame{
     }
 
     public int getPlayerInventorsBonus(Player p) {
-        long inventors = p.getMyTribe().stream()
-                .filter(c -> c.getJobType() == JobType.INVENTOR).count();
-        long uniqueInventions = p.getMyTribe().stream()
-                .filter(c -> c.getJobType() == JobType.INVENTOR)
-                .mapToInt(c -> c.getLevel())
-                .distinct().count();
+        long inventors = p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.INVENTOR).count();
+        long uniqueInventions = p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.INVENTOR)
+                .mapToInt(c -> c.getLevel()).distinct().count();
         return (int) (inventors * uniqueInventions);
     }
 
     public int getPlayerArtistsBonus(Player p) {
-        long artists = p.getMyTribe().stream()
-                .filter(c -> c.getJobType() == JobType.ARTIST).count();
+        long artists = p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count();
         return (int) (artists / 2) * 10;
     }
 
     public int getPlayerConstructorsBonus(Player p) {
-        return p.getMyTribe().stream()
-                .filter(c -> c.getJobType() == JobType.CONSTRUCTOR)
+        return p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.CONSTRUCTOR)
                 .mapToInt(CharacterCard::getAura).sum();
     }
 
     public int getPlayerBuildingsBaseAura(Player p) {
-        return p.getBuildings().stream()
-                .mapToInt(BuildingCard::getFinalAura).sum();
+        return p.getBuildings().stream().mapToInt(BuildingCard::getFinalAura).sum();
     }
 
     public int calculatePlayerScore(Player p) {
-        int score = 0;
-        score += p.getAuraPoints();
-        score += getPlayerInventorsBonus(p);
-        score += getPlayerArtistsBonus(p);
-        score += getPlayerConstructorsBonus(p);
-        score += getPlayerBuildingsBaseAura(p);
-
-        return score;
+        return p.getAuraPoints() + getPlayerInventorsBonus(p) + getPlayerArtistsBonus(p) +
+                getPlayerConstructorsBonus(p) + getPlayerBuildingsBaseAura(p);
     }
 
+    /**
+     * Determines the final winner(s) of the game. In case of a tie in Aura points,
+     * the player with the most remaining Food breaks the tie.
+     */
     public List<Player> determineWinners() {
-
         List<Player> winners = new ArrayList<>();
         int maxScore = -999;
 
@@ -598,9 +547,7 @@ public class Game implements IGame{
                 maxFood = Math.max(maxFood, p.getFood());
             }
             final int finalMaxFood = maxFood;
-            winners = winners.stream()
-                    .filter(p -> p.getFood() == finalMaxFood)
-                    .toList();
+            winners = winners.stream().filter(p -> p.getFood() == finalMaxFood).toList();
         }
 
         return winners;
@@ -618,4 +565,24 @@ public class Game implements IGame{
         }
         return observers;
     }
+
+    // --- BASIC GETTERS & SETTERS ---
+    public List<Player> getPlayers() { return players; }
+    public int getPlayersNumber() { return players.size(); }
+    public Board getBoard() { return this.board; }
+    public Deck<TribeCard> getTribeDeck() { return deckTribu; }
+    public Deck<BuildingCard> getBuildingDeck() { return deckBuildings; }
+    public void setTribeDeck(Deck<TribeCard> deck) { this.deckTribu = deck; }
+    public void setBuildingDeck(Deck<BuildingCard> deck) { this.deckBuildings = deck; }
+    public int getCurrentEra() { return currentEra; }
+    public int getRoundCount() { return roundCount; }
+    public void setCurrentEra(int era) { this.currentEra = era; }
+    public void setRoundCount(int round) { this.roundCount = round; }
+    public Player getCurrentPlayer() { return currentPlayer; }
+    public void setCurrentPlayer(Player player) {
+        this.currentPlayer = player;
+        notifyTurnChanged(player);
+    }
+    public void setActivePlayerCount(int count) { this.activePlayerCount = count; }
+    public int getActivePlayerCount() { return (activePlayerCount > 0) ? activePlayerCount : players.size(); }
 }

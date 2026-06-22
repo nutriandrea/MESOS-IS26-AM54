@@ -284,65 +284,6 @@ public class VirtualView implements IGameObserver {
         // Inviamo i dati completi alla connessione
         connection.notifyEndGame(winnerNames, finalScores, game.getPlayers().size());
     }
-
-    //PER LA RECONNECT
-    public void sendFullStateOnReconnect(Game game) {
-        Board b = game.getBoard();
-
-        // 1. Statistiche e Carte Giocatori
-        Map<String, StateChangedUpdate.PlayerSnapshot> stats = new LinkedHashMap<>();
-        for (Player p : game.getPlayers()) {
-            List<String> tribeStr = p.getMyTribe().stream().map(Card::toClientString).collect(Collectors.toList());
-            List<String> buildStr = p.getBuildings().stream().map(Card::toClientString).collect(Collectors.toList());
-            stats.put(p.getNickname(), new StateChangedUpdate.PlayerSnapshot(
-                    p.getFood(), p.getAuraPoints(), p.getMagicPoints(), p.getTotemColors(), tribeStr, buildStr
-            ));
-        }
-
-        List<String> turnOrder = new java.util.ArrayList<>();
-        Map<Integer, String> offering = new java.util.LinkedHashMap<>();
-        List<String> charUp = new java.util.ArrayList<>();
-        List<String> charLow = new java.util.ArrayList<>();
-        List<String> eventUp = new java.util.ArrayList<>();
-        List<String> eventLow = new java.util.ArrayList<>();
-        List<String> buildUp = new java.util.ArrayList<>();
-        List<String> buildLow = new java.util.ArrayList<>();
-
-        // Protezione Board
-        if (b != null) {
-            turnOrder = b.getTurnOrderTile().stream()
-                    .map(slot -> {
-                        int bonus = slot.getBonusFood();
-                        String foodStr = (bonus > 0 ? "+" : "") + bonus;
-                        String auraWarning = (bonus < 0) ? " (-2 ✨ se non hai cibo)" : "";
-                        String occName = (slot.getOccupiedBy() != null) ? slot.getOccupiedBy().getNickname() : "VUOTO";
-                        return "[Slot " + slot.getPosition() + " | Cibo: " + foodStr + auraWarning + "] -> " + occName;
-                    })
-                    .collect(Collectors.toList());
-
-            for (int i = 0; i < b.getOfferingTrack().size(); i++) {
-                OfferingTile tile = b.getOfferingTrack().get(i);
-                String occName = (tile.getOccupiedBy() != null) ? tile.getOccupiedBy().getNickname() : "VUOTO";
-                offering.put(i, "[Tessera " + tile.getId() + " | Pick Su:" + tile.getRemainingUpperPicks() + " Giù:" + tile.getRemainingLowerPicks() + " | Bonus 🍖:+" + tile.getFoodBonus() + "] -> " + occName);
-            }
-
-            charUp = b.getCharacterUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
-            charLow = b.getCharacterLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
-            eventUp = b.getEventUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
-            eventLow = b.getEventLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
-            buildUp = b.getBuildingCardsUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
-            buildLow = b.getBuildingCardsLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
-        }
-
-        // Manda il pacchetto solo a QUESTA connessione
-        connection.notifyStateChanged(
-                game.getCurrentState().getClass().getSimpleName(),
-                game.getCurrentEra(), game.getRoundCount(),
-                stats, turnOrder, offering,
-                charUp, charLow, eventUp, eventLow, buildUp, buildLow
-        );
-    }
-
     /**
      * Invia notifica di sospensione SOLO a questo giocatore.
      * Usata dal Controller per broadcast.

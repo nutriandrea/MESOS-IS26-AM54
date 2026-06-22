@@ -21,6 +21,7 @@ public class PickingState extends GameState {
 
         boolean usingExtraPick = false;
 
+        // 1. Verify pick availability based on the tile or Extra Pick status
         if (tile == null) {
             if (player.hasExtraPick() && isUpper) {
                 usingExtraPick = true;
@@ -39,32 +40,55 @@ public class PickingState extends GameState {
             }
         }
 
+        // 2. Peek at the target card without removing it from the board yet
         int charRowSize = game.getBoard().getCharacterRowSize(row);
-        Card card = null;
+        Card targetCard = null;
+        boolean isBuilding = cardIndex >= charRowSize;
 
-        if (cardIndex < charRowSize) {
-            card = game.getBoard().takeCharacterCard(row, cardIndex);
-        } else {
+        if (isBuilding) {
             int buildingIndex = cardIndex - charRowSize;
-            card = game.getBoard().takeBuildingCard(row, buildingIndex);
+            java.util.List<it.polimi.ingsw.am54.model.BuildingCard> buildings = isUpper ? game.getBoard().getBuildingCardsUpperRow() : game.getBoard().getBuildingCardsLowerRow();
+            if (buildingIndex < 0 || buildingIndex >= buildings.size()) {
+                throw new Exception("Indice carta edificio non valido.");
+            }
+            targetCard = buildings.get(buildingIndex);
+        } else {
+            java.util.List<it.polimi.ingsw.am54.model.CharacterCard> characters = isUpper ? game.getBoard().getCharacterUpperRow() : game.getBoard().getCharacterLowerRow();
+            if (cardIndex < 0 || cardIndex >= characters.size()) {
+                throw new Exception("Indice carta personaggio non valido.");
+            }
+            targetCard = characters.get(cardIndex);
         }
 
-        if (card == null) {
-            throw new Exception("Carta non trovata alla posizione specificata.");
+        // 3. Validate affordability BEFORE altering game state (prevents the lock-up bug)
+        if (!targetCard.canBePurchased(player)) {
+            throw new Exception("Cibo insufficiente per acquistare questa carta.");
         }
 
+        // 4. Safely consume the pick and remove the card from the board
         if (tile != null) {
             if (isUpper) tile.useUpperPick();
             else tile.useLowerPick();
         }
 
-        card.pick(player, game);
+        Card pickedCard;
+        if (isBuilding) {
+            pickedCard = game.getBoard().takeBuildingCard(row, cardIndex - charRowSize);
+        } else {
+            pickedCard = game.getBoard().takeCharacterCard(row, cardIndex);
+        }
 
+        // 5. Execute the purchase logic
+        pickedCard.pick(player, game);
+
+        // 6. Notify clients
         int finalFood = player.getFood();
         int finalMagic = player.getMagicPoints();
         game.notifyCardPicked(player, row, cardIndex, finalFood, finalMagic);
 
+        // 7. Auto-end turn logic (preserved from original logic)
         if (usingExtraPick) {
+            player.setExtraPick(false);
             executeEndTurnLogic(game, player);
         } else if (shouldAutoEndTurn(game, player)) {
             executeEndTurnLogic(game, player);

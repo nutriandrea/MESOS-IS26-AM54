@@ -89,10 +89,6 @@ public class OfferingTile {
         return false;
     }
 
-    public boolean hasPicksLeft() {
-        return remainingUpperPicks > 0 || remainingLowerPicks > 0;
-    }
-
     public int getRemainingUpperPicks() {
         return remainingUpperPicks;
     }

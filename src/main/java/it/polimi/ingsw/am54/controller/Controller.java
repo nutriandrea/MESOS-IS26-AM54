@@ -156,6 +156,12 @@ public class Controller {
             LOGGER.info("Player " + nickname + " has reconnected.");
 
             notifyAllClientsStateChanged();
+
+            // CRITICAL FIX: We must explicitly inform the reconnected player whose turn it is.
+            // Otherwise, a freshly restarted client will have 'null' as the current player and deadlock.
+            if (game.getCurrentPlayer() != null) {
+                newView.onTurnChanged(game, game.getCurrentPlayer());
+            }
         }
 
         connection.startHeartbeat();
@@ -307,18 +313,19 @@ public class Controller {
      * Automatically skips the disconnected player's turn if applicable,
      * then evaluates if the game needs to be suspended (1 active player left).
      */
+    /**
+     * Automatically skips the disconnected player's turn if applicable,
+     * then evaluates if the game needs to be suspended (1 active player left).
+     */
     private void autoHandleDisconnection(String nickname) {
         synchronized (game.getPlayers()) {
             game.setActivePlayerCount(activePlayerCount());
 
-            // Absolute priority to suspension: bypass state blocks if 1 or 0 players remain.
-            if (activePlayerCount() <= 1) {
-                checkSuspension();
-                return;
-            }
-
+            // Apply safety blocks (e.g., animations or critical event resolutions)
             if (game.getCurrentState().isDisconnectBlocked()) return;
 
+            // CRITICAL FIX: We must process the skipTurn FIRST, even if only 1 player remains.
+            // This ensures that when the game eventually resumes, the turn correctly belongs to Player B.
             try {
                 Player p = game.getPlayerByNickname(nickname);
                 if (game.getCurrentPlayer() != null && game.getCurrentPlayer().equals(p)) {
@@ -332,6 +339,7 @@ public class Controller {
                 LOGGER.warning("Turn skip failed for " + nickname + ": " + e.getMessage());
             }
 
+            // ONLY AFTER ensuring the turn has passed, we check if the game should be suspended.
             checkSuspension();
         }
     }

@@ -68,6 +68,15 @@ public class OfferingTile {
     public void freeSlot() {
         this.occupiedBy = null;
     }
+
+    /**
+     * Re-links the occupant reference WITHOUT touching the remaining pick counters.
+     * Used during JSON recovery: occupy() would reset the picks to full and wipe
+     * the progress the player had already made before the crash.
+     */
+    public void restoreOccupant(Player p) {
+        this.occupiedBy = p;
+    }
     public void resetPicks() {
         this.remainingUpperPicks = this.cardsFromUpper;
         this.remainingLowerPicks = this.cardsFromLower;

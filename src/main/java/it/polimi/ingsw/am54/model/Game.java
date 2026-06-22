@@ -394,7 +394,9 @@ public class Game implements IGame {
                 if (tile.getOccupiedBy() != null) {
                     try {
                         Player p = getPlayerByNickname(tile.getOccupiedBy().getNickname());
-                        tile.occupy(p);
+                        // restoreOccupant (not occupy): occupy() would reset the tile's
+                        // remaining picks to full, handing the player back picks already used.
+                        tile.restoreOccupant(p);
                         p.setCurrentTile(tile);
                     } catch (Exception e) {}
                 }

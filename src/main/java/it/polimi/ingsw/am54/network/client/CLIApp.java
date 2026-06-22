@@ -81,7 +81,15 @@ public class CLIApp implements CLIAbstract {
                     }
 
                     if (currentInputHandler != null) {
-                        currentInputHandler.accept(input);
+                        try {
+                            currentInputHandler.accept(input);
+                        } catch (Exception e) {
+                            // Un errore di rete (es. durante una riconnessione) non deve
+                            // MAI uccidere il thread di input: altrimenti la CLI smette
+                            // di rispondere ai comandi anche dopo il rientro in partita.
+                            System.out.println("⚠️ Impossibile inviare il comando ora. Riprova tra un istante.");
+                            currentInputHandler = null;
+                        }
                     } else {
                         System.out.println("⏳ Non è il tuo turno! Attendi la tua mossa.");
                     }

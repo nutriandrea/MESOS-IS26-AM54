@@ -68,14 +68,33 @@ public class PersistenceManager {
 
     public synchronized void saveGame(Game game) {
         File tempFile = new File(backupFile.getAbsolutePath() + ".tmp");
+
+        // 1. Write the whole game to the temp file and CLOSE the writer first.
+        //    Renaming/deleting while the FileWriter is still open fails silently on
+        //    Windows (the file is locked and the buffer may be unflushed), which would
+        //    leave a stranded ".tmp" file and a missing backup -> recovery loads null.
         try (FileWriter writer = new FileWriter(tempFile)) {
             gson.toJson(game, writer);
-            if (backupFile.exists() && !backupFile.delete()) {
-                System.err.println("[PERSISTENZA] Impossibile rimuovere il vecchio backup.");
-            }
-            tempFile.renameTo(backupFile);
         } catch (IOException e) {
             System.err.println("[PERSISTENZA] Errore salvataggio: " + e.getMessage());
+            return;
+        }
+
+        // 2. Atomically replace the old backup now that the temp file is fully flushed.
+        try {
+            java.nio.file.Files.move(tempFile.toPath(), backupFile.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        } catch (java.nio.file.AtomicMoveNotSupportedException atomicEx) {
+            // Fallback for filesystems that don't support atomic moves.
+            try {
+                java.nio.file.Files.move(tempFile.toPath(), backupFile.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                System.err.println("[PERSISTENZA] Errore salvataggio (rename): " + e.getMessage());
+            }
+        } catch (IOException e) {
+            System.err.println("[PERSISTENZA] Errore salvataggio (rename): " + e.getMessage());
         }
     }
 

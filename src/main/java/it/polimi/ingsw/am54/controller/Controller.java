@@ -470,13 +470,18 @@ public class Controller {
             }
             return;
         }
-        game.setActivePlayerCount(activePlayerCount());
-        try {
-            action.execute();
-        } catch (Exception e) {
-            VirtualView view = virtualViews.get(nickname);
-            if (view != null) {
-                view.showError(e.getMessage());
+        // Serialize on the same monitor used by join/reconnect/disconnect handlers so
+        // a game action can never run concurrently with a (dis)connection mutating the
+        // same model from another client thread.
+        synchronized (game.getPlayers()) {
+            game.setActivePlayerCount(activePlayerCount());
+            try {
+                action.execute();
+            } catch (Exception e) {
+                VirtualView view = virtualViews.get(nickname);
+                if (view != null) {
+                    view.showError(e.getMessage());
+                }
             }
         }
     }

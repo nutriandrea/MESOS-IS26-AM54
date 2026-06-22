@@ -31,7 +31,16 @@ public class Controller {
     private final Game game;
     private Server server;
     private final it.polimi.ingsw.am54.network.server.PersistenceManager persistenceManager;
-    private boolean scoresSavedToDatabase = false;
+    private volatile boolean scoresSavedToDatabase = false;
+
+    // --- FINAL RESULT SNAPSHOT ---
+    // Captured the instant the game ends so a player who reconnects AFTER the game
+    // is over can still be shown the winner board. We cannot recompute it on
+    // reconnect: a default win has a winner that determineWinners() would not pick,
+    // and winners may have already left the game (removePlayerEntirely).
+    private volatile List<String> finalWinners = null;
+    private volatile Map<String, Integer> finalScores = null;
+    private volatile int finalNumPlayers = 0;
 
     /** Maps a player's nickname to their respective VirtualView (Game Observer). */
     private final Map<String, VirtualView> virtualViews = new ConcurrentHashMap<>();
@@ -161,6 +170,13 @@ public class Controller {
             // Otherwise, a freshly restarted client will have 'null' as the current player and deadlock.
             if (game.getCurrentPlayer() != null) {
                 newView.onTurnChanged(game, game.getCurrentPlayer());
+            }
+
+            // If the game is ALREADY over, replay the final result to the reconnecting
+            // player: onStateChanged carries the EndGame state but not the winners, and
+            // notifyEndGame was a one-shot they missed while disconnected.
+            if (game.getCurrentState().isGameOver() && finalWinners != null) {
+                connection.notifyEndGame(finalWinners, finalScores, finalNumPlayers);
             }
         }
 
@@ -415,6 +431,10 @@ public class Controller {
 
                     // 2. Special resolution for a default win.
                     try {
+                        // Snapshot BEFORE saving/notifying, while all players are still present,
+                        // so a late reconnection can be shown the winner board.
+                        captureFinalResult(Collections.singletonList(winner));
+
                         if (!scoresSavedToDatabase) {
                             scoresSavedToDatabase = true;
                             int finalScore = game.calculatePlayerScore(winner);
@@ -425,6 +445,10 @@ public class Controller {
 
                         // Let the Model notify the end of the game.
                         game.notifyEndGame(Collections.singletonList(winner));
+
+                        // The game is over: drop the on-disk backup so a restart does not
+                        // "recover" a finished match back into mid-game.
+                        persistenceManager.clearBackup();
 
                     } catch (Exception e) {
                         LOGGER.severe("Error during default win resolution: " + e.getMessage());
@@ -460,6 +484,24 @@ public class Controller {
         int playerPosition = -1;
         LOGGER.info("Leaderboard request: " + entries.size() + " entries found");
         connection.sendLeaderboardUpdate(new LeaderboardUpdate(playerPosition, entries, numPlayers));
+    }
+
+    /**
+     * Freezes the final standings (winner nicknames + every player's score) at the
+     * moment the game ends, so they can be replayed to any player who reconnects later.
+     */
+    private void captureFinalResult(List<Player> winners) {
+        List<String> names = new ArrayList<>();
+        if (winners != null) {
+            for (Player w : winners) names.add(w.getNickname());
+        }
+        Map<String, Integer> scores = new HashMap<>();
+        for (Player p : game.getPlayers()) {
+            scores.put(p.getNickname(), game.calculatePlayerScore(p));
+        }
+        this.finalWinners = names;
+        this.finalScores = scores;
+        this.finalNumPlayers = game.getPlayers().size();
     }
 
     private void executeCommand(String nickname, GameAction action) {
@@ -499,6 +541,10 @@ public class Controller {
         if (game.getCurrentState().isGameOver() && !scoresSavedToDatabase) {
             scoresSavedToDatabase = true;
             int numPlayers = game.getPlayers().size();
+
+            // Snapshot the result NOW, while every player is still present, so a late
+            // reconnection can be shown the winner board.
+            captureFinalResult(game.determineWinners());
 
             new Thread(() -> {
                 try {

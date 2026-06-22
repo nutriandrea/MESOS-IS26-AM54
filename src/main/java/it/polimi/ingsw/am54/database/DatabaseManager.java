@@ -75,7 +75,7 @@ public class DatabaseManager {
                     LocalDateTime base = LocalDateTime.of(2026, 5, 22, 10, 0);
                     for (int np = 2; np <= 5; np++) {
                         ps.setString(1, "nutria");
-                        ps.setInt(2, 1312);
+                        ps.setInt(2, -1312);
                         ps.setTimestamp(3, Timestamp.valueOf(base.plusHours(np)));
                         ps.setInt(4, np);
                         ps.executeUpdate();

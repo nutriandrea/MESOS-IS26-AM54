@@ -73,7 +73,7 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
     @Override
     public void getLeaderboardRequest(int numPlayers) throws RemoteException {
-        controller.handleGetLeaderboard(this, numPlayers);
+        controller.handleGetLeaderboard(this, this.playerNickname, numPlayers);
     }
     @Override
     public void pong() throws RemoteException {

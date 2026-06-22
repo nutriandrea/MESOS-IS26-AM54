@@ -479,10 +479,13 @@ public class Controller {
                 .orElse(null);
     }
 
-    public void handleGetLeaderboard(ClientConnection connection, int numPlayers) {
-        List<it.polimi.ingsw.am54.network.messages.LeaderboardEntry> entries = dbManager.getAllLeaderboardEntries();
-        int playerPosition = -1;
-        LOGGER.info("Leaderboard request: " + entries.size() + " entries found");
+    public void handleGetLeaderboard(ClientConnection connection, String nickname, int numPlayers) {
+        // Spec: leaderboard of matches with THIS many players + the requesting
+        // player's own rank within that same leaderboard.
+        List<it.polimi.ingsw.am54.network.messages.LeaderboardEntry> entries = dbManager.getLeaderboard(numPlayers);
+        int playerPosition = dbManager.getPlayerPosition(nickname, numPlayers);
+        LOGGER.info("Leaderboard request (" + numPlayers + " players): " + entries.size()
+                + " entries; " + nickname + " at position " + playerPosition);
         connection.sendLeaderboardUpdate(new LeaderboardUpdate(playerPosition, entries, numPlayers));
     }
 

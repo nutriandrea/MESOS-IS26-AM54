@@ -36,3 +36,6 @@
 # Server runtime persistence artifacts
 backup.json
 backup.json.tmp
+
+# Database credentials (keep secrets local; commit only .env.example)
+.env

@@ -18,6 +18,6 @@ public final class GetLeaderboardRequest implements Request {
 
     @Override
     public void execute(Controller controller, String playerNickname, ClientConnection connection) {
-        controller.handleGetLeaderboard(connection, this.numPlayers);
+        controller.handleGetLeaderboard(connection, playerNickname, this.numPlayers);
     }
 }

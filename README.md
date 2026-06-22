@@ -8,7 +8,7 @@
 
 Distributed multiplayer implementation of the board game **Mesos** (Cranio Creations). 2–5 players, real-time network with dual-transport (Socket TCP + RMI), dual interface (JavaFX GUI + CLI).
 
-**Software Engineering Final Project** — Politecnico di Milano, AY 2025–2026  
+**Software Engineering Final Project** — Politecnico di Milano, AA 2025–2026  
 **Professor**: Alessandro Margara
 
 ---

@@ -6,7 +6,7 @@
 ![Tests](https://img.shields.io/badge/tests-28-blue)
 ![Coverage](https://img.shields.io/badge/coverage-80%25-success)
 
-Distributed multiplayer implementation of the board game **Mesos** (Codice Naturalis, Cranio Creations). 2–5 players, real-time network with dual-transport (Socket TCP + RMI), dual interface (JavaFX GUI + CLI).
+Distributed multiplayer implementation of the board game **Mesos** (Cranio Creations). 2–5 players, real-time network with dual-transport (Socket TCP + RMI), dual interface (JavaFX GUI + CLI).
 
 **Software Engineering Final Project** — Politecnico di Milano, AY 2025–2026  
 **Professor**: Alessandro Margara

@@ -222,9 +222,9 @@ Generates documentation in `target/site/apidocs/`. Open `target/site/apidocs/ind
 | [`docs/model.png`](./docs/model.png) | Model class diagram |
 | [`docs/network.png`](./docs/network.png) | Network package class diagram |
 | [`docs/uml_full.png`](./docs/uml_full.png) | Full application UML diagram |
-| [`model.puml`](./model.puml) | Model PlantUML source |
-| [`network.puml`](./network.puml) | Network PlantUML source |
-| [`uml_full.puml`](./uml_full.puml) | Full PlantUML source |
+| [`model.puml`](docs/UML/model.puml) | Model PlantUML source |
+| [`network.puml`](docs/UML/network.puml) | Network PlantUML source |
+| [`uml_full.puml`](docs/UML/uml_full.puml) | Full PlantUML source |
 | **API docs** | |
 | `target/site/apidocs/index.html` | Javadoc (`./mvnw javadoc:javadoc`) |
 

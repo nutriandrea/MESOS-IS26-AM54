@@ -253,6 +253,20 @@ public class Controller {
     public void removeClient(String nickname) {
         VirtualView view = virtualViews.remove(nickname);
 
+        // Game already finished: the final standings are frozen. A player closing the
+        // winner board must NOT be erased from the other players' final ranking, and
+        // there is nothing left to suspend. Just detach their view so the server stops
+        // pushing to a dead connection; leave the model (players, scores) untouched.
+        // The backup is cleared only once the very last viewer has left.
+        if (game.getCurrentState().isGameOver()) {
+            if (view != null) game.removeObserver(view);
+            disconnectedPlayers.remove(nickname);
+            if (virtualViews.isEmpty()) {
+                persistenceManager.clearBackup();
+            }
+            return;
+        }
+
         if (game.getCurrentState().isRemovePermanent()) {
             LOGGER.info("Player " + nickname + " abandoned the lobby permanently. Freeing slot and Totem.");
 
@@ -544,6 +558,18 @@ public class Controller {
         if (game.getCurrentState().isGameOver() && !scoresSavedToDatabase) {
             scoresSavedToDatabase = true;
             int numPlayers = game.getPlayers().size();
+
+            // EndGameState is BOTH auto-resolvable and game-over, so the guard above
+            // deliberately skips it. Resolve it here, exactly once (the flag protects us
+            // from re-entry): this plays out the final events, computes each player's
+            // end-of-game building aura and, crucially, fires notifyEndGame(...) so every
+            // connected client receives the REAL final scores and the correct winner(s).
+            // Without this the clients never got an EndGameUpdate and could only sort the
+            // raw round-10 aura — showing the wrong winner and the wrong points.
+            if (game.getCurrentState().isAutoResolvable()) {
+                game.getCurrentState().resolvePhase(game);
+                saveState();
+            }
 
             // Snapshot the result NOW, while every player is still present, so a late
             // reconnection can be shown the winner board.

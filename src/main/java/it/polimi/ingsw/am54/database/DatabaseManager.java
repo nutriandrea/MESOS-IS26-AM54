@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Manages the MySQL database connection (Aiven cloud) and all database
+ * Manages the PostgreSQL database connection (Aiven cloud) and all database
  * operations for persisting match results and querying the leaderboard.
  *
  * The connection is configured via a .env file (see .env.example).
@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  *
  * Table schema (auto-created on init):
  *   match_results (
- *       id          INT AUTO_INCREMENT PRIMARY KEY,
+ *       id          SERIAL PRIMARY KEY,
  *       nickname    VARCHAR(50)  NOT NULL,
  *       score       INTEGER      NOT NULL,
  *       match_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -45,19 +45,19 @@ public class DatabaseManager {
 
             stmt.execute(
                 "CREATE TABLE IF NOT EXISTS match_results (" +
-                "    id          INT AUTO_INCREMENT PRIMARY KEY," +
+                "    id          SERIAL PRIMARY KEY," +
                 "    nickname    VARCHAR(50)  NOT NULL," +
                 "    score       INTEGER      NOT NULL," +
-                "    match_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                "    match_date  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP," +
                 "    num_players INTEGER      NOT NULL" +
-                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+                ")"
             );
             this.available = true;
             LOGGER.info("Database connesso: " + config.getHost() + ":" + config.getPort() + "/" + config.getDbName());
 
             seedIfEmpty(conn);
         } catch (SQLException e) {
-            LOGGER.warning("Database MySQL non raggiungibile – leaderboard disabilitata: " + e.getMessage());
+            LOGGER.warning("Database PostgreSQL non raggiungibile – leaderboard disabilitata: " + e.getMessage());
             this.available = false;
         }
     }

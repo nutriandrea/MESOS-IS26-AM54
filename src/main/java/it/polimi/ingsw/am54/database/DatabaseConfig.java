@@ -39,10 +39,8 @@ public class DatabaseConfig {
 
     public String getJdbcUrl() {
         StringBuilder url = new StringBuilder();
-        url.append("jdbc:mysql://").append(host).append(":").append(port).append("/").append(dbName);
-        url.append("?sslMode=").append(sslMode);
-        url.append("&allowPublicKeyRetrieval=true");
-        url.append("&enabledTLSProtocols=TLSv1.2,TLSv1.3");
+        url.append("jdbc:postgresql://").append(host).append(":").append(port).append("/").append(dbName);
+        url.append("?sslmode=").append(sslMode.toLowerCase());
         if (!params.isEmpty()) {
             url.append("&").append(params);
         }

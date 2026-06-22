@@ -7,7 +7,7 @@ skinparam packageStyle rectangle
 ' MODEL - CORE
 ' ============================================================
 
-package "it.polimi.ingsw.am54.model" {
+package "model" {
 
     interface IGame {
         +joinGame(String) : void
@@ -330,7 +330,7 @@ CharacterCard --> JobType
 ' NETWORK SERVER
 ' ============================================================
 
-package "it.polimi.ingsw.am54.network.server" {
+package "network.server" {
 
     class Server {
         -Game game
@@ -528,7 +528,7 @@ Controller --> VirtualView
 ' NETWORK CLIENT
 ' ============================================================
 
-package "it.polimi.ingsw.am54.network.client" {
+package "network.client" {
 
     class Client {
         -ClientModel clientModel
@@ -622,7 +622,7 @@ ServerHandler --> Request
 ' NETWORK RMI
 ' ============================================================
 
-package "it.polimi.ingsw.am54.network.rmi" {
+package "network.rmi" {
 
     interface RMIGameServer extends Remote {
         +connect(RMIClientInterface) : RMIClientHandlerInterface
@@ -646,7 +646,7 @@ RMIClientHandlerInterface <|.. RMIClientHandler
 ' NETWORK MESSAGES
 ' ============================================================
 
-package "it.polimi.ingsw.am54.network.messages" {
+package "network.messages" {
 
     interface Request extends ClientMessage
     interface Update extends ClientMessage

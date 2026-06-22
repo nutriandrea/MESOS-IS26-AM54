@@ -650,26 +650,19 @@ public class ClientModel {
     }
 
     public void triggerConnectionLost() {
+        // AGGIUNTA: Forza un messaggio di sistema per la CLI (e GUI)
+        this.lastSystemMessage = "❌ ATTENZIONE: CONNESSIONE CON IL SERVER PERSA! Tentativo di riconnessione in corso...";
+        notifyUI();
+
         if (onConnectionLostCallback != null) {
             onConnectionLostCallback.run();
         }
     }
 
-    /* =====================================================================
-     * CARICAMENTO STATO COMPLETO (per riconnessione)
-     * ===================================================================== */
-
-    /**
-     * Carica lo stato completo del gioco da StateChangedUpdate.
-     * Chiamato quando un giocatore si riconnette.
-     * DA IMPLEMENTARE: usare StateChangedUpdate per ricostruire lo stato completo.
-     *
-     * @param update lo StateChangedUpdate ricevuto dal server
-     */
-    // TODO: implementare loadFullState con StateChangedUpdate
-    // public synchronized void loadFullState(StateChangedUpdate update) { ... }
-    
-    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(ClientModel.class.getName());
+    public synchronized void triggerSystemMessage(String msg) {
+        this.lastSystemMessage = msg;
+        notifyUI();
+    }
 
     // --- GETTER ---
     public synchronized String getLastSystemMessage() { return lastSystemMessage; }

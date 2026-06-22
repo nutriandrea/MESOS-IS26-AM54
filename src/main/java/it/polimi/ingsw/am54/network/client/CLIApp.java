@@ -74,6 +74,12 @@ public class CLIApp implements CLIAbstract {
                 if (scanner.hasNextLine()) {
                     String input = scanner.nextLine();
 
+                    // FIX: Se stiamo cercando di riconnetterci, blocca l'input dell'utente
+                    if (model.isReconnecting()) {
+                        System.out.println("❌ Comandi disabilitati. In attesa di riconnessione al server...");
+                        continue;
+                    }
+
                     if (currentInputHandler != null) {
                         currentInputHandler.accept(input);
                     } else {
@@ -88,7 +94,7 @@ public class CLIApp implements CLIAbstract {
 
     public synchronized void render() {
 
-        // FIX: Se i vincitori sono stati popolati, forziamo a prescindere la schermata finale
+        // Se i vincitori sono stati popolati, forziamo a prescindere la schermata finale
         if (model.getWinners() != null && !model.getWinners().isEmpty()) {
             clearConsole();
             renderEndGame();
@@ -101,25 +107,31 @@ public class CLIApp implements CLIAbstract {
         boolean hasSystemAlert = model.getLastSystemMessage() != null;
         ClientStateHandler handler = ClientStateRegistry.getHandler(currentState);
 
-        if (handler.shouldBlockInput(isMyTurn)) {
+        if (handler.shouldBlockInput(isMyTurn) || model.isReconnecting()) {
             currentInputHandler = null;
         }
 
         clearConsole();
-        handler.renderCLI(this);
 
-        // 4. STAMPA DIROMPENTE DEGLI ALLARMI
+        // ==========================================================
+        // FIX 1: STAMPA DEGLI ALLARMI SPOSTATA IN ALTO
+        // ==========================================================
         if (hasSystemAlert) {
-            System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             System.out.println(" 🚨 NOTIFICA DI RETE: " + model.getLastSystemMessage().toUpperCase());
             System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
             model.clearSystemMessage();
         }
 
         if (model.getLastErrorMessage() != null) {
-            System.out.println("\n❌ [ERRORE DAL SERVER]: " + model.getLastErrorMessage());
+            System.out.println("❌ [ERRORE DAL SERVER]: " + model.getLastErrorMessage() + "\n");
             model.clearError();
         }
+
+        // ==========================================================
+        // RENDER DELLO STATO (Che ora stamperà i prompt SOTTO agli allarmi)
+        // ==========================================================
+        handler.renderCLI(this);
     }
 
     public void renderSetup() {
@@ -132,11 +144,24 @@ public class CLIApp implements CLIAbstract {
             System.out.println("\nScegli il tuo colore (RED, YELLOW, BLACK, WHITE, BLUE): ");
             askForColor();
         } else {
+            // FIX 2: CONTROLLI RIGOROSI PER L'HOST DELLA PARTITA
             if (model.getPlayers().indexOf(myNickname) == 0) {
-                System.out.println("\nSei il primo giocatore. Scrivi 'START' per iniziare la partita!");
-                askForStart();
+                int numPlayers = model.getPlayers().size();
+                int numColorsChosen = model.getPlayerColors().size();
+
+                if (numPlayers < 2) {
+                    System.out.println("\n👑 Sei l'host della partita.");
+                    System.out.println("⏳ In attesa di altri giocatori per poter iniziare (minimo 2)...");
+                } else if (numColorsChosen < numPlayers) {
+                    System.out.println("\n👑 Sei l'host della partita.");
+                    System.out.println("⏳ In attesa che tutti i giocatori scelgano il loro colore...");
+                } else {
+                    System.out.println("\n👑 Sei l'host della partita.");
+                    System.out.println("✅ Tutti pronti! Scrivi 'START' per iniziare la partita!");
+                    askForStart(); // Attiviamo l'input solo qui!
+                }
             } else {
-                System.out.println("\nIn attesa che il creatore della stanza avvii la partita...");
+                System.out.println("\n⏳ In attesa che l'host (il creatore della stanza) avvii la partita...");
             }
         }
     }

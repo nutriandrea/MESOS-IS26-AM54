@@ -47,12 +47,13 @@ public class Client {
     public void startAutoReconnect() {
         if (isReconnecting) return;
         isReconnecting = true;
-        javafx.application.Platform.runLater(() -> model.setReconnectingStatus(true));
+
+        // FIX: Rimosso Platform.runLater che faceva crashare il thread in modalità CLI!
+        model.setReconnectingStatus(true);
 
         new Thread(() -> {
             while (isReconnecting) {
                 try {
-                    System.out.println("[CLIENT] Tento riconnessione a " + savedIp + "...");
                     Thread.sleep(3000);
 
                     ServerConnection newConn;
@@ -68,10 +69,13 @@ public class Client {
                     newConn.joinGame(nickname);
 
                     isReconnecting = false;
-                    javafx.application.Platform.runLater(() -> model.setReconnectingStatus(false));
-                    System.out.println("[CLIENT] Riconnesso con successo!");
+
+                    // Annunciamo la ripresa a gran voce!
+                    model.triggerSystemMessage("✅ RICONNESSO AL SERVER CON SUCCESSO!");
+                    model.setReconnectingStatus(false);
+
                 } catch (Exception e) {
-                    // Riprova
+                    // La connessione fallisce, riprova al prossimo ciclo silenziosamente
                 }
             }
         }).start();

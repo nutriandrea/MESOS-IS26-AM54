@@ -7,35 +7,52 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RMIServerConnection extends UnicastRemoteObject implements ServerConnection, RMIClientInterface {
 
-    /** Stub RMI del server: usato per inviare Request e rispondere ai ping */
     private RMIClientHandlerInterface serverStub;
-
-    /** Modello locale del client: viene aggiornato con gli update ricevuti */
     private ClientModel clientModel;
 
-    /* =====================================================================
-     * COSTRUTTORE
-     * ===================================================================== */
+    // Timer per controllare proattivamente se il server è vivo
+    private Timer connectionWatcher;
 
     public RMIServerConnection(RMIGameServer server, ClientModel clientModel) throws RemoteException {
         this.clientModel = clientModel;
-        // Ci registriamo sul server e otteniamo il nostro handler personale
         this.serverStub = server.connect(this);
+
+        // Avviamo il Watcher
+        startConnectionWatcher();
     }
 
-    /**
-     * Metodo di supporto per gestire il crash del server in RMI.
-     * Segnala la caduta della rete al Modello in modo disaccoppiato.
-     */
+    private void startConnectionWatcher() {
+        connectionWatcher = new Timer("RMI-Watcher", true);
+        connectionWatcher.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (serverStub != null) {
+                    try {
+                        // Ping fittizio verso il server. Se il server è morto,
+                        // questo lancerà una RemoteException e cattureremo il crash!
+                        serverStub.pong(); // Usiamo 'pong()' o un metodo generico vuoto sul server
+                    } catch (RemoteException e) {
+                        handleServerCrash();
+                        connectionWatcher.cancel();
+                    }
+                } else {
+                    connectionWatcher.cancel();
+                }
+            }
+        }, 2000, 2000); // Controlla ogni 2 secondi
+    }
+
     private void handleServerCrash() {
         if (this.serverStub == null) return;
         System.err.println("[RMI] Connessione persa, avviso il modello...");
         clientModel.triggerConnectionLost();
-        // Sganciamo lo stub rotto
         this.serverStub = null;
+        if(connectionWatcher != null) connectionWatcher.cancel();
     }
 
     /* =====================================================================

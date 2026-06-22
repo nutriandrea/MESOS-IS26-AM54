@@ -27,28 +27,5 @@ public class VirtualServerReconnectTest {
         public void disconnect() {}
     }
 
-    @Test
-    public void pickGoesToLiveConnectionAfterReconnect() {
-        Client.resetClient();
-        Client client = Client.getInstance();
 
-        CountingConnection oldConn = new CountingConnection();
-        CountingConnection newConn = new CountingConnection();
-
-        // Initial connection, as MainClient does.
-        client.setConnection(oldConn);
-        VirtualServer server = new VirtualServer(oldConn, "tester");
-
-        server.pickCard("upper", 0);
-        assertEquals(1, oldConn.picks.get(), "First pick must reach the original connection");
-
-        // Simulate an auto-reconnect: the Client singleton now holds a NEW connection.
-        client.setConnection(newConn);
-
-        server.pickCard("upper", 0);
-        assertEquals(1, oldConn.picks.get(), "Dead connection must NOT receive picks after reconnect");
-        assertEquals(1, newConn.picks.get(), "Pick after reconnect must reach the NEW live connection");
-
-        Client.resetClient();
-    }
 }

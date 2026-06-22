@@ -1,12 +1,12 @@
-# IS26-AM54 — Codex Naturalis (Mesos)
+# IS26-AM54 — MESOS
 
 [![Java](https://img.shields.io/badge/Java-25-%23ED8B00)](https://openjdk.org/projects/jdk/25/)
 [![Maven](https://img.shields.io/badge/Maven-3.9+-C71A36)](https://maven.apache.org/)
 [![JavaFX](https://img.shields.io/badge/JavaFX-23-007396)](https://openjfx.io/)
 
-Distributed multiplayer implementation of the board game **Mesos** (Codice Naturalis, Cranio Creations). 2–5 players, real-time network, Socket/RMI, dual interface (GUI + CLI).
+Distributed multiplayer implementation of the board game **Mesos** (Cranio Creations). 2–5 players, real-time network, Socket/RMI, dual interface (GUI + CLI).
 
-**Software Engineering Final Project** — Politecnico di Milano, AY 2025–2026  
+**Software Engineering Final Project** — Politecnico di Milano, AA 2025–2026  
 **Professor**: Alessandro Margara
 
 ---
@@ -15,7 +15,7 @@ Distributed multiplayer implementation of the board game **Mesos** (Codice Natur
 
 ```bash
 # Build
-mvn clean compile
+./mvnw clean compile
 
 # Run server (port 12345)
 ./mvnw compile exec:java -Dexec.mainClass="it.polimi.ingsw.am54.network.server.Server"
@@ -65,17 +65,17 @@ mvn clean compile
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         CLIENT                                      │
-│  ┌─────────────┐   ┌──────────────┐   ┌────────────────────────┐   │
-│  │  GUI/CLI    │──▶│ ClientModel  │──▶│ ServerConnection       │   │
-│  │  (View)     │   │  (State)     │   │  (TCP or RMI)          │   │
-│  └──────┬──────┘   └──────────────┘   └───────────┬────────────┘   │
-│         │                                          │                 │
-│         ▼                                          ▼                 │
+│  ┌─────────────┐   ┌──────────────┐   ┌────────────────────────┐    │
+│  │  GUI/CLI    │──▶│ ClientModel  │──▶│ ServerConnection       │    │
+│  │  (View)     │   │  (State)     │   │  (TCP or RMI)          │    │
+│  └──────┬──────┘   └──────────────┘   └───────────┬────────────┘    │
+│         │                                         │                 │
+│         ▼                                         ▼                 │
 │  ┌──────────────┐                        ┌───────────────────┐      │
 │  │ClientState   │                        │ ServerHandler     │      │
 │  │Registry      │                        │ RMIListener       │      │
 │  └──────────────┘                        └───────────────────┘      │
-└────────────────────────────────┬─────────────────────────────────────┘
+└────────────────────────────────┬────────────────────────────────────┘
                                  │ TCP / RMI
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -84,20 +84,20 @@ mvn clean compile
 │  │ ServerSocket     │───▶│ ClientHandler│───▶│   VirtualView     │  │
 │  │ RMI Registry     │    │ (per client) │    │   (Observer)      │  │
 │  └──────────────────┘    └──────────────┘    └─────────┬─────────┘  │
-│                                                         │            │
-│  ┌──────────────────────────────────────────────────────┘            │
-│  │  ┌──────────────────┐    ┌────────────────────────────────┐       │
-│  │  │   Controller     │───▶│   Game (Model)                │       │
-│  │  │   (synchronized) │    │   ┌────────────────────────┐   │       │
-│  │  └──────────────────┘    │   │  GameState (State P.)  │   │       │
-│  │                          │   │  ├─ SetUpGameState     │   │       │
-│  │  ┌──────────────────┐    │   │  ├─ StartTurnState     │   │       │
-│  │  │ DatabaseManager  │    │   │  ├─ PickingState       │   │       │
-│  │  │ PersistenceMgr   │    │   │  ├─ EventState         │   │       │
-│  │  └──────────────────┘    │   │  └─ EndGameState       │   │       │
-│  │                          │   └────────────────────────┘   │       │
-│  │                          └────────────────────────────────┘       │
-│  └───────────────────────────────────────────────────────────────────┘
+│                                                        │            │
+│  ┌─────────────────────────────────────────────────────┘            │
+│  │  ┌──────────────────┐    ┌────────────────────────────────┐      │
+│  │  │   Controller     │───▶│   Game (Model)                 │      │
+│  │  │   (synchronized) │    │   ┌────────────────────────┐   │      │
+│  │  └──────────────────┘    │   │  GameState (State P.)  │   │      │
+│  │                          │   │  ├─ SetUpGameState     │   │      │
+│  │  ┌──────────────────┐    │   │  ├─ StartTurnState     │   │      │
+│  │  │ DatabaseManager  │    │   │  ├─ PickingState       │   │      │
+│  │  │ PersistenceMgr   │    │   │  ├─ EventState         │   │      │
+│  │  └──────────────────┘    │   │  └─ EndGameState       │   │      │
+│  │                          │   └────────────────────────┘   │      │
+│  │                          └────────────────────────────────┘      │
+│  └────────────────────────────────────────────┘                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -118,6 +118,10 @@ mvn clean compile
 ---
 
 ## Protocol
+
+The full specification for messages, heartbeat, auto-reconnect, TCP stream layout, and RMI interfaces is in
+[`docs/network-protocol.pdf`](./docs/network-protocol.pdf) (LaTeX source:
+[`docs/network-protocol.tex`](./docs/network-protocol.tex) with TikZ diagrams).
 
 ### Client → Server (Requests)
 
@@ -199,16 +203,31 @@ src/main/java/it/polimi/ingsw/am54/
 
 ---
 
+## Javadoc
+
+```bash
+./mvnw javadoc:javadoc
+```
+
+Generates documentation in `target/site/apidocs/`. Open `target/site/apidocs/index.html` in your browser.
+
 ## Documentation
 
 | Document | Description |
-|----------|-------------|
-| [`docs/architecture.md`](./docs/architecture.md) | Polymorphic state pattern, client dispatch |
-| [`docs/network-architecture.md`](./docs/network-architecture.md) | TCP/RMI protocol, message flow, heartbeat |
-| [`docs/advanced-features.md`](./docs/advanced-features.md) | Disconnection, reconnect, leaderboard, persistence |
-| [`RULES.md`](./RULES.md) | Complete game rules |
-| [`SPEC.md`](./SPEC.md) | Original Italian specification |
-| [`DOCUMENTATION.md`](./DOCUMENTATION.md) | Comprehensive Italian documentation |
+|-----------|-------------|
+| **Network protocol** | |
+| [`docs/network-protocol.pdf`](./docs/network-protocol.pdf) | TCP/RMI protocol: messages, heartbeat, streams, RMI, auto-reconnect |
+| [`docs/network-protocol.tex`](./docs/network-protocol.tex) | LaTeX source with TikZ diagrams |
+| **UML diagrams** | |
+| [`docs/model.png`](./docs/model.png) | Model class diagram |
+| [`docs/network.png`](./docs/network.png) | Network package class diagram |
+| [`docs/uml_full.png`](./docs/uml_full.png) | Full application UML diagram |
+| [`model.puml`](docs/UML/model.puml) | Model PlantUML source |
+| [`network.puml`](docs/UML/network.puml) | Network PlantUML source |
+| [`uml_full.puml`](docs/UML/uml_full.puml) | Full PlantUML source |
+| **API docs** | |
+| `target/site/apidocs/index.html` | Javadoc (`./mvnw javadoc:javadoc`) |
+
 
 ---
 

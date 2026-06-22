@@ -76,25 +76,16 @@
                 <version>3.2.5</version>
             </plugin>
             <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.13</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.11.2</version>
                 <configuration>
-                    <excludes>
-                        <!-- Strato di presentazione (UI): GUI JavaFX e CLI testuale interattiva -->
-                        <exclude>it/polimi/ingsw/am54/gui/**</exclude>
-                        <exclude>it/polimi/ingsw/am54/network/client/CLIApp.class</exclude>
-                        <!-- Launcher / entry point (solo main statici) -->
-                        <exclude>it/polimi/ingsw/am54/Main.class</exclude>
-                        <exclude>it/polimi/ingsw/am54/MainClient.class</exclude>
-                        <exclude>it/polimi/ingsw/am54/MainLauncher.class</exclude>
-                        <exclude>it/polimi/ingsw/am54/Launcher.class</exclude>
-                    </excludes>
+                    <source>25</source>
+                    <doclint>none</doclint>
+                    <show>protected</show>
+                    <nohelp>true</nohelp>
+                    <notimestamp>true</notimestamp>
                 </configuration>
-                <executions>
-                    <execution><id>prepare-agent</id><goals><goal>prepare-agent</goal></goals></execution>
-                    <execution><id>report</id><phase>test</phase><goals><goal>report</goal></goals></execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.openjfx</groupId>

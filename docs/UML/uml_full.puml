@@ -3,13 +3,334 @@ skinparam linetype ortho
 skinparam maxmessagesize 300
 skinparam packageStyle rectangle
 
+' ============================================================
+' MODEL - CORE
+' ============================================================
 
+package "model" {
+
+    interface IGame {
+        +joinGame(String) : void
+        +chooseTotemColor(String, String) : void
+        +placeTotem(String, int) : void
+        +pickCard(String, String, int) : void
+        +setupGame() : void
+        +addObserver(IGameObserver) : void
+        +removeObserver(IGameObserver) : void
+    }
+
+    interface IGameObserver {
+        +onPlayerJoined(Game, Player) : void
+        +onTotemColorChosen(Game, Player, TotemColors) : void
+        +onTotemPlaced(Game, Player, int) : void
+        +onCardPicked(Game, Player, String, int, int) : void
+        +onTurnChanged(Game, Player) : void
+        +onStateChanged(Game, GameState) : void
+        +onEndGame(Game, List<Player>) : void
+    }
+
+    interface IDrawable {
+        +reveal(Board, String) : void
+    }
+
+    interface IPurchasable {
+        +canBePurchased(Player) : boolean
+    }
+
+    interface IEffect<T> {
+        +apply(Player, Game, T) : void
+        +isFarmerEffect() : boolean
+        +isEndgameEffect() : boolean
+    }
+
+    enum TotemColors {
+        RED, YELLOW, WHITE, BLACK, BLUE
+    }
+
+    enum JobType {
+        HUNTER, SHAMAN, CONSTRUCTOR, FARMER, INVENTOR, ARTIST, NULL
+    }
+
+    enum Phases {
+        STARTTURN, POSTPICK, POSTACTION, EVENT, ENDGAME
+    }
+
+    class Game implements IGame {
+        -Board board
+        -Deck<TribeCard> deckTribu
+        -Deck<BuildingCard> deckBuildings
+        -List<Player> players
+        -Player currentPlayer
+        -GameState currentState
+        -List<IGameObserver> observers
+        -int currentEra
+        -int roundCount
+        +joinGame(String) : void
+        +chooseTotemColor(String, String) : void
+        +placeTotem(String, int) : void
+        +pickCard(String, String, int) : void
+        +setupGame() : void
+        +nextPlayer() : void
+        +advanceEra() : void
+        +advanceRound() : void
+        +setState(GameState) : void
+        +getCurrentState() : GameState
+        +getPlayerByNickname(String) : Player
+        +getPlayers() : List<Player>
+        +getPlayersNumber() : int
+        +getBoard() : Board
+        +getCurrentEra() : int
+        +getRoundCount() : int
+        +getCurrentPlayer() : Player
+        +setCurrentPlayer(Player) : void
+        +getCurrentPicker() : Player
+        +assignPickerToTurnOrder(Player) : TurnOrderSlot
+        +isPickingComplete() : boolean
+        +isTribeDeckEmpty() : boolean
+        +isEraTransition() : boolean
+        +refillUpperTribeRow() : void
+        +refillUpperBuildings() : void
+        +calculatePlayerScore(Player) : int
+        +determineWinners() : List<Player>
+        +applyEndGameBuildingEffects() : void
+        +notifyEndGame(List<Player>) : void
+        +addObserver(IGameObserver) : void
+        +removeObserver(IGameObserver) : void
+    }
+
+    class Player {
+        -String nickname
+        -TotemColors totemColor
+        -int food
+        -int aura
+        -int magicPoints
+        -boolean extraPick
+        -boolean hasPlacedTotem
+        -ArrayList<CharacterCard> myTribe
+        -ArrayList<BuildingCard> myBuildings
+        -int myBuildingDiscount
+        -int myFoodDiscount
+        -int eventCostFood
+        -int eventCostAura
+        -OfferingTile currentTile
+        +getNickname() : String
+        +getTotemColors() : TotemColors
+        +getFood() : int
+        +getAuraPoints() : int
+        +getMagicPoints() : int
+        +getMyTribe() : ArrayList<CharacterCard>
+        +getBuildings() : ArrayList<BuildingCard>
+        +getCurrentTile() : OfferingTile
+        +hasPlacedTotem() : boolean
+        +getEventCostFood() : int
+        +getEventCostAura() : int
+        +getMyBuildingDiscount() : int
+        +getMyFoodDiscount() : int
+        +setNickname(String) : void
+        +setTotemColor(TotemColors) : void
+        +setHasPlacedTotem(boolean) : void
+        +setExtraPick(boolean) : void
+        +setCurrentTile(OfferingTile) : void
+        +modifyFood(int) : void
+        +modifyAuraPoints(int) : void
+        +modifyMagicPoints(int) : void
+        +modifyMyTribe(CharacterCard) : void
+        +modifyMyBuildingDiscount(int) : void
+        +modifyMyFoodDiscount(int) : void
+        +resetEventAttributes() : void
+    }
+
+    class Board {
+        -List<CharacterCard> characterUpperRow
+        -List<CharacterCard> characterLowerRow
+        -List<EventCard> eventUpperRow
+        -List<EventCard> eventLowerRow
+        -List<BuildingCard> buildingCardsUpperRow
+        -List<BuildingCard> buildingCardsLowerRow
+        -List<OfferingTile> offeringTrack
+        -List<TurnOrderSlot> turnOrderTile
+        +initializeLayout(int) : void
+        +addCharacterCard(CharacterCard, String) : void
+        +addEventCard(EventCard, String) : void
+        +addBuildingCard(BuildingCard, String) : void
+        +takeCharacterCard(String, int) : CharacterCard
+        +takeBuildingCard(String, int) : BuildingCard
+        +getCharacterRowSize(String) : int
+        +getBuildingRowSize(String) : int
+        +getEventRowSize(String) : int
+        +addTotemToPosition(Player, OfferingTile) : void
+        +setupInitialTurnOrder(List<Player>) : void
+        +getTurnOrderTile() : List<TurnOrderSlot>
+        +getOfferingTrack() : List<OfferingTile>
+        +moveUpperToLower() : void
+        +moveBuildings() : void
+        +refillUpperRow(Game) : void
+        +resolveAllEventsInOrder(Game) : void
+        +resolveAllVisibleEvents(Game) : void
+        +allTotemsPlaced(int) : boolean
+        +getFirstPlayerFromOfferingTrack() : Player
+        +discardLowerRowBuildings() : void
+        +clearLowerRow() : void
+    }
+
+    abstract class Card {
+        -int era
+        -Player owner
+        +getEra() : int
+        +addOwner(Player) : void
+        +pick(Player, Game) : void
+    }
+
+    abstract class TribeCard extends Card implements IDrawable {
+        +reveal(Board, String) : void
+    }
+
+    class CharacterCard extends TribeCard {
+        -int level
+        -JobType type
+        -int aura
+        -Phases phase
+        -List<IEffect<CharacterCard>> effects
+        +getLevel() : int
+        +getJobType() : JobType
+        +getAura() : int
+        +getCost() : int
+        +getName() : String
+        +getEffects() : List<IEffect>
+        +resolveEffects(Player, Game) : void
+        +reveal(Board, String) : void
+        +pick(Player, Game) : void
+    }
+
+    class EventCard extends TribeCard {
+        -boolean finalEvent
+        -List<IEffect<EventCard>> effects
+        -int baseFood
+        -int auraPerCharacter
+        -int threshold
+        -int bonusMultiplier
+        -int penalty
+        -int bonus
+        -int malus
+        +isFinalEvent() : boolean
+        +isFarmerEvent() : boolean
+        +shouldResolveLast() : boolean
+        +resolveEvent(Game) : void
+        +reveal(Board, String) : void
+    }
+
+    class BuildingCard extends Card implements IPurchasable {
+        -String name
+        -int cost
+        -int finalAura
+        -Phases phase
+        -List<IEffect<BuildingCard>> effects
+        -JobType buildingType
+        +getName() : String
+        +getCost() : int
+        +getFinalAura() : int
+        +getBuildingType() : JobType
+        +getEffects() : List<IEffect>
+        +canBePurchased(Player) : boolean
+        +resolveEffects(Player, Game) : void
+    }
+
+    abstract class GameState {
+        +joinGame(Game, String) : void
+        +chooseTotemColor(Game, String, String) : void
+        +setupGame(Game) : void
+        +placeTotem(Game, String, int) : void
+        +pickCard(Game, String, String, int) : void
+        +endTurn(Game, String) : void
+        +resolvePhase(Game) : void
+    }
+
+    class SetUpGameState extends GameState
+    class StartTurnState extends GameState
+    class PickingState extends GameState
+    class EventState extends GameState
+    class EndGameState extends GameState
+
+    class Deck<T> {
+        -Stack<T> cards
+        +drawCard() : T
+        +peek() : T
+        +isEmpty() : boolean
+        +size() : int
+    }
+
+    class DeckFactory {
+        +createBuildingDeck(String, int) : Deck<BuildingCard>
+        +createTribeDeck(String, String, int) : Deck<TribeCard>
+        +createBuildingEffect(String, String, JsonNode) : IEffect
+    }
+
+    class OfferingTile {
+        -char id
+        -int cardsFromUpper
+        -int cardsFromLower
+        -int foodBonus
+        -Player occupiedBy
+        -int remainingUpperPicks
+        -int remainingLowerPicks
+        +getId() : char
+        +getFoodBonus() : int
+        +getOccupiedBy() : Player
+        +isAvailable() : boolean
+        +occupy(Player) : void
+        +freeSlot() : void
+        +useUpperPick() : void
+        +useLowerPick() : void
+        +hasPicksLeft() : boolean
+    }
+
+    class TurnOrderSlot {
+        -int position
+        -int bonusFood
+        -Player occupiedBy
+        +getPosition() : int
+        +getBonusFood() : int
+        +getOccupiedBy() : Player
+        +occupy(Player) : void
+        +freeSlot() : void
+    }
+}
+
+' MODEL RELATIONSHIPS
+IGame <|.. Game
+IGameObserver <|.. VirtualView
+IDrawable <|.. TribeCard
+IPurchasable <|.. BuildingCard
+
+Game --> Board
+Game --> Player
+Game --> GameState
+Game --> Deck
+Game --> DeckFactory
+
+Player --> TotemColors
+Player --> CharacterCard
+Player --> BuildingCard
+Player --> OfferingTile
+
+Card <|-- TribeCard
+Card <|-- BuildingCard
+TribeCard <|-- CharacterCard
+TribeCard <|-- EventCard
+
+GameState <|-- SetUpGameState
+GameState <|-- StartTurnState
+GameState <|-- PickingState
+GameState <|-- EventState
+GameState <|-- EndGameState
+
+CharacterCard --> JobType
 
 ' ============================================================
 ' NETWORK SERVER
 ' ============================================================
 
-package "it.polimi.ingsw.am54.network.server" {
+package "network.server" {
 
     class Server {
         -Game game
@@ -22,6 +343,8 @@ package "it.polimi.ingsw.am54.network.server" {
         +getController() : Controller
         +getPersistenceManager() : PersistenceManager
     }
+
+    note bottom of Server: Single game architecture\n(no multi-partita support)\n+ persistence (game_state.json)\n+ crash recovery
 
     class PersistenceManager {
         -ObjectMapper objectMapper
@@ -158,8 +481,6 @@ package "it.polimi.ingsw.am54.network.server" {
         +Controller(Game)
         +handleJoinGame(String, ClientConnection) : void
         +handleReconnect(String, ClientConnection) : void
-        +sendFullStateToPlayer(String) : void
-        +broadcastSystemUpdate(Update) : void
         +handleSetupGame(String) : void
         +handleChooseTotemColor(String, String) : void
         +handlePlaceTotem(String, int) : void
@@ -175,13 +496,13 @@ package "it.polimi.ingsw.am54.network.server" {
 Server --> Game
 Server --> Controller
 Server --> PersistenceManager
+Server --> SocketClientHandler
+Server --> RMIServerImpl
 
 PersistenceManager --> GameFullSnapshot
 GameFullSnapshot --> PlayerSnapshot
 GameFullSnapshot --> BoardSnapshot
 GameFullSnapshot --> CardInfo
-Server --> SocketClientHandler
-Server --> RMIServerImpl
 
 SocketClientHandler --> Server
 SocketClientHandler --> ClientConnection
@@ -207,7 +528,7 @@ Controller --> VirtualView
 ' NETWORK CLIENT
 ' ============================================================
 
-package "it.polimi.ingsw.am54.network.client" {
+package "network.client" {
 
     class Client {
         -ClientModel clientModel
@@ -236,6 +557,7 @@ package "it.polimi.ingsw.am54.network.client" {
         -List<String> lowerBuildingRow
         -List<String> winners
         -String lastErrorMessage
+        +loadFullState(GameStateUpdate) : void
         +updatePlayerJoined(String) : void
         +updatePlayerDisconnected(String) : void
         +updatePlayerReconnected(String) : void
@@ -300,7 +622,7 @@ ServerHandler --> Request
 ' NETWORK RMI
 ' ============================================================
 
-package "it.polimi.ingsw.am54.network.rmi" {
+package "network.rmi" {
 
     interface RMIGameServer extends Remote {
         +connect(RMIClientInterface) : RMIClientHandlerInterface
@@ -324,7 +646,7 @@ RMIClientHandlerInterface <|.. RMIClientHandler
 ' NETWORK MESSAGES
 ' ============================================================
 
-package "it.polimi.ingsw.am54.network.messages" {
+package "network.messages" {
 
     interface Request extends ClientMessage
     interface Update extends ClientMessage
@@ -400,7 +722,6 @@ package "it.polimi.ingsw.am54.network.messages" {
         +getTimestamp() : long
     }
 
-
     class GameListUpdate implements Update {
         -List<String> gameIds
         -List<Integer> playerCounts
@@ -408,19 +729,6 @@ package "it.polimi.ingsw.am54.network.messages" {
 
     class GameCreatedUpdate implements Update {
         -String gameId
-    }
-
-    class PlayerStatsUpdate implements Update {
-        -String nickname
-        -int food
-        -int aura
-        -List<String> tribeCards
-        -List<String> buildingCards
-        +getNickname() : String
-        +getFood() : int
-        +getAura() : int
-        +getTribeCards() : List<String>
-        +getBuildingCards() : List<String>
     }
 }
 
@@ -447,7 +755,6 @@ Update <|-- ErrorMessageUpdate
 Update <|-- PingRequest
 Update <|-- GameListUpdate
 Update <|-- GameCreatedUpdate
-Update <|-- PlayerStatsUpdate
 
 ' ============================================================
 ' CROSS-PACKAGE

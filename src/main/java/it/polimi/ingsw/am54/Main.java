@@ -14,15 +14,15 @@ public class Main {
             System.out.println("\n--- FASE 1: INGRESSO NELLA LOBBY ---");
             game.joinGame("carbicane");
             game.joinGame("frabbo");
-            game.joinGame("Charlie");
+            game.joinGame("nutria");
             game.joinGame("Diana");
             System.out.println("4 giocatori sono entrati con successo nella lobby.");
 
             System.out.println("\n--- FASE 2: SCELTA DEI COLORI ---");
             game.chooseTotemColor("carbicane", "RED");
             game.chooseTotemColor("frabbo", "YELLOW");
-            game.chooseTotemColor("Charlie", "WHITE");
-            game.chooseTotemColor("Diana", "BLACK");
+            game.chooseTotemColor("nutria", "BLACK");
+            game.chooseTotemColor("Diana", "WHITE");
             System.out.println("Tutti i giocatori hanno scelto il loro Totem.");
 
             System.out.println("\n--- FASE 3: SETUP DELLA PARTITA ---");

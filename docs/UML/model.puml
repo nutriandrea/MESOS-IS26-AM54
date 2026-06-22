@@ -7,7 +7,7 @@ skinparam packageStyle rectangle
 ' MODEL - CORE
 ' ============================================================
 
-package "it.polimi.ingsw.am54.model" {
+package "model" {
 
     interface IGame {
         +joinGame(String) : void

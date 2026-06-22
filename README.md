@@ -4,7 +4,7 @@
 [![Maven](https://img.shields.io/badge/Maven-3.9+-C71A36)](https://maven.apache.org/)
 [![JavaFX](https://img.shields.io/badge/JavaFX-23-007396)](https://openjfx.io/)
 
-Distributed multiplayer implementation of the board game **Mesos** (Codice Naturalis, Cranio Creations). 2–5 players, real-time network, Socket/RMI, dual interface (GUI + CLI).
+Distributed multiplayer implementation of the board game **Mesos** (Cranio Creations). 2–5 players, real-time network, Socket/RMI, dual interface (GUI + CLI).
 
 **Software Engineering Final Project** — Politecnico di Milano, AA 2025–2026  
 **Professor**: Alessandro Margara
@@ -119,9 +119,9 @@ Distributed multiplayer implementation of the board game **Mesos** (Codice Natur
 
 ## Protocol
 
-La specifica completa di messaggi, heartbeat, auto-reconnect, layout degli stream TCP e interfacce RMI è in
-[`docs/network-protocol.pdf`](./docs/network-protocol.pdf) (sorgente LaTeX in
-[`docs/network-protocol.tex`](./docs/network-protocol.tex) con diagrammi TikZ).
+The full specification for messages, heartbeat, auto-reconnect, TCP stream layout, and RMI interfaces is in
+[`docs/network-protocol.pdf`](./docs/network-protocol.pdf) (LaTeX source:
+[`docs/network-protocol.tex`](./docs/network-protocol.tex) with TikZ diagrams).
 
 ### Client → Server (Requests)
 
@@ -209,24 +209,25 @@ src/main/java/it/polimi/ingsw/am54/
 ./mvnw javadoc:javadoc
 ```
 
-Genera la documentazione in `target/site/apidocs/`. Apri `target/site/apidocs/index.html` nel browser.
+Generates documentation in `target/site/apidocs/`. Open `target/site/apidocs/index.html` in your browser.
 
-## Documentazione
+## Documentation
 
-| Documento | Descrizione |
+| Document | Description |
 |-----------|-------------|
-| **Rete** | |
-| [`docs/network-protocol.pdf`](./docs/network-protocol.pdf) | Protocollo TCP/RMI: messaggi, heartbeat, stream, RMI, auto-reconnect |
-| [`docs/network-protocol.tex`](./docs/network-protocol.tex) | Sorgente LaTeX con diagrammi TikZ |
-| **UML** | |
-| [`docs/model.png`](./docs/model.png) | Diagramma classi del modello |
-| [`docs/network.png`](./docs/network.png) | Diagramma classi del package network |
-| [`docs/uml_full.png`](./docs/uml_full.png) | Diagramma UML completo |
-| [`model.puml`](./model.puml) | Sorgente PlantUML del modello |
-| [`network.puml`](./network.puml) | Sorgente PlantUML del network |
-| [`uml_full.puml`](./uml_full.puml) | Sorgente PlantUML completo |
-| **API** | |
+| **Network protocol** | |
+| [`docs/network-protocol.pdf`](./docs/network-protocol.pdf) | TCP/RMI protocol: messages, heartbeat, streams, RMI, auto-reconnect |
+| [`docs/network-protocol.tex`](./docs/network-protocol.tex) | LaTeX source with TikZ diagrams |
+| **UML diagrams** | |
+| [`docs/model.png`](./docs/model.png) | Model class diagram |
+| [`docs/network.png`](./docs/network.png) | Network package class diagram |
+| [`docs/uml_full.png`](./docs/uml_full.png) | Full application UML diagram |
+| [`model.puml`](./model.puml) | Model PlantUML source |
+| [`network.puml`](./network.puml) | Network PlantUML source |
+| [`uml_full.puml`](./uml_full.puml) | Full PlantUML source |
+| **API docs** | |
 | `target/site/apidocs/index.html` | Javadoc (`./mvnw javadoc:javadoc`) |
+
 
 ---
 

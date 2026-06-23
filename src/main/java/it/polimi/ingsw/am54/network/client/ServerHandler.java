@@ -7,47 +7,47 @@ import java.io.ObjectOutputStream;
 
 /**
  * ============================================================================
- * ServerHandler — Thread di ascolto asincrono lato client (Socket TCP)
+ * ServerHandler — Client-side asynchronous listening thread (TCP Socket)
  * ============================================================================
  *
- * RUOLO:
- * Thread indipendente che rimane in ascolto continuo dei messaggi provenienti
- * dal server sulla connessione Socket TCP.
+ * ROLE:
+ * Independent thread continuously listening for incoming messages from the
+ * server on the TCP Socket connection.
  *
- * COSA FA:
- * 1. Legge oggetti dallo stream di input del socket
- * 2. Se e' un PingRequest: risponde AUTOMATICAMENTE con un PongResponse
- *    (il client non deve fare nulla, e' tutto automatico)
- * 3. Se e' un Update: aggiorna il ClientModel di conseguenza
- * 4. Se il socket si chiude: ferma il thread
+ * WHAT IT DOES:
+ * 1. Reads objects from the socket's input stream
+ * 2. If it is a PingRequest: automatically answers with a PongResponse
+ * (client does nothing, it's automatic)
+ * 3. If it is an Update: updates the ClientModel accordingly
+ * 4. If the socket closes: stops the thread
  *
- * GESTIONE PING (trasparente per il client):
- * Quando il server invia un PingRequest, il client risponde immediatamente
- * con un PongResponse contenente lo stesso timestamp. Questo permette al
- * server di calcolare il round-trip time e rilevare disconnessioni.
+ * PING MANAGEMENT (transparent to the client):
+ * When the server sends a PingRequest, the client immediately responds
+ * with a PongResponse containing the same timestamp. This allows the
+ * server to calculate the round-trip time and detect disconnections.
  *
  * ============================================================================
  */
 public class ServerHandler implements Runnable {
 
-    /** Stream di input per ricevere messaggi dal server */
+    /** Input stream to receive messages from the server */
     private final ObjectInputStream in;
 
-    /** Stream di output per rispondere ai ping */
+    /** Output stream to respond to pings */
     private final ObjectOutputStream out;
 
-    /** Modello locale del client: viene aggiornato con gli update ricevuti */
+    /** Local client model: is updated with received updates */
     private final ClientModel clientModel;
 
-    /** Flag di stato: true = in ascolto, false = fermato */
+    /** Status flag: true = listening, false = stopped */
     private volatile boolean running = true;
 
     /**
-     * Costruttore.
+     * Constructor.
      *
-     * @param in stream di input dal server
-     * @param out stream di output verso il server (usato per rispondere ai ping)
-     * @param clientModel modello locale da aggiornare
+     * @param in input stream from the server
+     * @param out output stream towards the server (used to respond to pings)
+     * @param clientModel local model to update
      */
     public ServerHandler(ObjectInputStream in, ObjectOutputStream out, ClientModel clientModel) {
         this.in = in;
@@ -56,12 +56,11 @@ public class ServerHandler implements Runnable {
     }
 
     /**
-     * Loop principale: legge messaggi dal server finche' running == true.
-     *
-     * Per ogni messaggio ricevuto:
-     * - Se e' un PingRequest -> rispondi con PongResponse (automatico)
-     * - Se e' un Update -> aggiorna il ClientModel
-     * - Se eccezione -> ferma il thread
+     * Main loop: reads messages from the server as long as running == true.
+     * * For each received message:
+     * - If PingRequest -> respond with PongResponse (automatic)
+     * - If Update -> update ClientModel
+     * - If exception -> stop the thread
      */
     @Override
     public void run() {
@@ -72,7 +71,7 @@ public class ServerHandler implements Runnable {
                     handleUpdate(update);
                 }
             } catch (Exception e) {
-                // SE IL SERVER CADE, ENTRA QUI:
+                // IF THE SERVER CRASHES, ENTERS HERE:
                 if (running) {
                     System.err.println("[SOCKET] Connessione persa, avvio auto-reconnect...");
                     clientModel.triggerConnectionLost();
@@ -83,11 +82,11 @@ public class ServerHandler implements Runnable {
     }
 
     /**
-     * Risponde automaticamente a un PingRequest del server.
-     * Invia un PongResponse con lo stesso timestamp ricevuto.
+     * Automatically responds to a PingRequest from the server.
+     * Sends a PongResponse with the received timestamp.
      *
-     * Questo e' completamente trasparente per il client: il giocatore
-     * non vede nulla, il ping/pong avviene in background.
+     * This is completely transparent to the client: the player
+     * sees nothing, ping/pong happens in the background.
      */
     private void handlePing(PingRequest ping) {
         try {
@@ -103,19 +102,19 @@ public class ServerHandler implements Runnable {
         }
     }
 
-    /** Ferma il thread di ascolto */
+    /** Stops the listening thread */
     public void stop() { this.running = false; }
 
     /**
-     * Smista gli Update ricevuti dal server al ClientModel.
+     * Dispatches Updates received from the server to the ClientModel.
      *
-     * DISPATCH POLIMORFICO: message.applyTo(clientModel) delega a ogni sottotipo
-     * la propria logica di aggiornamento, senza switch o reflection.
+     * POLYMORPHIC DISPATCH: message.applyTo(clientModel) delegates the update logic to
+     * each subtype, without switch or reflection.
      *
-     * ECCEZIONI (gestite prima del dispatch):
-     * - PingRequest: risposta automatica a livello socket (trasparente per il client)
-     * - StateChangedUpdate: dopo applyTo(), verifica se la GUI deve passare
-     *   dalla scena lobby alla scena partita (responsabilita' UI separata dal model)
+     * EXCEPTIONS (handled before dispatch):
+     * - PingRequest: automatic response at socket level (transparent to client)
+     * - StateChangedUpdate: after applyTo(), checks if GUI must switch
+     * from lobby scene to game scene (UI responsibility separated from model)
      */
     private void handleUpdate(Update message) {
         if (message instanceof PingRequest ping) {

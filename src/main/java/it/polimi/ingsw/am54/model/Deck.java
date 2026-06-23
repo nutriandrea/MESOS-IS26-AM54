@@ -4,10 +4,10 @@ import java.util.*;
 
 
 /**
- * Mazzo di carte generico (LIFO), basato su uno {@link Stack}. Usato per il mazzo
- * Tribù (personaggi + eventi) e per il mazzo Edifici.
+ * Generic deck of cards (LIFO), based on a {@link Stack}. Used for the Tribe deck
+ * (characters + events) and for the Buildings deck.
  *
- * @param <T> il tipo di carta contenuta nel mazzo
+ * @param <T> the type of card contained in the deck
  */
 public class Deck<T extends Card> {
 
@@ -18,16 +18,16 @@ public class Deck<T extends Card> {
         this.cards = new Stack<>();
     }
 
-   //construttore con stack già presente
+    //constructor with an already existing stack
     public Deck(Stack<T> stack) {
         this.cards = stack;
     }
 
 
     /**
-     * Pesca la carta in cima al mazzo rimuovendola.
+     * Draws the card at the top of the deck, removing it.
      *
-     * @return la carta pescata, oppure {@code null} se il mazzo è vuoto
+     * @return the drawn card, or {@code null} if the deck is empty
      */
     public T drawCard() {
         if (cards.isEmpty()) {
@@ -41,10 +41,10 @@ public class Deck<T extends Card> {
     }
 
     /**
-     * Guarda la carta in cima al mazzo senza rimuoverla (es. per rilevare il
-     * passaggio di Era confrontandone l'era).
+     * Looks at the card at the top of the deck without removing it (e.g., to detect the
+     * passage of Era by comparing its era).
      *
-     * @return la prossima carta, oppure {@code null} se il mazzo è vuoto
+     * @return the next card, or {@code null} if the deck is empty
      */
     public T peek() {
         if (cards.isEmpty()) return null;
@@ -52,11 +52,11 @@ public class Deck<T extends Card> {
     }
 
     /**
-     * Restituisce tutte le carte presenti nel mazzo.
-     * Utilizzato dal PersistenceManager per salvare lo stato dei mazzi.
-     * Ritorna una copia per evitare modifiche esterne.
+     * Returns all the cards present in the deck.
+     * Used by the PersistenceManager to save the state of the decks.
+     * Returns a copy to avoid external modifications.
      *
-     * @return lista di tutte le carte nel mazzo
+     * @return list of all cards in the deck
      */
     public List<T> getAllCards() {
         return new ArrayList<>(cards);

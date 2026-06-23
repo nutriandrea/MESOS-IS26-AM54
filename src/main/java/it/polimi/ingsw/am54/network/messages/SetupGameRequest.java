@@ -4,8 +4,8 @@ import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.network.server.ClientConnection;
 
 /**
- * Richiesta inviata dal Client per segnalare di essere pronto per il Setup.
- * Essendo un "Trigger", non ha bisogno di parametri: basta il suo arrivo!
+ * Request sent by the Client to signal they are ready for Setup.
+ * Being a "Trigger", it needs no parameters: its arrival is enough!
  */
 public final class SetupGameRequest implements Request {
 

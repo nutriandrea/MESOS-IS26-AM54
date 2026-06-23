@@ -15,14 +15,14 @@ import java.util.concurrent.*;
 
 /**
  * ============================================================================
- * RMIClientHandler — Gestore di una connessione RMI per un client
+ * RMIClientHandler — Handler for an RMI connection for a client
  * ============================================================================
  *
- * RUOLO:
- * - Gestisce le richieste RMI da un client
- * - Inoltra le richieste al Controller (singola partita)
- * - Implementa ClientConnection (sendUpdate via callback RMI)
- * - Gestisce heartbeat (ping/pong)
+ * ROLE:
+ * - Handles RMI requests from a client
+ * - Forwards requests to the Controller (single game)
+ * - Implements ClientConnection (sendUpdate via RMI callback)
+ * - Manages heartbeat (ping/pong)
  * ============================================================================
  */
 public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHandlerInterface, ClientConnection {
@@ -47,11 +47,11 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
 
     /**
-     * Richiesta RMI di ingresso in partita: memorizza il nickname del client (necessario
-     * per identificarlo nelle richieste successive) e inoltra il join al Controller.
+     * RMI request to join the game: stores the client's nickname (necessary
+     * to identify it in subsequent requests) and forwards the join to the Controller.
      *
-     * @param nickname il nickname scelto dal client
-     * @throws RemoteException in caso di errore RMI
+     * @param nickname the nickname chosen by the client
+     * @throws RemoteException in case of RMI error
      */
     @Override
     public void joinGameRequest(String nickname) throws RemoteException {
@@ -88,8 +88,8 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
 
     /**
-     * Avvia l'heartbeat RMI: invia un ping al client ogni {@value #PING_INTERVAL_MS} ms
-     * e, se non riceve un pong entro {@value #PING_TIMEOUT_MS} ms, lo disconnette.
+     * Starts the RMI heartbeat: sends a ping to the client every {@value #PING_INTERVAL_MS} ms
+     * and, if it does not receive a pong within {@value #PING_TIMEOUT_MS} ms, disconnects it.
      */
     public void startPingScheduler() {
         this.lastPongTime = System.currentTimeMillis();
@@ -171,7 +171,7 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     @Override
     public void notifyEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers) {
         try {
-            // clientStub rappresenta l'interfaccia remota del client (RMIClientInterface)
+            // clientStub represents the remote interface of the client (RMIClientInterface)
             clientStub.onEndGame(new EndGameUpdate(winners, allScores, numPlayers));
         } catch (RemoteException e) {
             disconnect();
@@ -221,8 +221,8 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
     }
 
     /**
-     * Chiude la connessione RMI del client: ferma l'heartbeat, avvisa il Controller di
-     * rimuovere il giocatore e de-esporta questo handler dal registro RMI. Idempotente.
+     * Closes the client's RMI connection: stops the heartbeat, notifies the Controller to
+     * remove the player and unexports this handler from the RMI registry. Idempotent.
      */
     @Override
     public void disconnect() {
@@ -234,11 +234,11 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         }
 
         try {
-            // "Scollega" questo handler dalla rete RMI -> sennò non venivano mai effettivamente chiuse
+            // "Disconnect" this handler from the RMI network -> otherwise they were never actually closed
             UnicastRemoteObject.unexportObject(this, true);
-            // true = forza la disconnessione anche se ci sono chiamate in corso.
+            // true = forces disconnection even if there are calls in progress.
         } catch (NoSuchObjectException e) {
-            // Già de-esportato, possiamo ignorarlo
+            // Already unexported, we can ignore it
         }
     }
 

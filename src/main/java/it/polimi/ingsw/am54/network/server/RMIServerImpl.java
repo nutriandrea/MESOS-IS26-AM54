@@ -17,12 +17,12 @@ public class RMIServerImpl extends UnicastRemoteObject implements RMIGameServer 
     }
 
     /**
-     * Punto d'ingresso RMI: registra un nuovo client (passando il suo stub di callback)
-     * e gli restituisce un handler personale per inviare le proprie azioni di gioco.
+     * RMI entry point: registers a new client (passing its callback stub)
+     * and returns a personal handler for it to send its game actions.
      *
-     * @param clientStub lo stub di callback del client (per ricevere gli update)
-     * @return l'handler RMI dedicato a quel client
-     * @throws RemoteException in caso di errore RMI
+     * @param clientStub the client's callback stub (to receive updates)
+     * @return the RMI handler dedicated to that client
+     * @throws RemoteException in case of RMI error
      */
     @Override
     public RMIClientHandlerInterface connect(RMIClientInterface clientStub) throws RemoteException {

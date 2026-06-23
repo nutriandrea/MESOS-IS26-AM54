@@ -21,40 +21,40 @@ public class CLIApp implements CLIAbstract {
     private Consumer<String> currentInputHandler = null;
     private final AtomicBoolean running = new AtomicBoolean(true);
     private final Map<String, Function<String[], String>> cardRenderers = Map.ofEntries(
-        Map.entry("SHAMAN", parts -> {
-            int v1 = Integer.parseInt(parts[4]);
-            return "SHAMAN " + (v1 > 0 ? "★".repeat(v1) : "");
-        }),
-        Map.entry("HUNTER", parts -> {
-            int v1 = Integer.parseInt(parts[4]);
-            return "HUNTER " + (v1 > 0 ? "🍖".repeat(v1) : "");
-        }),
-        Map.entry("CONSTRUCTOR", parts -> {
-            int v1 = Integer.parseInt(parts[4]);
-            int v2 = Integer.parseInt(parts[5]);
-            StringBuilder sb = new StringBuilder("CONSTRUCTOR ");
-            if (v1 > 0) sb.append("🧱-").append(v1);
-            if (v2 > 0) sb.append(" ✨").append(v2);
-            return sb.toString();
-        }),
-        Map.entry("FARMER", parts -> {
-            return "FARMER " + ("🌾-3" ); //dato che sono tutti uguali non serve fare parsing
-        }),
-        Map.entry("INVENTOR", parts -> {
-            int v1 = Integer.parseInt(parts[4]);
-            return "INVENTOR " + (v1 >= 0 ? "⚙️ Liv." + v1 : "");
-        }),
-        Map.entry("ARTIST", parts -> "ARTIST 🎨"),
-        Map.entry("BUILDING", parts -> {
-            int v1 = Integer.parseInt(parts[4]);
-            int v2 = Integer.parseInt(parts[5]);
-            String nome = parts.length > 6 ? parts[6] : "Speciale";
-            return "🏛️ " + nome + " (Cost:🍖" + v1 + " Aura:✨" + v2 + ")";
-        }),
-        Map.entry("EVENT", parts -> {
-            String nomeEvento = parts.length > 4 ? parts[4] : "Sconosciuto";
-            return "📜 " + nomeEvento;
-        })
+            Map.entry("SHAMAN", parts -> {
+                int v1 = Integer.parseInt(parts[4]);
+                return "SHAMAN " + (v1 > 0 ? "★".repeat(v1) : "");
+            }),
+            Map.entry("HUNTER", parts -> {
+                int v1 = Integer.parseInt(parts[4]);
+                return "HUNTER " + (v1 > 0 ? "🍖".repeat(v1) : "");
+            }),
+            Map.entry("CONSTRUCTOR", parts -> {
+                int v1 = Integer.parseInt(parts[4]);
+                int v2 = Integer.parseInt(parts[5]);
+                StringBuilder sb = new StringBuilder("CONSTRUCTOR ");
+                if (v1 > 0) sb.append("🧱-").append(v1);
+                if (v2 > 0) sb.append(" ✨").append(v2);
+                return sb.toString();
+            }),
+            Map.entry("FARMER", parts -> {
+                return "FARMER " + ("🌾-3" ); //since they are all the same there is no need to parse
+            }),
+            Map.entry("INVENTOR", parts -> {
+                int v1 = Integer.parseInt(parts[4]);
+                return "INVENTOR " + (v1 >= 0 ? "⚙️ Liv." + v1 : "");
+            }),
+            Map.entry("ARTIST", parts -> "ARTIST 🎨"),
+            Map.entry("BUILDING", parts -> {
+                int v1 = Integer.parseInt(parts[4]);
+                int v2 = Integer.parseInt(parts[5]);
+                String nome = parts.length > 6 ? parts[6] : "Speciale";
+                return "🏛️ " + nome + " (Cost:🍖" + v1 + " Aura:✨" + v2 + ")";
+            }),
+            Map.entry("EVENT", parts -> {
+                String nomeEvento = parts.length > 4 ? parts[4] : "Sconosciuto";
+                return "📜 " + nomeEvento;
+            })
     );
 
     public CLIApp(VirtualServer server, ClientModel model, String nickname, Scanner scanner) {
@@ -74,7 +74,7 @@ public class CLIApp implements CLIAbstract {
                 if (scanner.hasNextLine()) {
                     String input = scanner.nextLine();
 
-                    // FIX: Se stiamo cercando di riconnetterci, blocca l'input dell'utente
+                    // FIX: If we are trying to reconnect, block user input
                     if (model.isReconnecting()) {
                         System.out.println("❌ Comandi disabilitati. In attesa di riconnessione al server...");
                         continue;
@@ -84,9 +84,9 @@ public class CLIApp implements CLIAbstract {
                         try {
                             currentInputHandler.accept(input);
                         } catch (Exception e) {
-                            // Un errore di rete (es. durante una riconnessione) non deve
-                            // MAI uccidere il thread di input: altrimenti la CLI smette
-                            // di rispondere ai comandi anche dopo il rientro in partita.
+                            // A network error (e.g., during a reconnection) must NEVER
+                            // kill the input thread: otherwise the CLI stops responding
+                            // to commands even after rejoining the game.
                             System.out.println("⚠️ Impossibile inviare il comando ora. Riprova tra un istante.");
                             currentInputHandler = null;
                         }
@@ -102,7 +102,7 @@ public class CLIApp implements CLIAbstract {
 
     public synchronized void render() {
 
-        // Se i vincitori sono stati popolati, forziamo a prescindere la schermata finale
+        // If winners have been populated, we force the final screen regardless
         if (model.getWinners() != null && !model.getWinners().isEmpty()) {
             clearConsole();
             renderEndGame();
@@ -122,7 +122,7 @@ public class CLIApp implements CLIAbstract {
         clearConsole();
 
         // ==========================================================
-        // FIX 1: STAMPA DEGLI ALLARMI SPOSTATA IN ALTO
+        // FIX 1: ALARMS PRINTING MOVED UP
         // ==========================================================
         if (hasSystemAlert) {
             System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -137,7 +137,7 @@ public class CLIApp implements CLIAbstract {
         }
 
         // ==========================================================
-        // RENDER DELLO STATO (Che ora stamperà i prompt SOTTO agli allarmi)
+        // STATE RENDER (Which will now print the prompts UNDER the alarms)
         // ==========================================================
         handler.renderCLI(this);
     }
@@ -152,7 +152,7 @@ public class CLIApp implements CLIAbstract {
             System.out.println("\nScegli il tuo colore (RED, YELLOW, BLACK, WHITE, BLUE): ");
             askForColor();
         } else {
-            // FIX 2: CONTROLLI RIGOROSI PER L'HOST DELLA PARTITA
+            // FIX 2: STRICT CHECKS FOR THE MATCH HOST
             if (model.getPlayers().indexOf(myNickname) == 0) {
                 int numPlayers = model.getPlayers().size();
                 int numColorsChosen = model.getPlayerColors().size();
@@ -166,7 +166,7 @@ public class CLIApp implements CLIAbstract {
                 } else {
                     System.out.println("\n👑 Sei l'host della partita.");
                     System.out.println("✅ Tutti pronti! Scrivi 'START' per iniziare la partita!");
-                    askForStart(); // Attiviamo l'input solo qui!
+                    askForStart(); // We enable input only here!
                 }
             } else {
                 System.out.println("\n⏳ In attesa che l'host (il creatore della stanza) avvii la partita...");
@@ -214,7 +214,7 @@ public class CLIApp implements CLIAbstract {
 
                 if (model.getPlayerColors().containsValue(color)) {
                     System.out.println("❌ Colore già preso da un altro giocatore! Scegline un altro.");
-                    return; // Usciamo dal metodo SENZA resettare l'handler, così il giocatore può riprovare a digitare!
+                    return; // We exit the method WITHOUT resetting the handler, so the player can try typing again!
                 }
 
                 server.chooseTotem(color);
@@ -275,12 +275,12 @@ public class CLIApp implements CLIAbstract {
     private String renderizzaCarta(String cardData) {
         if (cardData == null || cardData.equals("null") || cardData.isEmpty()) return "[ VUOTO ]";
 
-        // Adesso tutti i campi sono separati da '|'
+        // Now all fields are separated by '|'
         String[] parts = cardData.split("\\|");
 
         if (parts.length < 4) return "[ " + cardData + " ]";
 
-        // L'ID è parts[0], l'Era è parts[1], i MinPlayers sono parts[2] e il tipo/nome è parts[3]
+        // The ID is parts[0], the Era is parts[1], the MinPlayers are parts[2] and the type/name is parts[3]
         String tipo = parts[3];
 
         StringBuilder visual = new StringBuilder();
@@ -296,7 +296,7 @@ public class CLIApp implements CLIAbstract {
     private String formattaRiga(List<String> riga, int startIndex) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < riga.size(); i++) {
-            // Aggiunge lo startIndex all'indice corrente
+            // Adds the startIndex to the current index
             sb.append(i + startIndex).append(":").append(renderizzaCarta(riga.get(i))).append("   ");
         }
         return sb.toString();
@@ -315,7 +315,7 @@ public class CLIApp implements CLIAbstract {
         System.out.println("Ordine Turno:");
         for (String slot : model.getTurnOrderTrack()) {
             String pName = slot.contains(" -> ") ? slot.split(" -> ")[slot.split(" -> ").length - 1].trim() : slot;
-            // Se il giocatore è disconnesso, nascondiamo il nome e mostriamo "VUOTO"
+            // If the player is disconnected, we hide the name and show "VUOTO"
             if (model.isPlayerDisconnected(pName)) {
                 String prefix = slot.contains(" -> ") ? slot.substring(0, slot.lastIndexOf("->") + 2) : "";
                 System.out.println("  " + prefix + " VUOTO");
@@ -328,7 +328,7 @@ public class CLIApp implements CLIAbstract {
         for (java.util.Map.Entry<Integer, String> entry : model.getOfferingTrack().entrySet()) {
             String occupier = entry.getValue();
             String pName = occupier.contains(" -> ") ? occupier.split(" -> ")[occupier.split(" -> ").length - 1].trim() : occupier;
-            // Anche qui, se è sulle offerte ma è crashato, mostriamo "VUOTO"
+            // Here too, if they are on the offerings but crashed, we show "VUOTO"
             if (model.isPlayerDisconnected(pName)) {
                 String prefix = occupier.contains(" -> ") ? occupier.substring(0, occupier.lastIndexOf("->") + 2) : "";
                 System.out.println("  " + entry.getKey() + ") " + prefix + " VUOTO");
@@ -339,7 +339,7 @@ public class CLIApp implements CLIAbstract {
 
         lowerRow();
 
-        // Prepariamo le due liste: Attivi e Disconnessi
+        // We prepare the two lists: Active and Disconnected
         List<String> activePlayers = new java.util.ArrayList<>();
         List<String> disconnectedPlayers = new java.util.ArrayList<>();
 
@@ -364,7 +364,7 @@ public class CLIApp implements CLIAbstract {
             System.out.println("   Edifici: " + (bldgs != null && !bldgs.isEmpty() ? formattaRiga(bldgs,0) : "[ VUOTI ]"));
         }
 
-        // Se c'è qualcuno di offline, lo stampiamo nel suo "recinto" dedicato
+        // If someone is offline, we print them in their dedicated "enclosure"
         if (!disconnectedPlayers.isEmpty()) {
             System.out.println("\n🔌 --- GIOCATORI DISCONNESSI --- 🔌");
             for (String p : disconnectedPlayers) {
@@ -391,16 +391,16 @@ public class CLIApp implements CLIAbstract {
     }
 
     public void renderEndGame() {
-        // 1. SBLOCCO FORZATO DEL MODEL
+        // 1. FORCED MODEL UNLOCK
         model.clearPendingEvents();
 
-        // 2. GESTIONE DELLA "RACE CONDITION" DI RETE
+        // 2. NETWORK "RACE CONDITION" MANAGEMENT
         if (model.getWinners() == null || model.getWinners().isEmpty()) {
             System.out.println("\nCalcolo dei risultati finali in corso... Ricezione dati dal server...");
-            // RIMOSSO IL RETURN: Invece di bloccare tutto, andiamo avanti e stampiamo
-            // il prompt della classifica. Quando arriveranno i dati, il tabellone si aggiornerà da solo!
+            // REMOVED THE RETURN: Instead of blocking everything, we go ahead and print
+            // the leaderboard prompt. When the data arrives, the board will update itself!
         } else {
-            // 3. STAMPA EFFETTIVA DELLA SCHERMATA DI VITTORIA
+            // 3. ACTUAL PRINTING OF THE VICTORY SCREEN
             System.out.println("\n!!! PARTITA TERMINATA !!!");
             System.out.println("Vincitori: " + model.getWinners());
 
@@ -412,8 +412,8 @@ public class CLIApp implements CLIAbstract {
             }
         }
 
-        // Stampiamo SEMPRE la classifica e abilitiamo l'input,
-        // così la console non si congela mai.
+        // We ALWAYS print the leaderboard and enable input,
+        // so the console never freezes.
         stampaClassifica();
         stampaPromptLeaderboard();
     }

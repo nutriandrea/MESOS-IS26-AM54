@@ -3,20 +3,20 @@ package it.polimi.ingsw.am54.model.effects.events;
 import it.polimi.ingsw.am54.model.*;
 
 /**
- * Effetto dell'evento Pitture Rupestri: chi raggiunge la soglia di artisti guadagna
- * aura proporzionale, chi non la raggiunge subisce una penalità.
+ * Cave Paintings event effect: those who reach the artists threshold gain
+ * proportional aura, those who do not reach it suffer a penalty.
  */
 public class EventArtist implements IEffect<EventCard> {
 
     /**
-     * Per ogni giocatore confronta il numero di artisti con la soglia dell'evento:
-     * sotto soglia applica la penalità in aura, da soglia in su accredita
-     * {@code artisti * moltiplicatore}; infine azzera i modificatori temporanei.
+     * For each player compares the number of artists with the event threshold:
+     * below threshold applies the aura penalty, from the threshold up credits
+     * {@code artists * multiplier}; finally resets temporary modifiers.
      *
-     * @param p            non usato (l'effetto itera su tutti i giocatori)
-     * @param g            la partita corrente
-     * @param ec           la carta evento proprietaria dell'effetto
-     * @param currentEvent l'evento in risoluzione
+     * @param p            not used (the effect iterates over all players)
+     * @param g            the current game
+     * @param ec           the event card owning the effect
+     * @param currentEvent the event being resolved
      */
     @Override
     public void applyOnEvent(Player p, Game g, EventCard ec, EventCard currentEvent) {
@@ -24,7 +24,7 @@ public class EventArtist implements IEffect<EventCard> {
             long painters = pl.getMyTribe().stream()
                     .filter(c -> c.getJobType() == JobType.ARTIST).count();
 
-            // Legge i modificatori temporanei impostati dagli edifici (se ci sono)
+            // Reads temporary modifiers set by buildings (if any)
             int buildingFood = pl.getEventCostFood();
             if (buildingFood > 0) pl.modifyFood(buildingFood);
 
@@ -32,7 +32,7 @@ public class EventArtist implements IEffect<EventCard> {
                     ? -ec.getPenalty()
                     : (int) painters * ec.getBonusMultiplier());
 
-            // Resetta i modificatori a fine evento
+            // Resets modifiers at the end of the event
             pl.resetEventAttributes();
         });
     }

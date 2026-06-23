@@ -2,8 +2,8 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import com.google.gson.JsonObject;
 import it.polimi.ingsw.am54.model.*;
 
-// Gestisce l'immunità alla perdita di punti (No Loss) e il raddoppio dei punti (Double Aura)
-// durante l'Evento Rituale Sciamanico
+// Handles immunity to point loss (No Loss) and point doubling (Double Aura)
+// during the Shamanic Ritual Event
 public class BuildingShamanPassive implements IEffect<BuildingCard> {
     private final boolean noLoss;
     private final boolean doubleAura;
@@ -14,17 +14,17 @@ public class BuildingShamanPassive implements IEffect<BuildingCard> {
     }
 
     /**
-     * Imposta sul giocatore gli scudi temporanei letti poi dall'evento Rituale
-     * Sciamanico: immunità alla perdita di aura e/o raddoppio del bonus.
+     * Sets temporary shields on the player which are then read by the Shamanic Ritual
+     * event: immunity to aura loss and/or doubling of the bonus.
      *
-     * @param p            il giocatore proprietario dell'edificio
-     * @param g            la partita corrente
-     * @param card         l'edificio che possiede l'effetto
-     * @param currentEvent l'evento in corso di risoluzione
+     * @param p            the player who owns the building
+     * @param g            the current game
+     * @param card         the building that possesses the effect
+     * @param currentEvent the event currently being resolved
      */
     @Override
     public void applyOnEvent(Player p, Game g, BuildingCard card, EventCard currentEvent) {
-        // nel player ci sono ste 2 flag
+        // these two flags are in the player
         if (noLoss) p.setShamanNoLoss(true);
         if (doubleAura) p.setShamanDoubleAura(true);
     }

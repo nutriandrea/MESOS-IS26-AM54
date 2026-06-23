@@ -3,17 +3,17 @@ package it.polimi.ingsw.am54.model.effects.characters;
 import it.polimi.ingsw.am54.model.*;
 
 /**
- * Effetto del Costruttore: all'acquisto aumenta lo sconto permanente del giocatore
- * sugli edifici, di un valore pari al livello della carta.
+ * Constructor's effect: upon purchase, increases the player's permanent discount
+ * on buildings by a value equal to the card's level.
  */
 public class CharacterConstructor implements IEffect<CharacterCard> {
 
     /**
-     * Accredita al giocatore uno sconto edifici pari al livello del costruttore.
+     * Credits the player with a building discount equal to the constructor's level.
      *
-     * @param p    il giocatore che ha acquistato la carta
-     * @param g    la partita corrente
-     * @param card il costruttore appena pescato
+     * @param p    the player who purchased the card
+     * @param g    the current game
+     * @param card the newly picked constructor
      */
     @Override
     public void applyOnPurchase(Player p, Game g, CharacterCard card) {

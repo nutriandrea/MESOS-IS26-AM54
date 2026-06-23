@@ -13,10 +13,11 @@ import javafx.animation.*;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
-import java.awt.Taskbar;
-import javax.imageio.ImageIO;
-import java.io.InputStream;
 
+/**
+ * Main application class for the JavaFX GUI client.
+ * Handles primary stage setup, full-screen mode, and scene transitions.
+ */
 public class GUIApp extends Application {
 
     private static StackPane rootWrapper;
@@ -63,7 +64,7 @@ public class GUIApp extends Application {
         FadeTransition fadeIn = new FadeTransition(Duration.millis(800), blackScreen);
         fadeIn.setFromValue(1.0);
         fadeIn.setToValue(0.0);
-        fadeIn.setDelay(Duration.millis(600)); // Tempo di attesa per la stabilizzazione
+        fadeIn.setDelay(Duration.millis(600)); // Waiting time for stabilization
         fadeIn.setOnFinished(e -> transitionLayer.getChildren().remove(blackScreen));
         fadeIn.play();
     }

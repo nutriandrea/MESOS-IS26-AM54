@@ -11,68 +11,68 @@ import java.util.stream.Collectors;
 
 /**
  * ============================================================================
- * VirtualView — Pattern Proxy tra Model e rete
+ * VirtualView — Proxy Pattern between Model and network
  * ============================================================================
  *---
- * RUOLO:
- * Il Game (Model) non sa nulla della rete. Ha una lista di observer (IGameObserver)
- * e notifica un evento chiamando un metodo (es. onCardPicked) su ogni observer.
+ * ROLE:
+ * The Game (Model) knows nothing about the network. It has a list of observers (IGameObserver)
+ * and notifies an event by calling a method (e.g. onCardPicked) on each observer.
  *---
- * La VirtualView si registra come observer del Game. Quando il Game la notifica,
- * la VirtualView traduce la chiamata in un messaggio di rete e lo invia
- * sulla sua ClientConnection (Socket o RMI, non importa).
+ * The VirtualView registers itself as an observer of the Game. When the Game notifies it,
+ * the VirtualView translates the call into a network message and sends it
+ * on its ClientConnection (Socket or RMI, it does not matter).
  *---
- * COME AVVIENE IL BROADCAST:
- * Il broadcast NON e' responsabilita' della VirtualView. Ogni VirtualView ha
- * UNA SOLA ClientConnection e manda SOLO al proprio client.
- * Il broadcast avviene nel Game: quando il Game notifica un evento, lo fa
- * su TUTTI gli observer registrati (un for-loop). Quindi:
+ * HOW THE BROADCAST HAPPENS:
+ * Broadcasting is NOT the responsibility of the VirtualView. Every VirtualView has
+ * ONLY ONE ClientConnection and sends ONLY to its own client.
+ * Broadcasting happens in the Game: when the Game notifies an event, it does so
+ * on ALL registered observers (a for-loop). Therefore:
  *---
- *   Game.pickCard("Alice") -> notifyCardPicked() ->
- *     for (IGameObserver obs : observers) obs.onCardPicked()
- *       -> VV_Alice.connection.sendUpdate(CardPickedUpdate("Alice"))
- *       -> VV_Bob.connection.sendUpdate(CardPickedUpdate("Alice"))
- *       -> VV_Carlo.connection.sendUpdate(CardPickedUpdate("Alice"))
+ * Game.pickCard("Alice") -> notifyCardPicked() ->
+ * for (IGameObserver obs : observers) obs.onCardPicked()
+ * -> VV_Alice.connection.sendUpdate(CardPickedUpdate("Alice"))
+ * -> VV_Bob.connection.sendUpdate(CardPickedUpdate("Alice"))
+ * -> VV_Carlo.connection.sendUpdate(CardPickedUpdate("Alice"))
  *---
- * Tutti i client ricevono l'aggiornamento, tutti vedono la board aggiornata.
+ * All clients receive the update, everyone sees the updated board.
  *---
  * DIFF vs FULL STATE:
- * Gli update sono gia' "diff" perche' contengono SOLO i dati cambiati:
- *   - CardPickedUpdate: nickname, row, cardIndex, newFoodBalance
- *   - TotemPlacedUpdate: nickname, position
- *   - TurnChangedUpdate: nickname
- *   ecc.
- * Non viene mai inviato l'intero stato del gioco, solo la delta.
+ * The updates are already "diffs" because they contain ONLY the changed data:
+ * - CardPickedUpdate: nickname, row, cardIndex, newFoodBalance
+ * - TotemPlacedUpdate: nickname, position
+ * - TurnChangedUpdate: nickname
+ * etc.
+ * The entire state of the game is never sent, only the delta.
  *---
- * FLUSSO COMPLETO:
- *   Client Request -> SocketClientHandler/RMIClientHandler -> Controller -> Game
- *                                                                             |
- *                                                            notifyXxx() (for-loop)
- *                                                                             |
- *                                                  +----------------+----------------+
- *                                                  |                |                |
- *                                              VirtualView      VirtualView      VirtualView
- *                                                 (Alice)          (Bob)          (Carlo)
- *                                                  |                |                |
- *                                                  v                v                v
- *                                               Update           Update           Update
+ * FULL FLOW:
+ * Client Request -> SocketClientHandler/RMIClientHandler -> Controller -> Game
+ * |
+ * notifyXxx() (for-loop)
+ * |
+ * +----------------+----------------+
+ * |                |                |
+ * VirtualView      VirtualView      VirtualView
+ * (Alice)          (Bob)          (Carlo)
+ * |                |                |
+ * v                v                v
+ * Update           Update           Update
  * ============================================================================
  */
 public class VirtualView implements IGameObserver {
 
-    /** Canale di rete verso il client associato a questa VirtualView */
+    /** Network channel towards the client associated with this VirtualView */
     private final ClientConnection connection;
 
-    /** Nickname del giocatore proprietario di questa connessione */
+    /** Nickname of the player who owns this connection */
     private final String nickname;
 
 
     /**
-     * Costruttore: crea la VirtualView quando un giocatore entra in partita.
-     * Viene chiamata dal Controller.handleJoinGame() dopo la creazione della connessione.
+     * Constructor: creates the VirtualView when a player joins the game.
+     * It is called by Controller.handleJoinGame() after the connection is created.
      *
-     * @param connection il canale di rete (Socket o RMI) del giocatore
-     * @param nickname il nickname del giocatore
+     * @param connection the network channel (Socket or RMI) of the player
+     * @param nickname the nickname of the player
      */
     public VirtualView(ClientConnection connection, String nickname) {
         this.connection = connection;
@@ -84,55 +84,55 @@ public class VirtualView implements IGameObserver {
     }
 
     /**
-     * Invia un messaggio di errore SOLO a questo giocatore (es. mossa non valida).
+     * Sends an error message ONLY to this player (e.g. invalid move).
      *
-     * @param errorMessage il testo dell'errore da mostrare al client
+     * @param errorMessage the error text to show to the client
      */
     public void showError(String errorMessage) {
         connection.notifyError(errorMessage);
     }
 
     /**
-     * Notifica a questo client che un altro giocatore si è disconnesso.
+     * Notifies this client that another player has disconnected.
      *
-     * @param disconnectedNickname il nickname del giocatore disconnesso
+     * @param disconnectedNickname the nickname of the disconnected player
      */
     public void showPlayerDisconnected(String disconnectedNickname) {
         connection.notifyPlayerDisconnected(disconnectedNickname);
     }
 
     /**
-     * Notifica a questo client che un altro giocatore si è riconnesso.
+     * Notifies this client that another player has reconnected.
      *
-     * @param reconnectedNickname il nickname del giocatore riconnesso
+     * @param reconnectedNickname the nickname of the reconnected player
      */
     public void showPlayerReconnected(String reconnectedNickname) {
         connection.notifyPlayerReconnected(reconnectedNickname);
     }
 
     /* =====================================================================
-     * --- METODI DELL'OBSERVER ---
+     * --- OBSERVER METHODS ---
      *
-     * Il Game chiama questi metodi su TUTTI gli observer registrati.
-     * Ogni VirtualView inoltra l'Update alla propria connessione.
+     * The Game calls these methods on ALL registered observers.
+     * Each VirtualView forwards the Update to its own connection.
      *
-     * Esempio: quando Alice pesca una carta:
-     *   1. Game.pickCard("Alice", "upper", 2)
-     *   2. Game -> notifyCardPicked(p=Alice, row="upper", index=2, food=5)
-     *   3. for (obs : observers) obs.onCardPicked(game, Alice, "upper", 2, 5)
-     *      3a. VV_Alice.onCardPicked() -> connection.sendUpdate(CardPickedUpdate)
-     *      3b. VV_Bob.onCardPicked()   -> connection.sendUpdate(CardPickedUpdate)
-     *      3c. VV_Carlo.onCardPicked() -> connection.sendUpdate(CardPickedUpdate)
+     * Example: when Alice picks a card:
+     * 1. Game.pickCard("Alice", "upper", 2)
+     * 2. Game -> notifyCardPicked(p=Alice, row="upper", index=2, food=5)
+     * 3. for (obs : observers) obs.onCardPicked(game, Alice, "upper", 2, 5)
+     * 3a. VV_Alice.onCardPicked() -> connection.sendUpdate(CardPickedUpdate)
+     * 3b. VV_Bob.onCardPicked()   -> connection.sendUpdate(CardPickedUpdate)
+     * 3c. VV_Carlo.onCardPicked() -> connection.sendUpdate(CardPickedUpdate)
      *
-     * Risultato: TUTTI i client vedono Alice pescare la carta e la loro
-     * board locale viene aggiornata di conseguenza.
+     * Result: ALL clients see Alice picking the card and their
+     * local board is updated accordingly.
      * ===================================================================== */
 
     /**
-     * Notifica al client che un nuovo giocatore è entrato nella lobby.
+     * Notifies the client that a new player has entered the lobby.
      *
-     * @param game   la partita corrente
-     * @param player il giocatore appena unito
+     * @param game   the current game
+     * @param player the newly joined player
      */
     @Override
     public void onPlayerJoined(Game game, Player player) {
@@ -140,11 +140,11 @@ public class VirtualView implements IGameObserver {
     }
 
     /**
-     * Notifica al client il colore del totem scelto da un giocatore.
+     * Notifies the client of the totem color chosen by a player.
      *
-     * @param game   la partita corrente
-     * @param player il giocatore che ha scelto
-     * @param color  il colore selezionato
+     * @param game   the current game
+     * @param player the player who chose
+     * @param color  the selected color
      */
     @Override
     public void onTotemColorChosen(Game game, Player player, TotemColors color) {
@@ -152,11 +152,11 @@ public class VirtualView implements IGameObserver {
     }
 
     /**
-     * Notifica al client che un giocatore ha piazzato il totem su una tessera offerta.
+     * Notifies the client that a player has placed the totem on an offering tile.
      *
-     * @param game          la partita corrente
-     * @param player        il giocatore che ha piazzato il totem
-     * @param offerPosition l'indice della tessera scelta
+     * @param game          the current game
+     * @param player        the player who placed the totem
+     * @param offerPosition the index of the chosen tile
      */
     @Override
     public void onTotemPlaced(Game game, Player player, int offerPosition) {
@@ -168,7 +168,7 @@ public class VirtualView implements IGameObserver {
             OfferingTile tile = b.getOfferingTrack().get(i);
             String occName = (tile.getOccupiedBy() != null) ? tile.getOccupiedBy().getNickname() : "VUOTO";
 
-            // Se la tessera è vuota mostriamo il totale (cardsFromUpper), se è occupata mostriamo i rimanenti (remainingUpperPicks)
+            // If the tile is empty we show the total (cardsFromUpper), if it's occupied we show the remaining (remainingUpperPicks)
             int up = tile.getRemainingUpperPicks();
             int low = tile.getRemainingLowerPicks();
 
@@ -178,32 +178,32 @@ public class VirtualView implements IGameObserver {
     }
 
     /**
-     * Notifica al client che un giocatore ha pescato una carta, allegando lo snapshot
-     * aggiornato del tracciato offerte (pick residui per tessera).
+     * Notifies the client that a player has picked a card, attaching the updated snapshot
+     * of the offering track (residual picks per tile).
      *
-     * @param game            la partita corrente
-     * @param player          il giocatore che ha pescato
-     * @param row             la fila della carta ("upper" o "lower")
-     * @param cardIndex       l'indice della carta pescata
-     * @param newFoodBalance  il nuovo saldo di cibo del giocatore
-     * @param newMagicBalance il nuovo saldo di magia del giocatore
+     * @param game            the current game
+     * @param player          the player who picked
+     * @param row             the card row ("upper" or "lower")
+     * @param cardIndex       the index of the picked card
+     * @param newFoodBalance  the player's new food balance
+     * @param newMagicBalance the player's new magic balance
      */
     @Override
     public void onCardPicked(Game game, Player player, String row, int cardIndex, int newFoodBalance, int newMagicBalance) {
         Map<Integer, String> currentOffering = generateOfferingSnapshot(game.getBoard());
 
         connection.notifyCardPicked(player.getNickname(), row, cardIndex, newFoodBalance, newMagicBalance, currentOffering);
-   }
+    }
 
     /**
-     * Notifica al client che un giocatore ha terminato la pesca e il suo totem rientra
-     * nell'ordine di turno, incassando l'eventuale bonus cibo.
+     * Notifies the client that a player has finished picking and their totem returns
+     * to the turn order, collecting any food bonus.
      *
-     * @param game            la partita corrente
-     * @param player          il giocatore che termina il turno
-     * @param position        la posizione (slot) di rientro nell'ordine di turno
-     * @param newFoodBalance  il nuovo saldo di cibo
-     * @param newAuraBalance  il nuovo saldo di aura
+     * @param game            the current game
+     * @param player          the player ending their turn
+     * @param position        the return position (slot) in the turn order
+     * @param newFoodBalance  the new food balance
+     * @param newAuraBalance  the new aura balance
      */
     @Override
     public void onTotemReturned(Game game, Player player, int position, int newFoodBalance, int newAuraBalance) {
@@ -211,21 +211,21 @@ public class VirtualView implements IGameObserver {
     }
 
     /**
-     * Notifica al client la risoluzione di una carta Evento, inviando uno snapshot
-     * completo (statistiche di tutti i giocatori e contenuto di tutte le file del
-     * tabellone serializzato in stringhe).
+     * Notifies the client of the resolution of an Event card, sending a complete
+     * snapshot (statistics of all players and content of all board rows
+     * serialized into strings).
      *
-     * @param game          la partita corrente
-     * @param resolvedEvent la carta evento appena risolta
+     * @param game          the current game
+     * @param resolvedEvent the event card just resolved
      */
     @Override
     public void onEventResolved(Game game, EventCard resolvedEvent) {
         Board b = game.getBoard();
 
-        // 0. Recupera il vero nome dell'evento!
+        // 0. Retrieve the true name of the event!
         String eventName = resolvedEvent.getName();
 
-        // 1. Mappatura statistiche giocatori
+        // 1. Mapping player statistics
         Map<String, EventUpdate.PlayerSnapshot> stats = new HashMap<>();
         for (Player p : game.getPlayers()) {
             List<String> tribeStr = p.getMyTribe().stream().map(Card::toClientString).collect(Collectors.toList());
@@ -235,7 +235,7 @@ public class VirtualView implements IGameObserver {
             ));
         }
 
-        // 2. Trasformazione delle carte in Stringhe
+        // 2. Transformation of cards into Strings
         List<String> charUp = b.getCharacterUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
         List<String> charLow = b.getCharacterLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
         List<String> eventUp = b.getEventUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
@@ -243,35 +243,35 @@ public class VirtualView implements IGameObserver {
         List<String> buildUp = b.getBuildingCardsUpperRow().stream().map(Card::toClientString).collect(Collectors.toList());
         List<String> buildLow = b.getBuildingCardsLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
 
-        // 3. Spedisci lo Snapshot completo aggiungendo il nome in cima!
+        // 3. Send the complete Snapshot adding the name at the top!
         connection.notifyEventResolved(eventName, stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
     }
     /**
-     * Notifica al client il nuovo giocatore di turno (può essere {@code null} tra una
-     * fase e l'altra, quando nessun turno è attivo).
+     * Notifies the client of the new turn player (can be {@code null} between
+     * phases, when no turn is active).
      *
-     * @param game             la partita corrente
-     * @param newCurrentPlayer il nuovo giocatore di turno, o {@code null}
+     * @param game             the current game
+     * @param newCurrentPlayer the new turn player, or {@code null}
      */
     @Override
     public void onTurnChanged(Game game, Player newCurrentPlayer) {
-        // Se newCurrentPlayer e' null (tra una fase e l'altra), invia null.
+        // If newCurrentPlayer is null (between phases), sends null.
         String turnOwner = (newCurrentPlayer != null) ? newCurrentPlayer.getNickname() : null;
         connection.notifyTurnChanged(turnOwner);
     }
 
     /**
-     * Notifica al client un cambio di fase inviando lo snapshot COMPLETO dello stato
-     * (a differenza degli altri update, differenziali): statistiche di tutti i
-     * giocatori, ordine di turno, tracciato offerte e le sei file di carte. Inviato a
-     * ogni transizione di stato e alla riconnessione.
+     * Notifies the client of a phase change by sending the COMPLETE snapshot of the state
+     * (unlike other, differential updates): statistics of all players, turn order,
+     * offering track and the six rows of cards. Sent at every state transition
+     * and upon reconnection.
      *
-     * @param game     la partita corrente
-     * @param newState il nuovo stato di gioco
+     * @param game     the current game
+     * @param newState the new game state
      */
     @Override
     public void onStateChanged(Game game, GameState newState) {
-        // 1. Statistiche e Carte Giocatori (sempre valide)
+        // 1. Player Statistics and Cards (always valid)
         Map<String, StateChangedUpdate.PlayerSnapshot> stats = new java.util.LinkedHashMap<>();
         for (Player p : game.getPlayers()) {
             List<String> tribeStr = p.getMyTribe().stream().map(Card::toClientString).collect(Collectors.toList());
@@ -281,7 +281,7 @@ public class VirtualView implements IGameObserver {
             ));
         }
 
-        // Inizializziamo le strutture della Board a vuote
+        // Let's initialize the Board structures as empty
         List<String> turnOrder = new java.util.ArrayList<>();
         Map<Integer, String> offering = new java.util.LinkedHashMap<>();
         List<String> charUp = new java.util.ArrayList<>();
@@ -317,7 +317,7 @@ public class VirtualView implements IGameObserver {
             buildLow = b.getBuildingCardsLowerRow().stream().map(Card::toClientString).collect(Collectors.toList());
         }
 
-        // Spedisci il pacchetto (sicuro!)
+        // Send the packet (safely!)
         connection.notifyStateChanged(
                 newState.getClass().getSimpleName(), game.getCurrentEra(), game.getRoundCount(),
                 stats, turnOrder, offering,
@@ -326,11 +326,11 @@ public class VirtualView implements IGameObserver {
     }
 
     /**
-     * Notifica al client la fine della partita. Calcola qui, lato server, il punteggio
-     * finale reale di ogni giocatore e invia vincitori, punteggi e numero di giocatori.
+     * Notifies the client of the end of the game. Calculates here, server-side, the real
+     * final score of each player and sends winners, scores and the number of players.
      *
-     * @param game    la partita conclusa
-     * @param winners i giocatori vincitori
+     * @param game    the concluded game
+     * @param winners the winning players
      */
     @Override
     public void onEndGame(Game game, List<Player> winners) {
@@ -338,27 +338,27 @@ public class VirtualView implements IGameObserver {
                 .map(Player::getNickname)
                 .collect(Collectors.toList());
 
-        // Calcoliamo la mappa dei punteggi reali qui sul Server
+        // We calculate the real scores map here on the Server
         java.util.Map<String, Integer> finalScores = new java.util.HashMap<>();
         for (Player p : game.getPlayers()) {
             finalScores.put(p.getNickname(), game.calculatePlayerScore(p));
         }
 
-        // Inviamo i dati completi alla connessione
+        // We send the complete data to the connection
         connection.notifyEndGame(winnerNames, finalScores, game.getPlayers().size());
     }
 
     /**
-     * Notifica a questo client che la partita è stata sospesa (è rimasto un solo
-     * giocatore attivo). Invocata dal Controller in broadcast.
+     * Notifies this client that the game has been suspended (only one active
+     * player remaining). Invoked by the Controller via broadcast.
      */
     public void showGameSuspended() {
         connection.notifyGameSuspended();
     }
 
     /**
-     * Notifica a questo client che la partita è ripresa (almeno due giocatori attivi).
-     * Invocata dal Controller in broadcast.
+     * Notifies this client that the game has resumed (at least two active players).
+     * Invoked by the Controller via broadcast.
      */
     public void showGameResumed() {
         connection.notifyGameResumed();

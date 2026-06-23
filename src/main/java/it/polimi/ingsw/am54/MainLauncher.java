@@ -1,16 +1,16 @@
 package it.polimi.ingsw.am54;
 
 /**
- * Main class del JAR client. Esiste come livello intermedio che NON estende
- * {@link javafx.application.Application}: questo evita l'errore "JavaFX runtime
- * components are missing" quando si lancia il fat-jar con {@code java -jar}.
- * Delega subito a {@link Launcher#main(String[])}.
+ * Main class of the client JAR. Exists as an intermediate layer that does NOT extend
+ * {@link javafx.application.Application}: this avoids the "JavaFX runtime
+ * components are missing" error when launching the fat-jar with {@code java -jar}.
+ * Delegates immediately to {@link Launcher#main(String[])}.
  */
 public class MainLauncher {
     /**
-     * Punto d'ingresso del client: inoltra gli argomenti al {@link Launcher}.
+     * Client entry point: forwards the arguments to the {@link Launcher}.
      *
-     * @param args argomenti da riga di comando (es. {@code --cli} per la modalità testuale)
+     * @param args command line arguments (e.g. {@code --cli} for textual mode)
      */
     public static void main(String[] args) {
         Launcher.main(args);

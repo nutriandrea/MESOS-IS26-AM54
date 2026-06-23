@@ -3,7 +3,7 @@ package it.polimi.ingsw.am54.network.messages;
 import it.polimi.ingsw.am54.network.client.ClientModel;
 
 /**
- * Heartbeat inviato dal Server al Client per verificare la connessione attiva.
+ * Heartbeat sent by the Server to the Client to verify the active connection.
  * SERVER -> CLIENT
  */
 public final class PingRequest implements Update {
@@ -19,7 +19,7 @@ public final class PingRequest implements Update {
 
     @Override
     public void applyTo(ClientModel model) {
-        // PingRequest e' gestita a livello socket prima del dispatch;
-        // questo metodo non viene mai chiamato per questo tipo.
+        // PingRequest is handled at the socket level before dispatch;
+        // this method is never called for this type.
     }
 }

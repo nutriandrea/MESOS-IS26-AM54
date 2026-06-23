@@ -12,11 +12,11 @@ import java.util.List;
 public class EndGameState extends GameState {
 
     /**
-     * Risolve la fase finale della partita: applica gli eventi finali residui e gli
-     * effetti di fine partita degli edifici, registra il delta di aura prodotto, calcola
-     * i vincitori e li notifica ai client.
+     * Resolves the final phase of the game: applies the remaining final events and the
+     * endgame effects of the buildings, records the aura delta produced, calculates
+     * the winners and notifies the clients.
      *
-     * @param game la partita da concludere
+     * @param game the game to conclude
      */
     @Override
     public void resolvePhase(Game game) {
@@ -40,7 +40,7 @@ public class EndGameState extends GameState {
         }
 
         for (Player p : game.getPlayers()) {
-            int auraBefore = p.getAuraPoints(); // Registriamo lo stato dell'Aura a fine round 10 post-eventi
+            int auraBefore = p.getAuraPoints(); // Records the Aura state at the end of round 10 post-events
 
             for (BuildingCard building : p.getBuildings()) {
                 if (building.getEffects() != null) {
@@ -50,8 +50,8 @@ public class EndGameState extends GameState {
                 }
             }
 
-            int auraAfter = p.getAuraPoints(); // Registriamo l'Aura modificata dagli effetti degli edifici
-            p.setEndGameBuildingsAura(auraAfter - auraBefore); // Salviamo il delta esatto calcolato dal Server
+            int auraAfter = p.getAuraPoints(); // Records the Aura modified by the building effects
+            p.setEndGameBuildingsAura(auraAfter - auraBefore); // Saves the exact delta calculated by the Server
         }
 
         List<Player> winners = game.determineWinners();
@@ -60,12 +60,12 @@ public class EndGameState extends GameState {
     }
 
     /**
-     * Un nuovo ingresso a partita conclusa avvia una NUOVA partita: svuota i giocatori,
-     * riporta lo stato a {@link SetUpGameState} e inoltra il join al setup.
+     * A new entry after the game is over starts a NEW game: clears the players,
+     * resets the state to {@link SetUpGameState} and forwards the join to the setup.
      *
-     * @param game     la partita conclusa
-     * @param nickname il giocatore che richiede il riavvio
-     * @throws Exception in caso di errore nel join
+     * @param game     the completed game
+     * @param nickname the player requesting the restart
+     * @throws Exception in case of an error joining
      */
     @Override
     public void joinGame(Game game, String nickname) throws Exception {

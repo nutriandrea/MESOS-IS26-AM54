@@ -3,8 +3,8 @@ package it.polimi.ingsw.am54.network.messages;
 import it.polimi.ingsw.am54.network.client.ClientModel;
 
 /**
- * Messaggio inviato dal Server al Client per segnalare un errore
- * (es. mossa non valida o parametri errati).
+ * Message sent by the Server to the Client to report an error
+ * (e.g., invalid move or wrong parameters).
  */
 public final class ErrorMessageUpdate implements Update {
 

@@ -1,9 +1,9 @@
 package it.polimi.ingsw.am54.model;
 
 /**
- * Classe astratta che rappresenta lo stato del gioco.
- * Ogni metodo lancia IllegalStateException di default.
- * Gli stati concreti fanno override solo dei metodi permessi.
+ * Abstract class representing the game state.
+ * Every method throws an IllegalStateException by default.
+ * Concrete states only override the allowed methods.
  */
 public abstract class GameState {
 

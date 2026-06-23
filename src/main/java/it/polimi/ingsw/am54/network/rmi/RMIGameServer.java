@@ -4,6 +4,6 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface RMIGameServer extends Remote {
-    // Il client si connette, passa se stesso (il suo stub) e riceve in cambio il suo handler personale
+    // The client connects, passes itself (its stub) and receives its personal handler in return
     RMIClientHandlerInterface connect(RMIClientInterface clientStub) throws RemoteException;
 }

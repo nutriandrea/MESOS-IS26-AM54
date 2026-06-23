@@ -1,9 +1,9 @@
 /**
- * Interfaccia grafica JavaFX (la "V" di MVC).
- * {@link it.polimi.ingsw.am54.gui.GUIApp} avvia l'applicazione e gestisce le transizioni di
- * scena (login, plancia, classifica); i controller FXML
- * ({@code BoardController}, {@code LeaderboardController}, ...) collegano le viste al
- * {@link it.polimi.ingsw.am54.network.client.ClientModel} e inviano le azioni tramite
+ * JavaFX graphical user interface (the "V" in MVC).
+ * {@link it.polimi.ingsw.am54.gui.GUIApp} starts the application and handles scene
+ * transitions (login, board, leaderboard); the FXML controllers
+ * ({@code BoardController}, {@code LeaderboardController}, ...) connect the views to the
+ * {@link it.polimi.ingsw.am54.network.client.ClientModel} and send actions via
  * {@link it.polimi.ingsw.am54.network.client.VirtualServer}.
  */
 package it.polimi.ingsw.am54.gui;

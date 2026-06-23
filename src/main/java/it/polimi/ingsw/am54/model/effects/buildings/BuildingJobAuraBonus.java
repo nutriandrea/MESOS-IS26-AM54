@@ -2,8 +2,8 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import com.google.gson.JsonObject;
 import it.polimi.ingsw.am54.model.*;
 
-// Gestisce le 6 carte di Era 3 che danno punti prestigio a fine partita in base al tipo di personaggio
-// (es. Contadino x4, Cacciatore x3), più la carta di Era 2 che raddoppia i punti base dei Costruttori
+// Handles the 6 Era 3 cards that grant prestige points at the end of the game based on the character type
+// (e.g. Farmer x4, Hunter x3), plus the Era 2 card that doubles the base points of Constructors
 public class BuildingJobAuraBonus implements IEffect<BuildingCard> {
     private final JobType jobType;
     private final int multiplier;
@@ -16,13 +16,13 @@ public class BuildingJobAuraBonus implements IEffect<BuildingCard> {
     }
 
     /**
-     * A fine partita accredita aura in base ai personaggi del mestiere configurato:
-     * o sommandone l'aura base ({@code useCardBaseAura}), oppure moltiplicandone il
-     * numero per il moltiplicatore dell'edificio.
+     * At the end of the game, credits aura based on characters of the configured job:
+     * either by summing their base aura ({@code useCardBaseAura}), or by multiplying their
+     * number by the building's multiplier.
      *
-     * @param p    il giocatore proprietario dell'edificio
-     * @param g    la partita corrente
-     * @param card l'edificio che possiede l'effetto
+     * @param p    the player who owns the building
+     * @param g    the current game
+     * @param card the building that possesses the effect
      */
     @Override
     public void applyOnEndGame(Player p, Game g, BuildingCard card) {

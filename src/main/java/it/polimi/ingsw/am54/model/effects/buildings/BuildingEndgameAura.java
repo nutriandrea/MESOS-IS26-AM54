@@ -3,7 +3,7 @@ import com.google.gson.JsonObject;
 import it.polimi.ingsw.am54.model.*;
 
 /**
- * Effetto edificio: accredita un bonus fisso di aura al calcolo di fine partita.
+ * Building effect: credits a fixed aura bonus during the endgame scoring.
  */
 public class BuildingEndgameAura implements IEffect<BuildingCard> {
     private final int auraBonus;
@@ -13,11 +13,11 @@ public class BuildingEndgameAura implements IEffect<BuildingCard> {
     }
 
     /**
-     * Aggiunge il bonus di aura configurato al punteggio del giocatore.
+     * Adds the configured aura bonus to the player's score.
      *
-     * @param p    il giocatore proprietario dell'edificio
-     * @param g    la partita corrente
-     * @param card l'edificio che possiede l'effetto
+     * @param p    the player who owns the building
+     * @param g    the current game
+     * @param card the building that possesses the effect
      */
     @Override
     public void applyOnEndGame(Player p, Game g, BuildingCard card) {

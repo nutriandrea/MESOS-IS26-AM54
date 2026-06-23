@@ -3,20 +3,20 @@ package it.polimi.ingsw.am54.model.effects.events;
 import it.polimi.ingsw.am54.model.*;
 
 /**
- * Effetto dell'evento Caccia: premia ogni giocatore in base al numero di cacciatori
- * nella sua tribù, tenendo conto degli eventuali modificatori temporanei impostati
- * dagli edifici.
+ * Hunting event effect: rewards each player based on the number of hunters
+ * in their tribe, taking into account any temporary modifiers set
+ * by buildings.
  */
 public class EventHunter implements IEffect<EventCard> {
 
     /**
-     * Per ogni giocatore accredita cibo e aura proporzionali al numero di cacciatori
-     * (più i bonus temporanei degli edifici), poi azzera i modificatori temporanei.
+     * For each player credits food and aura proportional to the number of hunters
+     * (plus temporary building bonuses), then resets temporary modifiers.
      *
-     * @param p            non usato (l'effetto itera su tutti i giocatori)
-     * @param g            la partita corrente
-     * @param ec           la carta evento proprietaria dell'effetto
-     * @param currentEvent l'evento in risoluzione
+     * @param p            not used (the effect iterates over all players)
+     * @param g            the current game
+     * @param ec           the event card owning the effect
+     * @param currentEvent the event being resolved
      */
     @Override
     public void applyOnEvent(Player p, Game g, EventCard ec, EventCard currentEvent) {
@@ -24,14 +24,14 @@ public class EventHunter implements IEffect<EventCard> {
             long cacciatori = pl.getMyTribe().stream()
                     .filter(c -> c.getJobType() == JobType.HUNTER).count();
 
-            // Legge i modificatori temporanei impostati dagli edifici (se ci sono)
+            // Reads temporary modifiers set by buildings (if any)
             int buildingAura = pl.getEventCostAura();
             int buildingFood = pl.getEventCostFood();
 
             pl.modifyFood((int) cacciatori * ec.getBaseFood() + buildingFood);
             pl.modifyAuraPoints((int) cacciatori * ec.getAuraPerCharacter() + buildingAura);
 
-            // Resetta i modificatori a fine evento
+            // Resets modifiers at the end of the event
             pl.resetEventAttributes();
         });
     }

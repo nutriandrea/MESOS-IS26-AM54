@@ -11,37 +11,37 @@ import java.util.Map;
 
 /**
  * ============================================================================
- * ClientConnection — Astrazione del canale di comunicazione server -> client
+ * ClientConnection — Abstraction of the server -> client communication channel
  * ============================================================================
  *
- * RUOLO:
- * Interfaccia che astrae il trasporto di rete (Socket TCP o RMI).
- * Il Controller e la VirtualView usano questa interfaccia senza sapere
- * se stanno comunicando via Socket o RMI.
+ * ROLE:
+ * Interface that abstracts the network transport (TCP Socket or RMI).
+ * The Controller and the VirtualView use this interface without knowing
+ * whether they are communicating via Socket or RMI.
  *
- * IMPLEMENTAZIONI:
- * - SocketClientHandler: usa ObjectOutputStream per inviare Update
- * - RMIClientHandler: usa clientStub.receiveUpdate() per inviare Update
+ * IMPLEMENTATIONS:
+ * - SocketClientHandler: uses ObjectOutputStream to send Updates
+ * - RMIClientHandler: uses clientStub.receiveUpdate() to send Updates
  *
- * METODI:
- * - sendUpdate(Update): invia un messaggio di update al client
- * - disconnect(): chiude la connessione e pulisce le risorse
- * - startHeartbeat(): avvia il sistema di ping/pong (default = no-op)
+ * METHODS:
+ * - sendUpdate(Update): sends an update message to the client
+ * - disconnect(): closes the connection and cleans up resources
+ * - startHeartbeat(): starts the ping/pong system (default = no-op)
  *
- * NOTA SU startHeartbeat():
- * Il metodo ha un'implementazione di default vuota per retrocompatibilita'.
- * SocketClientHandler e RMIClientHandler lo sovrascrivono per avviare
- * il ping scheduler. Se una futura implementazione non ha bisogno di
- * heartbeat, puo' semplicemente non sovrascriverlo.
+ * NOTE ON startHeartbeat():
+ * The method has an empty default implementation for backward compatibility.
+ * SocketClientHandler and RMIClientHandler override it to start
+ * the ping scheduler. If a future implementation does not need
+ * a heartbeat, it can simply not override it.
  * ============================================================================
  */
 public interface ClientConnection {
 
     /**
-     * Metodi per mandare al client gli update
+     * Methods to send updates to the client
      */
 
-    // metodi specifici (non più il generico sendUpdate(Update))
+    // specific methods (no longer the generic sendUpdate(Update))
     void notifyPlayerJoined(String nickname);
     void notifyTotemColor(String nickanme, TotemColors color);
     void notifyTotemPlaced(String nickname, int position);
@@ -53,48 +53,48 @@ public interface ClientConnection {
                              List<String> buildUp, List<String> buildLow);
     void notifyTurnChanged(String nickname);
     void notifyStateChanged( String stateName,
-                            int currentEra, int currentRound,
-                            Map<String, StateChangedUpdate.PlayerSnapshot> playersStats,
-                            List<String> turnOrderTrack,
-                            Map<Integer, String> offeringTrack,
-                            List<String> charUpper, List<String> charLower,
-                            List<String> eventUpper, List<String> eventLower,
-                            List<String> buildUpper, List<String> buildLower);
+                             int currentEra, int currentRound,
+                             Map<String, StateChangedUpdate.PlayerSnapshot> playersStats,
+                             List<String> turnOrderTrack,
+                             Map<Integer, String> offeringTrack,
+                             List<String> charUpper, List<String> charLower,
+                             List<String> eventUpper, List<String> eventLower,
+                             List<String> buildUpper, List<String> buildLower);
     void notifyEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers);
     void notifyError(String message);
     void sendPing();
     void sendLeaderboardUpdate(LeaderboardUpdate update);
 
     /**
-     * Metodi per gestire giocatori che si sconnettono e riconettono
+     * Methods to handle players disconnecting and reconnecting
      */
     void notifyPlayerDisconnected(String nickname);
     void notifyPlayerReconnected(String nickname);
 
     /**
-     * Notifica al client che il gioco e' stato sospeso (1 solo giocatore attivo).
-     * Implementazione di default vuota per retrocompatibilita'.
+     * Notifies the client that the game has been suspended (only 1 active player).
+     * Empty default implementation for backward compatibility.
      */
     default void notifyGameSuspended() {}
 
     /**
-     * Notifica al client che il gioco e' stato ripreso.
-     * Implementazione di default vuota per retrocompatibilita'.
+     * Notifies the client that the game has resumed.
+     * Empty default implementation for backward compatibility.
      */
     default void notifyGameResumed() {}
 
     /**
-     * Chiude la connessione e pulisce le risorse.
-     * Chiama anche controller.removeClient() per deregistrare il giocatore.
+     * Closes the connection and cleans up resources.
+     * Also calls controller.removeClient() to deregister the player.
      */
     void disconnect();
 
     /**
-     * Avvia il sistema di heartbeat (ping/pong) per questa connessione.
-     * Implementazione di default vuota per retrocompatibilita'.
+     * Starts the heartbeat system (ping/pong) for this connection.
+     * Empty default implementation for backward compatibility.
      *
-     * SocketClientHandler e RMIClientHandler sovrascrivono questo metodo
-     * per avviare un ScheduledExecutorService che invia ping ogni 5 secondi.
+     * SocketClientHandler and RMIClientHandler override this method
+     * to start a ScheduledExecutorService that sends pings every 5 seconds.
      */
     default void startHeartbeat() {}
 }

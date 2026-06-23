@@ -4,7 +4,7 @@ import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.network.server.ClientConnection;
 
 /**
- * Richiesta inviata dal Client per terminare volontariamente il turno.
+ * Request sent by the Client to voluntarily end the turn.
  */
 public final class EndTurnRequest implements Request {
 

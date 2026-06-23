@@ -18,6 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * Manager responsible for updating and rendering the player's personal dashboard
+ * and the opponents' views in the GUI.
+ */
 public class DashboardManager {
 
     private final HBox handCardsContainer;
@@ -110,21 +114,21 @@ public class DashboardManager {
             cardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             cardsScroll.getStyleClass().add("opponent-scroll-pane");
 
-            // Forza altezze rigide per non far vibrare la VBox
+            // Force rigid heights to prevent the VBox from jittering
             cardsScroll.setMinHeight(150);
             cardsScroll.setMaxHeight(150);
-            cardsScroll.setVmax(0); // Nessun margine per scrollare giù!
+            cardsScroll.setVmax(0); // No margin for downward scrolling!
 
             HBox cardsBox = new HBox(10);
             cardsBox.setAlignment(Pos.CENTER_LEFT);
             cardsBox.setMinHeight(140);
 
-            // Traduciamo la rotellina del mouse: Verticale diventa Orizzontale
+            // Translate mouse wheel scrolling: Vertical becomes Horizontal
             cardsScroll.addEventFilter(ScrollEvent.SCROLL, event -> {
                 if (event.getDeltaY() != 0) {
                     double speed = 2.5;
                     cardsScroll.setHvalue(cardsScroll.getHvalue() - (event.getDeltaY() * speed) / cardsBox.getWidth());
-                    event.consume(); // Cancella il movimento verticale
+                    event.consume(); // Cancel the vertical movement
                 }
             });
             // ----------------------------------------------------------------------
@@ -159,7 +163,7 @@ public class DashboardManager {
             int w2 = getSortWeight(c2);
             if (w1 != w2) return Integer.compare(w1, w2);
 
-            // NOVITÀ: Se le carte sono Inventori (peso 6), le raggruppiamo per Livello/Icona
+            // FEATURE: If the cards are Inventors (weight 6), group them by Level/Icon
             if (w1 == 6) {
                 int lvl1 = getCardLevel(c1);
                 int lvl2 = getCardLevel(c2);
@@ -176,7 +180,7 @@ public class DashboardManager {
         return allCards;
     }
 
-    /** Ordine di visualizzazione delle carte nella mano (strategy map, non dispatch su stringa). */
+    /** Display order of cards in the hand (strategy map, not string dispatch). */
     private static final Map<String, Integer> TYPE_WEIGHTS = Map.of(
             "HUNTER", 1,
             "FARMER", 2,
@@ -194,7 +198,7 @@ public class DashboardManager {
 
     private int getSortWeight(String cardStrWithType) {
         String[] parts = cardStrWithType.split("\\|");
-        String category = parts[parts.length - 1]; // "building" o "character" (suffisso aggiunto da sortPlayerCards)
+        String category = parts[parts.length - 1]; // "building" or "character" (suffix added by sortPlayerCards)
         int era = getEra(cardStrWithType);
 
         if ("building".equals(category)) return 100 + era;
@@ -222,7 +226,7 @@ public class DashboardManager {
         }
 
         String[] split = cardStrWithType.split("\\|");
-        String category = split[split.length - 1]; // "building" o "character" (suffisso)
+        String category = split[split.length - 1]; // "building" or "character" (suffix)
 
         String imageId = split[0];
         String eraStr = split.length > 1 ? split[1] : "1";

@@ -4,7 +4,7 @@ import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.network.server.ClientConnection;
 
 /**
- * JoinGameRequest — Primo contatto del client con il server
+ * JoinGameRequest — First contact of the client with the server
  */
 public final class JoinGameRequest implements Request {
 

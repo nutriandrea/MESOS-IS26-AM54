@@ -1,6 +1,6 @@
 /**
- * Effetti degli Eventi globali (Caccia, Sostentamento, Pitture Rupestri, Rituale
- * Sciamanico). Vengono risolti su tutti i giocatori durante la fase di evento,
- * tenendo conto degli eventuali modificatori temporanei impostati dagli edifici.
+ * Global Event Effects (Hunting, Sustenance, Cave Paintings, Shamanic
+ * Ritual). They are resolved on all players during the event phase,
+ * taking into account any temporary modifiers set by buildings.
  */
 package it.polimi.ingsw.am54.model.effects.events;

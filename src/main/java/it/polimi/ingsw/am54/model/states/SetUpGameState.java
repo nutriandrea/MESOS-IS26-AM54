@@ -5,15 +5,15 @@ import it.polimi.ingsw.am54.model.GameState;
 import it.polimi.ingsw.am54.model.Player;
 import it.polimi.ingsw.am54.model.TotemColors;
 
-//Stato di setup: i giocatori si uniscono, scelgono il colore e avviano la partita
+// Setup state: players join, choose color and start the game
 public class SetUpGameState extends GameState {
     /**
-     * Aggiunge un nuovo giocatore alla lobby, verificando che la stanza non sia piena
-     * (max 5) e che il nickname non sia già in uso.
+     * Adds a new player to the lobby, verifying that the room is not full
+     * (max 5) and that the nickname is not already in use.
      *
-     * @param game     la partita corrente
-     * @param nickname il nickname richiesto dal nuovo giocatore
-     * @throws Exception se la stanza è piena o il nickname è duplicato
+     * @param game     the current game
+     * @param nickname the nickname requested by the new player
+     * @throws Exception if the room is full or the nickname is duplicated
      */
     @Override
     public void joinGame(Game game, String nickname) throws Exception {
@@ -34,13 +34,13 @@ public class SetUpGameState extends GameState {
     }
 
     /**
-     * Assegna il colore del totem a un giocatore, validando che il colore esista e
-     * non sia già stato scelto da un altro giocatore.
+     * Assigns the totem color to a player, validating that the color exists and
+     * has not already been chosen by another player.
      *
-     * @param game     la partita corrente
-     * @param nickname il giocatore che sceglie
-     * @param color    il nome del colore desiderato
-     * @throws Exception se il colore non è valido o è già occupato
+     * @param game     the current game
+     * @param nickname the choosing player
+     * @param color    the desired color name
+     * @throws Exception if the color is invalid or already occupied
      */
     @Override
     public void chooseTotemColor(Game game, String nickname, String color) throws Exception {
@@ -64,12 +64,12 @@ public class SetUpGameState extends GameState {
     }
 
     /**
-     * Avvia la partita: richiede almeno 2 giocatori e che tutti abbiano scelto il
-     * colore, poi delega a {@link Game#setupGame()} la costruzione di mazzi e plancia
-     * e infine transita allo {@link StartTurnState}.
+     * Starts the game: requires at least 2 players and that everyone has chosen a
+     * color, then delegates to {@link Game#setupGame()} the construction of decks and board
+     * and finally transitions to the {@link StartTurnState}.
      *
-     * @param game la partita da avviare
-     * @throws Exception se i giocatori sono meno di 2 o qualcuno non ha il colore
+     * @param game the game to start
+     * @throws Exception if players are less than 2 or someone hasn't chosen a color
      */
     @Override
     public void setupGame(Game game) throws Exception {
@@ -84,10 +84,10 @@ public class SetUpGameState extends GameState {
         }
 
 
-        // costruzione fisica del gioco delegata a Game
+        // physical construction of the game delegated to Game
         game.setupGame();
 
-        // Cambio di stato
+        // State change
         game.setState(new StartTurnState());
     }
 

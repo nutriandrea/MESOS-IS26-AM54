@@ -20,6 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controller for the leaderboard scene. Manages the display of the match's final
+ * standings (podium and detailed table) and fetches global statistics from the server.
+ */
 public class LeaderboardController {
 
     @FXML private StackPane rootPane;
@@ -44,8 +48,8 @@ public class LeaderboardController {
     }
 
     /**
-     * Inizializza la schermata di fine partita: imposta lo scaling responsivo, registra
-     * il callback di aggiornamento dal modello e costruisce podio e classifica generale.
+     * Initializes the end game screen: sets up responsive scaling, registers the
+     * update callback from the model, and builds the podium and general leaderboard.
      */
     @FXML
     public void initialize() {
@@ -89,9 +93,9 @@ public class LeaderboardController {
     }
 
     /**
-     * Costruisce la classifica della partita appena conclusa: raccoglie le statistiche di
-     * ogni giocatore (aura finale, cibo, magia, carte), le ordina per aura (cibo come
-     * spareggio) e popola il podio e la tabella dei risultati. Si esegue una sola volta.
+     * Builds the leaderboard for the recently finished match: collects each player's
+     * statistics (final aura, food, magic, cards), sorts them by aura (food as tiebreaker),
+     * and populates the podium and results table. It is executed only once.
      */
     private void buildLeaderboard() {
         ClientModel model = Client.getInstance().getModel();
@@ -164,7 +168,7 @@ public class LeaderboardController {
         if (p.color != null) {
             String cName = p.color.name().toLowerCase();
             try {
-                // Utilizza direttamente l'immagine frontale
+                // Directly use the frontal image
                 InputStream is = getClass().getResourceAsStream("/images/totem_front_" + cName + ".png");
                 if (is != null) {
                     totemView.setImage(new Image(is));
@@ -190,7 +194,7 @@ public class LeaderboardController {
         if (p.color != null) {
             try {
                 String cName = p.color.name().toLowerCase();
-                // Utilizza direttamente l'immagine frontale anche per la tabella
+                // Directly use the frontal image for the table as well
                 InputStream is = getClass().getResourceAsStream("/images/totem_front_" + cName + ".png");
                 if (is != null) iconView.setImage(new Image(is));
             } catch (Exception e) {}
@@ -223,8 +227,8 @@ public class LeaderboardController {
     }
 
     /**
-     * Apre l'overlay della classifica globale e richiede al server i dati relativi alle
-     * partite con lo stesso numero di giocatori di quella appena conclusa.
+     * Opens the global leaderboard overlay and requests the server for data regarding
+     * matches with the same number of players as the one just finished.
      */
     @FXML
     private void handleGlobalLeaderboardButton() {
@@ -256,8 +260,8 @@ public class LeaderboardController {
     }
 
     /**
-     * Popola l'overlay della classifica globale con le voci ricevute dal server,
-     * ordinate per punteggio decrescente. Mostra un messaggio se non ci sono partite archiviate.
+     * Populates the global leaderboard overlay with the entries received from the server,
+     * ordered by descending score. Shows a message if there are no archived matches.
      */
     private void updateGlobalLeaderboardUI() {
         if (leaderboardEntriesContainer == null || leaderboardOverlay == null || !leaderboardOverlay.isVisible()) return;
@@ -314,8 +318,8 @@ public class LeaderboardController {
     }
 
     /**
-     * Torna al menu principale: chiude la connessione al server, reinizializza il client
-     * e ricarica la schermata di login.
+     * Returns to the main menu: closes the connection to the server, reinitializes
+     * the client, and reloads the login screen.
      */
     @FXML
     private void handleReturnToMenu() {

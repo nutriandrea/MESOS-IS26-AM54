@@ -1,13 +1,13 @@
 /**
- * Lato server della rete. {@link it.polimi.ingsw.am54.network.server.Server} avvia i due
- * trasporti (Socket TCP su 12345 e RMI su 1099); gli handler per-client
+ * Server side of the network. {@link it.polimi.ingsw.am54.network.server.Server} starts the two
+ * transports (TCP Socket on 12345 and RMI on 1099); the per-client handlers
  * ({@link it.polimi.ingsw.am54.network.server.SocketClientHandler},
- * {@link it.polimi.ingsw.am54.network.server.RMIClientHandler}) implementano l'astrazione
+ * {@link it.polimi.ingsw.am54.network.server.RMIClientHandler}) implement the abstraction
  * {@link it.polimi.ingsw.am54.network.server.ClientConnection}.
  *
- * <p>{@link it.polimi.ingsw.am54.network.server.VirtualView} osserva il modello e traduce
- * ogni evento in un messaggio di rete verso il proprio client;
- * {@link it.polimi.ingsw.am54.network.server.PersistenceManager} salva/ripristina la
- * partita su file JSON per il recupero da crash.</p>
+ * <p>{@link it.polimi.ingsw.am54.network.server.VirtualView} observes the model and translates
+ * each event into a network message to its own client;
+ * {@link it.polimi.ingsw.am54.network.server.PersistenceManager} saves/restores the
+ * game on JSON files for crash recovery.</p>
  */
 package it.polimi.ingsw.am54.network.server;

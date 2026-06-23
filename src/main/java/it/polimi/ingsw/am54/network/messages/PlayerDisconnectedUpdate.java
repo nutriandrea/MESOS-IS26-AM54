@@ -3,7 +3,7 @@ package it.polimi.ingsw.am54.network.messages;
 import it.polimi.ingsw.am54.network.client.ClientModel;
 
 /**
- * Notifica broadcast a tutti i client che un giocatore e' stato marcato come disconnesso.
+ * Broadcast notification to all clients that a player has been marked as disconnected.
  * SERVER -> CLIENT
  */
 public final class PlayerDisconnectedUpdate implements Update {

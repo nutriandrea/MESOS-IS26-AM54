@@ -8,22 +8,22 @@ import java.rmi.registry.Registry;
 import java.util.Scanner;
 
 /**
- * Avvio del client in modalità testuale (CLI). Chiede IP del server, protocollo
- * (Socket o RMI) e nickname, stabilisce la connessione, valida l'ingresso e infine
- * avvia l'interfaccia {@code CLIApp}.
+ * Starts the client in textual mode (CLI). Asks for server IP, protocol
+ * (Socket or RMI) and nickname, establishes the connection, validates the entry
+ * and finally starts the {@code CLIApp} interface.
  */
 public class MainClient {
     /**
-     * Punto d'ingresso della modalità CLI.
+     * Entry point for the CLI mode.
      *
-     * @param args argomenti da riga di comando (non utilizzati oltre l'attivazione della CLI)
+     * @param args command line arguments (not used beyond CLI activation)
      */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("=== BENVENUTO IN MESOS (Modalità CLI) ===");
 
-        // 1. CHIEDIAMO PRIMA IP E PROTOCOLLO
+        // 1. WE ASK FOR IP AND PROTOCOL FIRST
         System.out.print("\nInserisci IP Server [IP o localhost]: ");
         String ip = scanner.nextLine();
         if (ip.trim().isEmpty()) {
@@ -38,14 +38,14 @@ public class MainClient {
         boolean isSocket = !"2".equals(protocolChoice.trim());
 
         try {
-            // 2. USIAMO IL SINGLETON (Fondamentale affinché CLIApp e Connection usino gli stessi dati)
+            // 2. WE USE THE SINGLETON (Fundamental so that CLIApp and Connection use the same data)
             ClientModel model = Client.getInstance().getModel();
             ServerConnection connection = null;
 
-            // 3. STABILIAMO LA CONNESSIONE
+            // 3. WE ESTABLISH THE CONNECTION
             if (!isSocket) {
                 System.out.println("\nConnessione via RMI in corso...");
-                // Fix RMI: Espone correttamente l'IP del client al Server per i callback
+                // RMI Fix: Correctly exposes the client's IP to the Server for callbacks
                 try (java.net.DatagramSocket s = new java.net.DatagramSocket()) {
                     s.connect(java.net.InetAddress.getByName(ip), 1099);
                     System.setProperty("java.rmi.server.hostname", s.getLocalAddress().getHostAddress());
@@ -59,11 +59,11 @@ public class MainClient {
                 connection = new SocketServerConnection(ip, 12345, model);
             }
 
-            // Salviamo la connessione nel Client globale per eventuali riconnessioni magiche
+            // We save the connection in the global Client for any magical reconnections
             Client.getInstance().setConnection(connection);
             Client.getInstance().setConnectionInfo(ip, isSocket);
 
-            // 4. CICLO DI VALIDAZIONE DEL NICKNAME
+            // 4. NICKNAME VALIDATION LOOP
             boolean nicknameAccepted = false;
             String nickname = "";
 
@@ -76,43 +76,43 @@ public class MainClient {
                     continue;
                 }
 
-                // Inviamo la richiesta
+                // We send the request
                 Client.getInstance().setNickname(nickname);
                 connection.joinGame(nickname);
 
                 System.out.print("Verifica in corso sul Server...");
 
-                // Aspettiamo la risposta (max 2 secondi)
+                // We wait for the response (max 2 seconds)
                 for (int i = 0; i < 20; i++) {
                     try { Thread.sleep(100); } catch (InterruptedException ignored) {}
 
-                    // CASO A: Il server ci ha rimbalzato
+                    // CASE A: The server rejected us
                     if (model.getLastErrorMessage() != null) {
                         System.out.println("\n❌ Errore: " + model.getLastErrorMessage());
-                        model.clearError(); // Puliamo l'errore
-                        break; // Usciamo dal for per ricominciare il while!
+                        model.clearError(); // We clear the error
+                        break; // We exit the for to restart the while loop!
                     }
 
-                    // CASO B: Il server ci ha accettato (il nostro nome è nella lista)
+                    // CASE B: The server accepted us (our name is in the list)
                     if (model.getPlayers().contains(nickname)) {
                         System.out.println("\n✅ Entrato con successo!");
                         nicknameAccepted = true;
-                        break; // Usciamo dal for e il while terminerà
+                        break; // We exit the for and the while loop will end
                     }
                 }
             }
 
-            // 5. NOME ACCETTATO: AVVIAMO LA CLI E IL GIOCO
+            // 5. NAME ACCEPTED: WE START THE CLI AND THE GAME
             VirtualServer virtualServer = new VirtualServer(connection, nickname);
             CLIApp cli = new CLIApp(virtualServer, model, nickname, scanner);
 
-            // Per sicurezza, forziamo il primissimo render per mostrare la Lobby!
+            // For safety, we force the very first render to show the Lobby!
             cli.render();
 
         } catch (Exception e) {
             System.err.println("\n❌ Errore critico: Impossibile raggiungere il server a " + ip);
             System.err.println("Assicurati che il Server sia avviato e l'IP sia corretto.");
-            // e.printStackTrace(); // Decommenta se ti serve debuggare
+            // e.printStackTrace(); // Uncomment if you need to debug
         }
     }
 }

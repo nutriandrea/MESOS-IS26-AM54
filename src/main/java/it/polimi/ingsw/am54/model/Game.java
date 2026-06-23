@@ -37,11 +37,11 @@ public class Game implements IGame {
     }
 
     /**
-     * Fa entrare un giocatore: delega allo stato corrente la validazione/aggiunta e
-     * notifica gli observer del nuovo ingresso.
+     * Makes a player join: delegates validation/addition to the current state and
+     * notifies observers of the new entry.
      *
-     * @param nickname il nickname del giocatore
-     * @throws Exception se lo stato corrente non consente il join (es. nickname duplicato)
+     * @param nickname the player's nickname
+     * @throws Exception if the current state does not allow joining (e.g., duplicated nickname)
      */
     @Override
     public void joinGame(String nickname) throws Exception {
@@ -50,12 +50,12 @@ public class Game implements IGame {
     }
 
     /**
-     * Assegna il colore del totem a un giocatore tramite lo stato corrente e notifica
-     * gli observer della scelta.
+     * Assigns the totem color to a player via the current state and notifies
+     * the observers of the choice.
      *
-     * @param nickname il giocatore che sceglie
-     * @param color    il nome del colore
-     * @throws Exception se il colore non è valido o già occupato
+     * @param nickname the choosing player
+     * @param color    the color name
+     * @throws Exception if the color is invalid or already occupied
      */
     @Override
     public void chooseTotemColor(String nickname, String color) throws Exception {
@@ -64,11 +64,11 @@ public class Game implements IGame {
     }
 
     /**
-     * Piazza il totem di un giocatore su una tessera offerta, delegando allo stato corrente.
+     * Places a player's totem on an offering tile, delegating to the current state.
      *
-     * @param nickname      il giocatore che piazza il totem
-     * @param offerPosition l'indice della tessera offerta
-     * @throws Exception se l'azione non è valida nello stato corrente
+     * @param nickname      the player placing the totem
+     * @param offerPosition the offering tile index
+     * @throws Exception if the action is invalid in the current state
      */
     @Override
     public void placeTotem(String nickname, int offerPosition) throws Exception {
@@ -76,12 +76,12 @@ public class Game implements IGame {
     }
 
     /**
-     * Esegue la pesca di una carta da parte di un giocatore, delegando allo stato corrente.
+     * Executes a card pick by a player, delegating to the current state.
      *
-     * @param nickname  il giocatore che pesca
-     * @param row       la fila ("upper" o "lower")
-     * @param cardIndex l'indice della carta
-     * @throws Exception se l'azione non è valida nello stato corrente
+     * @param nickname  the picking player
+     * @param row       the row ("upper" or "lower")
+     * @param cardIndex the card index
+     * @throws Exception if the action is invalid in the current state
      */
     @Override
     public void pickCard(String nickname, String row, int cardIndex) throws Exception {
@@ -303,9 +303,9 @@ public class Game implements IGame {
     public void advanceRound() { this.roundCount++; }
 
     /**
-     * Rifornisce la fila superiore Tribù (personaggi + eventi) pescando dal mazzo fino
-     * a raggiungere la dimensione prevista ({@code numGiocatori + 4}), o finché il
-     * mazzo non si esaurisce.
+     * Refills the upper Tribe row (characters + events) drawing from the deck until
+     * it reaches the expected size ({@code numPlayers + 4}), or until the
+     * deck runs out.
      */
     public void refillUpperTribeRow() {
         int targetSize = players.size() + 4;
@@ -317,8 +317,8 @@ public class Game implements IGame {
     }
 
     /**
-     * Rifornisce la fila superiore Edifici pescando dal mazzo la quantità prevista per
-     * l'Era corrente (da {@code EraCounts.json}).
+     * Refills the upper Buildings row drawing from the deck the expected quantity for
+     * the current Era (from {@code EraCounts.json}).
      */
     public void refillUpperBuildings() {
         int cardsToDraw = 0;
@@ -343,11 +343,11 @@ public class Game implements IGame {
     }
 
     /**
-     * Cerca un giocatore per nickname (confronto case-insensitive).
+     * Searches for a player by nickname (case-insensitive comparison).
      *
-     * @param nickname il nickname da cercare
-     * @return il giocatore corrispondente
-     * @throws Exception se nessun giocatore ha quel nickname
+     * @param nickname the nickname to search for
+     * @return the corresponding player
+     * @throws Exception if no player has that nickname
      */
     public Player getPlayerByNickname(String nickname) throws Exception {
         return this.players.stream()
@@ -397,10 +397,10 @@ public class Game implements IGame {
     }
 
     /**
-     * Termina il turno di un giocatore, delegando allo stato corrente.
+     * Ends a player's turn, delegating to the current state.
      *
-     * @param nickname il giocatore che termina il turno
-     * @throws Exception se l'azione non è valida nello stato corrente
+     * @param nickname the player ending the turn
+     * @throws Exception if the action is invalid in the current state
      */
     @Override
     public void endTurn(String nickname) throws Exception {
@@ -459,10 +459,10 @@ public class Game implements IGame {
     // --- DYNAMIC TURN ORDER MANAGEMENT ---
 
     /**
-     * Individua il prossimo giocatore che deve pescare: il primo occupante del
-     * tracciato offerte che non è ancora rientrato nell'ordine di turno.
+     * Identifies the next player who must pick: the first occupant of the
+     * offering track who has not yet returned to the turn order.
      *
-     * @return il picker corrente, o {@code null} se la pesca è completa
+     * @return the current picker, or {@code null} if the picking is complete
      */
     public Player getCurrentPicker() {
         List<OfferingTile> tiles = board.getOfferingTrack();
@@ -537,10 +537,10 @@ public class Game implements IGame {
     }
 
     /**
-     * Indica se la fase di pesca è conclusa, cioè se nessun occupante del tracciato
-     * offerte deve ancora rientrare nell'ordine di turno (tutti hanno pescato).
+     * Indicates if the picking phase is complete, that is, if no occupant of the offering
+     * track has yet to return to the turn order (everyone has picked).
      *
-     * @return true se la pesca del round è completa
+     * @return true if the round's picking is complete
      */
     public boolean isPickingComplete() {
         for (OfferingTile tile : board.getOfferingTrack()) {
@@ -557,10 +557,10 @@ public class Game implements IGame {
     public boolean isTribeDeckEmpty() { return deckTribu.isEmpty(); }
 
     /**
-     * Indica se la prossima carta in cima al mazzo Tribù appartiene a un'Era superiore
-     * a quella corrente: segnala che sta per iniziare una nuova Era.
+     * Indicates if the next card on top of the Tribe deck belongs to a higher Era
+     * than the current one: signals that a new Era is about to begin.
      *
-     * @return true se la prossima carta innesca il passaggio di Era
+     * @return true if the next card triggers the Era transition
      */
     public boolean isEraTransition() {
         TribeCard nextCard = deckTribu.peek();
@@ -569,11 +569,11 @@ public class Game implements IGame {
     }
 
     /**
-     * Bonus Inventori: numero di inventori moltiplicato per il numero di livelli
-     * (invenzioni) distinti posseduti.
+     * Inventors Bonus: number of inventors multiplied by the number of distinct
+     * levels (inventions) owned.
      *
-     * @param p il giocatore
-     * @return l'aura bonus dagli inventori
+     * @param p the player
+     * @return the bonus aura from inventors
      */
     public int getPlayerInventorsBonus(Player p) {
         long inventors = p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.INVENTOR).count();
@@ -583,10 +583,10 @@ public class Game implements IGame {
     }
 
     /**
-     * Bonus Artisti: 10 aura per ogni coppia di artisti.
+     * Artists Bonus: 10 aura for each pair of artists.
      *
-     * @param p il giocatore
-     * @return l'aura bonus dagli artisti
+     * @param p the player
+     * @return the bonus aura from artists
      */
     public int getPlayerArtistsBonus(Player p) {
         long artists = p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count();
@@ -594,10 +594,10 @@ public class Game implements IGame {
     }
 
     /**
-     * Bonus Costruttori: somma dell'aura base di tutti i costruttori in tribù.
+     * Constructors Bonus: sum of the base aura of all constructors in the tribe.
      *
-     * @param p il giocatore
-     * @return l'aura bonus dai costruttori
+     * @param p the player
+     * @return the bonus aura from constructors
      */
     public int getPlayerConstructorsBonus(Player p) {
         return p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.CONSTRUCTOR)
@@ -605,21 +605,21 @@ public class Game implements IGame {
     }
 
     /**
-     * Aura base degli Edifici: somma dell'aura finale di tutti gli edifici posseduti.
+     * Buildings base aura: sum of the final aura of all owned buildings.
      *
-     * @param p il giocatore
-     * @return l'aura base dagli edifici
+     * @param p the player
+     * @return the base aura from buildings
      */
     public int getPlayerBuildingsBaseAura(Player p) {
         return p.getBuildings().stream().mapToInt(BuildingCard::getFinalAura).sum();
     }
 
     /**
-     * Calcola il punteggio finale del giocatore: aura corrente più tutti i bonus di
-     * scoring (inventori, artisti, costruttori, aura base degli edifici).
+     * Calculates the player's final score: current aura plus all scoring
+     * bonuses (inventors, artists, constructors, buildings base aura).
      *
-     * @param p il giocatore
-     * @return il punteggio totale
+     * @param p the player
+     * @return the total score
      */
     public int calculatePlayerScore(Player p) {
         return p.getAuraPoints() + getPlayerInventorsBonus(p) + getPlayerArtistsBonus(p) +
@@ -658,9 +658,9 @@ public class Game implements IGame {
     }
 
     /**
-     * Notifica a tutti gli observer la fine della partita con la lista dei vincitori.
+     * Notifies all observers of the end of the game with the list of winners.
      *
-     * @param winners i giocatori vincitori
+     * @param winners the winning players
      */
     public void notifyEndGame(List<Player> winners) {
         for (IGameObserver obs : getSafeObservers()) {

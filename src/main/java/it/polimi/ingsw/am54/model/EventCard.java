@@ -3,9 +3,9 @@ package it.polimi.ingsw.am54.model;
 import java.util.List;
 
 /**
- * Carta Evento: si risolve globalmente su tutti i giocatori durante la fase eventi
- * di fine round. I parametri numerici (cibo base, aura per personaggio, soglie,
- * bonus/malus) sono interpretati dal proprio effetto secondo il tipo di evento.
+ * Event Card: it is resolved globally on all players during the end-of-round events phase.
+ * The numerical parameters (base food, aura per character, thresholds,
+ * bonus/malus) are interpreted by its own effect according to the event type.
  */
 public class EventCard extends TribeCard {
 
@@ -37,11 +37,11 @@ public class EventCard extends TribeCard {
     }
 
     /**
-     * Restituisce il nome della carta evento.
-     * Il nome è generato come "Event-" + era.
-     * Utilizzato dal PersistenceManager per salvare le carte nei mazzi.
+     * Returns the name of the event card.
+     * The name is generated as "Event-" + era.
+     * Used by the PersistenceManager to save the cards in the decks.
      *
-     * @return nome della carta (es. "Event-1", "Event-2")
+     * @return card name (e.g. "Event-1", "Event-2")
      */
     public String getName() {
         return this.name != null ? this.name + " - ERA: " + getEra() : "Event - Era: " + getEra();
@@ -60,29 +60,29 @@ public class EventCard extends TribeCard {
     }
 
     /**
-     * Verifica se l'evento corrisponde a un dato mestiere (usato dagli edifici che
-     * reagiscono solo all'evento del proprio tipo, es. Caccia o Pitture Rupestri).
+     * Verifies if the event matches a given job (used by buildings that
+     * react only to the event of their type, e.g. Hunting or Cave Paintings).
      *
-     * @param jobType il mestiere da confrontare
-     * @return true se il nome dell'evento coincide con il mestiere
+     * @param jobType the job to compare
+     * @return true if the event name matches the job
      */
     public boolean matchesJobType(JobType jobType) {
         return jobType != null && jobType.name().equals(this.name);
     }
 
     /**
-     * Risolve l'evento applicando i suoi effetti su tutta la partita. Gli effetti
-     * iterano internamente su tutti i giocatori, perciò qui il Player è {@code null};
-     * la carta passa sé stessa sia come carta proprietaria sia come evento corrente.
+     * Resolves the event applying its effects on the entire game. The effects
+     * internally iterate over all players, so here the Player is {@code null};
+     * the card passes itself both as the owner card and as the current event.
      *
-     * @param g la partita su cui risolvere l'evento
+     * @param g the game on which to resolve the event
      */
     public void resolveEvent(Game g) {
         for (IEffect<EventCard> effect : effects) {
-            // Chiamiamo il nuovo gancio.
-            // Passiamo 'null' per il Player perché classi come EventHunter o EventShaman
-            // fanno già un ciclo su tutti i giocatori al loro interno!
-            // Passiamo 'this' sia come carta proprietaria dell'effetto, sia come evento corrente.
+            // Call the new hook.
+            // We pass 'null' for the Player because classes like EventHunter or EventShaman
+            // already iterate over all players inside them!
+            // We pass 'this' both as the effect's owning card and as the current event.
             effect.applyOnEvent(null, g, this, this);
         }
     }
@@ -93,14 +93,14 @@ public class EventCard extends TribeCard {
     }
 
     /**
-     * Rivela l'evento inserendolo nella fila Eventi del tabellone.
+     * Reveals the event by inserting it into the Events row of the board.
      *
-     * @param board la plancia di gioco
-     * @param row   la fila di destinazione
+     * @param board the game board
+     * @param row   the target row
      */
     @Override
     public void reveal(Board board, String row) {
-        // La carta dice: "sono un Evento, mettimi nella fila degli Eventi"
+        // The card says: "I am an Event, put me in the Events row"
         board.addEventCard(this, row);
     }
 

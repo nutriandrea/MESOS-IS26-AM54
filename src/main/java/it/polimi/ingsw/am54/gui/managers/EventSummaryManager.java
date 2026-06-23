@@ -13,6 +13,10 @@ import javafx.scene.layout.VBox;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Manager responsible for building and displaying the event summary overlay,
+ * detailing the resource changes for each player after an event resolution.
+ */
 public class EventSummaryManager {
 
     private final VBox eventSummaryContainer;
@@ -53,7 +57,7 @@ public class EventSummaryManager {
                 lblName.setPrefWidth(140);
                 lblName.getStyleClass().add("event-player-name");
 
-                // Prima Colonna: Situazione Iniziale
+                // First Column: Initial Status
                 Label lblActivation = new Label(String.format("Inizio: 🍖%d  ✨%d  🔮%d",
                         data.oldFood, data.oldAura, data.oldMagic));
                 lblActivation.setPrefWidth(220);
@@ -63,7 +67,7 @@ public class EventSummaryManager {
                 String auraSign = data.diffAura >= 0 ? "+" : "";
                 String magicSign = data.diffMagic >= 0 ? "+" : "";
 
-                // Seconda Colonna: Variazione delle Risorse
+                // Second Column: Resource Delta
                 Label lblDiff = new Label(String.format("Variazione: 🍖%s%d  ✨%s%d  🔮%s%d",
                         foodSign, data.diffFood, auraSign, data.diffAura, magicSign, data.diffMagic));
                 lblDiff.setPrefWidth(240);
@@ -76,7 +80,7 @@ public class EventSummaryManager {
                     lblDiff.getStyleClass().add("event-delta-neutral");
                 }
 
-                // Terza Colonna: Situazione Finale Post-Evento
+                // Third Column: Final Post-Event Status
                 Label lblFinal = new Label(String.format("Fine: 🍖%d  ✨%d  🔮%d",
                         data.oldFood + data.diffFood, data.oldAura + data.diffAura, data.oldMagic + data.diffMagic));
                 lblFinal.setPrefWidth(220);

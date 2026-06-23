@@ -1,11 +1,11 @@
 /**
- * Controller del server (la "C" di MVC). {@link it.polimi.ingsw.am54.controller.Controller}
- * riceve le richieste dei client, le serializza su un unico monitor e le inoltra al
- * modello {@link it.polimi.ingsw.am54.model.Game}.
+ * Server-side controller (the "C" in MVC). {@link it.polimi.ingsw.am54.controller.Controller}
+ * receives client requests, serializes them using a single monitor, and forwards them to the
+ * {@link it.polimi.ingsw.am54.model.Game} model.
  *
- * <p>Gestisce inoltre il ciclo di vita delle connessioni: join/riconnessione,
- * disconnessioni temporanee, sospensione della partita con un solo giocatore attivo,
- * vittoria per abbandono, persistenza per il recupero da crash e salvataggio dei
- * risultati su database.</p>
+ * <p>It also manages the connection lifecycle: joins/reconnections,
+ * temporary disconnections, game suspension when only one active player remains,
+ * victory by abandonment, persistence for crash recovery, and saving
+ * match results to the database.</p>
  */
 package it.polimi.ingsw.am54.controller;

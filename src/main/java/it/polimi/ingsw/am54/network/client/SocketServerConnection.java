@@ -13,13 +13,13 @@ public class SocketServerConnection implements ServerConnection {
     private ServerHandler serverHandler;
 
     /**
-     * Apre la connessione TCP verso il server: crea il socket, inizializza gli stream di
-     * oggetti e avvia il thread {@link ServerHandler} che ascolta gli update in arrivo.
+     * Opens the TCP connection to the server: creates the socket, initializes the
+     * object streams and starts the {@link ServerHandler} thread listening for incoming updates.
      *
-     * @param host        l'indirizzo del server
-     * @param port        la porta TCP del server
-     * @param clientModel il modello locale da aggiornare con gli update ricevuti
-     * @throws IOException se la connessione o l'apertura degli stream fallisce
+     * @param host        the server address
+     * @param port        the server's TCP port
+     * @param clientModel the local model to update with received updates
+     * @throws IOException if the connection or stream opening fails
      */
     public SocketServerConnection(String host, int port, ClientModel clientModel) throws IOException {
         this.socket = new Socket(host, port);
@@ -33,10 +33,10 @@ public class SocketServerConnection implements ServerConnection {
     }
 
     /**
-     * Serializza e invia una Request al server sullo stream di output; in caso di errore
-     * di I/O chiude la connessione (innescando l'auto-riconnessione).
+     * Serializes and sends a Request to the server on the output stream; in case of I/O error
+     * closes the connection (triggering auto-reconnection).
      *
-     * @param request l'oggetto Request da inviare
+     * @param request the Request object to send
      */
     private void sendObject(Object request) {
         try {
@@ -48,7 +48,7 @@ public class SocketServerConnection implements ServerConnection {
         }
     }
 
-    //Gestiamo tutte le richieste
+    // We handle all requests
     @Override
     public void joinGame(String nickname) {
         sendObject(new JoinGameRequest(nickname));
@@ -87,7 +87,7 @@ public class SocketServerConnection implements ServerConnection {
     @Override
     public void disconnect() {
         connected = false;
-        // Fermiamo prima il thread in ascolto in modo pulito
+        // We stop the listening thread cleanly first
         if (serverHandler != null) {
             serverHandler.stop();
         }

@@ -3,7 +3,7 @@ import com.google.gson.JsonObject;
 import it.polimi.ingsw.am54.model.*;
 
 /**
- * Effetto edificio: all'acquisto fornisce immediatamente aura e/o punti magia.
+ * Building effect: provides aura and/or magic points immediately upon purchase.
  */
 public class BuildingImmediateResource implements IEffect<BuildingCard> {
     private final int auraBonus;
@@ -15,11 +15,11 @@ public class BuildingImmediateResource implements IEffect<BuildingCard> {
     }
 
     /**
-     * Accredita al giocatore l'aura e la magia configurate al momento dell'acquisto.
+     * Credits the configured aura and magic to the player at the time of purchase.
      *
-     * @param p    il giocatore proprietario dell'edificio
-     * @param g    la partita corrente
-     * @param card l'edificio che possiede l'effetto
+     * @param p    the player who owns the building
+     * @param g    the current game
+     * @param card the building that possesses the effect
      */
     @Override
     public void applyOnPurchase(Player p, Game g, BuildingCard card) {

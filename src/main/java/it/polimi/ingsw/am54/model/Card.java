@@ -1,13 +1,12 @@
 package it.polimi.ingsw.am54.model;
 
 /**
- * Classe base di tutte le carte di gioco (Personaggi, Eventi, Edifici).
- * Definisce i comportamenti comuni (era, proprietario, immagine) e i metodi
- * polimorfici che le sottoclassi specializzano: pesca, acquistabilità, rivelazione
- * sul tabellone e serializzazione per il client.
+ * Base class of all game cards (Characters, Events, Buildings).
+ * Defines common behaviors (era, owner, image) and polymorphic
+ * methods that subclasses specialize: picking, affordability, revealing
+ * on the board and serialization for the client.
  */
 public class Card {
-
 
     public Card(int era) {
         this.era = era;
@@ -22,10 +21,10 @@ public class Card {
     }
 
     /**
-     * Imposta l'era della carta.
-     * Utilizzato dal EventCard.getName() per generare il nome della carta.
+     * Sets the card's era.
+     * Used by EventCard.getName() to generate the card's name.
      *
-     * @param era l'era della carta (1-3)
+     * @param era the card's era (1-3)
      */
     public void setEra(int era) {
         this.era = era;
@@ -36,36 +35,36 @@ public class Card {
     }
 
     /**
-     * Esegue la logica di pesca/acquisto della carta da parte di un giocatore.
-     * Implementazione di default non supportata: ogni sottoclasse concreta la
-     * ridefinisce (es. il personaggio entra in tribù, l'edificio scala il cibo).
+     * Executes the drawing/purchasing logic of the card by a player.
+     * Default implementation not supported: each concrete subclass
+     * redefines it (e.g. character enters tribe, building subtracts food).
      *
-     * @param player il giocatore che pesca la carta
-     * @param game   la partita corrente (per applicare effetti e regole)
-     * @throws Exception se il tipo di carta non è pescabile o l'azione non è valida
+     * @param player the player who picks the card
+     * @param game   the current game (to apply effects and rules)
+     * @throws Exception if the card type is not pickable or the action is invalid
      */
     public void pick(Player player, Game game) throws Exception {
         throw new UnsupportedOperationException("Cannot pick this card type");
     }
 
     /**
-     * Indica se il giocatore può permettersi questa carta. Di base sempre vero
-     * (le carte gratuite); le sottoclassi a pagamento (es. {@link BuildingCard})
-     * verificano il cibo disponibile.
+     * Indicates whether the player can afford this card. Basically always true
+     * (free cards); paid subclasses (e.g. {@link BuildingCard})
+     * check available food.
      *
-     * @param player il giocatore che vuole acquistare la carta
-     * @return true se la carta è acquistabile dal giocatore
+     * @param player the player who wants to buy the card
+     * @return true if the card is purchasable by the player
      */
     public boolean canBePurchased(Player player) {
         return true;
     }
 
     /**
-     * Rivela la carta posizionandola nella fila corretta del tabellone.
-     * Ogni sottoclasse sa in quale struttura inserirsi (personaggi, eventi, edifici).
+     * Reveals the card by placing it in the correct row of the board.
+     * Each subclass knows which structure to enter (characters, events, buildings).
      *
-     * @param board la plancia su cui rivelare la carta
-     * @param row   la fila di destinazione ("upper" o "lower")
+     * @param board the board on which to reveal the card
+     * @param row   the target row ("upper" or "lower")
      */
     public void reveal(Board board, String row) {
         throw new UnsupportedOperationException("Cannot reveal this generic card type");
@@ -82,11 +81,11 @@ public class Card {
     }
 
     /**
-     * Restituisce una rappresentazione testuale della carta per il Client.
-     * Ogni sottoclasse produce un formato specifico con i propri campi.
-     * I dati sono separati da '|' per facilitare il parsing lato client.
+     * Returns a textual representation of the card for the Client.
+     * Each subclass produces a specific format with its own fields.
+     * Data is separated by '|' to ease client-side parsing.
      *
-     * @return la stringa serializzata della carta
+     * @return the serialized card string
      */
     public String toClientString() {
         throw new UnsupportedOperationException("Formato client non definito per questa carta");

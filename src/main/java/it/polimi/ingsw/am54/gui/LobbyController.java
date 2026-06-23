@@ -25,6 +25,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 
+/**
+ * Controller for the lobby scene. Handles player readiness, totem color selection,
+ * rules overlay display, and transitioning to the main game board once the host starts the match.
+ */
 public class LobbyController {
 
     @FXML private StackPane lobbyRoot;
@@ -149,26 +153,26 @@ public class LobbyController {
         }));
         dotAnimation.setCycleCount(Animation.INDEFINITE);
 
-        // Ridimensionamento fluido e proporzionale
+        // Smooth and proportional resizing
         lobbyRoot.widthProperty().addListener((obs, oldVal, newVal) -> {
             double currentWidth = newVal.doubleValue();
             double factor = currentWidth / 1920.0;
 
-            // 1. Welcome Label (Titolo principale)
+            // 1. Welcome Label (Main title)
             double targetWelcomeSize = Math.max(18.0, 52.0 * factor);
-            // Inseriamo Font e Colore (da CSS) per evitare il flash Arial/Nero
+            // Apply Font and Color (from CSS) to prevent the Arial/Black flash
             welcomeLabel.setStyle("-fx-font-size: " + targetWelcomeSize + "px; -fx-font-family: 'Herculanum'; -fx-text-fill: white;");
 
-            // 2. Etichetta "Regole del gioco"
+            // 2. "Game rules" label
             double targetLabelSize = Math.max(16.0, 32.0 * factor);
             if (infoLabel != null) {
                 infoLabel.setStyle("-fx-font-size: " + targetLabelSize + "px; -fx-font-family: 'Herculanum'; -fx-text-fill: white;");
             }
 
-            // 3. Testo interno del pulsante informativo "i"
+            // 3. Internal text of the info button "i"
             double targetButtonSize = Math.max(16.0, 28.0 * factor);
             if (infoButton != null) {
-                // Il bottone usa Arial e gold nel tuo CSS!
+                // The button uses Arial and gold in your CSS!
                 infoButton.setStyle("-fx-font-size: " + targetButtonSize + "px; -fx-font-family: 'Arial'; -fx-text-fill: gold;");
             }
         });
@@ -190,10 +194,10 @@ public class LobbyController {
 
         String currentState = model.getCurrentState();
         if (currentState != null && !currentState.equalsIgnoreCase("Lobby")) {
-            // "Sganciamo" l'aggiornamento della lobby per evitare chiamate fantasma
+            // Unhook the lobby update to avoid ghost calls
             model.setOnModelUpdatedCallback(null);
 
-            // Carichiamo la scena di gioco principale!
+            // Load the main game scene!
             GUIApp.loadBoardScene();
             return;
         }
@@ -215,7 +219,7 @@ public class LobbyController {
         boolean isHost = players != null && !players.isEmpty() && players.get(0).equals(myNickname);
         int playerCount = players != null ? players.size() : 0;
 
-        // Verifica che TUTTI i player loggati abbiano inserito un colore
+        // Verify that ALL logged-in players have chosen a color
         boolean everyoneHasChosen = playerColors != null && players != null && playerColors.size() == players.size();
 
         if (!hasChosenTotem) {
@@ -224,7 +228,7 @@ public class LobbyController {
             startButton.setManaged(false);
         } else {
             if (isHost) {
-                // IL PULSANTE APPARE SOLO SE CI SONO ALMENO 2 STRUTTURE E TUTTI HANNO SCELTO
+                // THE BUTTON APPEARS ONLY IF THERE ARE AT LEAST 2 PLAYERS AND EVERYONE HAS CHOSEN
                 if (playerCount > 1 && everyoneHasChosen) {
                     setSubtitleText("Premi Start quando vuoi iniziare la partita!", false);
                     startButton.setVisible(true);

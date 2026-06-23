@@ -4,8 +4,8 @@ import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.network.server.ClientConnection;
 
 /**
- * Richiesta inviata dal Client per piazzare il proprio Totem su un'offerta.
- * Sicura al 100%: il server dedurrà il mittente dal Socket associato.
+ * Request sent by the Client to place its own Totem on an offering.
+ * 100% safe: the server will deduce the sender from the associated Socket.
  */
 public final class PlaceTotemRequest implements Request {
 

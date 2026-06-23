@@ -16,7 +16,7 @@ public class OfferingTile {
         this.cardsFromUpper = cardsFromUpper;
         this.cardsFromLower = cardsFromLower;
         this.foodBonus = foodBonus;
-        this.occupiedBy = null; // default (non inzializzo occupato)
+        this.occupiedBy = null; // default (do not initialize occupied)
         this.remainingUpperPicks = cardsFromUpper;
         this.remainingLowerPicks = cardsFromLower;
     }
@@ -27,20 +27,20 @@ public class OfferingTile {
     }
 
     /**
-     * Restituisce il numero di carte che possono essere prese dalla fila superiore.
-     * Utilizzato dal PersistenceManager per salvare lo stato della tessera.
+     * Returns the number of cards that can be taken from the upper row.
+     * Used by the PersistenceManager to save the state of the tile.
      *
-     * @return numero di carte dalla fila superiore
+     * @return number of cards from the upper row
      */
     public int getCardsFromUpper() {
         return cardsFromUpper;
     }
 
     /**
-     * Restituisce il numero di carte che possono essere prese dalla fila inferiore.
-     * Utilizzato dal PersistenceManager per salvare lo stato della tessera.
+     * Returns the number of cards that can be taken from the lower row.
+     * Used by the PersistenceManager to save the state of the tile.
      *
-     * @return numero di carte dalla fila inferiore
+     * @return number of cards from the lower row
      */
     public int getCardsFromLower() {
         return cardsFromLower;
@@ -59,11 +59,11 @@ public class OfferingTile {
     }
 
     /**
-     * Assegna la tessera a un giocatore (piazzamento del totem) e RIPRISTINA i pick
-     * disponibili al valore pieno. Da non usare nel recupero da crash: in quel caso
-     * serve {@link #restoreOccupant(Player)} per non azzerare i pick già spesi.
+     * Assigns the tile to a player (totem placement) and RESTORES the available
+     * picks to their full value. Not to be used during crash recovery: in that case
+     * {@link #restoreOccupant(Player)} is needed to avoid resetting the already spent picks.
      *
-     * @param p il giocatore che occupa la tessera
+     * @param p the player who occupies the tile
      */
     public void occupy(Player p) {
         this.occupiedBy = p;
@@ -71,7 +71,7 @@ public class OfferingTile {
         this.remainingLowerPicks = this.cardsFromLower;
     }
 
-    //sembra essere bad practice usare il occupy ma con null come riferimento
+    // it seems to be bad practice to use occupy but with null as a reference
     public void freeSlot() {
         this.occupiedBy = null;
     }

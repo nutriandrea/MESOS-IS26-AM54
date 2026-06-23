@@ -1,14 +1,14 @@
 /**
- * Lato client della rete e stato locale. {@link it.polimi.ingsw.am54.network.client.Client}
- * è l'hub singleton che custodisce la connessione attiva e il
- * {@link it.polimi.ingsw.am54.network.client.ClientModel} (copia leggera dello stato di
- * gioco aggiornata dagli Update del server).
+ * Client side of the network and local state. {@link it.polimi.ingsw.am54.network.client.Client}
+ * is the singleton hub that guards the active connection and the
+ * {@link it.polimi.ingsw.am54.network.client.ClientModel} (lightweight copy of the game
+ * state updated by server Updates).
  *
- * <p>L'astrazione {@link it.polimi.ingsw.am54.network.client.ServerConnection} ha due
- * implementazioni ({@link it.polimi.ingsw.am54.network.client.SocketServerConnection} e
+ * <p>The {@link it.polimi.ingsw.am54.network.client.ServerConnection} abstraction has two
+ * implementations ({@link it.polimi.ingsw.am54.network.client.SocketServerConnection} and
  * {@link it.polimi.ingsw.am54.network.client.RMIServerConnection});
- * {@link it.polimi.ingsw.am54.network.client.VirtualServer} è la facciata che la View usa
- * per inviare azioni, recuperando sempre la connessione corrente (così le mosse
- * sopravvivono a una riconnessione automatica). {@code CLIApp} è l'interfaccia testuale.</p>
+ * {@link it.polimi.ingsw.am54.network.client.VirtualServer} is the facade that the View uses
+ * to send actions, always retrieving the current connection (so moves
+ * survive an automatic reconnection). {@code CLIApp} is the textual interface.</p>
  */
 package it.polimi.ingsw.am54.network.client;

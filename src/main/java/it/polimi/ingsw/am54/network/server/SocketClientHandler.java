@@ -14,20 +14,20 @@ import java.util.concurrent.*;
 
 /**
  * ============================================================================
- * SocketClientHandler — Gestore di una connessione TCP per un client
+ * SocketClientHandler — Handler for a TCP connection for a client
  * ============================================================================
  *
- * RUOLO:
- * - Thread separato per ogni client connesso via Socket TCP
- * - Legge le Request dal client e le inoltra al Controller (singola partita)
- * - Implementa ClientConnection (sendUpdate) e ClientHandler
- * - Gestisce il sistema di heartbeat (ping/pong) per rilevare disconnessioni
+ * ROLE:
+ * - Separate thread for each client connected via TCP Socket
+ * - Reads Requests from the client and forwards them to the Controller (single game)
+ * - Implements ClientConnection (sendUpdate) and ClientHandler
+ * - Manages the heartbeat system (ping/pong) to detect disconnections
  *
  * PING-PONG PATTERN:
- * - Ping ogni 5 secondi (PING_INTERVAL_MS)
- * - Se nessun Pong ricevuto entro 15 secondi (PING_TIMEOUT_MS):
- *   1. Chiama controller.markDisconnected() -> notifica gli altri giocatori
- *   2. Chiama disconnect() -> chiude il socket e pulisce
+ * - Ping every 5 seconds (PING_INTERVAL_MS)
+ * - If no Pong is received within 15 seconds (PING_TIMEOUT_MS):
+ * 1. Calls controller.markDisconnected() -> notifies other players
+ * 2. Calls disconnect() -> closes the socket and cleans up
  * ============================================================================
  */
 public class SocketClientHandler implements Runnable, ClientConnection {
@@ -56,10 +56,10 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     /**
-     * Loop principale del thread: apre gli stream e legge le Request dal client finché
-     * la connessione è attiva, applicando un dispatch a due livelli (PongResponse e
-     * JoinGameRequest gestiti subito, le altre Request via {@code execute()}). Alla
-     * chiusura o in caso di errore, disconnette il client.
+     * Main thread loop: opens streams and reads Requests from the client as long as
+     * the connection is active, applying a two-level dispatch (PongResponse and
+     * JoinGameRequest handled immediately, other Requests via {@code execute()}). Upon
+     * closure or in case of error, disconnects the client.
      */
     @Override
     public void run() {
@@ -73,10 +73,10 @@ public class SocketClientHandler implements Runnable, ClientConnection {
             while (connected) {
                 Object input = in.readObject();
                 /*
-                 * DISPATCH A DUE LIVELLI:
-                 * 1. PongResponse e JoinGameRequest come early instanceof
-                 *    (operazioni a livello socket / necessitano contesto prima del dispatch)
-                 * 2. Tutte le altre Request tramite execute() polimorfico
+                 * TWO-LEVEL DISPATCH:
+                 * 1. PongResponse and JoinGameRequest as early instanceof
+                 * (socket-level operations / need context before dispatch)
+                 * 2. All other Requests via polymorphic execute()
                  */
                 if (input instanceof PongResponse) {
                     lastPongTime = System.currentTimeMillis();
@@ -97,8 +97,8 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     /**
-     * Avvia l'heartbeat: invia un ping ogni {@value #PING_INTERVAL_MS} ms e, se non
-     * riceve un pong entro {@value #PING_TIMEOUT_MS} ms, dichiara il client disconnesso.
+     * Starts the heartbeat: sends a ping every {@value #PING_INTERVAL_MS} ms and, if it
+     * doesn't receive a pong within {@value #PING_TIMEOUT_MS} ms, declares the client disconnected.
      */
     public void startPingScheduler() {
         this.lastPongTime = System.currentTimeMillis();
@@ -119,7 +119,7 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     /**
-     * Helper privato per scrivere sul flusso di rete in modo sicuro.
+     * Private helper to write to the network stream safely.
      */
     private synchronized void writeToStream(Update update) {
         if (!connected) return;
@@ -133,8 +133,8 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     /* =====================================================================
-     * IMPLEMENTAZIONE ClientConnection
-     * Il Socket "impacchetta" i parametri ricevuti in un DTO.
+     * ClientConnection IMPLEMENTATION
+     * The Socket "packages" the received parameters into a DTO.
      * ===================================================================== */
 
     @Override
@@ -220,9 +220,9 @@ public class SocketClientHandler implements Runnable, ClientConnection {
     }
 
     /**
-     * Chiude la connessione del client: ferma l'heartbeat, chiude il socket e avvisa il
-     * Controller di rimuovere il giocatore (gestione disconnessione/sospensione).
-     * Idempotente: ulteriori chiamate non hanno effetto.
+     * Closes the client's connection: stops the heartbeat, closes the socket and notifies the
+     * Controller to remove the player (disconnect/suspension management).
+     * Idempotent: subsequent calls have no effect.
      */
     @Override
     public void disconnect() {

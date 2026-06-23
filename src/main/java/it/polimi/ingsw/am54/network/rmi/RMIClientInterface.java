@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface RMIClientInterface extends Remote {
-    // Il server usa questo metodo per inviare Update al client
-    // SEVER -> CLIENT
+    // The server uses this method to send Updates to the client
+    // SERVER -> CLIENT
     void onPlayerJoined(String nickname) throws RemoteException;
     void onTotemColorChosen(String nickname, TotemColors color) throws RemoteException;
     void onTotemPlaced(String nickname, int position) throws RemoteException;
@@ -40,5 +40,5 @@ public interface RMIClientInterface extends Remote {
     void onGameSuspended() throws RemoteException;
     void onGameResumed() throws RemoteException;
 
-    void ping() throws RemoteException; // Per l'heartbeat
+    void ping() throws RemoteException; // For the heartbeat
 }

@@ -3,19 +3,19 @@ import com.google.gson.JsonObject;
 import it.polimi.ingsw.am54.model.*;
 
 /**
- * Effetto edificio: a fine turno concede al giocatore una pesca extra.
+ * Building effect: grants the player an extra pick at the end of the turn.
  */
 public class BuildingExtraPick implements IEffect<BuildingCard> {
     public BuildingExtraPick(JsonObject params) {
-        // Non serve leggere parametri, questa carta fa solo una cosa!
+        // No need to read parameters, this card only does one thing!
     }
 
     /**
-     * Attiva il flag di pesca extra sul giocatore alla chiusura del turno.
+     * Activates the extra pick flag on the player at the end of the turn.
      *
-     * @param p    il giocatore proprietario dell'edificio
-     * @param g    la partita corrente
-     * @param card l'edificio che possiede l'effetto
+     * @param p    the player who owns the building
+     * @param g    the current game
+     * @param card the building that possesses the effect
      */
     @Override
     public void applyOnTurnEnd(Player p, Game g, BuildingCard card) {

@@ -2,16 +2,16 @@ package it.polimi.ingsw.am54.model.effects.buildings;
 import it.polimi.ingsw.am54.model.*;
 import java.util.Arrays;
 
-// Gestisce i 6 Punti Prestigio a fine partita per ogni set di 6 personaggi diversi
+// Handles the 6 Prestige Points at the end of the game for each set of 6 different characters
 public class BuildingSixDifferentAura implements IEffect<BuildingCard> {
 
     /**
-     * A fine partita assegna 6 aura per ogni set completo dei sei mestieri diversi:
-     * il numero di set equivale al mestiere meno rappresentato nella tribù.
+     * At the end of the game, awards 6 aura for each complete set of the six different jobs:
+     * the number of sets equals the least represented job in the tribe.
      *
-     * @param p    il giocatore proprietario dell'edificio
-     * @param g    la partita corrente
-     * @param card l'edificio che possiede l'effetto
+     * @param p    the player who owns the building
+     * @param g    the current game
+     * @param card the building that possesses the effect
      */
     @Override
     public void applyOnEndGame(Player p, Game g, BuildingCard card) {

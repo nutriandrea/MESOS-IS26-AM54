@@ -5,6 +5,11 @@ import it.polimi.ingsw.am54.network.client.ClientModel;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Registry for all client state handlers. Maps the game state name received
+ * from the server to the corresponding {@link ClientStateHandler} implementation,
+ * which encapsulates the UI and interaction logic for that specific phase.
+ */
 public final class ClientStateRegistry {
     private static final Map<String, ClientStateHandler> HANDLERS = new HashMap<>();
 
@@ -22,6 +27,13 @@ public final class ClientStateRegistry {
 
     private ClientStateRegistry() {}
 
+    /**
+     * Retrieves the appropriate handler for the given state name.
+     * Returns a {@link DefaultHandler} if the state is unknown.
+     *
+     * @param stateName the name of the current state
+     * @return the corresponding ClientStateHandler
+     */
     public static ClientStateHandler getHandler(String stateName) {
         ClientStateHandler handler = HANDLERS.get(stateName.toUpperCase());
         return handler != null ? handler : new DefaultHandler();

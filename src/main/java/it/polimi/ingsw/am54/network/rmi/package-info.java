@@ -1,8 +1,8 @@
 /**
- * Interfacce remote RMI. {@link it.polimi.ingsw.am54.network.rmi.RMIGameServer} è il punto
- * d'ingresso nel registry; {@link it.polimi.ingsw.am54.network.rmi.RMIClientHandlerInterface}
- * espone le azioni di gioco del client verso il server, mentre
- * {@link it.polimi.ingsw.am54.network.rmi.RMIClientInterface} è lo stub di callback con cui
- * il server consegna gli aggiornamenti al client.
+ * RMI remote interfaces. {@link it.polimi.ingsw.am54.network.rmi.RMIGameServer} is the entry
+ * point in the registry; {@link it.polimi.ingsw.am54.network.rmi.RMIClientHandlerInterface}
+ * exposes the client's game actions to the server, while
+ * {@link it.polimi.ingsw.am54.network.rmi.RMIClientInterface} is the callback stub with which
+ * the server delivers updates to the client.
  */
 package it.polimi.ingsw.am54.network.rmi;

@@ -9,12 +9,11 @@ import java.util.Map;
 
 public final class StateChangedUpdate implements Update {
 
-    // DTO per le statistiche del giocatore
     public static class PlayerSnapshot implements Serializable {
         public final int food;
         public final int aura;
         public final int magicPoints;
-        public final TotemColors color; // Utile da mandare all'inizio
+        public final TotemColors color;
         public final List<String> tribe;
         public final List<String> buildings;
 

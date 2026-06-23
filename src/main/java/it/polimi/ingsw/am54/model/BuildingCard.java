@@ -2,11 +2,10 @@ package it.polimi.ingsw.am54.model;
 
 import java.util.*;
 
-
 /**
- * Carta Edificio: a differenza dei personaggi ha un costo in cibo (ridotto dagli
- * sconti del giocatore) e fornisce aura e/o effetti che si attivano in fasi diverse
- * (acquisto, fine turno, evento, fine partita).
+ * Building Card: unlike characters, it has a food cost (reduced by the
+ * player's discounts) and provides aura and/or effects that trigger in different
+ * phases (purchase, turn end, event, game end).
  */
 public class BuildingCard extends Card {
 
@@ -32,10 +31,10 @@ public class BuildingCard extends Card {
     }
 
     /**
-     * Applica tutti gli effetti "on purchase" dell'edificio sul giocatore.
+     * Applies all the "on purchase" effects of the building on the player.
      *
-     * @param p il giocatore che ha costruito l'edificio
-     * @param g la partita corrente
+     * @param p the player who built the building
+     * @param g the current game
      */
     public void resolveEffects(Player p, Game g) {
         for (IEffect<BuildingCard> effect : this.effects) {
@@ -63,20 +62,20 @@ public class BuildingCard extends Card {
     }
 
     /**
-     * Pesca l'edificio: calcola il costo effettivo (al netto dello sconto del
-     * giocatore), verifica il cibo disponibile, scala il costo, assegna la proprietà
-     * e risolve gli effetti immediati.
+     * Picks the building: calculates the actual cost (net of the player's
+     * discount), verifies available food, subtracts the cost, assigns ownership
+     * and resolves immediate effects.
      *
-     * @param player il giocatore che costruisce l'edificio
-     * @param game   la partita corrente
-     * @throws Exception se il giocatore non ha cibo sufficiente
+     * @param player the player who builds the building
+     * @param game   the current game
+     * @throws Exception if the player doesn't have enough food
      */
     @Override
     public void pick(Player player, Game game) throws Exception {
         int finalCost = this.cost - player.getMyBuildingDiscount();
         finalCost = Math.max(0, finalCost);
 
-        //controlla se il player può effettivamente acquistare
+        //checks if the player can actually buy
         if (player.getFood() < finalCost) {
             throw new Exception("Cibo insufficiente per comprare l'edificio! Hai " + player.getFood() + ", servono " + finalCost);
         }
@@ -93,30 +92,30 @@ public class BuildingCard extends Card {
     }
 
     /**
-     * Indica se il giocatore può permettersi l'edificio, considerando lo sconto
-     * costruttori già accumulato.
+     * Indicates whether the player can afford the building, considering the
+     * accumulated constructor discount.
      *
-     * @param player il giocatore che vuole costruire
-     * @return true se il cibo è sufficiente a coprire il costo scontato
+     * @param player the player who wants to build
+     * @return true if the food is sufficient to cover the discounted cost
      */
     @Override
     public boolean canBePurchased(Player player) {
-        // Calcoliamo il costo effettivo considerando lo sconto del giocatore
+        // We calculate the actual cost considering the player's discount
         int finalCost = this.cost - player.getMyBuildingDiscount();
         finalCost = Math.max(0, finalCost);
-        // Verifichiamo se il cibo corrente è sufficiente
+        // We check if the current food is sufficient
         return player.getFood() >= finalCost;
     }
 
     /**
-     * Rivela l'edificio inserendolo nella fila Edifici del tabellone.
+     * Reveals the building by placing it in the Buildings row of the board.
      *
-     * @param board la plancia di gioco
-     * @param row   la fila di destinazione ("upper" o "lower")
+     * @param board the game board
+     * @param row   the target row ("upper" or "lower")
      */
     @Override
     public void reveal(Board board, String row) {
-        // Questo metodo sa esattamente come rimettere l'edificio al suo posto!
+        // This method knows exactly how to put the building back in its place!
         board.addBuildingCard(this, row);
     }
 

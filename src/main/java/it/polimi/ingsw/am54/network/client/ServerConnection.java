@@ -4,11 +4,11 @@ import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.messages.Request;
 
 /**
- * Interfaccia generica per la connessione verso il Server.
- * Nasconde se stiamo usando Socket o RMI.
+ * Generic interface for connection to the Server.
+ * Hides whether we are using Socket or RMI.
  */
 public interface ServerConnection {
-    // Invia messaggi al server, un metodo per tipo, in stile RMI
+    // Sends messages to the server, one method per type, RMI style
     void joinGame(String nickname);
     void setupGame();
     void chooseTotem(TotemColors color);
@@ -17,6 +17,6 @@ public interface ServerConnection {
     void endTurn();
     void requestLeaderboard(int numPlayers);
 
-    // Chiude la connessione col server
+    // Closes the connection to the server
     void disconnect();
 }

@@ -18,12 +18,12 @@ public class EventState extends GameState {
     }
 
     /**
-     * Risolve automaticamente la fase eventi di fine round: applica i trigger degli
-     * edifici e risolve in ordine tutte le carte evento, poi riorganizza il tabellone
-     * (scarta/sposta le file, rifornisce, gestisce l'eventuale passaggio di Era),
-     * avanza il round, resetta i totem e infine transita a {@link StartTurnState}.
+     * Automatically resolves the end-of-round event phase: applies building triggers and
+     * resolves all event cards in order, then reorganizes the board (discards/moves rows,
+     * refills, handles possible Era transition), advances the round, resets the totems and
+     * finally transitions to {@link StartTurnState}.
      *
-     * @param game la partita su cui risolvere la fase
+     * @param game the game on which to resolve the phase
      */
     @Override
     public void resolvePhase(Game game){
@@ -32,9 +32,9 @@ public class EventState extends GameState {
         while ((currentEvent = game.getBoard().popNextEvent()) != null) {
 
             // ==========================================
-            // INIEZIONE TRIGGER: On Event
-            // Prima che l'evento colpisca, diamo la possibilità agli Edifici di preparare
-            // la "cartella clinica" del giocatore (sconti, scudi dello sciamano, ecc.)
+            // TRIGGER INJECTION: On Event
+            // Before the event hits, give the Buildings a chance to prepare
+            // the player's "medical record" (discounts, shaman shields, etc.)
             // ==========================================
             for (it.polimi.ingsw.am54.model.Player p : game.getPlayers()) {
                 for (it.polimi.ingsw.am54.model.BuildingCard building : p.getBuildings()) {
@@ -46,56 +46,56 @@ public class EventState extends GameState {
                 }
             }
 
-            // RISOLVIAMO L'EVENTO
-            // Ora l'evento calcolerà i danni/bonus leggendo i modificatori temporanei
-            // appena impostati dagli Edifici, dopodiché pulirà tutto (resetEventAttributes).
+            // RESOLVE THE EVENT
+            // Now the event will calculate damages/bonuses by reading the temporary modifiers
+            // just set by the Buildings, after which it will clean everything (resetEventAttributes).
             currentEvent.resolveEvent(game);
 
             game.notifyEventResolved(currentEvent);
         }
 
-        // 3. Scarto tutte le carte (Personaggi) rimaste nella fila inferiore
+        // 3. Discard all remaining cards (Characters) in the lower row
         game.getBoard().clearLowerRow();
 
-        // 4. Sposta Personaggi ed Eventi dalla fila superiore alla fila inferiore
+        // 4. Move Characters and Events from the upper row to the lower row
         game.getBoard().moveUpperToLower();
 
-        // 5. Riempi la fila superiore (delegato al Game)
+        // 5. Refill the upper row (delegated to Game)
         game.refillUpperTribeRow();
 
-        // 6. INIZIO NUOVA ERA (Se la prossima carta nel deck è dell'era successiva)
+        // 6. START OF NEW ERA (If the next card in the deck is from the next era)
         if (game.isEraTransition()) {
             game.advanceEra();
 
-            // REGOLE: Se transizione a Era III -> scarta eventuali Edifici dalla fila inferiore
+            // RULES: If transitioning to Era III -> discard any Buildings from the lower row
             if (game.getCurrentEra() == 3) {
                 game.getBoard().discardLowerRowBuildings();
             }
 
-            // Sposta gli Edifici dalla fila superiore alla fila inferiore
+            // Move the Buildings from the upper row to the lower row
             game.getBoard().moveBuildings();
 
-            // Piazza i nuovi Edifici dell'Era nella fila superiore
+            // Place the new Era Buildings in the upper row
             game.refillUpperBuildings();
         }
 
-        // 8. Controllo Condizione Fine Partita (Regola: Il mazzo Tribù è esaurito)
+        // 8. End Game Condition Check (Rule: The Tribe deck is empty)
         game.advanceRound();
 
-        // A. Resetta la flag dei totem per tutti i giocatori
+        // A. Reset the totem flag for all players
         for(it.polimi.ingsw.am54.model.Player p : game.getPlayers()) {
             p.setHasPlacedTotem(false);
         }
 
-        // B. Il nuovo primo giocatore è quello seduto nel primo slot dell'Ordine di Turno
+        // B. The new first player is the one sitting in the first Turn Order slot
         for (it.polimi.ingsw.am54.model.TurnOrderSlot slot : game.getBoard().getTurnOrderTile()) {
             if (slot.getOccupiedBy() != null) {
                 game.setCurrentPlayer(slot.getOccupiedBy());
-                break; // Trovato il primo, ci fermiamo
+                break; // Found the first one, we stop
             }
         }
         for (it.polimi.ingsw.am54.model.OfferingTile tile : game.getBoard().getOfferingTrack()) {
-            tile.freeSlot(); // Libera l'occupante
+            tile.freeSlot(); // Free the occupant
             tile.resetPicks();
         }
 

@@ -17,6 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Manager responsible for rendering and updating the turn order track and
+ * the offering track, handling totem placements and animations.
+ */
 public class TotemManager {
 
     private final ImageView turnOrderImage;
@@ -51,14 +55,14 @@ public class TotemManager {
             String s = turnOrder.get(i);
             String pName = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
 
-            // Creiamo un'immagine di base per occupare SEMPRE lo spazio fisico
+            // Create a base image to ALWAYS occupy the physical space
             javafx.scene.image.ImageView totemFace = new javafx.scene.image.ImageView();
             totemFace.setFitWidth(TOTEM_FACE_SIZE);
             totemFace.setFitHeight(TOTEM_FACE_SIZE);
             totemFace.setPreserveRatio(true);
 
-            // Se lo slot è VUOTO o di un DISCONNESSO, lo rendiamo invisibile.
-            // Questo mantiene intatta l'impaginazione impedendo lo shift!
+            // If the slot is EMPTY or belongs to a DISCONNECTED player, make it invisible.
+            // This preserves the layout and prevents layout shifting!
             if (pName.equalsIgnoreCase("vuoto") || pName.equalsIgnoreCase("null") || disconnected.contains(pName)) {
                 totemFace.setOpacity(0.0);
             } else {
@@ -91,13 +95,12 @@ public class TotemManager {
         if(offeringTrack == null) return;
         offeringTrack.getChildren().clear();
 
-        // Rimuoviamo il blocco che fermava il disegno se la mappa era vuota.
         Map<Integer, String> offeringData = model.getOfferingTrack();
 
         int numPlayers = (model.getPlayers() != null) ? model.getPlayers().size() : 3;
         List<String> expectedTiles = getExpectedOfferingTiles(numPlayers);
 
-        // Iteriamo in modo fisso sul numero di tessere ATTESE in base al numero di giocatori
+        // Iterate fixedly over the EXPECTED number of tiles based on the player count
         for (int position = 0; position < expectedTiles.size(); position++) {
             String tileLetter = expectedTiles.get(position);
             Group tileGroup = new Group();
@@ -111,7 +114,7 @@ public class TotemManager {
             AnchorPane totemPane = new AnchorPane();
             totemPane.setPickOnBounds(false);
 
-            // Controlliamo in modo sicuro se c'è un totem in questa specifica posizione
+            // Safely check if there is a totem in this specific position
             String occupier = (offeringData != null) ? offeringData.get(position) : null;
 
             boolean hasReturned = false;
@@ -208,6 +211,7 @@ public class TotemManager {
             offeringTrack.getChildren().add(tileGroup);
         }
     }
+
     public void refreshTotemsPosition() {
         ClientModel model = Client.getInstance().getModel();
         if (model == null || totemArea == null || totemArea.getChildren().isEmpty()) return;
@@ -243,10 +247,10 @@ public class TotemManager {
         double stepOriginal = 0;
 
         Map<Integer, double[]> config = Map.of(
-            2, new double[]{222.0, 170.0},
-            3, new double[]{175.0, 173.0},
-            4, new double[]{133.0, 173.0},
-            5, new double[]{64.0, 174.0}
+                2, new double[]{222.0, 170.0},
+                3, new double[]{175.0, 173.0},
+                4, new double[]{133.0, 173.0},
+                5, new double[]{64.0, 174.0}
         );
         double[] coords = config.getOrDefault(totalPlayers, new double[]{222.0, 170.0});
         startYOriginal = coords[0];
@@ -258,10 +262,10 @@ public class TotemManager {
 
     private List<String> getExpectedOfferingTiles(int numPlayers) {
         Map<Integer, List<String>> tiles = Map.of(
-            2, List.of("B", "C", "E", "F"),
-            3, List.of("B", "C", "D", "E", "F"),
-            4, List.of("B", "C", "D", "E", "F", "G"),
-            5, List.of("A", "B", "C", "D", "E", "F", "G")
+                2, List.of("B", "C", "E", "F"),
+                3, List.of("B", "C", "D", "E", "F"),
+                4, List.of("B", "C", "D", "E", "F", "G"),
+                5, List.of("A", "B", "C", "D", "E", "F", "G")
         );
         return tiles.getOrDefault(numPlayers, List.of("B", "C", "D", "E", "F"));
     }

@@ -1,4 +1,4 @@
-// Nel file: network/messages/EventUpdate.java
+// In the file: network/messages/EventUpdate.java
 package it.polimi.ingsw.am54.network.messages;
 
 import it.polimi.ingsw.am54.network.client.ClientModel;
@@ -8,7 +8,7 @@ import java.util.Map;
 
 public final class EventUpdate implements Update {
 
-    // DTO compatto per le statistiche di un singolo giocatore
+    // Compact DTO for a single player's statistics
     public static class PlayerSnapshot implements Serializable {
         public final int food;
         public final int aura;

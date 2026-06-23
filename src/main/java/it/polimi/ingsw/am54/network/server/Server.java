@@ -11,7 +11,7 @@ import java.rmi.registry.Registry;
 
 /**
  * ============================================================================
- * Server — Entry point del server AM54 (single game)
+ * Server — AM54 server entry point (single game)
  * ============================================================================
  */
 public class Server {
@@ -21,25 +21,25 @@ public class Server {
     private boolean isRunning;
 
     /**
-     * Costruisce il server. Tenta di ripristinare una partita da {@code backup.json}:
-     * se esiste un backup valido riprende quella partita (recupero da crash), altrimenti
-     * ne crea una nuova e pulita.
+     * Builds the server. Attempts to restore a game from {@code backup.json}:
+     * if a valid backup exists it resumes that game (crash recovery), otherwise
+     * it creates a new and clean one.
      */
     public Server() {
         PersistenceManager pm = new PersistenceManager("backup.json");
         Game loadedGame = pm.loadGame();
 
-        // Si attiva SOLO se il file di backup esiste ed è valido
+        // It activates ONLY if the backup file exists and is valid
         if (loadedGame != null) {
             this.game = loadedGame;
             this.controller = new Controller(this.game);
 
-            // CHIAMATA QUI: Solo durante il vero ripristino
+            // CALL HERE: Only during actual recovery
             this.controller.validateGameStateAfterRecovery();
 
             System.out.println("[Server] Crash rilevato: partita ripristinata.");
         } else {
-            // Avvio normale pulito
+            // Clean normal start
             this.game = new Game();
             this.controller = new Controller(game);
             System.out.println("Server creato con una nuova partita.");
@@ -54,11 +54,11 @@ public class Server {
     }
 
     /**
-     * Avvia entrambi i trasporti del server: prima il registry RMI, poi il loop di
-     * accettazione TCP (che è bloccante e tiene vivo il server).
+     * Starts both server transports: first the RMI registry, then the TCP acceptance
+     * loop (which is blocking and keeps the server alive).
      *
-     * @param tcpPort la porta per le connessioni Socket TCP
-     * @param rmiPort la porta del registry RMI
+     * @param tcpPort the port for TCP Socket connections
+     * @param rmiPort the port of the RMI registry
      */
     public void start(int tcpPort, int rmiPort) {
         startRMI(rmiPort);
@@ -66,14 +66,14 @@ public class Server {
     }
 
     /**
-     * Crea il registry RMI sulla porta indicata e vi pubblica il server di gioco
-     * ("AM54-Server"). Eventuali errori vengono loggati senza interrompere il server.
+     * Creates the RMI registry on the indicated port and publishes the game server
+     * ("AM54-Server") there. Any errors are logged without interrupting the server.
      *
-     * @param port la porta del registry RMI
+     * @param port the port of the RMI registry
      */
     private void startRMI(int port) {
         try {
-            // L'hostname RMI è già stato settato globalmente nel main!
+            // The RMI hostname has already been globally set in main!
             Registry registry = LocateRegistry.createRegistry(port);
             RMIServerImpl rmiServer = new RMIServerImpl(this);
             registry.rebind("AM54-Server", rmiServer);
@@ -84,11 +84,11 @@ public class Server {
     }
 
     /**
-     * Avvia il loop di accettazione TCP: per ogni client che si connette crea un
-     * {@link SocketClientHandler} su un thread dedicato. Bloccante finché il server
-     * resta attivo.
+     * Starts the TCP acceptance loop: for each connecting client it creates a
+     * {@link SocketClientHandler} on a dedicated thread. Blocking as long as the server
+     * remains active.
      *
-     * @param port la porta su cui ascoltare le connessioni TCP
+     * @param port the port on which to listen for TCP connections
      */
     private void startTCP(int port) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -107,26 +107,26 @@ public class Server {
     }
 
     /**
-     * Punto d'ingresso del server: rileva automaticamente l'IP della scheda di rete
-     * attiva (da comunicare ai giocatori), lo imposta come hostname RMI e avvia il
-     * server sulle porte TCP 12345 e RMI 1099.
+     * Server entry point: automatically detects the IP of the active network card
+     * (to communicate to players), sets it as the RMI hostname and starts the
+     * server on TCP port 12345 and RMI port 1099.
      *
-     * @param args argomenti da riga di comando (non utilizzati)
+     * @param args command line arguments (not used)
      */
     public static void main(String[] args) {
         System.out.println("=== Avvio Server AM54 ===");
 
-        String serverIp = "127.0.0.1"; // Fallback di sicurezza
+        String serverIp = "127.0.0.1"; // Safety fallback
 
         try (java.net.DatagramSocket s = new java.net.DatagramSocket()) {
-            // Finge di connettersi all'esterno per scoprire l'IP della scheda Wi-Fi attiva
+            // Pretends to connect outside to discover the active Wi-Fi card's IP
             s.connect(java.net.InetAddress.getByName("8.8.8.8"), 10002);
             serverIp = s.getLocalAddress().getHostAddress();
         } catch (Exception e) {
             System.err.println("Autodetect IP fallito. Uso localhost.");
         }
 
-        // Imposta l'hostname RMI in modo dinamico
+        // Sets the RMI hostname dynamically
         System.setProperty("java.rmi.server.hostname", serverIp);
         System.out.println("[Server] RMI Hostname globale impostato a: " + serverIp);
         System.out.println("\n---> COMUNICA QUESTO IP AGLI ALTRI GIOCATORI: " + serverIp + " <--- \n");

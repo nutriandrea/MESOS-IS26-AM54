@@ -8,36 +8,36 @@ import java.util.TimerTask;
 
 /**
  * ============================================================================
- * ClientModel — Modello leggero lato client
+ * ClientModel — Lightweight client-side model
  * ============================================================================
  *
- * RUOLO:
- * Mantieni uno stato locale del gioco sincronizzato con il server.
- * Riceve gli Update dal ServerHandler (TCP) o RMIServerConnection (RMI)
- * e aggiorna il proprio stato di conseguenza.
+ * ROLE:
+ * Maintain a local game state synchronized with the server.
+ * Receives Updates from ServerHandler (TCP) or RMIServerConnection (RMI)
+ * and updates its state accordingly.
  *
- * PERCHE' ESISTE:
- * Il Model lato server (Game.java) e' pesante: contiene la logica di gioco,
- * le carte, gli effetti, ecc. Il client non ha bisogno di tutto questo.
- * Il ClientModel contiene SOLO i dati necessari per visualizzare lo stato
- * del gioco: nomi giocatori, carte sul tavolo, colori, turni, ecc.
+ * WHY IT EXISTS:
+ * The server-side Model (Game.java) is heavy: it contains game logic,
+ * cards, effects, etc. The client doesn't need all of this.
+ * ClientModel contains ONLY the data necessary to display the game
+ * state: player names, cards on the board, colors, turns, etc.
  *
- * SINCRONIZZAZIONE:
- * Tutti i metodi di aggiornamento sono synchronized per garantire thread-safety.
- * Il ServerHandler gira su un thread separato e aggiorna il ClientModel
- * in modo concorrente rispetto al thread della UI.
+ * SYNCHRONIZATION:
+ * All update methods are synchronized to ensure thread-safety.
+ * ServerHandler runs on a separate thread and updates ClientModel
+ * concurrently with the UI thread.
  *
- * STRUTTURA:
- * 1. STATO GLOBALE: round, era, stato corrente, giocatore di turno
- * 2. TABELLONE: carte sul tavolo, turn order, offering track
- * 3. GIOCATORI: nickname, colori, risorse (food, aura), inventario carte
- * 4. EXTRA: vincitori, errori, giocatori disconnessi
+ * STRUCTURE:
+ * 1. GLOBAL STATE: round, era, current state, turn player
+ * 2. BOARD: cards on table, turn order, offering track
+ * 3. PLAYERS: nickname, colors, resources (food, aura), card inventory
+ * 4. EXTRA: winners, errors, disconnected players
  * ============================================================================
  */
 public class ClientModel {
 
     //------------------------------------------------------------------------------
-    //Attributi e metodi per notificare UI di cambiamenti
+    //Attributes and methods to notify UI of changes
     private Runnable onModelUpdatedCallback;
     private Timer debounceTimer;
 
@@ -73,12 +73,12 @@ public class ClientModel {
 
     private void notifyUI() {
         if (onModelUpdatedCallback != null) {
-            // Se c'è già un aggiornamento in coda, lo annulliamo
+            // If there is already an update queued, we cancel it
             if (debounceTimer != null) {
                 debounceTimer.cancel();
             }
-            // Ne creiamo uno nuovo che aspetterà 100 millisecondi prima di ridisegnare
-            debounceTimer = new Timer(true); // "true" significa che non bloccherà la chiusura del gioco
+            // We create a new one that will wait 100 milliseconds before redrawing
+            debounceTimer = new Timer(true); // "true" means it will not block the game from closing
             debounceTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
@@ -89,86 +89,86 @@ public class ClientModel {
     }
     //------------------------------------------------------------------------------
 
-    // --- 1. STATO GLOBALE ---
-    /** Round corrente (inizia da 1 dopo il setup) */
+    // --- 1. GLOBAL STATE ---
+    /** Current round (starts from 1 after setup) */
     private int currentRound = 1;
 
-    /** Era corrente (inizia da 1) */
+    /** Current era (starts from 1) */
     private int currentEra = 1;
 
-    /** Stato corrente del gioco (es. "Lobby", "SetUpGameState", "PickingState") */
+    /** Current state of the game (e.g. "Lobby", "SetUpGameState", "PickingState") */
     private String currentState = "Lobby";
 
-    /** Nickname del giocatore il cui turno e' attivo */
+    /** Nickname of the active turn player */
     private String currentPlayer;
 
-    // --- 2. TABELLONE (BOARD) ---
-    /** Ordine di turno: lista di nickname in ordine di turno */
+    // --- 2. BOARD ---
+    /** Turn order: list of nicknames in turn order */
     private final List<String> turnOrderTrack = new ArrayList<>();
 
-    /** Tessere offerta: mappa posizione -> nickname del giocatore che l'ha occupata */
+    /** Offering tiles: map position -> nickname of the player who occupied it */
     private final Map<Integer, String> offeringTrack = new TreeMap<>();
 
-    /** Carte personaggio nella fila superiore */
+    /** Character cards in the upper row */
     private final List<String> characterUpperRow = new ArrayList<>();
 
-    /** Carte personaggio nella fila inferiore */
+    /** Character cards in the lower row */
     private final List<String> characterLowerRow = new ArrayList<>();
 
-    /** Carte evento nella fila superiore */
+    /** Event cards in the upper row */
     private final List<String> eventUpperRow = new ArrayList<>();
 
-    /** Carte evento nella fila inferiore */
+    /** Event cards in the lower row */
     private final List<String> eventLowerRow = new ArrayList<>();
 
-    /** Carte edificio nella fila superiore */
+    /** Building cards in the upper row */
     private final List<String> upperBuildingRow = new ArrayList<>();
 
-    /** Carte edificio nella fila inferiore */
+    /** Building cards in the lower row */
     private final List<String> lowerBuildingRow = new ArrayList<>();
 
-    // --- 3. STATO GIOCATORI (MAPPE indicizzate per Nickname) ---
-    /** Lista di tutti i giocatori in partita */
+    // --- 3. PLAYER STATE (MAPS indexed by Nickname) ---
+    /** List of all players in the game */
     private final List<String> players = new ArrayList<>();
 
-    /** Mappa nickname -> colore del totem */
+    /** Map nickname -> totem color */
     private final Map<String, TotemColors> playerColors = new HashMap<>();
 
-    /** Mappa nickname -> cibo disponibile */
+    /** Map nickname -> available food */
     private final Map<String, Integer> playerFood = new HashMap<>();
 
-    /** Mappa nickname -> punti aura */
+    /** Map nickname -> aura points */
     private final Map<String, Integer> playerAura = new HashMap<>();
 
     private final Map<String, Integer> playerMagic = new HashMap<>();
 
-    /** Mappa nickname -> lista delle carte tribu' (personaggi) possedute */
+    /** Map nickname -> list of owned tribe cards (characters) */
     private final Map<String, List<String>> playerTribe = new HashMap<>();
 
-    /** Mappa nickname -> lista delle carte edificio possedute */
+    /** Map nickname -> list of owned building cards */
     private final Map<String, List<String>> playerBuildings = new HashMap<>();
 
     // --- 4. EXTRA ---
-    /** Lista dei vincitori (popolata alla fine della partita) */
+    /** List of winners (populated at the end of the game) */
     private List<String> winners = new ArrayList<>();
 
-    /** Mappa nickname -> punteggio finale dell'ultima partita */
+    /** Map nickname -> final score of the last match */
     private Map<String, Integer> lastMatchScores = Map.of();
 
-    /** Numero di giocatori dell'ultima partita */
+    /** Number of players in the last match */
     private int lastMatchNumPlayers = 0;
 
-    //--- 5. CLASSIFICA (LEADERBOARD) ---
-    /** Posizione del giocatore nella classifica per il numero di giocatori specificato */
+    //--- 5. LEADERBOARD ---
+    /** Player's leaderboard position for the specified number of players */
     private int leaderboardPosition = -1;
 
-    /** Lista completa delle entry della classifica */
+    /** Complete list of leaderboard entries */
     private List<LeaderboardEntry> leaderboardEntries = List.of();
 
-    /** Numero di giocatori per cui e' stata richiesta la classifica */
+    /** Number of players for which the leaderboard was requested */
     private int leaderboardNumPlayers = 0;
 
-    /** Ultimo messaggio di errore ricevuto */
+    /** Last received error message */
     private String lastErrorMessage;
 
     private boolean isReconnecting = false;
@@ -176,26 +176,26 @@ public class ClientModel {
     private Runnable onConnectionLostCallback;
 
     /**
-     * Set di nickname dei giocatori temporaneamente disconnessi.
-     * Popolato quando si riceve PlayerDisconnectedUpdate.
-     * Svuotato quando si riceve PlayerReconnectedUpdate o PlayerJoinedUpdate.
+     * Set of nicknames of temporarily disconnected players.
+     * Populated when PlayerDisconnectedUpdate is received.
+     * Emptied when PlayerReconnectedUpdate or PlayerJoinedUpdate is received.
      *
-     * La UI puo' usare questo set per mostrare un indicatore visivo
-     * (es. icona grigia) accanto al nome del giocatore disconnesso.
+     * The UI can use this set to show a visual indicator
+     * (e.g., grey icon) next to the disconnected player's name.
      */
     private final Set<String> disconnectedPlayers = new HashSet<>();
 
     // =====================================================================
-    // METODI DI AGGIORNAMENTO (chiamati dal ServerHandler / RMIServerConnection)
-    // Tutti synchronized per thread-safety
+    // UPDATE METHODS (called by ServerHandler / RMIServerConnection)
+    // All synchronized for thread-safety
     // =====================================================================
 
     /**
-     * Aggiorna il modello all'ingresso di un giocatore: lo aggiunge alla lista e
-     * all'ordine di turno, lo toglie dai disconnessi (utile in caso di riconnessione) e
-     * imposta un messaggio di sistema di benvenuto.
+     * Updates the model when a player joins: adds them to the list and turn order,
+     * removes them from disconnected (useful in case of reconnection) and sets a
+     * welcome system message.
      *
-     * @param nickname il giocatore entrato
+     * @param nickname the joined player
      */
     public synchronized void updatePlayerJoined(String nickname) {
         if (!players.contains(nickname)) {
@@ -209,46 +209,46 @@ public class ClientModel {
     }
 
     /**
-     * Marca un giocatore come disconnesso (resta visibile con il suo stato) e imposta un
-     * messaggio di sistema di avviso.
+     * Marks a player as disconnected (remains visible with their state) and sets a
+     * warning system message.
      *
-     * @param nickname il giocatore disconnesso
+     * @param nickname the disconnected player
      */
     public synchronized void updatePlayerDisconnected(String nickname) {
         disconnectedPlayers.add(nickname);
-        // AGGIUNTA: Messaggio di sistema per le cadute
+        // ADDITION: System message for drops
         this.lastSystemMessage = "⚠️ ATTENZIONE: " + nickname.toUpperCase() + " si è disconnesso!";
         notifyUI();
     }
 
     /**
-     * Riporta un giocatore allo stato "online" togliendolo dai disconnessi e imposta un
-     * messaggio di sistema di rientro.
+     * Brings a player back to the "online" state by removing them from disconnected
+     * and sets a re-entry system message.
      *
-     * @param nickname il giocatore riconnesso
+     * @param nickname the reconnected player
      */
     public synchronized void updatePlayerReconnected(String nickname) {
         disconnectedPlayers.remove(nickname);
-        // AGGIUNTA: Messaggio di sistema per il rientro
+        // ADDITION: System message for re-entry
         this.lastSystemMessage = "🟢 BENTORNATO: " + nickname.toUpperCase() + " è tornato in partita!";
         notifyUI();
     }
 
-    /** Controlla se un giocatore e' attualmente disconnesso */
+    /** Checks if a player is currently disconnected */
     public synchronized boolean isPlayerDisconnected(String nickname) {
         return disconnectedPlayers.contains(nickname);
     }
 
-    /** Restituisce una copia del set dei giocatori disconnessi */
+    /** Returns a copy of the disconnected players set */
     public synchronized Set<String> getDisconnectedPlayers() {
         return new HashSet<>(disconnectedPlayers);
     }
 
 
     /**
-     * Aggiorna il giocatore attualmente di turno.
+     * Updates the currently active player.
      *
-     * @param nickname il nuovo giocatore di turno (o {@code null} tra una fase e l'altra)
+     * @param nickname the new active player (or {@code null} between phases)
      */
     public synchronized void updateTurn(String nickname) {
         this.currentPlayer = nickname;
@@ -256,12 +256,12 @@ public class ClientModel {
     }
 
     /**
-     * Riflette il piazzamento di un totem: libera la posizione del giocatore nell'ordine
-     * di turno (segnandola "VUOTO" per non far scalare gli altri) e lo inserisce sulla
-     * tessera offerta indicata.
+     * Reflects a totem placement: frees the player's position in the turn order
+     * (marking it "VUOTO" so others don't shift) and places them on the indicated
+     * offering tile.
      *
-     * @param nickname il giocatore che ha piazzato il totem
-     * @param position l'indice della tessera offerta
+     * @param nickname the player who placed the totem
+     * @param position the offering tile index
      */
     public synchronized void updateTotemPlacement(String nickname, int position) {
         for (int i = 0; i < turnOrderTrack.size(); i++) {
@@ -270,7 +270,7 @@ public class ClientModel {
 
             if (name.equalsIgnoreCase(nickname)) {
                 if (s.contains(" -> ")) {
-                    // Mantiene "[Slot X | Cibo: +Y] -> " e aggiunge "VUOTO"
+                    // Keeps "[Slot X | Food: +Y] -> " and adds "VUOTO"
                     String prefix = s.substring(0, s.lastIndexOf("->") + 2);
                     turnOrderTrack.set(i, prefix + " VUOTO");
                 } else {
@@ -288,16 +288,16 @@ public class ClientModel {
     }
 
     /**
-     * Riflette la pesca di una carta: rimuove la carta dalla fila corretta (personaggio o
-     * edificio in base all'indice), la aggiunge alla tribù/edifici del giocatore, aggiorna
-     * cibo e magia e sostituisce il tracciato offerte con quello aggiornato dal server.
+     * Reflects picking a card: removes the card from the correct row (character or
+     * building based on index), adds it to the player's tribe/buildings, updates
+     * food and magic, and replaces the offering track with the one updated by the server.
      *
-     * @param nickname        il giocatore che ha pescato
-     * @param row             la fila ("upper" o "lower")
-     * @param index           l'indice della carta (personaggi seguiti dagli edifici)
-     * @param newFoodBalance  il nuovo saldo di cibo
-     * @param newMagicBalance il nuovo saldo di magia
-     * @param updatedOffering il tracciato offerte aggiornato
+     * @param nickname        the player who picked
+     * @param row             the row ("upper" or "lower")
+     * @param index           the card index (characters followed by buildings)
+     * @param newFoodBalance  the new food balance
+     * @param newMagicBalance the new magic balance
+     * @param updatedOffering the updated offering track
      */
     public synchronized void updateCardPicked(String nickname, String row, int index, int newFoodBalance, int newMagicBalance, java.util.Map<Integer, String> updatedOffering) {
         boolean isUpper = row.equalsIgnoreCase("upper");
@@ -330,7 +330,7 @@ public class ClientModel {
         }
 
         playerFood.put(nickname, newFoodBalance);
-        playerMagic.put(nickname, newMagicBalance); // Aggiornamento istantaneo del contatore Magia!
+        playerMagic.put(nickname, newMagicBalance); // Instant update of the Magic counter!
 
         this.offeringTrack.clear();
         this.offeringTrack.putAll(updatedOffering);
@@ -338,18 +338,17 @@ public class ClientModel {
     }
 
     /**
-     * Riflette il rientro del totem di un giocatore dalla tessera offerta all'ordine di
-     * turno: libera la sua tessera (segnandola "VUOTO" senza perdere bonus/ID), lo
-     * reinserisce nel primo slot realmente disponibile (saltando i "fantasmi") e aggiorna
-     * cibo e aura.
+     * Reflects the return of a player's totem from the offering tile to the turn
+     * order: frees their tile (marking it "VUOTO" without losing bonus/ID), reinserts
+     * them in the first truly available slot (skipping "ghosts") and updates food and aura.
      *
-     * @param nickname       il giocatore il cui totem rientra
-     * @param newFoodBalance il nuovo saldo di cibo
-     * @param newAuraBalance il nuovo saldo di aura
+     * @param nickname       the player whose totem returns
+     * @param newFoodBalance the new food balance
+     * @param newAuraBalance the new aura balance
      */
     public synchronized void updateTotemReturned(String nickname, int newFoodBalance, int newAuraBalance) {
-        // 1. FIX: Invece di cancellare fisicamente la tessera dalla mappa (facendola sparire nella CLI),
-        // la cerchiamo e sostituiamo il nome dell'occupante con "VUOTO", mantenendo intatti i bonus e l'ID!
+        // 1. FIX: Instead of physically deleting the tile from the map (making it disappear in the CLI),
+        // we look for it and replace the occupant's name with "VUOTO", keeping bonuses and ID intact!
         int targetKey = -1;
         String targetPrefix = "";
 
@@ -359,11 +358,11 @@ public class ClientModel {
             if (name.equalsIgnoreCase(nickname)) {
                 targetKey = entry.getKey();
                 targetPrefix = occupier.contains(" -> ") ? occupier.substring(0, occupier.lastIndexOf("->") + 2) : "";
-                break; // Trovato il totem, fermiamo il ciclo
+                break; // Found the totem, we stop the loop
             }
         }
 
-        // Se l'abbiamo trovato, aggiorniamo la mappa in modo sicuro
+        // If we found it, we safely update the map
         if (targetKey != -1) {
             if (!targetPrefix.isEmpty()) {
                 offeringTrack.put(targetKey, targetPrefix + " VUOTO");
@@ -372,8 +371,8 @@ public class ClientModel {
             }
         }
 
-        // 2. FIX GRAFICO/LOGICO: Rimuoviamo preventivamente il giocatore dalla sua vecchia
-        // posizione "fantasma" nell'ordine di turno per forzare il ricalcolo.
+        // 2. GRAPHIC/LOGIC FIX: We preemptively remove the player from their old
+        // "ghost" position in the turn order to force recalculation.
         for (int i = 0; i < turnOrderTrack.size(); i++) {
             String s = turnOrderTrack.get(i);
             String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
@@ -387,14 +386,14 @@ public class ClientModel {
             }
         }
 
-        // 3. Inseriamo il giocatore nel PRIMO slot veramente disponibile partendo dall'alto.
-        // Uno slot è disponibile se è VUOTO, NULL, oppure se è occupato da un "Fantasma".
+        // 3. We insert the player in the FIRST truly available slot starting from the top.
+        // A slot is available if it is VUOTO, NULL, or occupied by a "Ghost".
         boolean placed = false;
         for (int i = 0; i < turnOrderTrack.size(); i++) {
             String s = turnOrderTrack.get(i);
             String name = s.contains(" -> ") ? s.split(" -> ")[s.split(" -> ").length - 1].trim() : s;
 
-            // Determiniamo se l'occupante attuale dello slot è in realtà un fantasma
+            // We determine if the current occupant of the slot is actually a ghost
             boolean isGhost = disconnectedPlayers.contains(name);
             if (!isGhost && !name.equalsIgnoreCase("VUOTO") && !name.equalsIgnoreCase("NULL")) {
                 for (String occupier : offeringTrack.values()) {
@@ -406,7 +405,7 @@ public class ClientModel {
                 }
             }
 
-            // Se lo slot è libero o fantasma, lo sovrascriviamo con il giocatore attivo!
+            // If the slot is free or a ghost, we overwrite it with the active player!
             if (name.equalsIgnoreCase("VUOTO") || name.equalsIgnoreCase("NULL") || isGhost) {
                 if (s.contains(" -> ")) {
                     String prefix = s.substring(0, s.lastIndexOf("->") + 2);
@@ -419,7 +418,7 @@ public class ClientModel {
             }
         }
 
-        // Fallback di sicurezza
+        // Safety fallback
         if (!placed) {
             turnOrderTrack.add(nickname);
         }
@@ -430,20 +429,20 @@ public class ClientModel {
     }
 
     /**
-     * Applica lo snapshot di un evento risolto: per ogni giocatore calcola il delta di
-     * risorse (per il riepilogo a schermo) e ne aggiorna cibo, aura, magia, tribù ed
-     * edifici, quindi ricostruisce le file del tabellone e notifica la UI.
+     * Applies the snapshot of a resolved event: for each player calculates the
+     * resource delta (for the on-screen summary) and updates food, aura, magic,
+     * tribe and buildings, then rebuilds the board rows and notifies the UI.
      *
-     * @param msg l'aggiornamento dell'evento ricevuto dal server
+     * @param msg the event update received from the server
      */
     public synchronized void updateEventSnapshot(EventUpdate msg) {
         EventReport report = new EventReport();
         report.eventName = msg.getEventName() != null ? msg.getEventName() : "Risoluzione Eventi";
 
-        // Aggiorna Risorse di TUTTI i Giocatori simultaneamente (LA TUA LOGICA INTATTA)
+        // Updates Resources of ALL Players simultaneously (YOUR LOGIC INTACT)
         msg.getPlayersStats().forEach((nick, stats) -> {
 
-            // <-- CATTURA DATI PRIMA DELLA SOVRASCRITTURA -->
+            // <-- CAPTURE DATA BEFORE OVERWRITING -->
             PlayerDelta pd = new PlayerDelta();
             pd.nickname = nick;
             pd.oldFood = playerFood.getOrDefault(nick, 0);
@@ -462,13 +461,13 @@ public class ClientModel {
             playerBuildings.put(nick, new java.util.ArrayList<>(stats.buildings));
         });
 
-        // Memorizza l'evento e notifica la GUI
+        // Stores the event and notifies the GUI
         pendingEventReports.add(report);
         if (onEventResolvedCallback != null) {
             onEventResolvedCallback.accept(new java.util.ArrayList<>(pendingEventReports));
         }
 
-        // Pialla e Ricostruisci la Board in un colpo solo (LA TUA LOGICA INTATTA)
+        // Wipes and Rebuilds the Board in one go (YOUR LOGIC INTACT)
         characterUpperRow.clear(); characterUpperRow.addAll(msg.getCharUpper());
         characterLowerRow.clear(); characterLowerRow.addAll(msg.getCharLower());
         eventUpperRow.clear();     eventUpperRow.addAll(msg.getEventUpper());
@@ -479,20 +478,20 @@ public class ClientModel {
     }
 
     /**
-     * Applica lo snapshot COMPLETO dello stato ricevuto a ogni cambio di fase o alla
-     * riconnessione: azzera tutte le strutture locali (per non lasciare "fantasmi" di
-     * giocatori usciti) e le ripopola con stato, statistiche dei giocatori, ordine di
-     * turno, tracciato offerte e file del tabellone.
+     * Applies the COMPLETE state snapshot received at each phase change or upon
+     * reconnection: clears all local structures (to avoid leaving "ghosts" of
+     * disconnected players) and repopulates them with state, player statistics,
+     * turn order, offering track and board rows.
      *
-     * @param msg lo snapshot di stato ricevuto dal server
+     * @param msg the state snapshot received from the server
      */
     public synchronized void updateState(StateChangedUpdate msg) {
         this.currentState = msg.getStateName();
         this.currentEra = msg.getCurrentEra();
         this.currentRound = msg.getCurrentRound();
 
-        // 1. PULIZIA TOTALE: Dobbiamo svuotare TUTTO prima di riempire.
-        // Se non svuotiamo queste mappe, i dati dei giocatori disconnessi rimangono "fantasmi".
+        // 1. TOTAL CLEANUP: We must empty EVERYTHING before filling.
+        // If we don't empty these maps, disconnected players' data remain as "ghosts".
         this.players.clear();
         this.playerColors.clear();
         this.playerFood.clear();
@@ -501,7 +500,7 @@ public class ClientModel {
         this.playerTribe.clear();
         this.playerBuildings.clear();
 
-        // 2. Ricarica i dati puliti inviati dal server
+        // 2. Reloads the clean data sent by the server
         this.players.addAll(msg.getPlayersStats().keySet());
 
         msg.getPlayersStats().forEach((nick, stats) -> {
@@ -513,14 +512,14 @@ public class ClientModel {
             playerBuildings.put(nick, new ArrayList<>(stats.buildings));
         });
 
-        // 3. Sincronizzazione strutture di gioco rimanenti
+        // 3. Synchronization of remaining game structures
         turnOrderTrack.clear();
         turnOrderTrack.addAll(msg.getTurnOrderTrack());
 
         offeringTrack.clear();
         offeringTrack.putAll(msg.getOfferingTrack());
 
-        // 4. Sincronizza plancia di gioco
+        // 4. Synchronizes game board
         characterUpperRow.clear(); characterUpperRow.addAll(msg.getCharUpper());
         characterLowerRow.clear(); characterLowerRow.addAll(msg.getCharLower());
         eventUpperRow.clear();     eventUpperRow.addAll(msg.getEventUpper());
@@ -530,24 +529,24 @@ public class ClientModel {
         notifyUI();
     }
 
-    /** Aggiornato quando un giocatore sceglie il colore del totem */
+    /** Updated when a player chooses the totem color */
     public synchronized void updateTotemColor(String nickname, TotemColors color) {
         playerColors.put(nickname, color);
         notifyUI();
     }
 
     /**
-     * Registra il risultato finale (vincitori e punteggi). I dati vengono assegnati subito
-     * così non sono mai vuoti; se ci sono ancora report eventi da mostrare, l'apertura
-     * della schermata di fine partita viene posticipata fino al loro consumo.
+     * Registers the final result (winners and scores). The data is assigned immediately
+     * so it's never empty; if there are still event reports to show, opening the
+     * endgame screen is postponed until they are consumed.
      *
-     * @param winners    i vincitori
-     * @param allScores  i punteggi finali di tutti i giocatori
-     * @param numPlayers il numero di giocatori della partita
+     * @param winners    the winners
+     * @param allScores  the final scores of all players
+     * @param numPlayers the number of players in the match
      */
     public synchronized void updateEndGame(List<String> winners, Map<String, Integer> allScores, int numPlayers) {
-        // FIX ASSOLUTO: Assegnazione immediata e incondizionata dei risultati.
-        // Così model.getWinners() non sarà MAI vuoto quando la CLI andrà a stamparlo.
+        // ABSOLUTE FIX: Immediate and unconditional assignment of results.
+        // This way model.getWinners() will NEVER be empty when the CLI goes to print it.
         this.winners = winners;
         this.lastMatchScores = allScores;
         this.lastMatchNumPlayers = numPlayers;
@@ -563,16 +562,16 @@ public class ClientModel {
     }
 
     // ==========================================
-    // CALCOLO BONUS STATICI (DA GAME.JAVA)
+    // STATIC BONUS CALCULATION (FROM GAME.JAVA)
     // ==========================================
 
     /**
-     * Ricalcola lato client il bonus Artisti di un giocatore (10 aura per coppia),
-     * leggendo le carte serializzate della sua tribù. Usato per mostrare il dettaglio
-     * del punteggio finale.
+     * Recalculates client-side a player's Artists bonus (10 aura per pair),
+     * reading the serialized cards of their tribe. Used to show the breakdown
+     * of the final score.
      *
-     * @param pName il nickname del giocatore
-     * @return l'aura bonus dagli artisti
+     * @param pName the player's nickname
+     * @return the bonus aura from artists
      */
     public int getArtistBonus(String pName) {
         int artistCount = 0;
@@ -587,11 +586,11 @@ public class ClientModel {
     }
 
     /**
-     * Ricalcola lato client il bonus Inventori (numero di inventori per invenzioni
-     * distinte), leggendo le carte serializzate della tribù.
+     * Recalculates client-side the Inventors bonus (number of inventors per distinct
+     * inventions), reading the serialized cards of the tribe.
      *
-     * @param pName il nickname del giocatore
-     * @return l'aura bonus dagli inventori
+     * @param pName the player's nickname
+     * @return the bonus aura from inventors
      */
     public int getInventorBonus(String pName) {
         int inventorCount = 0;
@@ -608,11 +607,11 @@ public class ClientModel {
     }
 
     /**
-     * Ricalcola lato client l'aura dei Costruttori (somma delle loro aura base),
-     * leggendo le carte serializzate della tribù.
+     * Recalculates client-side the Constructors aura (sum of their base aura),
+     * reading the serialized cards of the tribe.
      *
-     * @param pName il nickname del giocatore
-     * @return l'aura bonus dai costruttori
+     * @param pName the player's nickname
+     * @return the bonus aura from constructors
      */
     public int getConstructorBonus(String pName) {
         int constructorAura = 0;
@@ -627,11 +626,11 @@ public class ClientModel {
     }
 
     /**
-     * Ricalcola lato client l'aura base degli Edifici (somma delle aura finali),
-     * leggendo le carte serializzate del giocatore.
+     * Recalculates client-side the Buildings base aura (sum of the final auras),
+     * reading the player's serialized cards.
      *
-     * @param pName il nickname del giocatore
-     * @return l'aura base dagli edifici
+     * @param pName the player's nickname
+     * @return the base aura from buildings
      */
     public int getBuildingBaseAura(String pName) {
         int buildingBaseAura = 0;
@@ -646,12 +645,12 @@ public class ClientModel {
     }
 
     /**
-     * Memorizza la classifica ricevuta dal server (posizione del giocatore ed elenco
-     * completo) per la sua visualizzazione.
+     * Stores the leaderboard received from the server (player position and complete
+     * list) for display.
      *
-     * @param playerPosition la posizione del giocatore in classifica
-     * @param entries        le voci della classifica
-     * @param numPlayers     il filtro sul numero di giocatori usato
+     * @param playerPosition the player's position in the leaderboard
+     * @param entries        the leaderboard entries
+     * @param numPlayers     the player number filter used
      */
     public synchronized void updateLeaderboard(int playerPosition, List<LeaderboardEntry> entries, int numPlayers) {
         this.leaderboardPosition = playerPosition;
@@ -660,19 +659,19 @@ public class ClientModel {
         notifyUI();
     }
 
-    /** Aggiornato quando si riceve un messaggio di errore */
+    /** Updated when an error message is received */
     public synchronized void updateError(String message) {
         this.lastErrorMessage = message;
         notifyUI();
     }
 
-    /** Aggiornato quando il gioco viene sospeso (1 solo giocatore attivo) */
+    /** Updated when the game is suspended (only 1 active player) */
     public synchronized void updateGameSuspended() {
         this.lastSystemMessage = "⏸️ GIOCO SOSPESO: in attesa di riconnessioni...";
         notifyUI();
     }
 
-    /** Aggiornato quando il gioco viene ripreso */
+    /** Updated when the game is resumed */
     public synchronized void updateGameResumed() {
         this.lastSystemMessage = "▶️ GIOCO RIPRESO: almeno 2 giocatori attivi!";
         notifyUI();
@@ -702,11 +701,11 @@ public class ClientModel {
     }
 
     /**
-     * Segnala la perdita di connessione col server: imposta un messaggio di sistema e
-     * invoca l'eventuale callback (es. per avviare l'auto-riconnessione lato UI).
+     * Signals connection loss with the server: sets a system message and invokes
+     * any callback (e.g., to trigger UI-side auto-reconnection).
      */
     public void triggerConnectionLost() {
-        // AGGIUNTA: Forza un messaggio di sistema per la CLI (e GUI)
+        // ADDITION: Forces a system message for CLI (and GUI)
         this.lastSystemMessage = "❌ ATTENZIONE: CONNESSIONE CON IL SERVER PERSA! Tentativo di riconnessione in corso...";
         notifyUI();
 

@@ -1,15 +1,15 @@
 /**
- * Messaggi di rete scambiati tra client e server, con dispatch polimorfico.
+ * Network messages exchanged between client and server, with polymorphic dispatch.
  *
- * <p>Tutti implementano l'interfaccia marcatore
- * {@link it.polimi.ingsw.am54.network.messages.ClientMessage}. Le due sottogerarchie
- * {@code sealed} sono:</p>
+ * <p>All implement the marker interface
+ * {@link it.polimi.ingsw.am54.network.messages.ClientMessage}. The two {@code sealed} sub-hierarchies
+ * are:</p>
  * <ul>
- *   <li>{@link it.polimi.ingsw.am54.network.messages.Request} (client → server): porta
+ *   <li>{@link it.polimi.ingsw.am54.network.messages.Request} (client → server): provides
  *       {@code execute(Controller, String, ClientConnection)};</li>
- *   <li>{@link it.polimi.ingsw.am54.network.messages.Update} (server → client): porta
+ *   <li>{@link it.polimi.ingsw.am54.network.messages.Update} (server → client): provides
  *       {@code applyTo(ClientModel)}.</li>
  * </ul>
- * In questo modo non servono {@code switch}/{@code instanceof} nei loop di rete.
+ * This way, no {@code switch}/{@code instanceof} are needed in the network loops.
  */
 package it.polimi.ingsw.am54.network.messages;

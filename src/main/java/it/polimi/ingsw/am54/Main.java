@@ -4,15 +4,15 @@ import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.IGame;
 
 /**
- * Piccola demo da console del solo motore di gioco (senza rete): crea una partita,
- * fa entrare quattro giocatori, sceglie i colori ed esegue il setup. Utile come
- * verifica rapida del modello, non è il punto d'ingresso dell'applicazione.
+ * Small console demo of the game engine alone (no network): creates a game,
+ * joins four players, chooses colors and performs the setup. Useful as a
+ * quick verification of the model, it is not the application's entry point.
  */
 public class Main {
     /**
-     * Esegue la demo di setup del motore di gioco.
+     * Runs the game engine setup demo.
      *
-     * @param args argomenti da riga di comando (non utilizzati)
+     * @param args command line arguments (not used)
      */
     public static void main(String[] args) {
 
@@ -22,17 +22,17 @@ public class Main {
 
         try {
             System.out.println("\n--- FASE 1: INGRESSO NELLA LOBBY ---");
-            game.joinGame("carbicane");
+            game.joinGame("carbi");
             game.joinGame("frabbo");
-            game.joinGame("nutria");
-            game.joinGame("Diana");
+            game.joinGame("cacio");
+            game.joinGame("gabri");
             System.out.println("4 giocatori sono entrati con successo nella lobby.");
 
             System.out.println("\n--- FASE 2: SCELTA DEI COLORI ---");
-            game.chooseTotemColor("carbicane", "RED");
+            game.chooseTotemColor("carbi", "RED");
             game.chooseTotemColor("frabbo", "YELLOW");
-            game.chooseTotemColor("nutria", "BLACK");
-            game.chooseTotemColor("Diana", "WHITE");
+            game.chooseTotemColor("cacio", "BLACK");
+            game.chooseTotemColor("gabri", "WHITE");
             System.out.println("Tutti i giocatori hanno scelto il loro Totem.");
 
             System.out.println("\n--- FASE 3: SETUP DELLA PARTITA ---");

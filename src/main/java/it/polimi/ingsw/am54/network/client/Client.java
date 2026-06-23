@@ -1,8 +1,8 @@
 package it.polimi.ingsw.am54.network.client;
 
 /**
- * Hub centrale del lato Client.
- * Tiene insieme la rete, il modello locale e le info dell'utente.
+ * Central hub of the Client side.
+ * Ties together the network, local model, and user info.
  */
 public class Client {
     private static Client instance;
@@ -26,8 +26,8 @@ public class Client {
     }
 
     /**
-     * Reinizializza il client (es. ritorno al menu): chiude l'eventuale connessione
-     * attiva e ricrea da zero l'istanza singleton.
+     * Reinitializes the client (e.g. returning to the menu): closes any active
+     * connection and recreates the singleton instance from scratch.
      */
     public static void resetClient() {
         if (instance != null && instance.connection != null) {
@@ -38,7 +38,7 @@ public class Client {
         instance = new Client();
     }
 
-    // Metodo per "accendere" il client dopo la scelta RMI/Socket
+    // Method to "turn on" the client after the RMI/Socket choice
     public void setConnection(ServerConnection connection) {
         this.connection = connection;
     }
@@ -49,16 +49,16 @@ public class Client {
     }
 
     /**
-     * Avvia l'auto-riconnessione in un thread dedicato: ogni 3 secondi ritenta di
-     * stabilire una nuova connessione (Socket o RMI, secondo l'ultima usata) e di
-     * rientrare in partita con lo stesso nickname, finché non riesce. Aggiornando la
-     * connessione nel singleton, le mosse successive viaggiano subito su quella nuova.
+     * Starts auto-reconnection in a dedicated thread: every 3 seconds attempts to
+     * establish a new connection (Socket or RMI, depending on the last used) and to
+     * rejoin the game with the same nickname, until successful. By updating the
+     * connection in the singleton, subsequent moves travel immediately on the new one.
      */
     public void startAutoReconnect() {
         if (isReconnecting) return;
         isReconnecting = true;
 
-        // FIX: Rimosso Platform.runLater che faceva crashare il thread in modalità CLI!
+        // FIX: Removed Platform.runLater which caused the thread to crash in CLI mode!
         model.setReconnectingStatus(true);
 
         new Thread(() -> {
@@ -80,12 +80,12 @@ public class Client {
 
                     isReconnecting = false;
 
-                    // Annunciamo la ripresa a gran voce!
+                    // We announce the recovery loudly!
                     model.triggerSystemMessage("✅ RICONNESSO AL SERVER CON SUCCESSO!");
                     model.setReconnectingStatus(false);
 
                 } catch (Exception e) {
-                    // La connessione fallisce, riprova al prossimo ciclo silenziosamente
+                    // The connection fails, retries at the next cycle silently
                 }
             }
         }).start();

@@ -62,9 +62,6 @@ public class DatabaseManager {
         }
     }
 
-    /**
-     * Inserisce nutria 1312 pts per 2-5 players solo se la tabella è vuota (primo avvio).
-     */
     private void seedIfEmpty(Connection conn) {
         try (Statement countStmt = conn.createStatement();
              ResultSet rs = countStmt.executeQuery("SELECT COUNT(*) FROM match_results")) {

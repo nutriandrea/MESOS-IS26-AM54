@@ -4,21 +4,21 @@ import it.polimi.ingsw.am54.network.messages.*;
 import it.polimi.ingsw.am54.model.TotemColors;
 
 /**
- * Offre alla View i metodi per interagire con il gioco.
- * Trasforma le chiamate ai metodi in oggetti Request inviati sulla rete.
+ * Offers methods to the View to interact with the game.
+ * Transforms method calls into Request objects sent over the network.
  */
 public class VirtualServer {
     private final String nickname;
 
     public VirtualServer(ServerConnection connection, String nickname) {
-        // NB: la connessione NON viene memorizzata qui. Dopo una riconnessione
-        // automatica il Client sostituisce la connessione viva nel singleton; se
-        // tenessimo un riferimento "congelato" al costruttore, ogni mossa verrebbe
-        // inviata alla vecchia connessione morta e andrebbe persa silenziosamente.
+        // NB: the connection is NOT stored here. After an automatic reconnection
+        // the Client replaces the live connection in the singleton; if we
+        // kept a "frozen" reference to the constructor, every move would be
+        // sent to the old dead connection and silently lost.
         this.nickname = nickname;
     }
 
-    /** Restituisce SEMPRE la connessione attualmente viva (aggiornata dopo le riconnessioni). */
+    /** ALWAYS returns the currently live connection (updated after reconnections). */
     private ServerConnection connection() {
         return Client.getInstance().getConnection();
     }

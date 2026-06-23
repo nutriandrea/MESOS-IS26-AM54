@@ -2,29 +2,29 @@ package it.polimi.ingsw.am54.model;
 
 public interface IEffect<T extends Card> {
 
-    // 1. FASE PICK: Chiamato istantaneamente quando la carta viene comprata/pescata
+    // 1. PICK PHASE: Called instantly when the card is bought/picked
     default void applyOnPurchase(Player p, Game g, T card) {
-        // Di default non fa nulla
+        // By default does nothing
     }
 
-    // 2. FASE CHIUSURA TURNO: Chiamato quando il singolo giocatore restituisce il totem
-    // e prende il bonus dalla Turn Order Track
+    // 2. TURN END PHASE: Called when the single player returns the totem
+    // and takes the bonus from the Turn Order Track
     default void applyOnTurnEnd(Player p, Game g, T card) {
-        // Di default non fa nulla
+        // By default does nothing
     }
 
-    // 3. FASE EVENTI: Chiamato un attimo prima di risolvere una carta Evento globale
+    // 3. EVENTS PHASE: Called right before resolving a global Event card
     default void applyOnEvent(Player p, Game g, T card, EventCard currentEvent) {
-        // Di default non fa nulla
+        // By default does nothing
     }
 
-    // 4. FASE FINE PARTITA: Chiamato alla fine del gioco per il calcolo dei punti vittoria
+    // 4. END GAME PHASE: Called at the end of the game for the victory points calculation
     default void applyOnEndGame(Player p, Game g, T card) {
-        // Di default non fa nulla
+        // By default does nothing
     }
 
-    // 5. FASE PASSIVA: Chiamato ogni volta che un Personaggio viene aggiunto alla tribù
+    // 5. PASSIVE PHASE: Called every time a Character is added to the tribe
     default void applyOnCharacterPicked(Player p, Game g, T card, CharacterCard newCharacter) {
-        // Di default non fa nulla
+        // By default does nothing
     }
 }

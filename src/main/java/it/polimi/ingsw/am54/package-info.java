@@ -1,17 +1,17 @@
 /**
- * Radice del progetto <b>Mesos</b> (gruppo AM54), gioco da tavolo multiplayer
- * realizzato per la Prova Finale di Ingegneria del Software.
+ * Root of the <b>Mesos</b> project (group AM54), a multiplayer board game
+ * developed for the Software Engineering Final Project.
  *
- * <p>Contiene i punti d'ingresso eseguibili:</p>
+ * <p>Contains the executable entry points:</p>
  * <ul>
- *   <li>{@link it.polimi.ingsw.am54.MainLauncher} / {@link it.polimi.ingsw.am54.Launcher}
- *       — avvio del client (scelta GUI o CLI);</li>
- *   <li>{@link it.polimi.ingsw.am54.network.server.Server} — avvio del server;</li>
- *   <li>{@link it.polimi.ingsw.am54.MainClient} — avvio diretto del client in modalità testuale.</li>
+ * <li>{@link it.polimi.ingsw.am54.MainLauncher} / {@link it.polimi.ingsw.am54.Launcher}
+ * — client startup (GUI or CLI choice);</li>
+ * <li>{@link it.polimi.ingsw.am54.network.server.Server} — server startup;</li>
+ * <li>{@link it.polimi.ingsw.am54.MainClient} — direct startup of the client in textual mode.</li>
  * </ul>
  *
- * <p>L'architettura segue il pattern <b>MVC</b> con <b>State Pattern</b> per le fasi di
- * gioco, <b>Observer</b> per la propagazione degli aggiornamenti e un doppio strato di
- * trasporto (Socket TCP e RMI).</p>
+ * <p>The architecture follows the <b>MVC</b> pattern with <b>State Pattern</b> for the game
+ * phases, <b>Observer</b> for update propagation and a dual transport
+ * layer (TCP Socket and RMI).</p>
  */
 package it.polimi.ingsw.am54;

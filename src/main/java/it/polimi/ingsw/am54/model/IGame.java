@@ -1,18 +1,16 @@
 package it.polimi.ingsw.am54.model;
 public interface IGame {
-    // Azioni di Gioco
+    // Game Actions
     void joinGame(String nickname) throws Exception;
     void chooseTotemColor(String nickname, String color) throws Exception;
     void placeTotem(String nickname, int offerPosition) throws Exception;
-    // void pickCharacter(String nickname, int cardIndex) throws Exception;
-    // void buyBuilding(String nickname, int cardIndex) throws Exception;
     void pickCard(String nickname, String row, int cardIndex) throws Exception;
     void endTurn(String nickname) throws Exception;
 
     void setupGame() throws Exception;
 
-    // Gestione Observer
-    // Permette alla UI o alla rete di "iscriversi" per ricevere aggiornamenti
+    // Observer Management
+    // Allows the UI or network to "subscribe" to receive updates
     void addObserver(IGameObserver observer);
     void removeObserver(IGameObserver observer);
 }

@@ -4,19 +4,19 @@ import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.network.server.ClientConnection;
 
 /**
- * Richiesta inviata dal giocatore al server (CLIENT -> SERVER).
+ * Request sent by the player to the server (CLIENT -> SERVER).
  * <p>
- * DISPATCH POLIMORFICO: ogni sottotipo implementa {@link #execute},
- * eliminando la necessita' di switch/if-else sul tipo nel loop di lettura.
- * Il compilatore, grazie a {@code sealed}, garantisce che tutti i casi siano coperti.
+ * POLYMORPHIC DISPATCH: each subtype implements {@link #execute},
+ * eliminating the need for switch/if-else on the type in the read loop.
+ * The compiler, thanks to {@code sealed}, guarantees that all cases are covered.
  * <p>
- * Eccezione: {@link PongResponse} e {@link JoinGameRequest} sono gestiti come
- * early {@code instanceof} in {@code SocketClientHandler} perche' operano a
- * livello socket (ping) o necessitano di settare il nickname prima del dispatch.
+ * Exception: {@link PongResponse} and {@link JoinGameRequest} are handled as
+ * early {@code instanceof} in {@code SocketClientHandler} because they operate at the
+ * socket level (ping) or need to set the nickname before dispatch.
  */
 public sealed interface Request extends ClientMessage
         permits JoinGameRequest, SetupGameRequest, ChooseTotemRequest,
-                PlaceTotemRequest, PickCardRequest, EndTurnRequest,
-                PongResponse, GetLeaderboardRequest {
+        PlaceTotemRequest, PickCardRequest, EndTurnRequest,
+        PongResponse, GetLeaderboardRequest {
     void execute(Controller controller, String playerNickname, ClientConnection connection);
 }

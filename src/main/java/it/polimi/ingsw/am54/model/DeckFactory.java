@@ -16,21 +16,21 @@ import java.util.function.Supplier;
 
 
 /**
- * Factory dei mazzi di gioco. Legge le carte dai file JSON di configurazione, le
- * filtra/mescola per Era secondo il numero di giocatori e associa a ciascuna il
- * proprio effetto. Le carte di Era più bassa finiscono in cima al mazzo (pescate prima).
+ * Game decks factory. Reads the cards from the configuration JSON files, filters/shuffles
+ * them by Era according to the number of players and associates each with its own effect.
+ * The lowest Era cards end up at the top of the deck (drawn first).
  */
 public class DeckFactory {
 
     /**
-     * Crea il mazzo degli Edifici per il numero di giocatori indicato: carica le carte
-     * dal JSON, le raggruppa per Era, le mescola e ne impila la quantità prevista da
-     * {@code EraCounts.json} (Era 1 in cima, Era 3 in fondo).
+     * Creates the Buildings deck for the specified number of players: loads the cards
+     * from the JSON, groups them by Era, shuffles them and stacks the expected amount from
+     * {@code EraCounts.json} (Era 1 at the top, Era 3 at the bottom).
      *
-     * @param filePath   percorso del JSON degli edifici
-     * @param numPlayers numero di giocatori (2-5)
-     * @return il mazzo Edifici pronto all'uso
-     * @throws IllegalArgumentException se il numero di giocatori non è valido
+     * @param filePath   path of the buildings JSON
+     * @param numPlayers number of players (2-5)
+     * @return the ready-to-use Buildings deck
+     * @throws IllegalArgumentException if the number of players is not valid
      */
     public static Deck<BuildingCard> createBuildingDeck(String filePath, int numPlayers) {
 
@@ -40,7 +40,7 @@ public class DeckFactory {
 
         int countE1 = 0, countE2 = 0, countE3 = 0;
 
-        // leggiamo il setup delle quantità da EraCounts.json
+        // read the quantities setup from EraCounts.json
         try {
             InputStream is = DeckFactory.class.getResourceAsStream("/data/EraCounts.json");
             JsonObject countsRoot = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonObject();
@@ -102,15 +102,15 @@ public class DeckFactory {
 
         Stack<BuildingCard> finalDeck = new Stack<>();
 
-        // Inseriamo prima l'era 3 (così va in fondo al mazzo)
+        // Insert era 3 first (so it goes to the bottom of the deck)
         for (int i = 0; i < Math.min(countE3, e3.size()); i++) {
             finalDeck.push(e3.get(i));
         }
-        // Poi l'era 2
+        // Then era 2
         for (int i = 0; i < Math.min(countE2, e2.size()); i++) {
             finalDeck.push(e2.get(i));
         }
-        // Infine l'era 1 (così rimane in cima allo stack e viene pescata per prima)
+        // Finally era 1 (so it remains at the top of the stack and is drawn first)
         for (int i = 0; i < Math.min(countE1, e1.size()); i++) {
             finalDeck.push(e1.get(i));
         }
@@ -119,16 +119,16 @@ public class DeckFactory {
     }
 
     /**
-     * Crea il mazzo Tribù unendo Personaggi ed Eventi. I personaggi vengono filtrati
-     * per numero minimo di giocatori, mescolati e "tagliati" alle quantità per Era; gli
-     * eventi vengono uniti ai personaggi della stessa Era e l'insieme è rimescolato (così
-     * non è prevedibile quando esce un evento). Gli eventi finali vanno in fondo al mazzo.
+     * Creates the Tribe deck joining Characters and Events. Characters are filtered
+     * by minimum number of players, shuffled and "cut" to the quantities per Era;
+     * events are joined to the characters of the same Era and the set is reshuffled (so
+     * it is not predictable when an event comes out). The final events go to the bottom of the deck.
      *
-     * @param charPath   percorso del JSON dei personaggi
-     * @param eventPath  percorso del JSON degli eventi
-     * @param numPlayers numero di giocatori (2-5)
-     * @return il mazzo Tribù pronto all'uso
-     * @throws IllegalArgumentException se il numero di giocatori non è valido
+     * @param charPath   path of the characters JSON
+     * @param eventPath  path of the events JSON
+     * @param numPlayers number of players (2-5)
+     * @return the ready-to-use Tribe deck
+     * @throws IllegalArgumentException if the number of players is not valid
      */
     public static Deck<TribeCard> createTribeDeck(String charPath, String eventPath, int numPlayers) {
 
@@ -138,7 +138,7 @@ public class DeckFactory {
 
         int countE1 = 0, countE2 = 0, countE3 = 0;
 
-        // Leggiamo il numero di personaggi da pescare per Era
+        // Read the number of characters to draw per Era
         try {
             InputStream is = DeckFactory.class.getResourceAsStream("/data/EraCounts.json");
             JsonObject countsRoot = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonObject();
@@ -153,7 +153,7 @@ public class DeckFactory {
             throw new IllegalStateException("Errore critico durante la lettura del file EraCounts.json", e);
         }
 
-        // Liste separate per Personaggi ed Eventi
+        // Separate lists for Characters and Events
         List<TribeCard> charE1 = new ArrayList<>();
         List<TribeCard> charE2 = new ArrayList<>();
         List<TribeCard> charE3 = new ArrayList<>();
@@ -163,7 +163,7 @@ public class DeckFactory {
         List<TribeCard> eventE3 = new ArrayList<>();
         List<TribeCard> finalEvents = new ArrayList<>();
 
-        // caricamento Personaggi (inseriti in charE)
+        // Character loading (inserted in charE)
         try {
             InputStream is = DeckFactory.class.getResourceAsStream(charPath);
             JsonArray root = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonArray();
@@ -198,7 +198,7 @@ public class DeckFactory {
             throw new IllegalStateException("Errore critico durante la lettura del file dei Personaggi: " + charPath, e);
         }
 
-        // caricamento Eventi (inseriti in eventE)
+        // Event loading (inserted in eventE)
         try {
             InputStream is = DeckFactory.class.getResourceAsStream(eventPath);
             JsonArray root = JsonParser.parseReader(new InputStreamReader(is)).getAsJsonArray();
@@ -242,7 +242,7 @@ public class DeckFactory {
             throw new IllegalStateException("Errore critico durante la lettura del file degli Eventi: " + eventPath, e);
         }
 
-        //mescoliamo solo i personaggi e li "tagliamo" in base al numero del JSON
+        // we shuffle only the characters and "cut" them based on the JSON number
         Collections.shuffle(charE1);
         Collections.shuffle(charE2);
         Collections.shuffle(charE3);
@@ -251,25 +251,25 @@ public class DeckFactory {
         List<TribeCard> era2 = new ArrayList<>(charE2.subList(0, Math.min(countE2, charE2.size())));
         List<TribeCard> era3 = new ArrayList<>(charE3.subList(0, Math.min(countE3, charE3.size())));
 
-        // uniamo tutti gli Eventi ai personaggi appena selezionati
+        // join all Events to the newly selected characters
         era1.addAll(eventE1);
         era2.addAll(eventE2);
         era3.addAll(eventE3);
 
-        // mischiamo il mazzetto completo per ogni Era (così non sai mai quando esce l'evento)
+        // we shuffle the complete mini-deck for each Era (so you never know when the event comes out)
         Collections.shuffle(era1);
         Collections.shuffle(era2);
         Collections.shuffle(era3);
-        Collections.shuffle(finalEvents); // mischiamo anche i finali
+        Collections.shuffle(finalEvents); // shuffle the finals as well
 
-        // impiliamo tutto nello Stack finale (LIFO)
+        // let's stack everything in the final Stack (LIFO)
         Stack<TribeCard> finalDeck = new Stack<>();
         for (TribeCard c : finalEvents) finalDeck.push(c);
         for (TribeCard c : era3) finalDeck.push(c);
         for (TribeCard c : era2) finalDeck.push(c);
         for (TribeCard c : era1) finalDeck.push(c);
 
-        //ritorniamo lo Stack finale e completo
+        // return the final and complete Stack
         return new Deck<>(finalDeck);
     }
 
@@ -286,7 +286,7 @@ public class DeckFactory {
             Map.entry("DOUBLE_INVENTOR", p -> new BuildingDoubleInventor())
     );
 
-    // crea l'effetto giusto per gli edifici
+    // creates the right effect for the buildings
     private static IEffect<BuildingCard> createBuildingEffect(String phase, String nomeLambda, JsonObject params) {
         if (nomeLambda == null || nomeLambda.isEmpty() || nomeLambda.equals("null")) return null;
         return BUILDING_EFFECTS.getOrDefault(nomeLambda, p -> {

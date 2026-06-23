@@ -7,15 +7,15 @@ import it.polimi.ingsw.am54.model.OfferingTile;
 
 public class StartTurnState extends GameState {
     /**
-     * Piazza il totem del giocatore di turno su una tessera offerta libera. Valida
-     * turno, doppio piazzamento e disponibilità della tessera; poi libera lo slot del
-     * giocatore nell'ordine di turno. Quando tutti hanno piazzato, transita a
-     * {@link PickingState}, altrimenti passa al giocatore successivo.
+     * Places the turn player's totem on a free offering tile. Validates
+     * turn, double placement and tile availability; then frees the player's slot
+     * in the turn order. When all have placed, transitions to
+     * {@link PickingState}, otherwise passes to the next player.
      *
-     * @param game          la partita corrente
-     * @param nickname      il giocatore che piazza il totem
-     * @param offerPosition l'indice della tessera offerta scelta
-     * @throws Exception se non è il suo turno, ha già piazzato, o la tessera è occupata/non valida
+     * @param game          the current game
+     * @param nickname      the player placing the totem
+     * @param offerPosition the index of the chosen offering tile
+     * @throws Exception if it's not their turn, they have already placed, or the tile is occupied/invalid
      */
     @Override
     public void placeTotem(Game game, String nickname, int offerPosition) throws Exception {
@@ -59,12 +59,12 @@ public class StartTurnState extends GameState {
     }
 
     /**
-     * Salta il turno del giocatore corrente (es. disconnesso): lo sposta in fondo
-     * all'ordine di turno, lo marca come "ha piazzato" e passa al successivo.
+     * Skips the current player's turn (e.g. disconnected): moves them to the bottom
+     * of the turn order, marks them as "has placed" and passes to the next.
      *
-     * @param game     la partita corrente
-     * @param nickname il giocatore da saltare
-     * @throws Exception se non è il suo turno o ha già piazzato il totem
+     * @param game     the current game
+     * @param nickname the player to skip
+     * @throws Exception if it's not their turn or they have already placed the totem
      */
     @Override
     public void skipTurn(Game game, String nickname) throws Exception {
@@ -81,11 +81,11 @@ public class StartTurnState extends GameState {
     }
 
     /**
-     * Dopo un recupero da crash, individua il giocatore che deve ancora agire in
-     * questa fase (il primo nell'ordine di turno che non ha piazzato il totem).
+     * After a crash recovery, identifies the player who has yet to act in
+     * this phase (the first in the turn order who hasn't placed the totem).
      *
-     * @param game la partita corrente
-     * @return il giocatore attivo da ripristinare, o {@code null} se nessuno
+     * @param game the current game
+     * @return the active player to restore, or {@code null} if none
      */
     @Override
     public Player recoverActivePlayer(Game game) {
@@ -99,36 +99,36 @@ public class StartTurnState extends GameState {
     }
 
     /**
-     * Gestisce la disconnessione di un giocatore in fase di piazzamento: libera la
-     * tessera offerta se l'aveva occupata, lo toglie dall'ordine di turno compattando
-     * gli altri, e se era di turno passa al successivo. Se l'uscita completa la fase,
-     * transita a {@link PickingState}.
+     * Handles the disconnection of a player during the placement phase: frees the
+     * offering tile if they had occupied it, removes them from the turn order compacting
+     * the others, and if it was their turn passes to the next. If the exit completes the phase,
+     * transitions to {@link PickingState}.
      *
-     * @param game            la partita corrente
-     * @param p               il giocatore disconnesso
-     * @param isCurrentPlayer true se era il giocatore di turno
-     * @throws Exception in caso di errore nella transizione
+     * @param game            the current game
+     * @param p               the disconnected player
+     * @param isCurrentPlayer true if they were the turn player
+     * @throws Exception in case of an error in the transition
      */
     @Override
     public void handleDisconnection(Game game, Player p, boolean isCurrentPlayer) throws Exception {
-        // 1. Se aveva già piazzato (es. crash subito dopo), libera la tessera Offerta
+        // 1. If they had already placed (e.g. crash right after), frees the Offering tile
         if (p.hasPlacedTotem() && p.getCurrentTile() != null) {
             p.getCurrentTile().freeSlot();
             p.setCurrentTile(null);
             game.notifyTotemReturned(p, -1);
         }
 
-        // Non forziamo più p.setHasPlacedTotem(true)! Lasciamo che il gioco prosegua basandosi sugli attivi
+        // We no longer force p.setHasPlacedTotem(true)! We let the game continue based on the active ones
 
-        // 2. Rimuove il giocatore dalla Turn Order e fa scalare tutti gli altri verso l'alto (Shift Up)
+        // 2. Removes the player from the Turn Order and shifts all others upwards (Shift Up)
         game.getBoard().removePlayerFromTurnOrderAndShiftUp(p);
 
-        // 3. Se stava scegliendo lui, passiamo al prossimo
+        // 3. If they were choosing, let's move to the next
         if (isCurrentPlayer) {
             game.nextPlayer();
         }
 
-        // 4. Verifica immediata: la fase è finita grazie all'abbassamento dei player attivi?
+        // 4. Immediate check: is the phase over due to the decrease in active players?
         if (game.getBoard().allTotemsPlaced(game.getActivePlayerCount())) {
             game.setState(new PickingState());
             Player first = game.getBoard().getFirstPlayerFromOfferingTrack();

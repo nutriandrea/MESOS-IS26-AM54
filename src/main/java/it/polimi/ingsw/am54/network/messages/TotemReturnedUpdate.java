@@ -3,9 +3,9 @@ package it.polimi.ingsw.am54.network.messages;
 import it.polimi.ingsw.am54.network.client.ClientModel;
 
 /**
- * Messaggio di update inviato dal Server quando un giocatore finisce
- * il suo turno di Pick. Notifica ai Client di togliere il Totem
- * dalla Offering Track e rimetterlo nella Turn Order Track.
+ * Update message sent by the Server when a player ends
+ * their Pick turn. Notifies Clients to remove the Totem
+ * from the Offering Track and put it back in the Turn Order Track.
  */
 public final class TotemReturnedUpdate implements Update {
 

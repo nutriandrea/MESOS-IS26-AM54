@@ -3,16 +3,16 @@ package it.polimi.ingsw.am54.network.messages;
 import it.polimi.ingsw.am54.network.client.ClientModel;
 
 /**
- * Notifica di cambiamento dello stato del gioco inviata dal server (SERVER -> CLIENT).
+ * Update message sent by the server (SERVER -> CLIENT).
  * <p>
- * DISPATCH POLIMORFICO: ogni sottotipo implementa {@link #applyTo(ClientModel)},
- * eliminando switch/if-else nel gestore lato client.
- * Grazie a {@code sealed}, il compilatore garantisce copertura esaustiva.
+ * POLYMORPHIC DISPATCH: each subtype implements {@link #applyTo(ClientModel)},
+ * eliminating switch/if-else in the client-side handler.
+ * Thanks to {@code sealed}, the compiler guarantees exhaustive coverage.
  * <p>
- * Eccezione: {@link StateChangedUpdate} ha logica aggiuntiva nel gestore
- * ({@code ServerHandler.handleUpdate}) per attivare il cambio scena GUI quando
- * si passa da lobby a partita. La responsabilita' model vs UI resta separata:
- * applyTo() aggiorna il modello, il gestore decide se cambiare scena.
+ * Exception: {@link StateChangedUpdate} has additional logic in the handler
+ * ({@code ServerHandler.handleUpdate}) to trigger GUI scene switching when
+ * moving from lobby to game. Model vs UI responsibility remains separated:
+ * applyTo() updates the model, the handler decides whether to change scene.
  */
 public sealed interface Update extends ClientMessage
         permits StateChangedUpdate, PlayerJoinedUpdate, PlayerDisconnectedUpdate,

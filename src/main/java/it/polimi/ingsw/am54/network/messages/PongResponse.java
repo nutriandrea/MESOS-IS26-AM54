@@ -4,7 +4,7 @@ import it.polimi.ingsw.am54.controller.Controller;
 import it.polimi.ingsw.am54.network.server.ClientConnection;
 
 /**
- * Risposta del Client al PingRequest del Server.
+ * Client's response to the Server's PingRequest.
  * CLIENT -> SERVER
  */
 public final class PongResponse implements Request {
@@ -20,7 +20,7 @@ public final class PongResponse implements Request {
 
     @Override
     public void execute(Controller controller, String playerNickname, ClientConnection connection) {
-        // PongResponse e' gestita a livello socket prima del dispatch;
-        // questo metodo non viene mai chiamato per questo tipo.
+        // PongResponse is handled at the socket level before dispatch;
+        // this method is never called for this type.
     }
 }

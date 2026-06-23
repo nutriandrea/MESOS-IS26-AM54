@@ -5,7 +5,7 @@ import it.polimi.ingsw.am54.model.TotemColors;
 import it.polimi.ingsw.am54.network.server.ClientConnection;
 
 /**
- * Richiesta inviata dal Client per scegliere il colore del proprio Totem.
+ * Request sent by the Client to choose the color of their Totem.
  */
 public final class ChooseTotemRequest implements Request {
 

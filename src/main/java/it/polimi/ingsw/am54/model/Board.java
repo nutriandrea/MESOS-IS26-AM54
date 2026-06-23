@@ -146,10 +146,10 @@ public class Board {
     }
 
     /**
-     * Posiziona i giocatori negli slot dell'ordine di turno secondo l'ordine (già
-     * mescolato) ricevuto, assegnando l'i-esimo giocatore all'i-esimo slot.
+     * Places the players in the turn order slots according to the (already
+     * shuffled) received order, assigning the i-th player to the i-th slot.
      *
-     * @param randomPlayers i giocatori nell'ordine di turno iniziale
+     * @param randomPlayers the players in the initial turn order
      */
     public void setupInitialTurnOrder(List<Player> randomPlayers) {
         for (int i = 0; i < randomPlayers.size(); i++) {
@@ -196,11 +196,11 @@ public class Board {
     }
 
     /**
-     * Rimuove e restituisce la carta Personaggio all'indice indicato nella fila data.
+     * Removes and returns the Character card at the specified index in the given row.
      *
-     * @param row   la fila ("upper" o "lower")
-     * @param index l'indice della carta
-     * @return la carta rimossa, o {@code null} se l'indice non è valido
+     * @param row   the row ("upper" or "lower")
+     * @param index the index of the card
+     * @return the removed card, or {@code null} if the index is invalid
      */
     public CharacterCard takeCharacterCard(String row, int index) {
         List<CharacterCard> targetRow = row.equalsIgnoreCase("upper") ? characterUpperRow : characterLowerRow;
@@ -209,11 +209,11 @@ public class Board {
     }
 
     /**
-     * Rimuove e restituisce la carta Edificio all'indice indicato nella fila data.
+     * Removes and returns the Building card at the specified index in the given row.
      *
-     * @param row   la fila ("upper" o "lower")
-     * @param index l'indice della carta (relativo agli edifici)
-     * @return la carta rimossa, o {@code null} se l'indice non è valido
+     * @param row   the row ("upper" or "lower")
+     * @param index the index of the card (relative to buildings)
+     * @return the removed card, or {@code null} if the index is invalid
      */
     public BuildingCard takeBuildingCard(String row, int index) {
         List<BuildingCard> targetRow = row.equalsIgnoreCase("upper") ? buildingCardsUpperRow : buildingCardsLowerRow;
@@ -308,10 +308,10 @@ public class Board {
     }
 
     /**
-     * Restituisce il primo giocatore (in ordine di tracciato) che ha un totem su una
-     * tessera offerta: è il primo a dover pescare nella fase di Picking.
+     * Returns the first player (in track order) who has a totem on an
+     * offering tile: they are the first who must pick in the Picking phase.
      *
-     * @return il primo occupante del tracciato offerte, o {@code null} se nessuno
+     * @return the first occupant of the offering track, or {@code null} if none
      */
     public Player getFirstPlayerFromOfferingTrack() {
         for (OfferingTile tile : offeringTrack) {

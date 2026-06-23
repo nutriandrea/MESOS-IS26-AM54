@@ -3,19 +3,19 @@ import it.polimi.ingsw.am54.model.*;
 import java.util.List;
 
 /**
- * Effetto edificio: concede cibo bonus ogni volta che il giocatore completa un set
- * con almeno un personaggio per ciascuno dei sei mestieri.
+ * Building effect: grants bonus food every time the player completes a set
+ * with at least one character for each of the six jobs.
  */
 public class BuildingSixOfType implements IEffect<BuildingCard> {
 
     /**
-     * All'arrivo di un nuovo personaggio verifica se ogni mestiere raggiunge la
-     * quota del mestiere appena incrementato; se il set è completo accredita 5 cibo.
+     * Upon the arrival of a new character, checks if every job reaches the
+     * quota of the newly incremented job; if the set is complete, credits 5 food.
      *
-     * @param p            il giocatore proprietario dell'edificio
-     * @param g            la partita corrente
-     * @param card         l'edificio che possiede l'effetto
-     * @param newCharacter il personaggio appena aggiunto alla tribù
+     * @param p            the player who owns the building
+     * @param g            the current game
+     * @param card         the building that possesses the effect
+     * @param newCharacter the character just added to the tribe
      */
     @Override
     public void applyOnCharacterPicked(Player p, Game g, BuildingCard card, CharacterCard newCharacter) {
@@ -28,9 +28,9 @@ public class BuildingSixOfType implements IEffect<BuildingCard> {
         JobType[] allJobs = { JobType.HUNTER, JobType.CONSTRUCTOR, JobType.SHAMAN, JobType.FARMER, JobType.ARTIST, JobType.INVENTOR };
 
         for (JobType j : allJobs) {
-            if (tribe.stream().filter(c -> c.getJobType() == j).count() < currentCount) return; // Rompe se un lavoro è in difetto
+            if (tribe.stream().filter(c -> c.getJobType() == j).count() < currentCount) return; // Breaks if a job is lacking
         }
 
-        p.modifyFood(5); // Se arriva qui, il set è completo!
+        p.modifyFood(5); // If it gets here, the set is complete!
     }
 }

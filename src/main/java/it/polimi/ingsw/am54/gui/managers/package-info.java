@@ -1,6 +1,6 @@
 /**
- * Manager di supporto alla GUI: incapsulano porzioni complesse della plancia
- * (dashboard del giocatore, mercato delle carte, animazioni e rendering dei totem)
- * per alleggerire i controller FXML.
+ * GUI support managers: encapsulate complex portions of the game board
+ * (player dashboard, card market, totem animations, and rendering)
+ * to lighten the FXML controllers.
  */
 package it.polimi.ingsw.am54.gui.managers;

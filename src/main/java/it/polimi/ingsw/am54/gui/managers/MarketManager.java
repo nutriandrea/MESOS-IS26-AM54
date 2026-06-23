@@ -9,6 +9,10 @@ import javafx.scene.layout.HBox;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * Manager responsible for rendering and updating the market cards (characters,
+ * buildings, and events) and their respective decks on the GUI board.
+ */
 public class MarketManager {
 
     private final HBox upperMarket;
@@ -23,13 +27,13 @@ public class MarketManager {
     };
 
     private static final Map<String, Function<String[], String>> CARD_PATH_RESOLVERS = Map.of(
-        "BUILDING", parts -> "/images/cards/buildings/era " + parts[1] + "/front/" + parts[0] + ".jpg",
-        "EVENT", parts -> "/images/cards/events/era" + parts[1] + "/front/" + parts[0] + ".jpg"
+            "BUILDING", parts -> "/images/cards/buildings/era " + parts[1] + "/front/" + parts[0] + ".jpg",
+            "EVENT", parts -> "/images/cards/events/era" + parts[1] + "/front/" + parts[0] + ".jpg"
     );
 
     private static final Map<String, Function<String[], String>> NAME_EXTRACTORS = Map.of(
-        "BUILDING", parts -> parts.length > 6 ? parts[6] : "Edificio",
-        "EVENT", parts -> parts.length > 4 ? parts[4] : "Evento"
+            "BUILDING", parts -> parts.length > 6 ? parts[6] : "Edificio",
+            "EVENT", parts -> parts.length > 4 ? parts[4] : "Evento"
     );
 
     public MarketManager(HBox upperMarket, HBox lowerMarket, ImageView tribeDeckView, ImageView buildingsDeckView) {
@@ -109,7 +113,7 @@ public class MarketManager {
             if (tribeDeckView != null) tribeDeckView.setVisible(false);
         }
 
-        // --- DECK EDIFICI ---
+        // --- BUILDINGS DECK ---
         if (buildingsDeckView != null) {
             javafx.scene.Node deckContainer = buildingsDeckView.getParent();
             if (era == 3) {
@@ -120,9 +124,9 @@ public class MarketManager {
                 }
             } else {
                 int nextEra = era + 1;
-                String buildBackId = "102"; // Back dell'Era 2 (mostrato in Era 1)
+                String buildBackId = "102"; // Era 2 back (shown during Era 1)
                 if (nextEra == 3) {
-                    buildBackId = "109"; // Back dell'Era 3 (mostrato in Era 2)
+                    buildBackId = "109"; // Era 3 back (shown during Era 2)
                 }
                 String buildingsBack = "/images/cards/buildings/era " + nextEra + "/back/" + buildBackId + ".jpg";
                 try {

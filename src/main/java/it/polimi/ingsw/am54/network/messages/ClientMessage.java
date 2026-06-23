@@ -3,11 +3,11 @@ package it.polimi.ingsw.am54.network.messages;
 import java.io.Serializable;
 
 /**
- * Interfaccia radice per TUTTI i messaggi che viaggiano sulla rete.
- * Essendo vuota, funge da "etichetta" (Marker Interface) per garantire
- * che solo oggetti consentiti vengano inviati tramite i Socket,
- * rendendoli automaticamente Serializzabili.
+ * Root interface for ALL messages traveling on the network.
+ * Being empty, it acts as a "label" (Marker Interface) to ensure
+ * that only allowed objects are sent through Sockets,
+ * making them automatically Serializable.
  */
 public interface ClientMessage extends Serializable {
-    // Nessun metodo qui dentro!
+    // No methods in here!
 }

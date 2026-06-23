@@ -22,6 +22,11 @@ import javafx.scene.layout.*;
 import javafx.util.Duration;
 import it.polimi.ingsw.am54.gui.states.ClientStateRegistry;
 
+/**
+ * Main controller for the game board screen.
+ * Orchestrates the various UI managers (market, dashboard, totems, events)
+ * and reacts to state changes coming from the ClientModel.
+ */
 public class BoardController {
 
     @FXML private StackPane rootPane;
@@ -98,10 +103,9 @@ public class BoardController {
     private it.polimi.ingsw.am54.gui.managers.EventSummaryManager eventSummaryManager;
 
     /**
-     * Inizializza la schermata di gioco: crea i manager di supporto (mercato, dashboard,
-     * totem, riepilogo eventi), registra i callback per aggiornarsi dal {@link ClientModel}
-     * (refresh della board, riepilogo eventi, overlay di riconnessione) e prepara
-     * animazioni e layout dinamico.
+     * Initializes the game screen: creates support managers (market, dashboard, totem, event summary),
+     * registers callbacks to update from the {@link ClientModel} (board refresh, event summary,
+     * reconnection overlay), and sets up animations and dynamic layout.
      */
     @FXML
     public void initialize() {
@@ -420,9 +424,9 @@ public class BoardController {
     }
 
     /**
-     * Mostra l'overlay del conteggio finale dell'aura: per ogni giocatore costruisce il
-     * dettaglio del punteggio (aura di fine round, bonus artisti/inventori/costruttori,
-     * aura base e da effetti degli edifici, cibo residuo) e il totale finale.
+     * Shows the final aura calculation overlay: for each player it builds the score breakdown
+     * (end of round aura, artist/inventor/constructor bonuses, base and building effect aura, leftover food)
+     * and the final total.
      */
     private void openFinalCalculationOverlay() {
         if (!isDashboardOpen) toggleDashboard();

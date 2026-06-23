@@ -4,8 +4,8 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface RMIClientHandlerInterface extends Remote {
-    // RMI sfruttato al massimo non funziona come socket,
-    // ma ha un metodo specifico per ogni azione che il client può chiamare
+    // RMI used to its fullest does not work like a socket,
+    // but has a specific method for each action the client can call
 
     void joinGameRequest(String nickname) throws RemoteException;
     void setupGameRequest() throws RemoteException;

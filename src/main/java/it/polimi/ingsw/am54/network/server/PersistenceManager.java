@@ -13,9 +13,9 @@ import it.polimi.ingsw.am54.model.states.*;
 import java.io.*;
 
 /**
- * Gestisce il backup su file JSON della partita per il recupero da crash del server.
- * Usa Gson con {@link RuntimeTypeAdapterFactory} per serializzare in modo polimorfico
- * gli stati di gioco, gli effetti delle carte e le carte Tribù.
+ * Manages the JSON file backup of the game for server crash recovery.
+ * Uses Gson with {@link RuntimeTypeAdapterFactory} to polymorphically serialize
+ * game states, card effects, and Tribe cards.
  */
 public class PersistenceManager {
     private final File backupFile;
@@ -24,7 +24,7 @@ public class PersistenceManager {
     public PersistenceManager(String filename) {
         this.backupFile = new File(filename);
 
-        // Factory per GameState (già presente)
+        // Factory for GameState (already present)
         RuntimeTypeAdapterFactory<GameState> stateAdapter = RuntimeTypeAdapterFactory
                 .of(GameState.class, "type")
                 .registerSubtype(SetUpGameState.class, "SetUpGameState")
@@ -33,10 +33,10 @@ public class PersistenceManager {
                 .registerSubtype(EventState.class, "EventState")
                 .registerSubtype(EndGameState.class, "EndGameState");
 
-        // Factory per IEffect
+        // Factory for IEffect
         RuntimeTypeAdapterFactory<IEffect> effectAdapter = RuntimeTypeAdapterFactory
                 .of(IEffect.class, "effectType")
-                // Edifici
+                // Buildings
                 .registerSubtype(BuildingEventCostModifier.class, "BuildingEventCostModifier")
                 .registerSubtype(BuildingShamanPassive.class, "BuildingShamanPassive")
                 .registerSubtype(BuildingSixDifferentAura.class, "BuildingSixDifferentAura")
@@ -47,18 +47,18 @@ public class PersistenceManager {
                 .registerSubtype(BuildingDoubleInventor.class, "BuildingDoubleInventor")
                 .registerSubtype(BuildingSixOfType.class, "BuildingSixOfType")
                 .registerSubtype(BuildingEndgameAura.class, "BuildingEndgameAura")
-                // Personaggi
+                // Characters
                 .registerSubtype(CharacterPassive.class, "CharacterPassive")
                 .registerSubtype(CharacterHunter.class, "CharacterHunter")
                 .registerSubtype(CharacterShaman.class, "CharacterShaman")
                 .registerSubtype(CharacterConstructor.class, "CharacterConstructor")
-                // Eventi
+                // Events
                 .registerSubtype(EventShaman.class, "EventShaman")
                 .registerSubtype(EventFarmer.class, "EventFarmer")
                 .registerSubtype(EventArtist.class, "EventArtist")
                 .registerSubtype(EventHunter.class, "EventHunter");
 
-        // Factory per TribeCard
+        // Factory for TribeCard
         RuntimeTypeAdapterFactory<it.polimi.ingsw.am54.model.TribeCard> tribeCardAdapter = RuntimeTypeAdapterFactory
                 .of(it.polimi.ingsw.am54.model.TribeCard.class, "tribeCardType")
                 .registerSubtype(it.polimi.ingsw.am54.model.CharacterCard.class, "CharacterCard")
@@ -72,11 +72,11 @@ public class PersistenceManager {
     }
 
     /**
-     * Salva l'intera partita su file in modo atomico: scrive prima su un file temporaneo
-     * (chiudendolo) e poi lo sposta sul backup definitivo. Questo evita che un crash a
-     * metà scrittura corrompa il backup precedente.
+     * Atomically saves the entire game to a file: first writes to a temporary file
+     * (closing it) and then moves it to the final backup. This prevents a crash
+     * mid-write from corrupting the previous backup.
      *
-     * @param game la partita da salvare
+     * @param game the game to save
      */
     public synchronized void saveGame(Game game) {
         File tempFile = new File(backupFile.getAbsolutePath() + ".tmp");
@@ -111,10 +111,10 @@ public class PersistenceManager {
     }
 
     /**
-     * Carica la partita dal file di backup, se presente, e ne ripristina i riferimenti
-     * transitori tra oggetti ({@link Game#restoreReferences()}).
+     * Loads the game from the backup file, if present, and restores its
+     * transient references between objects ({@link Game#restoreReferences()}).
      *
-     * @return la partita ripristinata, oppure {@code null} se non c'è backup o è illeggibile
+     * @return the restored game, or {@code null} if there is no backup or it is unreadable
      */
     public synchronized Game loadGame() {
         if (!backupFile.exists()) return null;
@@ -132,8 +132,8 @@ public class PersistenceManager {
     }
 
     /**
-     * Elimina il file di backup (a partita conclusa) così che un riavvio del server non
-     * "recuperi" una partita già finita.
+     * Deletes the backup file (when the game is over) so that a server restart does not
+     * "recover" an already finished game.
      */
     public synchronized void clearBackup() {
         if (backupFile.exists()) {

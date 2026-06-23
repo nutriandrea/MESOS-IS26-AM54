@@ -15,29 +15,29 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     private RMIClientHandlerInterface serverStub;
     private ClientModel clientModel;
 
-    // Timer per controllare proattivamente se il server è vivo
+    // Timer to proactively check if the server is alive
     private Timer connectionWatcher;
 
     /**
-     * Stabilisce la connessione RMI: si registra presso il server passando sé stesso come
-     * stub di callback, ne riceve l'handler personale e avvia il watcher che monitora la
-     * vitalità del server.
+     * Establishes the RMI connection: registers with the server passing itself as a
+     * callback stub, receives its personal handler and starts the watcher that monitors
+     * the server's vitality.
      *
-     * @param server      lo stub remoto del server di gioco
-     * @param clientModel il modello locale da aggiornare con le callback ricevute
-     * @throws RemoteException in caso di errore RMI
+     * @param server      the remote stub of the game server
+     * @param clientModel the local model to update with received callbacks
+     * @throws RemoteException in case of RMI error
      */
     public RMIServerConnection(RMIGameServer server, ClientModel clientModel) throws RemoteException {
         this.clientModel = clientModel;
         this.serverStub = server.connect(this);
 
-        // Avviamo il Watcher
+        // Start the Watcher
         startConnectionWatcher();
     }
 
     /**
-     * Avvia un controllo periodico (ogni 2 s) che "pinga" il server: se la chiamata
-     * remota fallisce, il server è considerato caduto e si gestisce il crash.
+     * Starts a periodic check (every 2 s) that "pings" the server: if the remote
+     * call fails, the server is considered down and the crash is handled.
      */
     private void startConnectionWatcher() {
         connectionWatcher = new Timer("RMI-Watcher", true);
@@ -46,9 +46,9 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
             public void run() {
                 if (serverStub != null) {
                     try {
-                        // Ping fittizio verso il server. Se il server è morto,
-                        // questo lancerà una RemoteException e cattureremo il crash!
-                        serverStub.pong(); // Usiamo 'pong()' o un metodo generico vuoto sul server
+                        // Dummy ping to the server. If the server is dead,
+                        // this will throw a RemoteException and we will catch the crash!
+                        serverStub.pong(); // We use 'pong()' or a generic empty method on the server
                     } catch (RemoteException e) {
                         handleServerCrash();
                         connectionWatcher.cancel();
@@ -57,12 +57,12 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
                     connectionWatcher.cancel();
                 }
             }
-        }, 2000, 2000); // Controlla ogni 2 secondi
+        }, 2000, 2000); // Check every 2 seconds
     }
 
     /**
-     * Gestisce la caduta del server: avvisa il modello locale (che avvierà
-     * l'auto-riconnessione), scarta lo stub remoto e ferma il watcher.
+     * Handles the server crash: notifies the local model (which will start
+     * auto-reconnection), discards the remote stub and stops the watcher.
      */
     private void handleServerCrash() {
         if (this.serverStub == null) return;
@@ -73,9 +73,9 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     }
 
     /* =====================================================================
-     * AZIONI IN USCITA (Dal Client al Server) - Implementa ServerConnection
-     * Il giocatore interagisce con la GUI, il VirtualServer chiama questi
-     * metodi, e li inoltriamo al server tramite RMI.
+     * OUTGOING ACTIONS (From Client to Server) - Implements ServerConnection
+     * The player interacts with the GUI, the VirtualServer calls these
+     * methods, and we forward them to the server via RMI.
      * ===================================================================== */
 
     @Override
@@ -121,8 +121,8 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     }
 
     /* =====================================================================
-     * EVENTI IN INGRESSO (Dal Server al Client) - Implementa RMIClientInterface
-     * Il Server chiama direttamente questi metodi, niente istanceof
+     * INCOMING EVENTS (From Server to Client) - Implements RMIClientInterface
+     * The Server calls these methods directly, no instanceof
      * ===================================================================== */
 
     @Override
@@ -161,7 +161,7 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
                                 List<String> charUp, List<String> charLow,
                                 List<String> eventUp, List<String> eventLow,
                                 List<String> buildUp, List<String> buildLow) throws RemoteException {
-        // Ricostruiamo il DTO localmente solo per comodità
+        // We reconstruct the DTO locally just for convenience
         EventUpdate localSnapshot = new EventUpdate(name,stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
         clientModel.updateEventSnapshot(localSnapshot);
     }
@@ -219,7 +219,7 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     }
 
     /* =====================================================================
-     * HEARTBEAT (Gestione del Ping/Pong)
+     * HEARTBEAT (Ping/Pong Management)
      * ===================================================================== */
 
     @Override
@@ -235,16 +235,16 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     @Override
     public void ping() throws RemoteException {
         try {
-            // Risposta immediata al server per confermare che siamo vivi
+            // Immediate response to the server to confirm we are alive
             serverStub.pong();
         } catch (RemoteException | NullPointerException e) {
-            // Se non riusciamo a rispondere, il server e' giù
+            // If we fail to respond, the server is down
             handleServerCrash();
         }
     }
 
     /* =====================================================================
-     * DISCONNESSIONE VOLONTARIA
+     * VOLUNTARY DISCONNECTION
      * ===================================================================== */
 
     @Override

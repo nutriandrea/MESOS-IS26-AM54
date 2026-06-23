@@ -11,7 +11,6 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-// NUOVI IMPORT PER IL DOCK DEL MAC
 import java.awt.Taskbar;
 import javax.imageio.ImageIO;
 import java.io.InputStream;
@@ -28,12 +27,10 @@ public class Launcher extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // 1. Icona per la Finestra (Serve per Windows/Linux)
         try {
             primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/images/app_mesos.png")));
         } catch (Exception e) {}
 
-        // 2. FORZATURA ICONA NEL DOCK DI macOS (La vera magia)
         try {
             if (Taskbar.isTaskbarSupported()) {
                 Taskbar taskbar = Taskbar.getTaskbar();
@@ -78,11 +75,9 @@ public class Launcher extends Application {
             String os = System.getProperty("os.name").toLowerCase();
 
             try {
-                // Trova automaticamente dove si trova il file JAR nel computer
                 String jarPath = new java.io.File(getClass().getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
 
                 if (os.contains("mac")) {
-                    // Magia per Mac: apre l'app Terminale e digita il comando
                     String[] cmd = {
                             "osascript",
                             "-e",
@@ -90,15 +85,12 @@ public class Launcher extends Application {
                     };
                     Runtime.getRuntime().exec(cmd);
                 } else {
-                    // Magia per Windows: apre il prompt dei comandi (cmd)
                     new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", "java -jar \"" + jarPath + "\" --cli").start();
                 }
 
-                // Chiude la finestrella del Launcher grafico, dato che ora si gioca nel terminale
                 System.exit(0);
 
             } catch (Exception ex) {
-                // Se qualcosa va storto (es. permessi bloccati), fa il fallback al vecchio messaggio
                 root.getChildren().clear();
                 Label cliWarning = new Label("⚠️ ERRORE AVVIO AUTOMATICO ⚠️\n\nApri il Terminale e digita manualmente:\n\njava -jar IS26-AM54-1.0-SNAPSHOT-Client.jar --cli");
                 cliWarning.setStyle("-fx-font-family: 'Herculanum'; -fx-font-size: 18px; -fx-text-fill: #ff4444; -fx-text-alignment: center;");

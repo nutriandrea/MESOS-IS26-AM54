@@ -57,15 +57,9 @@ public class GUIApp extends Application {
         primaryStage.setFullScreenExitHint("");
         primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
 
-        // Impostiamo il fullscreen PRIMA di chiamare il metodo show()
         primaryStage.setFullScreen(true);
         primaryStage.show();
 
-        // ==========================================================
-        // EFFETTO "FADE IN" DA VIDEOGIOCO
-        // Aspettiamo mezzo secondo che il Mac finisca l'animazione
-        // del Fullscreen, poi dissolviamo il nero!
-        // ==========================================================
         FadeTransition fadeIn = new FadeTransition(Duration.millis(800), blackScreen);
         fadeIn.setFromValue(1.0);
         fadeIn.setToValue(0.0);
@@ -147,7 +141,6 @@ public class GUIApp extends Application {
     public static void loadBoardScene() {
         Platform.runLater(() -> {
             try {
-                // Schermo nero temporaneo per transizione fluida
                 Rectangle blackScreen = new Rectangle();
                 blackScreen.setFill(Color.BLACK);
                 blackScreen.widthProperty().bind(rootWrapper.widthProperty());
@@ -174,7 +167,6 @@ public class GUIApp extends Application {
 
                 System.out.println("[GUI] Board caricata con successo.");
             } catch (Throwable e) {
-                // SE CRASHA, ORA TI APPARE UN POP-UP VISIBILE CHE TI DICE IL PERCHÉ!
                 javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
                 alert.setTitle("Crash del Client");
                 alert.setHeaderText("Impossibile caricare la Plancia (Board.fxml)");
@@ -195,7 +187,7 @@ public class GUIApp extends Application {
             try {
                 FXMLLoader loader = new FXMLLoader(GUIApp.class.getResource("/fxml/Leaderboard.fxml"));
                 Parent root = loader.load();
-                changeBackground("board-background"); // Usa un background scuro base
+                changeBackground("board-background");
                 changeSceneContent(root);
                 System.out.println("[GUI] Classifica Finale caricata con successo.");
             } catch (Exception e) {
@@ -208,7 +200,6 @@ public class GUIApp extends Application {
     public static void loadLoginScene() {
         Platform.runLater(() -> {
             try {
-                // Ricrea tutto l'environment pulito per il login
                 FXMLLoader loader = new FXMLLoader(GUIApp.class.getResource("/fxml/Login.fxml"));
                 Parent loginRoot = loader.load();
                 changeBackground("login-background");

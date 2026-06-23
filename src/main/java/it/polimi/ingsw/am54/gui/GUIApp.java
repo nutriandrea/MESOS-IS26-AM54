@@ -39,11 +39,9 @@ public class GUIApp extends Application {
         Parent loginContent = FXMLLoader.load(getClass().getResource("/fxml/Login.fxml"));
         contentLayer.getChildren().add(loginContent);
 
-        // ==========================================================
-        // LO SCUDO NERO
-        // ==========================================================
         transitionLayer = new StackPane();
         transitionLayer.setMouseTransparent(true);
+
 
         Rectangle blackScreen = new Rectangle();
         blackScreen.setFill(Color.BLACK);
@@ -54,37 +52,26 @@ public class GUIApp extends Application {
         rootWrapper.getChildren().addAll(backgroundLayer, contentLayer, transitionLayer);
 
         Scene scene = new Scene(rootWrapper);
-        scene.setFill(Color.BLACK);
         primaryStage.setScene(scene);
 
-        // ==========================================================
-        // IL TRIGGER INFALLIBILE
-        // ==========================================================
-        // Questo scatta automaticamente appena la finestra è visibile,
-        // a prescindere dalle dimensioni o dal fullscreen.
-        primaryStage.setOnShown(event -> {
-            // Un micro-ritardo di sicurezza di 200ms per far assestare i CSS
-            javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(Duration.millis(200));
-            delay.setOnFinished(e -> {
-                FadeTransition fade = new FadeTransition(Duration.millis(300), blackScreen);
-                fade.setFromValue(1.0);
-                fade.setToValue(0.0);
-                fade.setOnFinished(ev -> transitionLayer.getChildren().remove(blackScreen));
-                fade.play();
-            });
-            delay.play();
-        });
-
-        // Opzionale: decommenta la riga sotto se vuoi che parta SEMPRE in fullscreen.
-        // Altrimenti partirà sempre a finestra, ma lo scudo nero funzionerà in entrambi i casi.
-        primaryStage.setFullScreen(true);
-
         primaryStage.setFullScreenExitHint("");
-
-        // Impedisce che la gente esca dal full screen premendo ESC per sbaglio (opzionale)
         primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
-        // Questo comando ora risveglierà il setOnShown qui sopra
+
+        // Impostiamo il fullscreen PRIMA di chiamare il metodo show()
+        primaryStage.setFullScreen(true);
         primaryStage.show();
+
+        // ==========================================================
+        // EFFETTO "FADE IN" DA VIDEOGIOCO
+        // Aspettiamo mezzo secondo che il Mac finisca l'animazione
+        // del Fullscreen, poi dissolviamo il nero!
+        // ==========================================================
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(800), blackScreen);
+        fadeIn.setFromValue(1.0);
+        fadeIn.setToValue(0.0);
+        fadeIn.setDelay(Duration.millis(600)); // Tempo di attesa per la stabilizzazione
+        fadeIn.setOnFinished(e -> transitionLayer.getChildren().remove(blackScreen));
+        fadeIn.play();
     }
 
     public static void changeSceneContent(Parent newContent) {

@@ -309,6 +309,9 @@ Without `.env`, the leaderboard is gracefully disabled (PostgreSQL not required 
 ## Build Artifacts
 
 ```bash
+# Clean 
+./mvnw clean
+
 # Build executable JARs
 ./mvnw package
 

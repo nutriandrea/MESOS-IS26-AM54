@@ -43,6 +43,10 @@ public class LeaderboardController {
         int aura, food, magic, tribeCards, buildCards;
     }
 
+    /**
+     * Inizializza la schermata di fine partita: imposta lo scaling responsivo, registra
+     * il callback di aggiornamento dal modello e costruisce podio e classifica generale.
+     */
     @FXML
     public void initialize() {
         setupScaling();
@@ -84,6 +88,11 @@ public class LeaderboardController {
         mainArea.setTranslateY((screenH - scaledH) / 2.0);
     }
 
+    /**
+     * Costruisce la classifica della partita appena conclusa: raccoglie le statistiche di
+     * ogni giocatore (aura finale, cibo, magia, carte), le ordina per aura (cibo come
+     * spareggio) e popola il podio e la tabella dei risultati. Si esegue una sola volta.
+     */
     private void buildLeaderboard() {
         ClientModel model = Client.getInstance().getModel();
         if (model == null || model.getPlayers() == null) return;
@@ -213,6 +222,10 @@ public class LeaderboardController {
         return l;
     }
 
+    /**
+     * Apre l'overlay della classifica globale e richiede al server i dati relativi alle
+     * partite con lo stesso numero di giocatori di quella appena conclusa.
+     */
     @FXML
     private void handleGlobalLeaderboardButton() {
         if (leaderboardOverlay == null) return;
@@ -242,6 +255,10 @@ public class LeaderboardController {
         event.consume();
     }
 
+    /**
+     * Popola l'overlay della classifica globale con le voci ricevute dal server,
+     * ordinate per punteggio decrescente. Mostra un messaggio se non ci sono partite archiviate.
+     */
     private void updateGlobalLeaderboardUI() {
         if (leaderboardEntriesContainer == null || leaderboardOverlay == null || !leaderboardOverlay.isVisible()) return;
 
@@ -296,6 +313,10 @@ public class LeaderboardController {
         }
     }
 
+    /**
+     * Torna al menu principale: chiude la connessione al server, reinizializza il client
+     * e ricarica la schermata di login.
+     */
     @FXML
     private void handleReturnToMenu() {
         try {

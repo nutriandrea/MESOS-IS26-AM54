@@ -36,23 +36,53 @@ public class Game implements IGame {
         this.currentState = new SetUpGameState();
     }
 
+    /**
+     * Fa entrare un giocatore: delega allo stato corrente la validazione/aggiunta e
+     * notifica gli observer del nuovo ingresso.
+     *
+     * @param nickname il nickname del giocatore
+     * @throws Exception se lo stato corrente non consente il join (es. nickname duplicato)
+     */
     @Override
     public void joinGame(String nickname) throws Exception {
         currentState.joinGame(this, nickname);
         notifyPlayerJoined(getPlayerByNickname(nickname));
     }
 
+    /**
+     * Assegna il colore del totem a un giocatore tramite lo stato corrente e notifica
+     * gli observer della scelta.
+     *
+     * @param nickname il giocatore che sceglie
+     * @param color    il nome del colore
+     * @throws Exception se il colore non è valido o già occupato
+     */
     @Override
     public void chooseTotemColor(String nickname, String color) throws Exception {
         currentState.chooseTotemColor(this, nickname, color);
         notifyTotemColorChosen(getPlayerByNickname(nickname), TotemColors.valueOf(color.toUpperCase()));
     }
 
+    /**
+     * Piazza il totem di un giocatore su una tessera offerta, delegando allo stato corrente.
+     *
+     * @param nickname      il giocatore che piazza il totem
+     * @param offerPosition l'indice della tessera offerta
+     * @throws Exception se l'azione non è valida nello stato corrente
+     */
     @Override
     public void placeTotem(String nickname, int offerPosition) throws Exception {
         currentState.placeTotem(this, nickname, offerPosition);
     }
 
+    /**
+     * Esegue la pesca di una carta da parte di un giocatore, delegando allo stato corrente.
+     *
+     * @param nickname  il giocatore che pesca
+     * @param row       la fila ("upper" o "lower")
+     * @param cardIndex l'indice della carta
+     * @throws Exception se l'azione non è valida nello stato corrente
+     */
     @Override
     public void pickCard(String nickname, String row, int cardIndex) throws Exception {
         currentState.pickCard(this, nickname, row, cardIndex);
@@ -272,6 +302,11 @@ public class Game implements IGame {
     public void advanceEra() { this.currentEra++; }
     public void advanceRound() { this.roundCount++; }
 
+    /**
+     * Rifornisce la fila superiore Tribù (personaggi + eventi) pescando dal mazzo fino
+     * a raggiungere la dimensione prevista ({@code numGiocatori + 4}), o finché il
+     * mazzo non si esaurisce.
+     */
     public void refillUpperTribeRow() {
         int targetSize = players.size() + 4;
         while ((board.getCharacterRowSize("upper") + board.getEventRowSize("upper")) < targetSize) {
@@ -281,6 +316,10 @@ public class Game implements IGame {
         }
     }
 
+    /**
+     * Rifornisce la fila superiore Edifici pescando dal mazzo la quantità prevista per
+     * l'Era corrente (da {@code EraCounts.json}).
+     */
     public void refillUpperBuildings() {
         int cardsToDraw = 0;
         try {
@@ -303,6 +342,13 @@ public class Game implements IGame {
         }
     }
 
+    /**
+     * Cerca un giocatore per nickname (confronto case-insensitive).
+     *
+     * @param nickname il nickname da cercare
+     * @return il giocatore corrispondente
+     * @throws Exception se nessun giocatore ha quel nickname
+     */
     public Player getPlayerByNickname(String nickname) throws Exception {
         return this.players.stream()
                 .filter(p -> p.getNickname().equalsIgnoreCase(nickname))
@@ -350,6 +396,12 @@ public class Game implements IGame {
         }
     }
 
+    /**
+     * Termina il turno di un giocatore, delegando allo stato corrente.
+     *
+     * @param nickname il giocatore che termina il turno
+     * @throws Exception se l'azione non è valida nello stato corrente
+     */
     @Override
     public void endTurn(String nickname) throws Exception {
         currentState.endTurn(this, nickname);
@@ -406,6 +458,12 @@ public class Game implements IGame {
 
     // --- DYNAMIC TURN ORDER MANAGEMENT ---
 
+    /**
+     * Individua il prossimo giocatore che deve pescare: il primo occupante del
+     * tracciato offerte che non è ancora rientrato nell'ordine di turno.
+     *
+     * @return il picker corrente, o {@code null} se la pesca è completa
+     */
     public Player getCurrentPicker() {
         List<OfferingTile> tiles = board.getOfferingTrack();
         for (OfferingTile tile : tiles) {
@@ -478,6 +536,12 @@ public class Game implements IGame {
         return null;
     }
 
+    /**
+     * Indica se la fase di pesca è conclusa, cioè se nessun occupante del tracciato
+     * offerte deve ancora rientrare nell'ordine di turno (tutti hanno pescato).
+     *
+     * @return true se la pesca del round è completa
+     */
     public boolean isPickingComplete() {
         for (OfferingTile tile : board.getOfferingTrack()) {
             Player occupant = tile.getOccupiedBy();
@@ -492,12 +556,25 @@ public class Game implements IGame {
 
     public boolean isTribeDeckEmpty() { return deckTribu.isEmpty(); }
 
+    /**
+     * Indica se la prossima carta in cima al mazzo Tribù appartiene a un'Era superiore
+     * a quella corrente: segnala che sta per iniziare una nuova Era.
+     *
+     * @return true se la prossima carta innesca il passaggio di Era
+     */
     public boolean isEraTransition() {
         TribeCard nextCard = deckTribu.peek();
         if (nextCard == null) return false;
         return nextCard.getEra() > currentEra;
     }
 
+    /**
+     * Bonus Inventori: numero di inventori moltiplicato per il numero di livelli
+     * (invenzioni) distinti posseduti.
+     *
+     * @param p il giocatore
+     * @return l'aura bonus dagli inventori
+     */
     public int getPlayerInventorsBonus(Player p) {
         long inventors = p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.INVENTOR).count();
         long uniqueInventions = p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.INVENTOR)
@@ -505,20 +582,45 @@ public class Game implements IGame {
         return (int) (inventors * uniqueInventions);
     }
 
+    /**
+     * Bonus Artisti: 10 aura per ogni coppia di artisti.
+     *
+     * @param p il giocatore
+     * @return l'aura bonus dagli artisti
+     */
     public int getPlayerArtistsBonus(Player p) {
         long artists = p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.ARTIST).count();
         return (int) (artists / 2) * 10;
     }
 
+    /**
+     * Bonus Costruttori: somma dell'aura base di tutti i costruttori in tribù.
+     *
+     * @param p il giocatore
+     * @return l'aura bonus dai costruttori
+     */
     public int getPlayerConstructorsBonus(Player p) {
         return p.getMyTribe().stream().filter(c -> c.getJobType() == JobType.CONSTRUCTOR)
                 .mapToInt(CharacterCard::getAura).sum();
     }
 
+    /**
+     * Aura base degli Edifici: somma dell'aura finale di tutti gli edifici posseduti.
+     *
+     * @param p il giocatore
+     * @return l'aura base dagli edifici
+     */
     public int getPlayerBuildingsBaseAura(Player p) {
         return p.getBuildings().stream().mapToInt(BuildingCard::getFinalAura).sum();
     }
 
+    /**
+     * Calcola il punteggio finale del giocatore: aura corrente più tutti i bonus di
+     * scoring (inventori, artisti, costruttori, aura base degli edifici).
+     *
+     * @param p il giocatore
+     * @return il punteggio totale
+     */
     public int calculatePlayerScore(Player p) {
         return p.getAuraPoints() + getPlayerInventorsBonus(p) + getPlayerArtistsBonus(p) +
                 getPlayerConstructorsBonus(p) + getPlayerBuildingsBaseAura(p);
@@ -555,6 +657,11 @@ public class Game implements IGame {
         return winners;
     }
 
+    /**
+     * Notifica a tutti gli observer la fine della partita con la lista dei vincitori.
+     *
+     * @param winners i giocatori vincitori
+     */
     public void notifyEndGame(List<Player> winners) {
         for (IGameObserver obs : getSafeObservers()) {
             obs.onEndGame(this, winners);

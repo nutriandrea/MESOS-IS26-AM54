@@ -2,11 +2,26 @@ package it.polimi.ingsw.am54.model.effects.events;
 
 import it.polimi.ingsw.am54.model.*;
 
+/**
+ * Effetto dell'evento Sostentamento: ogni giocatore deve "nutrire" la propria tribù
+ * pagando 1 cibo per carta, scontato dai raccoglitori (e dagli edifici); se il cibo
+ * non basta, paga la differenza in aura.
+ */
 public class EventFarmer implements IEffect<EventCard> {
 
     // I flag isFarmerEffect() e shouldResolveLast() sono stati ELIMINATI!
 
-    // FIRMA AGGIORNATA PER LA FASE EVENTI
+    /**
+     * Per ogni giocatore calcola il costo di sostentamento (1 per carta in tribù),
+     * sottrae lo sconto dei raccoglitori (×3) e degli edifici, e applica il costo:
+     * se il cibo è insufficiente, converte la parte mancante in perdita di aura.
+     * Infine azzera i modificatori temporanei.
+     *
+     * @param p            non usato (l'effetto itera su tutti i giocatori)
+     * @param g            la partita corrente
+     * @param ec           la carta evento proprietaria dell'effetto
+     * @param currentEvent l'evento in risoluzione
+     */
     @Override
     public void applyOnEvent(Player p, Game g, EventCard ec, EventCard currentEvent) {
         g.getPlayers().forEach(pl -> {

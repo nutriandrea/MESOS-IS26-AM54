@@ -3,7 +3,17 @@ package it.polimi.ingsw.am54;
 import it.polimi.ingsw.am54.model.Game;
 import it.polimi.ingsw.am54.model.IGame;
 
+/**
+ * Piccola demo da console del solo motore di gioco (senza rete): crea una partita,
+ * fa entrare quattro giocatori, sceglie i colori ed esegue il setup. Utile come
+ * verifica rapida del modello, non è il punto d'ingresso dell'applicazione.
+ */
 public class Main {
+    /**
+     * Esegue la demo di setup del motore di gioco.
+     *
+     * @param args argomenti da riga di comando (non utilizzati)
+     */
     public static void main(String[] args) {
 
         System.out.println("=== AVVIO MOTORE DI GIOCO (TEST 4 GIOCATORI) ===");

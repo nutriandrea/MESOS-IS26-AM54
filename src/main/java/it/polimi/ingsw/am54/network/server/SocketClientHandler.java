@@ -55,6 +55,12 @@ public class SocketClientHandler implements Runnable, ClientConnection {
         startPingScheduler();
     }
 
+    /**
+     * Loop principale del thread: apre gli stream e legge le Request dal client finché
+     * la connessione è attiva, applicando un dispatch a due livelli (PongResponse e
+     * JoinGameRequest gestiti subito, le altre Request via {@code execute()}). Alla
+     * chiusura o in caso di errore, disconnette il client.
+     */
     @Override
     public void run() {
         try {
@@ -90,6 +96,10 @@ public class SocketClientHandler implements Runnable, ClientConnection {
         }
     }
 
+    /**
+     * Avvia l'heartbeat: invia un ping ogni {@value #PING_INTERVAL_MS} ms e, se non
+     * riceve un pong entro {@value #PING_TIMEOUT_MS} ms, dichiara il client disconnesso.
+     */
     public void startPingScheduler() {
         this.lastPongTime = System.currentTimeMillis();
         this.pingScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -209,6 +219,11 @@ public class SocketClientHandler implements Runnable, ClientConnection {
         writeToStream(new PingRequest(System.currentTimeMillis()));
     }
 
+    /**
+     * Chiude la connessione del client: ferma l'heartbeat, chiude il socket e avvisa il
+     * Controller di rimuovere il giocatore (gestione disconnessione/sospensione).
+     * Idempotente: ulteriori chiamate non hanno effetto.
+     */
     @Override
     public void disconnect() {
         if (!connected) return;

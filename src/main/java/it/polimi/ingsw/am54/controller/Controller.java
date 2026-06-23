@@ -96,6 +96,10 @@ public class Controller {
      * Serializes the current game state to a local JSON file.
      * Invoked automatically after any state-altering game action.
      */
+    /**
+     * Persiste lo stato corrente della partita su file. A partita conclusa cancella il
+     * backup (così un riavvio non recupera una partita finita), altrimenti la salva.
+     */
     private void saveState() {
         if (game.getCurrentState().isGameOver()) {
             persistenceManager.clearBackup();
@@ -111,6 +115,15 @@ public class Controller {
 
     // --- CONNECTION LIFECYCLE (JOIN / RECONNECT) ---
 
+    /**
+     * Gestisce l'ingresso di un client. Distingue tre casi: riconnessione di un
+     * giocatore caduto (delegata a {@link #handleReconnect}), nickname duplicato
+     * (rifiutato con errore) e ingresso standard (crea la VirtualView, la registra come
+     * observer del modello e inoltra il join al Game).
+     *
+     * @param nickname   il nickname del giocatore
+     * @param connection la connessione (Socket o RMI) del client
+     */
     public void handleJoinGame(String nickname, ClientConnection connection) {
         synchronized (game.getPlayers()) {
             // Case 1: Player is recovering from a temporary crash.
@@ -151,6 +164,16 @@ public class Controller {
         connection.startHeartbeat();
     }
 
+    /**
+     * Ripristina un giocatore che si riconnette entro la finestra utile: lo toglie dai
+     * disconnessi, sostituisce la sua VirtualView con quella della nuova connessione, gli
+     * reinvia lo snapshot completo dello stato (e il turno corrente), notifica gli altri
+     * del rientro e, se la partita era sospesa con ora ≥2 attivi, la fa riprendere. Se la
+     * partita è già finita, gli replica il risultato finale.
+     *
+     * @param nickname   il giocatore che si riconnette
+     * @param connection la nuova connessione del client
+     */
     public void handleReconnect(String nickname, ClientConnection connection) {
         synchronized (game.getPlayers()) {
             disconnectedPlayers.remove(nickname);
@@ -188,6 +211,10 @@ public class Controller {
         }
     }
 
+    /**
+     * Dopo un ripristino da crash, riallinea il giocatore di turno chiedendo allo stato
+     * corrente chi deve agire ({@code recoverActivePlayer}) e logga la fase recuperata.
+     */
     public void validateGameStateAfterRecovery() {
         synchronized (game.getPlayers()) {
             // Restore the turn based on the current phase.
@@ -207,6 +234,11 @@ public class Controller {
 
     // --- GAME COMMAND EXECUTORS ---
 
+    /**
+     * Avvia la partita su richiesta dell'host e salva lo stato.
+     *
+     * @param nickname il giocatore che avvia la partita
+     */
     public void handleSetupGame(String nickname) {
         executeCommand(nickname, () -> {
             game.setupGame();
@@ -214,6 +246,12 @@ public class Controller {
         });
     }
 
+    /**
+     * Assegna il colore del totem scelto da un giocatore e salva lo stato.
+     *
+     * @param nickname il giocatore che sceglie
+     * @param color    il colore scelto
+     */
     public void handleChooseTotemColor(String nickname, String color) {
         executeCommand(nickname, () -> {
             game.chooseTotemColor(nickname, color);
@@ -221,6 +259,12 @@ public class Controller {
         });
     }
 
+    /**
+     * Piazza il totem di un giocatore su una tessera offerta e salva lo stato.
+     *
+     * @param nickname il giocatore che piazza
+     * @param position l'indice della tessera offerta
+     */
     public void handlePlaceTotem(String nickname, int position) {
         executeCommand(nickname, () -> {
             game.placeTotem(nickname, position);
@@ -228,6 +272,14 @@ public class Controller {
         });
     }
 
+    /**
+     * Esegue la pesca di una carta, risolve le eventuali fasi automatiche (eventi,
+     * fine partita) e salva lo stato.
+     *
+     * @param nickname il giocatore che pesca
+     * @param row      la fila ("upper" o "lower")
+     * @param index    l'indice della carta
+     */
     public void handlePickCard(String nickname, String row, int index) {
         executeCommand(nickname, () -> {
             game.pickCard(nickname, row, index);
@@ -236,6 +288,11 @@ public class Controller {
         });
     }
 
+    /**
+     * Termina il turno di un giocatore, risolve le eventuali fasi automatiche e salva lo stato.
+     *
+     * @param nickname il giocatore che termina il turno
+     */
     public void handleEndTurn(String nickname) {
         executeCommand(nickname, () -> {
             game.endTurn(nickname);
@@ -493,6 +550,14 @@ public class Controller {
                 .orElse(null);
     }
 
+    /**
+     * Gestisce la richiesta di classifica: recupera dal database le partite con quel
+     * numero di giocatori e la posizione del richiedente, poi invia il risultato al client.
+     *
+     * @param connection la connessione del client richiedente
+     * @param nickname   il nickname del richiedente (per calcolarne la posizione)
+     * @param numPlayers il filtro sul numero di giocatori
+     */
     public void handleGetLeaderboard(ClientConnection connection, String nickname, int numPlayers) {
         // Spec: leaderboard of matches with THIS many players + the requesting
         // player's own rank within that same leaderboard.
@@ -504,8 +569,11 @@ public class Controller {
     }
 
     /**
-     * Freezes the final standings (winner nicknames + every player's score) at the
-     * moment the game ends, so they can be replayed to any player who reconnects later.
+     * Congela il risultato finale (nickname dei vincitori e punteggio di ogni giocatore)
+     * nel momento in cui la partita finisce, così da poterlo ritrasmettere a chi si
+     * riconnette più tardi.
+     *
+     * @param winners la lista dei vincitori
      */
     private void captureFinalResult(List<Player> winners) {
         List<String> names = new ArrayList<>();
@@ -521,6 +589,15 @@ public class Controller {
         this.finalNumPlayers = game.getPlayers().size();
     }
 
+    /**
+     * Esegue un'azione di gioco serializzandola sul monitor {@code game.getPlayers()}
+     * (così non si sovrappone a join/disconnessioni di altri thread). Se la partita è
+     * sospesa rifiuta l'azione; eventuali eccezioni del modello vengono trasformate in
+     * un messaggio di errore inviato solo al giocatore.
+     *
+     * @param nickname il giocatore che esegue l'azione
+     * @param action   l'azione di gioco da eseguire
+     */
     private void executeCommand(String nickname, GameAction action) {
         if (suspended) {
             VirtualView view = virtualViews.get(nickname);

@@ -12,6 +12,15 @@ public class SocketServerConnection implements ServerConnection {
     private boolean connected;
     private ServerHandler serverHandler;
 
+    /**
+     * Apre la connessione TCP verso il server: crea il socket, inizializza gli stream di
+     * oggetti e avvia il thread {@link ServerHandler} che ascolta gli update in arrivo.
+     *
+     * @param host        l'indirizzo del server
+     * @param port        la porta TCP del server
+     * @param clientModel il modello locale da aggiornare con gli update ricevuti
+     * @throws IOException se la connessione o l'apertura degli stream fallisce
+     */
     public SocketServerConnection(String host, int port, ClientModel clientModel) throws IOException {
         this.socket = new Socket(host, port);
         this.out = new ObjectOutputStream(socket.getOutputStream());
@@ -23,7 +32,12 @@ public class SocketServerConnection implements ServerConnection {
         new Thread(this.serverHandler).start();
     }
 
-    // metodo privato per inviare i dati sullo stream in modo più pulito
+    /**
+     * Serializza e invia una Request al server sullo stream di output; in caso di errore
+     * di I/O chiude la connessione (innescando l'auto-riconnessione).
+     *
+     * @param request l'oggetto Request da inviare
+     */
     private void sendObject(Object request) {
         try {
             out.writeObject(request);

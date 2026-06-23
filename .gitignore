@@ -37,5 +37,8 @@
 backup.json
 backup.json.tmp
 
+# Maven shade build artifact
+dependency-reduced-pom.xml
+
 # Database credentials (keep secrets local; commit only .env.example)
 .env

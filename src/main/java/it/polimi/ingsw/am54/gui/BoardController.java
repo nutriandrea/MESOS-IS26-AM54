@@ -97,6 +97,12 @@ public class BoardController {
     private TotemManager totemManager;
     private it.polimi.ingsw.am54.gui.managers.EventSummaryManager eventSummaryManager;
 
+    /**
+     * Inizializza la schermata di gioco: crea i manager di supporto (mercato, dashboard,
+     * totem, riepilogo eventi), registra i callback per aggiornarsi dal {@link ClientModel}
+     * (refresh della board, riepilogo eventi, overlay di riconnessione) e prepara
+     * animazioni e layout dinamico.
+     */
     @FXML
     public void initialize() {
         marketManager = new MarketManager(upperMarket, lowerMarket, tribeDeckView, buildingsDeckView);
@@ -413,6 +419,11 @@ public class BoardController {
         }
     }
 
+    /**
+     * Mostra l'overlay del conteggio finale dell'aura: per ogni giocatore costruisce il
+     * dettaglio del punteggio (aura di fine round, bonus artisti/inventori/costruttori,
+     * aura base e da effetti degli edifici, cibo residuo) e il totale finale.
+     */
     private void openFinalCalculationOverlay() {
         if (!isDashboardOpen) toggleDashboard();
 

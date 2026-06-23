@@ -7,7 +7,17 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Scanner;
 
+/**
+ * Avvio del client in modalità testuale (CLI). Chiede IP del server, protocollo
+ * (Socket o RMI) e nickname, stabilisce la connessione, valida l'ingresso e infine
+ * avvia l'interfaccia {@code CLIApp}.
+ */
 public class MainClient {
+    /**
+     * Punto d'ingresso della modalità CLI.
+     *
+     * @param args argomenti da riga di comando (non utilizzati oltre l'attivazione della CLI)
+     */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 

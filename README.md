@@ -53,7 +53,7 @@ Distributed multiplayer implementation of the board game **Mesos** (Cranio Creat
 | Client disconnection + auto-reconnect | ✅ |
 | Server crash handling + suspended game | ✅ |
 | Persistence (JSON backup) for reconnect | ✅ |
-| Leaderboard (MySQL database) | ✅ |
+| Leaderboard (PostgreSQL database) | ✅ |
 | Polymorphic State pattern (refactored) | ✅ |
 | Heartbeat / ping-pong disconnection detection | ✅ |
 | AI / ML bots | 🔄 |
@@ -174,7 +174,7 @@ Each round:
 ```
 src/main/java/it/polimi/ingsw/am54/
 ├── controller/Controller.java       # Server-side coordinator
-├── database/                         # MySQL leaderboard + JSON persistence
+├── database/                         # PostgreSQL leaderboard + JSON persistence
 ├── gui/
 │   ├── BoardController.java         # Main game board (JavaFX)
 │   ├── LoginController.java
@@ -209,7 +209,7 @@ src/main/java/it/polimi/ingsw/am54/
 ./mvnw javadoc:javadoc
 ```
 
-Generates documentation in `target/site/apidocs/`. Open `target/site/apidocs/index.html` in your browser.
+Generates documentation in `target/reports/apidocs/`. Open `target/reports/apidocs/index.html` in your browser.
 
 ## Documentation
 
@@ -226,39 +226,49 @@ Generates documentation in `target/site/apidocs/`. Open `target/site/apidocs/ind
 | [`network.puml`](docs/UML/network.puml) | Network PlantUML source |
 | [`uml_full.puml`](docs/UML/uml_full.puml) | Full PlantUML source |
 | **API docs** | |
-| `target/site/apidocs/index.html` | Javadoc (`./mvnw javadoc:javadoc`) |
+| `target/reports/apidocs/index.html` | Javadoc (`./mvnw javadoc:javadoc`) |
 
 
 ---
 
 ## Configuration
 
-Copy `.env.example` to `.env` and configure:
+Copy `.env.example` to `.env` and configure (PostgreSQL — e.g. a free Aiven service):
 
 ```env
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
+DB_HOST=your-host.aivencloud.com
+DB_PORT=5432
+DB_USER=avnadmin
 DB_PASSWORD=your_password
-DB_NAME=codex_naturalis
+DB_NAME=defaultdb
+DB_SSL_MODE=require
 ```
 
-Without a `.env` file, the leaderboard is gracefully disabled (MySQL not required).
+Without a `.env` file (or if the database is unreachable), the leaderboard is gracefully disabled — the rest of the game works normally.
 
 ---
 
 ## Build Artifacts
 
 ```bash
-# Build JARs
-mvn package
-
-# Run server JAR
-java -jar target/Server.jar
-
-# Run client JAR (GUI)
-java -jar target/Client.jar
-
-# Run client JAR (CLI)
-java -jar target/Client.jar CLI
+# Build the runnable JARs (in target/)
+./mvnw clean package -DskipTests
 ```
+
+This produces two fat JARs:
+- `target/IS26-AM54-1.0-SNAPSHOT-Server.jar`
+- `target/IS26-AM54-1.0-SNAPSHOT-Client.jar`
+
+```bash
+# Run the server (TCP 12345 + RMI 1099)
+java -jar target/IS26-AM54-1.0-SNAPSHOT-Server.jar
+
+# Run the client — opens a launcher to choose GUI or CLI
+java -jar target/IS26-AM54-1.0-SNAPSHOT-Client.jar
+
+# Run the client straight in CLI mode
+java -jar target/IS26-AM54-1.0-SNAPSHOT-Client.jar --cli
+```
+
+> **Windows + CLI:** for correct emoji/accent rendering, set the console to UTF-8
+> first with `chcp 65001`. The GUI launcher's "CLI" button does this automatically.

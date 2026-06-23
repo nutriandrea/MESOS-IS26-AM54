@@ -15,9 +15,23 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 
+/**
+ * Factory dei mazzi di gioco. Legge le carte dai file JSON di configurazione, le
+ * filtra/mescola per Era secondo il numero di giocatori e associa a ciascuna il
+ * proprio effetto. Le carte di Era più bassa finiscono in cima al mazzo (pescate prima).
+ */
 public class DeckFactory {
 
-    // crea il mazzo BUILDINGS
+    /**
+     * Crea il mazzo degli Edifici per il numero di giocatori indicato: carica le carte
+     * dal JSON, le raggruppa per Era, le mescola e ne impila la quantità prevista da
+     * {@code EraCounts.json} (Era 1 in cima, Era 3 in fondo).
+     *
+     * @param filePath   percorso del JSON degli edifici
+     * @param numPlayers numero di giocatori (2-5)
+     * @return il mazzo Edifici pronto all'uso
+     * @throws IllegalArgumentException se il numero di giocatori non è valido
+     */
     public static Deck<BuildingCard> createBuildingDeck(String filePath, int numPlayers) {
 
         if (numPlayers < 2 || numPlayers > 5) {
@@ -104,7 +118,18 @@ public class DeckFactory {
         return new Deck<>(finalDeck);
     }
 
-    //crea il mazzo tribu coi PERSONAGGI ed EVENTI
+    /**
+     * Crea il mazzo Tribù unendo Personaggi ed Eventi. I personaggi vengono filtrati
+     * per numero minimo di giocatori, mescolati e "tagliati" alle quantità per Era; gli
+     * eventi vengono uniti ai personaggi della stessa Era e l'insieme è rimescolato (così
+     * non è prevedibile quando esce un evento). Gli eventi finali vanno in fondo al mazzo.
+     *
+     * @param charPath   percorso del JSON dei personaggi
+     * @param eventPath  percorso del JSON degli eventi
+     * @param numPlayers numero di giocatori (2-5)
+     * @return il mazzo Tribù pronto all'uso
+     * @throws IllegalArgumentException se il numero di giocatori non è valido
+     */
     public static Deck<TribeCard> createTribeDeck(String charPath, String eventPath, int numPlayers) {
 
         if (numPlayers < 2 || numPlayers > 5) {

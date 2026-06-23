@@ -3,6 +3,19 @@ package it.polimi.ingsw.am54.model.states;
 import it.polimi.ingsw.am54.model.*;
 
 public class PickingState extends GameState {
+    /**
+     * Esegue la pesca di una carta da parte del giocatore di turno. Verifica turno,
+     * disponibilità dei pick sulla tessera (o l'eventuale Extra Pick sulla fila upper),
+     * validità di riga/indice e copertura del costo; quindi consuma il pick, rimuove
+     * la carta dal tabellone, ne applica la logica e notifica i client. Se i pick sono
+     * esauriti chiude automaticamente il turno.
+     *
+     * @param game      la partita corrente
+     * @param nickname  il giocatore che pesca
+     * @param row       la fila scelta ("upper" o "lower")
+     * @param cardIndex l'indice della carta (personaggi seguiti dagli edifici)
+     * @throws Exception se non è il suo turno, la mossa è invalida o non può permettersi la carta
+     */
     @Override
     public void pickCard(Game game, String nickname, String row, int cardIndex) throws Exception {
         Player player = game.getPlayerByNickname(nickname);
@@ -95,6 +108,15 @@ public class PickingState extends GameState {
         }
     }
 
+    /**
+     * Chiude volontariamente il turno di pesca del giocatore. Non è consentito se
+     * restano pick obbligatori con personaggi ancora disponibili (salvo i nickname
+     * di sviluppo "tester"/"tester2"). In caso di Extra Pick non usato lo consuma.
+     *
+     * @param game     la partita corrente
+     * @param nickname il giocatore che termina il turno
+     * @throws Exception se non è il suo turno o ci sono pesche obbligatorie residue
+     */
     @Override
     public void endTurn(Game game, String nickname) throws Exception {
         Player player = game.getPlayerByNickname(nickname);
@@ -126,6 +148,14 @@ public class PickingState extends GameState {
         executeEndTurnLogic(game, player);
     }
 
+    /**
+     * Verifica se la tessera ha ancora pick obbligatori da spendere su file che
+     * contengono carte (un pick è obbligatorio finché ci sono carte pescabili).
+     *
+     * @param game la partita corrente
+     * @param tile la tessera del giocatore
+     * @return true se restano pesche obbligatorie
+     */
     private boolean hasMandatoryCharactersLeft(Game game, OfferingTile tile) {
         boolean mandatoryUpper = tile.getRemainingUpperPicks() > 0 &&
                 !(game.getBoard().getCharacterRowSize("upper") == 0 && game.getBoard().getBuildingRowSize("upper") == 0);
@@ -134,6 +164,16 @@ public class PickingState extends GameState {
         return mandatoryUpper || mandatoryLower;
     }
 
+    /**
+     * Salta il turno di pesca del giocatore corrente (es. disconnesso): chiude la sua
+     * pesca restituendo il totem, applica gli effetti di fine turno degli edifici e fa
+     * avanzare la fase (prossimo picker, oppure transizione a Evento/EndGame se la
+     * pesca è completa).
+     *
+     * @param game     la partita corrente
+     * @param nickname il giocatore da saltare
+     * @throws Exception se non è il suo turno
+     */
     @Override
     public void skipTurn(Game game, String nickname) throws Exception {
         Player player = game.getPlayerByNickname(nickname);
@@ -180,6 +220,14 @@ public class PickingState extends GameState {
         }
     }
 
+    /**
+     * Chiude il turno del giocatore e fa avanzare la fase: reinserisce il giocatore
+     * nell'ordine di turno incassando il bonus, poi sceglie il prossimo picker oppure,
+     * se la pesca è completa, transita a EndGame (mazzo esaurito in Era 3) o a Evento.
+     *
+     * @param game   la partita corrente
+     * @param player il giocatore di cui chiudere il turno
+     */
     private void executeEndTurnLogic(Game game, Player player) {
         if (player.getCurrentTile() != null) {
             finalizePlayerTurn(game, player, game.assignPickerToTurnOrder(player));
@@ -205,6 +253,15 @@ public class PickingState extends GameState {
         }
     }
 
+    /**
+     * Finalizza il rientro del totem nell'ordine di turno: applica il bonus/malus cibo
+     * dello slot (in mancanza di cibo il malus diventa -2 aura), notifica il rientro e
+     * libera la tessera offerta del giocatore.
+     *
+     * @param game   la partita corrente
+     * @param player il giocatore che termina il turno
+     * @param slot   lo slot dell'ordine di turno assegnato al giocatore
+     */
     private void finalizePlayerTurn(Game game, Player player, TurnOrderSlot slot) {
         if (slot != null) {
             int bonus = slot.getBonusFood();
@@ -221,6 +278,14 @@ public class PickingState extends GameState {
         player.setCurrentTile(null);
     }
 
+    /**
+     * Determina se il turno debba chiudersi automaticamente, cioè quando entrambe le
+     * file della tessera non hanno più pick disponibili o carte pescabili.
+     *
+     * @param game   la partita corrente
+     * @param player il giocatore di turno
+     * @return true se non resta nulla da pescare e il turno può chiudersi da solo
+     */
     private boolean shouldAutoEndTurn(Game game, Player player) {
         OfferingTile tile = player.getCurrentTile();
         if (tile == null) return false;
@@ -232,11 +297,28 @@ public class PickingState extends GameState {
         return upperDone && lowerDone;
     }
 
+    /**
+     * Dopo un recupero da crash, individua il giocatore che sta pescando (il primo
+     * occupante del tracciato offerte non ancora rientrato nell'ordine di turno).
+     *
+     * @param game la partita corrente
+     * @return il picker corrente, o {@code null}
+     */
     @Override
     public Player recoverActivePlayer(Game game) {
         return game.getCurrentPicker();
     }
 
+    /**
+     * Gestisce la disconnessione di un giocatore NON di turno che aveva una tessera
+     * occupata: la libera, lo sposta in fondo all'ordine di turno e notifica il
+     * rientro del totem (il giocatore di turno prosegue la pesca indisturbato).
+     *
+     * @param game            la partita corrente
+     * @param p               il giocatore disconnesso
+     * @param isCurrentPlayer true se era il giocatore di turno
+     * @throws Exception in caso di errore
+     */
     @Override
     public void handleDisconnection(Game game, Player p, boolean isCurrentPlayer) throws Exception {
         if (!isCurrentPlayer && p.getCurrentTile() != null) {

@@ -85,8 +85,20 @@
                     <show>protected</show>
                     <nohelp>true</nohelp>
                     <notimestamp>true</notimestamp>
+                    <failOnError>false</failOnError>
+                    <failOnWarnings>false</failOnWarnings>
+                    <quiet>true</quiet>
+                    <encoding>UTF-8</encoding>
+                    <charset>UTF-8</charset>
+                    <docencoding>UTF-8</docencoding>
+                    <author>true</author>
+                    <use>true</use>
+                    <windowtitle>Mesos (AM54) — Documentazione API</windowtitle>
+                    <doctitle>Mesos (AM54) — Documentazione API</doctitle>
+                    <bottom><![CDATA[Ingegneria del Software 2025/2026 — Cacioppo, Carbone, Buca, Botton]]></bottom>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>

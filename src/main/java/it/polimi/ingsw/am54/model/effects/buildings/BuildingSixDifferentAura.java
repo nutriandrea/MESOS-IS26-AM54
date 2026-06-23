@@ -5,7 +5,14 @@ import java.util.Arrays;
 // Gestisce i 6 Punti Prestigio a fine partita per ogni set di 6 personaggi diversi
 public class BuildingSixDifferentAura implements IEffect<BuildingCard> {
 
-    // FIRMA AGGIORNATA PER LA FASE DI FINE PARTITA
+    /**
+     * A fine partita assegna 6 aura per ogni set completo dei sei mestieri diversi:
+     * il numero di set equivale al mestiere meno rappresentato nella tribù.
+     *
+     * @param p    il giocatore proprietario dell'edificio
+     * @param g    la partita corrente
+     * @param card l'edificio che possiede l'effetto
+     */
     @Override
     public void applyOnEndGame(Player p, Game g, BuildingCard card) {
         JobType[] allJobs = { JobType.HUNTER, JobType.CONSTRUCTOR, JobType.SHAMAN, JobType.FARMER, JobType.ARTIST, JobType.INVENTOR };

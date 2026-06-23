@@ -17,6 +17,14 @@ public class EventState extends GameState {
         return true;
     }
 
+    /**
+     * Risolve automaticamente la fase eventi di fine round: applica i trigger degli
+     * edifici e risolve in ordine tutte le carte evento, poi riorganizza il tabellone
+     * (scarta/sposta le file, rifornisce, gestisce l'eventuale passaggio di Era),
+     * avanza il round, resetta i totem e infine transita a {@link StartTurnState}.
+     *
+     * @param game la partita su cui risolvere la fase
+     */
     @Override
     public void resolvePhase(Game game){
 

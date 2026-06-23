@@ -13,6 +13,15 @@ public class BuildingShamanPassive implements IEffect<BuildingCard> {
         this.doubleAura = params != null && params.has("doubleAura") && params.get("doubleAura").getAsBoolean();
     }
 
+    /**
+     * Imposta sul giocatore gli scudi temporanei letti poi dall'evento Rituale
+     * Sciamanico: immunità alla perdita di aura e/o raddoppio del bonus.
+     *
+     * @param p            il giocatore proprietario dell'edificio
+     * @param g            la partita corrente
+     * @param card         l'edificio che possiede l'effetto
+     * @param currentEvent l'evento in corso di risoluzione
+     */
     @Override
     public void applyOnEvent(Player p, Game g, BuildingCard card, EventCard currentEvent) {
         // nel player ci sono ste 2 flag

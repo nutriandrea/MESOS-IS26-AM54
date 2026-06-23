@@ -25,6 +25,10 @@ public class Client {
         return instance;
     }
 
+    /**
+     * Reinizializza il client (es. ritorno al menu): chiude l'eventuale connessione
+     * attiva e ricrea da zero l'istanza singleton.
+     */
     public static void resetClient() {
         if (instance != null && instance.connection != null) {
             try {
@@ -44,6 +48,12 @@ public class Client {
         this.savedIsSocket = isSocket;
     }
 
+    /**
+     * Avvia l'auto-riconnessione in un thread dedicato: ogni 3 secondi ritenta di
+     * stabilire una nuova connessione (Socket o RMI, secondo l'ultima usata) e di
+     * rientrare in partita con lo stesso nickname, finché non riesce. Aggiornando la
+     * connessione nel singleton, le mosse successive viaggiano subito su quella nuova.
+     */
     public void startAutoReconnect() {
         if (isReconnecting) return;
         isReconnecting = true;

@@ -46,6 +46,13 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         startPingScheduler();
     }
 
+    /**
+     * Richiesta RMI di ingresso in partita: memorizza il nickname del client (necessario
+     * per identificarlo nelle richieste successive) e inoltra il join al Controller.
+     *
+     * @param nickname il nickname scelto dal client
+     * @throws RemoteException in caso di errore RMI
+     */
     @Override
     public void joinGameRequest(String nickname) throws RemoteException {
         this.playerNickname = nickname;
@@ -80,6 +87,10 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         lastPongTime = System.currentTimeMillis();
     }
 
+    /**
+     * Avvia l'heartbeat RMI: invia un ping al client ogni {@value #PING_INTERVAL_MS} ms
+     * e, se non riceve un pong entro {@value #PING_TIMEOUT_MS} ms, lo disconnette.
+     */
     public void startPingScheduler() {
         this.lastPongTime = System.currentTimeMillis();
         this.pingScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -209,6 +220,10 @@ public class RMIClientHandler extends UnicastRemoteObject implements RMIClientHa
         catch (RemoteException e) { disconnect(); }
     }
 
+    /**
+     * Chiude la connessione RMI del client: ferma l'heartbeat, avvisa il Controller di
+     * rimuovere il giocatore e de-esporta questo handler dal registro RMI. Idempotente.
+     */
     @Override
     public void disconnect() {
         if (!connected) return;

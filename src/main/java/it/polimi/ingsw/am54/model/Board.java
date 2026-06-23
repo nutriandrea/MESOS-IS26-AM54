@@ -145,6 +145,12 @@ public class Board {
         eventUpperRow.add(card);
     }
 
+    /**
+     * Posiziona i giocatori negli slot dell'ordine di turno secondo l'ordine (già
+     * mescolato) ricevuto, assegnando l'i-esimo giocatore all'i-esimo slot.
+     *
+     * @param randomPlayers i giocatori nell'ordine di turno iniziale
+     */
     public void setupInitialTurnOrder(List<Player> randomPlayers) {
         for (int i = 0; i < randomPlayers.size(); i++) {
             Player p = randomPlayers.get(i);
@@ -189,12 +195,26 @@ public class Board {
         }
     }
 
+    /**
+     * Rimuove e restituisce la carta Personaggio all'indice indicato nella fila data.
+     *
+     * @param row   la fila ("upper" o "lower")
+     * @param index l'indice della carta
+     * @return la carta rimossa, o {@code null} se l'indice non è valido
+     */
     public CharacterCard takeCharacterCard(String row, int index) {
         List<CharacterCard> targetRow = row.equalsIgnoreCase("upper") ? characterUpperRow : characterLowerRow;
         if (index < 0 || index >= targetRow.size()) return null;
         return targetRow.remove(index);
     }
 
+    /**
+     * Rimuove e restituisce la carta Edificio all'indice indicato nella fila data.
+     *
+     * @param row   la fila ("upper" o "lower")
+     * @param index l'indice della carta (relativo agli edifici)
+     * @return la carta rimossa, o {@code null} se l'indice non è valido
+     */
     public BuildingCard takeBuildingCard(String row, int index) {
         List<BuildingCard> targetRow = row.equalsIgnoreCase("upper") ? buildingCardsUpperRow : buildingCardsLowerRow;
         if (index < 0 || index >= targetRow.size()) return null;
@@ -287,6 +307,12 @@ public class Board {
         return !someoneStillNeedsToPlace;
     }
 
+    /**
+     * Restituisce il primo giocatore (in ordine di tracciato) che ha un totem su una
+     * tessera offerta: è il primo a dover pescare nella fase di Picking.
+     *
+     * @return il primo occupante del tracciato offerte, o {@code null} se nessuno
+     */
     public Player getFirstPlayerFromOfferingTrack() {
         for (OfferingTile tile : offeringTrack) {
             if (!tile.isAvailable()) {

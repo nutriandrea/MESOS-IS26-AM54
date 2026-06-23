@@ -57,13 +57,21 @@ public class GUIApp extends Application {
         scene.setFill(Color.BLACK);
         primaryStage.setScene(scene);
 
+        primaryStage.setFullScreen(true);
+        primaryStage.setFullScreenExitHint("");
+        // Impedisce che la gente esca dal full screen premendo ESC per sbaglio (opzionale)
+        primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
+
+        primaryStage.show();
+
         // ==========================================================
-        // IL TRIGGER INFALLIBILE
+        // DISSOLVENZA DELLO SCUDO NERO
         // ==========================================================
-        // Questo scatta automaticamente appena la finestra è visibile,
-        // a prescindere dalle dimensioni o dal fullscreen.
-        primaryStage.setOnShown(event -> {
-            // Un micro-ritardo di sicurezza di 200ms per far assestare i CSS
+        // NB: NON usiamo setOnShown. Quando il Launcher riusa uno Stage già
+        // mostrato, l'evento "shown" non si ripete e lo scudo nero resterebbe
+        // opaco per sempre (= schermo nero fisso). Triggeriamo la dissolvenza
+        // direttamente: funziona sia da avvio diretto sia dal Launcher.
+        Platform.runLater(() -> {
             javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(Duration.millis(200));
             delay.setOnFinished(e -> {
                 FadeTransition fade = new FadeTransition(Duration.millis(300), blackScreen);
@@ -74,29 +82,38 @@ public class GUIApp extends Application {
             });
             delay.play();
         });
-
-        // Opzionale: decommenta la riga sotto se vuoi che parta SEMPRE in fullscreen.
-        // Altrimenti partirà sempre a finestra, ma lo scudo nero funzionerà in entrambi i casi.
-        primaryStage.setFullScreen(true);
-
-        primaryStage.setFullScreenExitHint("");
-
-        // Impedisce che la gente esca dal full screen premendo ESC per sbaglio (opzionale)
-        primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
-        // Questo comando ora risveglierà il setOnShown qui sopra
-        primaryStage.show();
     }
 
+    /**
+     * Sostituisce il contenuto in primo piano della finestra con una nuova vista,
+     * rendendola trasparente per lasciar vedere lo sfondo.
+     *
+     * @param newContent la nuova radice di scena da mostrare
+     */
     public static void changeSceneContent(Parent newContent) {
         newContent.setStyle("-fx-background-color: transparent;");
         contentLayer.getChildren().setAll(newContent);
     }
 
+    /**
+     * Cambia lo sfondo applicando la classe CSS indicata al livello di background.
+     *
+     * @param styleClass la classe CSS dello sfondo (es. "board-background")
+     */
     public static void changeBackground(String styleClass) {
         backgroundLayer.getStyleClass().clear();
         backgroundLayer.getStyleClass().add(styleClass);
     }
 
+    /**
+     * Riproduce l'animazione di ingresso in partita: zoom/pan sullo sfondo fino al nero
+     * pieno, durante il quale viene eseguito il cambio di scena, seguito dalla dissolvenza
+     * di ritorno.
+     *
+     * @param panX        spostamento orizzontale dello sfondo durante lo zoom
+     * @param panY        spostamento verticale dello sfondo durante lo zoom
+     * @param onPitchBlack azione da eseguire a schermo completamente nero (cambio scena)
+     */
     public static void playEntranceAnimation(double panX, double panY, Runnable onPitchBlack) {
         Rectangle blackScreen = new Rectangle();
         blackScreen.setFill(Color.BLACK);
@@ -157,6 +174,10 @@ public class GUIApp extends Application {
         phase1.play();
     }
 
+    /**
+     * Carica la scena della plancia di gioco (Board.fxml) con una transizione a schermo
+     * nero. Eseguita sul thread JavaFX; in caso di errore mostra un popup diagnostico.
+     */
     public static void loadBoardScene() {
         Platform.runLater(() -> {
             try {
@@ -203,6 +224,9 @@ public class GUIApp extends Application {
         });
     }
 
+    /**
+     * Carica la scena della classifica finale (Leaderboard.fxml). Eseguita sul thread JavaFX.
+     */
     public static void loadLeaderboardScene() {
         Platform.runLater(() -> {
             try {
@@ -218,6 +242,10 @@ public class GUIApp extends Application {
         });
     }
 
+    /**
+     * Riporta l'applicazione alla schermata di login (es. ritorno al menu dopo la partita).
+     * Eseguita sul thread JavaFX.
+     */
     public static void loadLoginScene() {
         Platform.runLater(() -> {
             try {

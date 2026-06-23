@@ -18,6 +18,15 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
     // Timer per controllare proattivamente se il server è vivo
     private Timer connectionWatcher;
 
+    /**
+     * Stabilisce la connessione RMI: si registra presso il server passando sé stesso come
+     * stub di callback, ne riceve l'handler personale e avvia il watcher che monitora la
+     * vitalità del server.
+     *
+     * @param server      lo stub remoto del server di gioco
+     * @param clientModel il modello locale da aggiornare con le callback ricevute
+     * @throws RemoteException in caso di errore RMI
+     */
     public RMIServerConnection(RMIGameServer server, ClientModel clientModel) throws RemoteException {
         this.clientModel = clientModel;
         this.serverStub = server.connect(this);
@@ -26,6 +35,10 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
         startConnectionWatcher();
     }
 
+    /**
+     * Avvia un controllo periodico (ogni 2 s) che "pinga" il server: se la chiamata
+     * remota fallisce, il server è considerato caduto e si gestisce il crash.
+     */
     private void startConnectionWatcher() {
         connectionWatcher = new Timer("RMI-Watcher", true);
         connectionWatcher.scheduleAtFixedRate(new TimerTask() {
@@ -47,6 +60,10 @@ public class RMIServerConnection extends UnicastRemoteObject implements ServerCo
         }, 2000, 2000); // Controlla ogni 2 secondi
     }
 
+    /**
+     * Gestisce la caduta del server: avvisa il modello locale (che avvierà
+     * l'auto-riconnessione), scarta lo stub remoto e ferma il watcher.
+     */
     private void handleServerCrash() {
         if (this.serverStub == null) return;
         System.err.println("[RMI] Connessione persa, avviso il modello...");

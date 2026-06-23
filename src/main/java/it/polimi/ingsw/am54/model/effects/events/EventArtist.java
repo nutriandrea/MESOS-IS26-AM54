@@ -2,9 +2,22 @@ package it.polimi.ingsw.am54.model.effects.events;
 
 import it.polimi.ingsw.am54.model.*;
 
+/**
+ * Effetto dell'evento Pitture Rupestri: chi raggiunge la soglia di artisti guadagna
+ * aura proporzionale, chi non la raggiunge subisce una penalità.
+ */
 public class EventArtist implements IEffect<EventCard> {
 
-    // FIRMA AGGIORNATA PER LA FASE EVENTI
+    /**
+     * Per ogni giocatore confronta il numero di artisti con la soglia dell'evento:
+     * sotto soglia applica la penalità in aura, da soglia in su accredita
+     * {@code artisti * moltiplicatore}; infine azzera i modificatori temporanei.
+     *
+     * @param p            non usato (l'effetto itera su tutti i giocatori)
+     * @param g            la partita corrente
+     * @param ec           la carta evento proprietaria dell'effetto
+     * @param currentEvent l'evento in risoluzione
+     */
     @Override
     public void applyOnEvent(Player p, Game g, EventCard ec, EventCard currentEvent) {
         g.getPlayers().forEach(pl -> {

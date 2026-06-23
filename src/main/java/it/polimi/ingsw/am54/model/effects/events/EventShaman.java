@@ -2,8 +2,23 @@ package it.polimi.ingsw.am54.model.effects.events;
 
 import it.polimi.ingsw.am54.model.*;
 
+/**
+ * Effetto dell'evento Rituale Sciamanico: premia in aura chi ha più punti magia e
+ * penalizza chi ne ha meno, rispettando gli scudi/raddoppi impostati dagli edifici.
+ */
 public class EventShaman implements IEffect<EventCard> {
 
+    /**
+     * Calcola il massimo e il minimo di punti magia tra i giocatori: chi è al massimo
+     * guadagna il bonus (raddoppiato se ha l'edificio "double aura" ed è l'unico al
+     * massimo), chi è al minimo subisce il malus (salvo "no loss"); poi azzera i
+     * modificatori temporanei.
+     *
+     * @param p            non usato (l'effetto itera su tutti i giocatori)
+     * @param g            la partita corrente
+     * @param ec           la carta evento proprietaria dell'effetto
+     * @param currentEvent l'evento in risoluzione
+     */
     @Override
     public void applyOnEvent(Player p, Game g, EventCard ec, EventCard currentEvent) {
         int max = g.getPlayers().stream().mapToInt(Player::getMagicPoints).max().orElse(0);

@@ -15,7 +15,15 @@ public class BuildingJobAuraBonus implements IEffect<BuildingCard> {
         this.useCardBaseAura = params != null && params.has("useCardBaseAura") && params.get("useCardBaseAura").getAsBoolean();
     }
 
-    // FIRMA AGGIORNATA PER LA FASE FINE PARTITA
+    /**
+     * A fine partita accredita aura in base ai personaggi del mestiere configurato:
+     * o sommandone l'aura base ({@code useCardBaseAura}), oppure moltiplicandone il
+     * numero per il moltiplicatore dell'edificio.
+     *
+     * @param p    il giocatore proprietario dell'edificio
+     * @param g    la partita corrente
+     * @param card l'edificio che possiede l'effetto
+     */
     @Override
     public void applyOnEndGame(Player p, Game g, BuildingCard card) {
         if (jobType == null) return;

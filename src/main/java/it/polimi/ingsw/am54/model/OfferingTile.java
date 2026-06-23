@@ -58,6 +58,13 @@ public class OfferingTile {
         return occupiedBy == null;
     }
 
+    /**
+     * Assegna la tessera a un giocatore (piazzamento del totem) e RIPRISTINA i pick
+     * disponibili al valore pieno. Da non usare nel recupero da crash: in quel caso
+     * serve {@link #restoreOccupant(Player)} per non azzerare i pick già spesi.
+     *
+     * @param p il giocatore che occupa la tessera
+     */
     public void occupy(Player p) {
         this.occupiedBy = p;
         this.remainingUpperPicks = this.cardsFromUpper;

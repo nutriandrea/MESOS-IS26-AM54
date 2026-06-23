@@ -12,6 +12,11 @@ import it.polimi.ingsw.am54.model.effects.events.*;
 import it.polimi.ingsw.am54.model.states.*;
 import java.io.*;
 
+/**
+ * Gestisce il backup su file JSON della partita per il recupero da crash del server.
+ * Usa Gson con {@link RuntimeTypeAdapterFactory} per serializzare in modo polimorfico
+ * gli stati di gioco, gli effetti delle carte e le carte Tribù.
+ */
 public class PersistenceManager {
     private final File backupFile;
     private final Gson gson;
@@ -66,6 +71,13 @@ public class PersistenceManager {
                 .create();
     }
 
+    /**
+     * Salva l'intera partita su file in modo atomico: scrive prima su un file temporaneo
+     * (chiudendolo) e poi lo sposta sul backup definitivo. Questo evita che un crash a
+     * metà scrittura corrompa il backup precedente.
+     *
+     * @param game la partita da salvare
+     */
     public synchronized void saveGame(Game game) {
         File tempFile = new File(backupFile.getAbsolutePath() + ".tmp");
 
@@ -98,6 +110,12 @@ public class PersistenceManager {
         }
     }
 
+    /**
+     * Carica la partita dal file di backup, se presente, e ne ripristina i riferimenti
+     * transitori tra oggetti ({@link Game#restoreReferences()}).
+     *
+     * @return la partita ripristinata, oppure {@code null} se non c'è backup o è illeggibile
+     */
     public synchronized Game loadGame() {
         if (!backupFile.exists()) return null;
         try (FileReader reader = new FileReader(backupFile)) {
@@ -113,6 +131,10 @@ public class PersistenceManager {
         }
     }
 
+    /**
+     * Elimina il file di backup (a partita conclusa) così che un riavvio del server non
+     * "recuperi" una partita già finita.
+     */
     public synchronized void clearBackup() {
         if (backupFile.exists()) {
             backupFile.delete();

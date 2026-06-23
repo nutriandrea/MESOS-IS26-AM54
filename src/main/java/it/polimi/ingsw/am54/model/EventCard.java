@@ -2,6 +2,11 @@ package it.polimi.ingsw.am54.model;
 
 import java.util.List;
 
+/**
+ * Carta Evento: si risolve globalmente su tutti i giocatori durante la fase eventi
+ * di fine round. I parametri numerici (cibo base, aura per personaggio, soglie,
+ * bonus/malus) sono interpretati dal proprio effetto secondo il tipo di evento.
+ */
 public class EventCard extends TribeCard {
 
     private boolean finalEvent;
@@ -54,13 +59,24 @@ public class EventCard extends TribeCard {
         return "FARMER".equals(name);
     }
 
+    /**
+     * Verifica se l'evento corrisponde a un dato mestiere (usato dagli edifici che
+     * reagiscono solo all'evento del proprio tipo, es. Caccia o Pitture Rupestri).
+     *
+     * @param jobType il mestiere da confrontare
+     * @return true se il nome dell'evento coincide con il mestiere
+     */
     public boolean matchesJobType(JobType jobType) {
         return jobType != null && jobType.name().equals(this.name);
     }
 
-    // ==========================================
-    // RISOLUZIONE DELL'EVENTO AGGIORNATA
-    // ==========================================
+    /**
+     * Risolve l'evento applicando i suoi effetti su tutta la partita. Gli effetti
+     * iterano internamente su tutti i giocatori, perciò qui il Player è {@code null};
+     * la carta passa sé stessa sia come carta proprietaria sia come evento corrente.
+     *
+     * @param g la partita su cui risolvere l'evento
+     */
     public void resolveEvent(Game g) {
         for (IEffect<EventCard> effect : effects) {
             // Chiamiamo il nuovo gancio.
@@ -76,6 +92,12 @@ public class EventCard extends TribeCard {
         return getImageId() + "|" + getEra() + "|0|EVENT|" + getName();
     }
 
+    /**
+     * Rivela l'evento inserendolo nella fila Eventi del tabellone.
+     *
+     * @param board la plancia di gioco
+     * @param row   la fila di destinazione
+     */
     @Override
     public void reveal(Board board, String row) {
         // La carta dice: "sono un Evento, mettimi nella fila degli Eventi"

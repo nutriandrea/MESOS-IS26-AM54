@@ -18,7 +18,16 @@ public class BuildingEventCostModifier implements IEffect<BuildingCard> {
         this.overrideAuraCost = params != null && params.has("overrideAuraCost") && params.get("overrideAuraCost").getAsBoolean();
     }
 
-    // FIRMA AGGIORNATA PER LA FASE EVENTI
+    /**
+     * Imposta sul giocatore i modificatori temporanei letti poi dall'effetto evento:
+     * sconto cibo sul Sostentamento (per il proprio mestiere), oppure cibo/aura extra
+     * sugli eventi Caccia/Pitture Rupestri quando l'evento corrisponde al tipo edificio.
+     *
+     * @param p            il giocatore proprietario dell'edificio
+     * @param g            la partita corrente
+     * @param card         l'edificio che possiede l'effetto
+     * @param currentEvent l'evento in corso di risoluzione
+     */
     @Override
     public void applyOnEvent(Player p, Game g, BuildingCard card, EventCard currentEvent) {
         if (jobType == null || currentEvent == null) return;

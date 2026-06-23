@@ -11,6 +11,13 @@ import java.util.List;
 
 public class EndGameState extends GameState {
 
+    /**
+     * Risolve la fase finale della partita: applica gli eventi finali residui e gli
+     * effetti di fine partita degli edifici, registra il delta di aura prodotto, calcola
+     * i vincitori e li notifica ai client.
+     *
+     * @param game la partita da concludere
+     */
     @Override
     public void resolvePhase(Game game) {
         EventCard currentFinalEvent;
@@ -52,6 +59,14 @@ public class EndGameState extends GameState {
         game.notifyEndGame(winners);
     }
 
+    /**
+     * Un nuovo ingresso a partita conclusa avvia una NUOVA partita: svuota i giocatori,
+     * riporta lo stato a {@link SetUpGameState} e inoltra il join al setup.
+     *
+     * @param game     la partita conclusa
+     * @param nickname il giocatore che richiede il riavvio
+     * @throws Exception in caso di errore nel join
+     */
     @Override
     public void joinGame(Game game, String nickname) throws Exception {
         System.out.println("[SERVER] Riavvio della partita richiesto dal client: " + nickname);

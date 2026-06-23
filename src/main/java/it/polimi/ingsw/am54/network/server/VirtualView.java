@@ -84,22 +84,27 @@ public class VirtualView implements IGameObserver {
     }
 
     /**
-     * Invia un messaggio di errore SOLO a questo giocatore.
-     * Usata dal Controller.signalError() quando un giocatore fa una mossa non valida.
+     * Invia un messaggio di errore SOLO a questo giocatore (es. mossa non valida).
+     *
+     * @param errorMessage il testo dell'errore da mostrare al client
      */
     public void showError(String errorMessage) {
         connection.notifyError(errorMessage);
     }
 
     /**
-     * Notifica a questa vista che un altro giocatore si è disconnesso.
+     * Notifica a questo client che un altro giocatore si è disconnesso.
+     *
+     * @param disconnectedNickname il nickname del giocatore disconnesso
      */
     public void showPlayerDisconnected(String disconnectedNickname) {
         connection.notifyPlayerDisconnected(disconnectedNickname);
     }
 
     /**
-     * Notifica a questa vista che un altro giocatore si è riconnesso.
+     * Notifica a questo client che un altro giocatore si è riconnesso.
+     *
+     * @param reconnectedNickname il nickname del giocatore riconnesso
      */
     public void showPlayerReconnected(String reconnectedNickname) {
         connection.notifyPlayerReconnected(reconnectedNickname);
@@ -123,22 +128,38 @@ public class VirtualView implements IGameObserver {
      * board locale viene aggiornata di conseguenza.
      * ===================================================================== */
 
+    /**
+     * Notifica al client che un nuovo giocatore è entrato nella lobby.
+     *
+     * @param game   la partita corrente
+     * @param player il giocatore appena unito
+     */
     @Override
     public void onPlayerJoined(Game game, Player player) {
-        // Tutti i giocatori vedono che un nuovo giocatore si e' unito
         connection.notifyPlayerJoined(player.getNickname());
     }
 
+    /**
+     * Notifica al client il colore del totem scelto da un giocatore.
+     *
+     * @param game   la partita corrente
+     * @param player il giocatore che ha scelto
+     * @param color  il colore selezionato
+     */
     @Override
     public void onTotemColorChosen(Game game, Player player, TotemColors color) {
-        // Tutti vedono il colore scelto dal giocatore
         connection.notifyTotemColor(player.getNickname(), color);
     }
 
+    /**
+     * Notifica al client che un giocatore ha piazzato il totem su una tessera offerta.
+     *
+     * @param game          la partita corrente
+     * @param player        il giocatore che ha piazzato il totem
+     * @param offerPosition l'indice della tessera scelta
+     */
     @Override
     public void onTotemPlaced(Game game, Player player, int offerPosition) {
-        // Tutti vedono il totem piazzato su una tessera offerta
-        // Il client rimuovera' il giocatore dal turnOrderTrack e lo mettera' nell'offeringTrack
         connection.notifyTotemPlaced(player.getNickname(), offerPosition);}
 
     private Map<Integer, String> generateOfferingSnapshot(Board b) {
@@ -156,23 +177,47 @@ public class VirtualView implements IGameObserver {
         return offering;
     }
 
+    /**
+     * Notifica al client che un giocatore ha pescato una carta, allegando lo snapshot
+     * aggiornato del tracciato offerte (pick residui per tessera).
+     *
+     * @param game            la partita corrente
+     * @param player          il giocatore che ha pescato
+     * @param row             la fila della carta ("upper" o "lower")
+     * @param cardIndex       l'indice della carta pescata
+     * @param newFoodBalance  il nuovo saldo di cibo del giocatore
+     * @param newMagicBalance il nuovo saldo di magia del giocatore
+     */
     @Override
     public void onCardPicked(Game game, Player player, String row, int cardIndex, int newFoodBalance, int newMagicBalance) {
-        // Tutti vedono la carta pescata. Il client:
-        //   - Rimuove la carta dalla riga corretta (upper/lower)
-        //   - Aggiunge la carta alla tribu' del giocatore
-        //   - Aggiorna il cibo del giocatore
-        //   - Rimette il giocatore nel turnOrderTrack
         Map<Integer, String> currentOffering = generateOfferingSnapshot(game.getBoard());
 
         connection.notifyCardPicked(player.getNickname(), row, cardIndex, newFoodBalance, newMagicBalance, currentOffering);
    }
 
+    /**
+     * Notifica al client che un giocatore ha terminato la pesca e il suo totem rientra
+     * nell'ordine di turno, incassando l'eventuale bonus cibo.
+     *
+     * @param game            la partita corrente
+     * @param player          il giocatore che termina il turno
+     * @param position        la posizione (slot) di rientro nell'ordine di turno
+     * @param newFoodBalance  il nuovo saldo di cibo
+     * @param newAuraBalance  il nuovo saldo di aura
+     */
     @Override
     public void onTotemReturned(Game game, Player player, int position, int newFoodBalance, int newAuraBalance) {
         connection.notifyTotemReturned(player.getNickname(), position, newFoodBalance, newAuraBalance);
     }
 
+    /**
+     * Notifica al client la risoluzione di una carta Evento, inviando uno snapshot
+     * completo (statistiche di tutti i giocatori e contenuto di tutte le file del
+     * tabellone serializzato in stringhe).
+     *
+     * @param game          la partita corrente
+     * @param resolvedEvent la carta evento appena risolta
+     */
     @Override
     public void onEventResolved(Game game, EventCard resolvedEvent) {
         Board b = game.getBoard();
@@ -202,17 +247,28 @@ public class VirtualView implements IGameObserver {
         connection.notifyEventResolved(eventName, stats, charUp, charLow, eventUp, eventLow, buildUp, buildLow);
     }
     /**
-     * COSA FA: Notifica a tutti chi è il nuovo giocatore di turno.
-     * PERCHÉ LO FA: Permette all'interfaccia grafica di attivare i pulsanti solo per quel giocatore, e mostrare agli altri la scritta "In attesa di...".
+     * Notifica al client il nuovo giocatore di turno (può essere {@code null} tra una
+     * fase e l'altra, quando nessun turno è attivo).
+     *
+     * @param game             la partita corrente
+     * @param newCurrentPlayer il nuovo giocatore di turno, o {@code null}
      */
     @Override
     public void onTurnChanged(Game game, Player newCurrentPlayer) {
-        // Tutti vedono chi e' il nuovo giocatore di turno.
         // Se newCurrentPlayer e' null (tra una fase e l'altra), invia null.
         String turnOwner = (newCurrentPlayer != null) ? newCurrentPlayer.getNickname() : null;
         connection.notifyTurnChanged(turnOwner);
     }
 
+    /**
+     * Notifica al client un cambio di fase inviando lo snapshot COMPLETO dello stato
+     * (a differenza degli altri update, differenziali): statistiche di tutti i
+     * giocatori, ordine di turno, tracciato offerte e le sei file di carte. Inviato a
+     * ogni transizione di stato e alla riconnessione.
+     *
+     * @param game     la partita corrente
+     * @param newState il nuovo stato di gioco
+     */
     @Override
     public void onStateChanged(Game game, GameState newState) {
         // 1. Statistiche e Carte Giocatori (sempre valide)
@@ -269,6 +325,13 @@ public class VirtualView implements IGameObserver {
         );
     }
 
+    /**
+     * Notifica al client la fine della partita. Calcola qui, lato server, il punteggio
+     * finale reale di ogni giocatore e invia vincitori, punteggi e numero di giocatori.
+     *
+     * @param game    la partita conclusa
+     * @param winners i giocatori vincitori
+     */
     @Override
     public void onEndGame(Game game, List<Player> winners) {
         List<String> winnerNames = winners.stream()
@@ -284,17 +347,18 @@ public class VirtualView implements IGameObserver {
         // Inviamo i dati completi alla connessione
         connection.notifyEndGame(winnerNames, finalScores, game.getPlayers().size());
     }
+
     /**
-     * Invia notifica di sospensione SOLO a questo giocatore.
-     * Usata dal Controller per broadcast.
+     * Notifica a questo client che la partita è stata sospesa (è rimasto un solo
+     * giocatore attivo). Invocata dal Controller in broadcast.
      */
     public void showGameSuspended() {
         connection.notifyGameSuspended();
     }
 
     /**
-     * Invia notifica di ripresa SOLO a questo giocatore.
-     * Usata dal Controller per broadcast.
+     * Notifica a questo client che la partita è ripresa (almeno due giocatori attivi).
+     * Invocata dal Controller in broadcast.
      */
     public void showGameResumed() {
         connection.notifyGameResumed();

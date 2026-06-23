@@ -44,6 +44,12 @@ Distributed multiplayer implementation of the board game **Mesos** (Cranio Creat
 
 ---
 
+## Acknowledgments
+
+Special thanks to **Dario D'Abate** (Laboratory Instructor), **Carlo Arnone** (Laboratory Tutor) and **Ing. Conti** (Practical Instructor) for their invaluable guidance and support throughout the project.
+
+---
+
 ## Features
 
 | Area | Feature | Status |
@@ -61,7 +67,7 @@ Distributed multiplayer implementation of the board game **Mesos** (Cranio Creat
 | | `synchronized` critical sections (3 total) | ✅ |
 | **UI** | JavaFX GUI (board, cards, totems, events, music) | ✅ |
 | | CLI (full terminal interface) | ✅ |
-| **Data** | MySQL leaderboard (graceful fallback if absent) | ✅ |
+| **Data** | PostgreSQL leaderboard (graceful fallback if absent) | ✅ |
 
 ---
 
@@ -289,13 +295,14 @@ Copy `.env.example` → `.env`:
 
 ```env
 DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=codex_naturalis
+DB_PORT=5432
+DB_NAME=am54
+DB_USER=postgres
+DB_PASSWORD=
+DB_SSL_MODE=require
 ```
 
-Without `.env`, the leaderboard is gracefully disabled (MySQL not required for gameplay).
+Without `.env`, the leaderboard is gracefully disabled (PostgreSQL not required for gameplay).
 
 ---
 

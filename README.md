@@ -278,9 +278,9 @@ src/test/java/it/polimi/ingsw/am54/
 | [`docs/network-protocol.pdf`](./docs/network-protocol.pdf) | TCP/RMI protocol specification with TikZ diagrams |
 | [`docs/network-protocol.tex`](./docs/network-protocol.tex) | LaTeX source |
 | **UML diagrams** | |
-| [`docs/model.png`](./docs/model.png) | Model class diagram |
-| [`docs/network.png`](./docs/network.png) | Network package class diagram |
-| [`docs/uml_full.png`](./docs/uml_full.png) | Full application UML diagram |
+| [`docs/model.png`](docs/UML/model.png) | Model class diagram |
+| [`docs/network.png`](docs/UML/network.png) | Network package class diagram |
+| [`docs/uml_full.png`](docs/UML/uml_full.png) | Full application UML diagram |
 | [`docs/UML/model.puml`](./docs/UML/model.puml) | Model PlantUML source |
 | [`docs/UML/network.puml`](./docs/UML/network.puml) | Network PlantUML source |
 | [`docs/UML/uml_full.puml`](./docs/UML/uml_full.puml) | Full PlantUML source |

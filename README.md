@@ -11,6 +11,8 @@ Distributed multiplayer implementation of the board game **Mesos** (Cranio Creat
 **Software Engineering Final Project** — Politecnico di Milano, AA 2025–2026  
 **Professor**: Alessandro Margara
 
+![Grade](https://img.shields.io/badge/Final_Grade-30L%2F30-brightgreen)
+
 ---
 
 ## Quick Start
